@@ -11,6 +11,7 @@ import { LibraryDialog } from "@/components/OpenAI/LibraryDialog";
 import { SavedContentLibrary } from "@/components/OpenAI/SavedContentLibrary";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { GenerateRequest, GenerateResponse, SavedPrompt, SavedPersona } from "@/lib/types";
+import { GeneratedContent } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Library } from "lucide-react";
 
@@ -22,6 +23,9 @@ export default function Home() {
   // Library dialog state
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [activeLibraryTab, setActiveLibraryTab] = useState<"prompts" | "personas">("prompts");
+  
+  // Saved content library state
+  const [savedContentLibraryOpen, setSavedContentLibraryOpen] = useState(false);
   
   // Configuration state
   const [systemPrompt, setSystemPrompt] = useLocalStorage<string>(
@@ -134,6 +138,27 @@ export default function Home() {
     setActiveLibraryTab("personas");
     setLibraryOpen(true);
   };
+  
+  // Handle opening the saved content library
+  const handleOpenSavedContentLibrary = () => {
+    setSavedContentLibraryOpen(true);
+  };
+  
+  // Handle selecting saved content from the library
+  const handleSelectSavedContent = (content: GeneratedContent) => {
+    setGeneratedContent(content.content);
+    if (content.systemPrompt) {
+      setSystemPrompt(content.systemPrompt);
+    }
+    if (content.userPrompt) {
+      setUserPrompt(content.userPrompt);
+    }
+    
+    toast({
+      title: "Content Loaded",
+      description: `The content "${content.title}" has been loaded.`,
+    });
+  };
 
   // Check for API key on component mount
   useEffect(() => {
@@ -224,6 +249,12 @@ export default function Home() {
         onSelectPrompt={handleSelectPrompt}
         onSelectPersona={handleSelectPersona}
         initialTab={activeLibraryTab}
+      />
+      
+      <SavedContentLibrary
+        open={savedContentLibraryOpen}
+        onOpenChange={setSavedContentLibraryOpen}
+        onSelectContent={handleSelectSavedContent}
       />
     </div>
   );

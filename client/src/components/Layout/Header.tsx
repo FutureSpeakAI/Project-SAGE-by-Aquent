@@ -3,9 +3,10 @@ import { KeyRound } from "lucide-react";
 
 interface HeaderProps {
   onOpenApiKeyModal: () => void;
+  onOpenSavedContentLibrary?: () => void;
 }
 
-export function Header({ onOpenApiKeyModal }: HeaderProps) {
+export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary }: HeaderProps) {
   return (
     <header className="bg-gradient-to-r from-black to-gray-800 py-3 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
