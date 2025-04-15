@@ -11,6 +11,31 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add a status endpoint to verify database connection
+  app.get('/api/status', async (_req: Request, res: Response) => {
+    try {
+      // Check if db is available
+      const dbAvailable = !!process.env.DATABASE_URL;
+      
+      res.json({
+        status: 'ok',
+        environment: process.env.NODE_ENV || 'development',
+        database: {
+          available: dbAvailable,
+          type: dbAvailable ? 'postgresql' : 'memory'
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Status check error:', error);
+      res.status(500).json({ 
+        status: 'error',
+        message: 'Failed to check system status',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
   // OpenAI content generation endpoint
   app.post("/api/generate", generateContent);
 
