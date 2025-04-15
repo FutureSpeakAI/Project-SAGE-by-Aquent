@@ -407,7 +407,7 @@ export function RichOutputPanel({
     <>
       <Card className="w-full h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200 flex flex-row items-center justify-between">
-          <CardTitle className="font-semibold text-white">Ninja Output</CardTitle>
+          <CardTitle className="font-semibold text-white">Mission Results</CardTitle>
           
           {showContent && (
             <div className="flex gap-2">

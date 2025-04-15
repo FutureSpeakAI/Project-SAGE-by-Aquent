@@ -34,7 +34,7 @@ export function SystemPromptPanel({
         <CollapsibleTrigger className="flex justify-between items-center w-full">
           <h2 className="font-semibold text-white flex items-center">
             <BookText className="h-4 w-4 mr-2 text-[#FF6600]" />
-            Ninja Training Instructions
+            Choose Your Ninja
           </h2>
           {isOpen ? (
             <ChevronUp className="h-4 w-4 text-[#FF6600]" />
@@ -48,7 +48,7 @@ export function SystemPromptPanel({
         <div className="p-4 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-gray-600">
-              Configure how the AI behaves.
+              This is the system prompt field.
             </p>
             
             {onOpenPromptLibrary && (
@@ -68,7 +68,7 @@ export function SystemPromptPanel({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">Ninja System Instructions</Label>
+            <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">Ninja Agent Description</Label>
             <Textarea
               id="systemPrompt"
               className="resize-none h-32"
