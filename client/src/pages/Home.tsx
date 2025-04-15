@@ -167,6 +167,7 @@ export default function Home() {
                 setUserPrompt={setUserPrompt}
                 onGenerate={handleGenerate}
                 isGenerating={generateMutation.isPending}
+                onOpenPromptLibrary={handleOpenPromptLibrary}
               />
             </div>
             

@@ -59,7 +59,7 @@ export function SystemPromptPanel({
                 }}
               >
                 <BookText className="h-4 w-4" />
-                <span>Prompt Library</span>
+                <span>Deploy From Library</span>
               </Button>
             )}
           </div>

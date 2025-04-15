@@ -2,20 +2,22 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap } from "lucide-react";
+import { Zap, BookText } from "lucide-react";
 
 interface UserPromptPanelProps {
   userPrompt: string;
   setUserPrompt: (prompt: string) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  onOpenPromptLibrary?: () => void;
 }
 
 export function UserPromptPanel({
   userPrompt,
   setUserPrompt,
   onGenerate,
-  isGenerating
+  isGenerating,
+  onOpenPromptLibrary
 }: UserPromptPanelProps) {
   return (
     <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -25,9 +27,26 @@ export function UserPromptPanel({
       
       <CardContent className="p-4">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Enter your prompt below to generate content.
-          </p>
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              Enter your prompt below to generate content.
+            </p>
+            
+            {onOpenPromptLibrary && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenPromptLibrary();
+                }}
+              >
+                <BookText className="h-4 w-4" />
+                <span>Deploy From Library</span>
+              </Button>
+            )}
+          </div>
           
           <div className="space-y-2">
             <Textarea
