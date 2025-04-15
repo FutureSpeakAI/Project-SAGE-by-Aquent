@@ -552,12 +552,22 @@ export function RichOutputPanel({
               </div>
               <p className="text-gray-700 font-medium">An error occurred</p>
               <p className="text-gray-500 mt-2">{error}</p>
-              {error && error.includes("API key") && (
+              {error && (error.includes("API key") || error.includes("Invalid key")) && (
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md max-w-md">
                   <p className="text-amber-700 text-sm">
-                    <strong>Note:</strong> The server is having issues with the OpenAI API key.
-                    This is a server configuration issue and not related to your account.
-                    Please contact the administrator for assistance.
+                    <strong>Note:</strong> The OpenAI API key is now managed by the server.
+                    This error indicates a server configuration issue and not a problem with your account.
+                    Please contact the administrator to verify that a valid API key is configured.
+                  </p>
+                </div>
+              )}
+              
+              {error && error.includes("fetch failed") && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md max-w-md">
+                  <p className="text-amber-700 text-sm">
+                    <strong>Connection error:</strong> The server is having trouble connecting to OpenAI's API.
+                    This could be due to a temporary network issue or server configuration problem.
+                    Please try again in a few moments or contact the administrator if the issue persists.
                   </p>
                 </div>
               )}
