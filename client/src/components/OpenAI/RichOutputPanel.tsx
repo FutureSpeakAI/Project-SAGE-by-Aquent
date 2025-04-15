@@ -570,7 +570,6 @@ export function RichOutputPanel({
             <AIContextMenu 
               selectedText={selectedText}
               onProcessText={handleProcessedText}
-              apiKey={apiKey}
               model={model}
               temperature={temperature}
               onOpenPersonaLibrary={onOpenPersonaLibrary}

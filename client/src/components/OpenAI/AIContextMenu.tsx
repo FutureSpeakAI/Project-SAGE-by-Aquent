@@ -27,7 +27,6 @@ interface AIContextMenuProps {
   children: React.ReactNode;
   selectedText: string;
   onProcessText: (text: string, replaceSelection: boolean) => void;
-  apiKey: string;
   model: string;
   temperature: number;
   onOpenPersonaLibrary?: () => void;
@@ -38,7 +37,6 @@ export function AIContextMenu({
   children,
   selectedText,
   onProcessText,
-  apiKey,
   model,
   temperature,
   onOpenPersonaLibrary,
@@ -112,7 +110,6 @@ export function AIContextMenu({
 
     // Always pass true to ensure selection replacement
     generateMutation.mutate({
-      apiKey,
       model,
       systemPrompt,
       userPrompt: selectedText,
@@ -157,7 +154,6 @@ export function AIContextMenu({
     setProcessingOperation("Custom Instructions");
     
     generateMutation.mutate({
-      apiKey,
       model,
       systemPrompt,
       userPrompt: savedSelectedText,
