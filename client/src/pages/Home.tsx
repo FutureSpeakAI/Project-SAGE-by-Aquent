@@ -214,7 +214,7 @@ export default function Home() {
     const newBriefing = {
       title,
       content,
-      contentType: ContentType.BRIEFING,
+      contentType: ContentType.BRIEFING, // Ensure this is 'briefing'
       systemPrompt: null,
       userPrompt: null,
       model: null,
