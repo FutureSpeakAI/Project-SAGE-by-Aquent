@@ -20,7 +20,6 @@ interface ContentTabProps {
   handleOpenPersonaLibrary: () => void;
   handleOpenPromptLibrary: () => void;
   handleOpenBriefingLibrary: () => void;
-  apiKey: string;
   model: string;
   setModel: (model: string) => void;
   temperature: number;
