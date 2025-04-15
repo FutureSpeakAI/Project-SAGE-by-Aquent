@@ -88,10 +88,22 @@ export function AIContextMenu({
       });
       return;
     }
+    
+    if (!selectedText) {
+      toast({
+        title: "No text selected",
+        description: "Please select text to process.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const systemPrompt = `You are an expert editor and writer. ${customInstructions}
+    const systemPrompt = `You are an expert editor and writer. Your task is to ${customInstructions.trim()} for the following text.
     Only return the processed text without any additional comments or explanations.`;
 
+    console.log("Sending custom instructions:", customInstructions);
+    console.log("System prompt:", systemPrompt);
+    
     generateMutation.mutate({
       apiKey,
       model,
@@ -154,15 +166,28 @@ export function AIContextMenu({
             <DialogTitle>Custom AI Instructions</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-gray-600">
-              Provide custom instructions for AI to process the selected text.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 font-medium">
+                What would you like the AI to do with your selected text?
+              </p>
+              <p className="text-sm text-gray-600">
+                Enter instructions like "rewrite in the style of Shakespeare" or "convert to a bulleted list of key points"
+              </p>
+            </div>
             <Textarea
-              placeholder="Example: 'Rewrite in the style of Shakespeare' or 'Convert to a bulleted list'"
+              placeholder="Enter instructions here... (e.g., translate to Spanish, convert to bullet points, make more formal, etc.)"
               value={customInstructions}
               onChange={(e) => setCustomInstructions(e.target.value)}
               className="min-h-[100px]"
             />
+            <div className="bg-blue-50 p-2 rounded-md text-xs text-blue-700">
+              <p className="font-medium">Tips:</p>
+              <ul className="list-disc pl-4 mt-1 space-y-1">
+                <li>Be specific about the style, tone, or format you want</li>
+                <li>For multiple instructions, separate with commas</li>
+                <li>For best results, select text first before opening this dialog</li>
+              </ul>
+            </div>
           </div>
           <DialogFooter>
             <Button
