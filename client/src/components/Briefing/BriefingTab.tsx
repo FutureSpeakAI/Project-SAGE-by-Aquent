@@ -42,11 +42,11 @@ export function BriefingTab({
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'system',
-      content: 'You are a helpful assistant that helps users create creative briefings. Ask questions to understand what they need in their briefing, then create a structured, detailed brief.'
+      content: 'You are a creative briefing expert that helps users create professional creative briefs. Ask only ONE question at a time to understand the user\'s requirements. Be conversational and friendly. Do not provide multiple questions in a single message. Wait for the user to respond before proceeding to the next question. Focus on gathering information that would be relevant for a creative brief, such as project overview, objectives, target audience, key messages, deliverables, and timeline.'
     },
     {
       role: 'assistant',
-      content: 'Hello! I\'m here to help you create a creative briefing document. Let\'s start by understanding your project. What are you looking to create? (For example: a website, marketing campaign, video, etc.)'
+      content: 'Hello! I\'m here to help you create a creative briefing document. What specific type of project are you looking to create?'
     }
   ]);
   
@@ -137,7 +137,7 @@ export function BriefingTab({
         body: JSON.stringify({
           apiKey,
           model,
-          systemPrompt: "Based on the conversation, create a well-structured creative briefing document. Include sections like Project Overview, Objectives, Target Audience, Key Messages, Deliverables, Timeline, and any other relevant information mentioned in the conversation. Format with clear headings and bullet points where appropriate.",
+          systemPrompt: "Based on the conversation, create a well-structured creative briefing document. Include sections like Project Overview, Objectives, Target Audience, Key Messages, Deliverables, Timeline, and any other relevant information mentioned in the conversation. USE HTML FORMATTING for rich text output with these guidelines:\n\n1. Use <h1>, <h2>, <h3> tags for headings\n2. Use <ul> and <li> for bullet points\n3. Use <p> for paragraphs\n4. Use <strong> for emphasis\n5. Use <hr> for section dividers\n6. Use <blockquote> for highlighted information\n\nMake the document visually organized, professional, and comprehensive. The HTML will be rendered directly in a rich text editor.",
           userPrompt: messages
             .map(msg => `${msg.role === 'user' ? 'User' : msg.role === 'assistant' ? 'Assistant' : 'System'}: ${msg.content}`)
             .join('\n\n'),
