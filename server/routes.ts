@@ -2,7 +2,13 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, SavedPrompt, SavedPersona } from "./storage";
 import { generateContent } from "./openai";
-import { GeneratedContent, InsertGeneratedContent } from "@shared/schema";
+import { 
+  GeneratedContent, 
+  InsertGeneratedContent, 
+  BriefConversation, 
+  InsertBriefConversation,
+  ContentType
+} from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // OpenAI content generation endpoint
@@ -183,9 +189,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generated Content API Routes
-  app.get("/api/generated-contents", async (_req: Request, res: Response) => {
+  app.get("/api/generated-contents", async (req: Request, res: Response) => {
     try {
-      const contents = await storage.getGeneratedContents();
+      const contentType = req.query.type as string;
+      const contents = await storage.getGeneratedContents(contentType);
       res.json(contents);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch generated contents" });
@@ -213,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/generated-contents", async (req: Request, res: Response) => {
     try {
-      const { title, content, systemPrompt, userPrompt, model, temperature, metadata } = req.body;
+      const { title, content, contentType, systemPrompt, userPrompt, model, temperature, metadata } = req.body;
       
       if (!title || !content) {
         return res.status(400).json({ error: "Title and content are required" });
@@ -222,6 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const savedContent = await storage.saveGeneratedContent({
         title,
         content,
+        contentType: contentType || ContentType.GENERAL,
         systemPrompt: systemPrompt || null,
         userPrompt: userPrompt || null,
         model: model || null,
@@ -242,15 +250,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid ID format" });
       }
       
-      const { title, content, systemPrompt, userPrompt, model, temperature, metadata } = req.body;
+      const { title, content, contentType, systemPrompt, userPrompt, model, temperature, metadata } = req.body;
       
-      if (!title && !content) {
-        return res.status(400).json({ error: "At least title or content must be provided for update" });
+      if (!title && !content && !contentType) {
+        return res.status(400).json({ error: "At least title, content, or contentType must be provided for update" });
       }
       
       const updatedContent = await storage.updateGeneratedContent(id, {
         ...(title && { title }),
         ...(content && { content }),
+        ...(contentType && { contentType }),
         ...(systemPrompt !== undefined && { systemPrompt }),
         ...(userPrompt !== undefined && { userPrompt }),
         ...(model !== undefined && { model }),

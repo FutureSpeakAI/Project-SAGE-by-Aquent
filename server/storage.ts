@@ -227,7 +227,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Generated Content Implementation
-  async getGeneratedContents(): Promise<GeneratedContent[]> {
+  async getGeneratedContents(contentType?: string): Promise<GeneratedContent[]> {
+    if (contentType) {
+      return await db.select()
+        .from(generatedContents)
+        .where(eq(generatedContents.contentType, contentType))
+        .orderBy(generatedContents.updatedAt);
+    }
     return await db.select().from(generatedContents).orderBy(generatedContents.updatedAt);
   }
 
@@ -255,6 +261,39 @@ export class DatabaseStorage implements IStorage {
 
   async deleteGeneratedContent(id: number): Promise<boolean> {
     await db.delete(generatedContents).where(eq(generatedContents.id, id));
+    // Since we don't have access to count, just return true if no error was thrown
+    return true;
+  }
+  
+  // Brief Conversation Implementation
+  async getBriefConversations(): Promise<BriefConversation[]> {
+    return await db.select().from(briefConversations).orderBy(briefConversations.updatedAt);
+  }
+  
+  async getBriefConversation(id: number): Promise<BriefConversation | undefined> {
+    const [conversation] = await db.select().from(briefConversations).where(eq(briefConversations.id, id));
+    return conversation;
+  }
+  
+  async saveBriefConversation(conversation: InsertBriefConversation): Promise<BriefConversation> {
+    const [result] = await db.insert(briefConversations).values(conversation).returning();
+    return result;
+  }
+  
+  async updateBriefConversation(id: number, conversation: Partial<InsertBriefConversation>): Promise<BriefConversation | undefined> {
+    const [result] = await db.update(briefConversations)
+      .set({
+        ...conversation,
+        updatedAt: new Date()
+      })
+      .where(eq(briefConversations.id, id))
+      .returning();
+    
+    return result;
+  }
+  
+  async deleteBriefConversation(id: number): Promise<boolean> {
+    await db.delete(briefConversations).where(eq(briefConversations.id, id));
     // Since we don't have access to count, just return true if no error was thrown
     return true;
   }
