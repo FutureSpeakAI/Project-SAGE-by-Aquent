@@ -14,7 +14,7 @@ interface SystemPromptPanelProps {
   setModel: (model: string) => void;
   temperature: number;
   setTemperature: (temp: number) => void;
-  onOpenPromptLibrary?: () => void;
+  onOpenPersonaLibrary?: () => void;
 }
 
 export function SystemPromptPanel({
@@ -24,7 +24,7 @@ export function SystemPromptPanel({
   setModel,
   temperature,
   setTemperature,
-  onOpenPromptLibrary,
+  onOpenPersonaLibrary,
 }: SystemPromptPanelProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -51,14 +51,14 @@ export function SystemPromptPanel({
               This is the system prompt field.
             </p>
             
-            {onOpenPromptLibrary && (
+            {onOpenPersonaLibrary && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-1 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"
                 onClick={(e) => {
                   e.preventDefault();
-                  onOpenPromptLibrary();
+                  onOpenPersonaLibrary();
                 }}
               >
                 <BookText className="h-4 w-4" />

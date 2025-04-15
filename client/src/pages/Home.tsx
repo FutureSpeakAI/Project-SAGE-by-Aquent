@@ -8,6 +8,7 @@ import { UserPromptPanel } from "@/components/OpenAI/UserPromptPanel";
 import { RichOutputPanel } from "@/components/OpenAI/RichOutputPanel";
 import { ApiKeyModal } from "@/components/OpenAI/ApiKeyModal";
 import { LibraryDialog } from "@/components/OpenAI/LibraryDialog";
+import { SavedContentLibrary } from "@/components/OpenAI/SavedContentLibrary";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { GenerateRequest, GenerateResponse, SavedPrompt, SavedPersona } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -105,11 +106,21 @@ export default function Home() {
 
   // Handle selecting a persona for the context menu
   const handleSelectPersona = (persona: SavedPersona) => {
-    // This will be used in the context menu component
-    toast({
-      title: "Persona Selected",
-      description: `The persona "${persona.name}" is now active for text transformations.`,
-    });
+    // Use the persona for text transformations and/or set as system prompt
+    if (activeLibraryTab === "personas") {
+      // If opened from the system prompt panel, set the system prompt
+      setSystemPrompt(persona.instruction);
+      toast({
+        title: "Persona Deployed",
+        description: `The persona "${persona.name}" has been deployed as your system prompt.`,
+      });
+    } else {
+      // Otherwise it's being used for the AI context menu
+      toast({
+        title: "Persona Selected",
+        description: `The persona "${persona.name}" is now active for text transformations.`,
+      });
+    }
   };
 
   // Open the library dialog to the prompts tab
@@ -169,7 +180,7 @@ export default function Home() {
                 setModel={setModel}
                 temperature={temperature}
                 setTemperature={setTemperature}
-                onOpenPromptLibrary={handleOpenPromptLibrary}
+                onOpenPersonaLibrary={handleOpenPersonaLibrary}
               />
               
               <UserPromptPanel
