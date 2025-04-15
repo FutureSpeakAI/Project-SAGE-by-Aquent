@@ -29,7 +29,11 @@ export function BriefingLibrary({
   // Fetch briefing content
   const { data: briefings = [], isLoading } = useQuery({
     queryKey: ['/api/generated-contents', ContentType.BRIEFING],
-    queryFn: () => apiRequest<GeneratedContent[]>('GET', `/api/generated-contents?type=${ContentType.BRIEFING}`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/generated-contents?type=${ContentType.BRIEFING}`);
+      const data = await response.json();
+      return data as GeneratedContent[];
+    },
     enabled: open,
   });
 
@@ -56,10 +60,12 @@ export function BriefingLibrary({
   });
 
   // Filter briefings based on search term
-  const filteredBriefings = briefings.filter(briefing => 
-    briefing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    briefing.content.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredBriefings = Array.isArray(briefings) 
+    ? briefings.filter((briefing: GeneratedContent) => 
+        briefing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        briefing.content.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   const handleDeleteBriefing = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
