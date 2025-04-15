@@ -67,22 +67,26 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
+    if (!db) return undefined;
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
+    if (!db) return undefined;
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    if (!db) throw new Error("Database not available");
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   // Prompt Library Implementation
   async getPrompts(): Promise<SavedPrompt[]> {
+    if (!db) return [];
     const dbPrompts = await db.select().from(savedPrompts).orderBy(savedPrompts.updatedAt);
     
     // Convert the DB format to the interface format
@@ -97,6 +101,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPrompt(id: string): Promise<SavedPrompt | undefined> {
+    if (!db) return undefined;
     const [dbPrompt] = await db.select().from(savedPrompts).where(eq(savedPrompts.id, parseInt(id)));
     
     if (!dbPrompt) return undefined;
@@ -112,6 +117,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async savePrompt(prompt: Omit<SavedPrompt, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedPrompt> {
+    if (!db) throw new Error("Database not available");
     const [dbPrompt] = await db.insert(savedPrompts).values({
       name: prompt.name,
       systemPrompt: prompt.systemPrompt || null,
@@ -129,6 +135,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePrompt(id: string, promptUpdate: Partial<Omit<SavedPrompt, 'id' | 'createdAt' | 'updatedAt'>>): Promise<SavedPrompt | undefined> {
+    if (!db) return undefined;
     const [dbPrompt] = await db.update(savedPrompts)
       .set({
         ...promptUpdate,
@@ -150,6 +157,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePrompt(id: string): Promise<boolean> {
+    if (!db) return false;
     await db.delete(savedPrompts).where(eq(savedPrompts.id, parseInt(id)));
     // Since we don't have access to count, just return true if no error was thrown
     return true;
@@ -157,6 +165,7 @@ export class DatabaseStorage implements IStorage {
 
   // Persona Library Implementation
   async getPersonas(): Promise<SavedPersona[]> {
+    if (!db) return [];
     const dbPersonas = await db.select().from(savedPersonas).orderBy(savedPersonas.updatedAt);
     
     // Convert the DB format to the interface format
@@ -171,6 +180,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPersona(id: string): Promise<SavedPersona | undefined> {
+    if (!db) return undefined;
     const [dbPersona] = await db.select().from(savedPersonas).where(eq(savedPersonas.id, parseInt(id)));
     
     if (!dbPersona) return undefined;
@@ -186,6 +196,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async savePersona(persona: Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedPersona> {
+    if (!db) throw new Error("Database not available");
     const [dbPersona] = await db.insert(savedPersonas).values({
       name: persona.name,
       description: persona.description || null,
@@ -203,6 +214,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePersona(id: string, personaUpdate: Partial<Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>>): Promise<SavedPersona | undefined> {
+    if (!db) return undefined;
     const [dbPersona] = await db.update(savedPersonas)
       .set({
         ...personaUpdate,
@@ -224,6 +236,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePersona(id: string): Promise<boolean> {
+    if (!db) return false;
     await db.delete(savedPersonas).where(eq(savedPersonas.id, parseInt(id)));
     // Since we don't have access to count, just return true if no error was thrown
     return true;
@@ -231,6 +244,7 @@ export class DatabaseStorage implements IStorage {
 
   // Generated Content Implementation
   async getGeneratedContents(contentType?: string): Promise<GeneratedContent[]> {
+    if (!db) return [];
     if (contentType) {
       return await db.select()
         .from(generatedContents)
@@ -241,16 +255,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGeneratedContent(id: number): Promise<GeneratedContent | undefined> {
+    if (!db) return undefined;
     const [content] = await db.select().from(generatedContents).where(eq(generatedContents.id, id));
     return content;
   }
 
   async saveGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent> {
+    if (!db) throw new Error("Database not available");
     const [result] = await db.insert(generatedContents).values(content).returning();
     return result;
   }
 
   async updateGeneratedContent(id: number, content: Partial<InsertGeneratedContent>): Promise<GeneratedContent | undefined> {
+    if (!db) return undefined;
     const [result] = await db.update(generatedContents)
       .set({
         ...content,
@@ -263,6 +280,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteGeneratedContent(id: number): Promise<boolean> {
+    if (!db) return false;
     await db.delete(generatedContents).where(eq(generatedContents.id, id));
     // Since we don't have access to count, just return true if no error was thrown
     return true;
@@ -270,15 +288,18 @@ export class DatabaseStorage implements IStorage {
   
   // Brief Conversation Implementation
   async getBriefConversations(): Promise<BriefConversation[]> {
+    if (!db) return [];
     return await db.select().from(briefConversations).orderBy(briefConversations.updatedAt);
   }
   
   async getBriefConversation(id: number): Promise<BriefConversation | undefined> {
+    if (!db) return undefined;
     const [conversation] = await db.select().from(briefConversations).where(eq(briefConversations.id, id));
     return conversation;
   }
   
   async saveBriefConversation(conversation: InsertBriefConversation): Promise<BriefConversation> {
+    if (!db) throw new Error("Database not available");
     const { title, messages } = conversation;
     // Ensure messages is an array of { role: string, content: string }
     const validMessages = Array.isArray(messages) ? 
@@ -299,6 +320,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateBriefConversation(id: number, conversation: Partial<InsertBriefConversation>): Promise<BriefConversation | undefined> {
+    if (!db) return undefined;
     const { title, messages } = conversation;
     
     const updateData: Record<string, any> = {
@@ -333,6 +355,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteBriefConversation(id: number): Promise<boolean> {
+    if (!db) return false;
     await db.delete(briefConversations).where(eq(briefConversations.id, id));
     // Since we don't have access to count, just return true if no error was thrown
     return true;
@@ -465,9 +488,17 @@ export class MemoryStorage implements IStorage {
 
   async saveGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent> {
     const now = new Date();
+    // Handle null values properly
     const newContent: GeneratedContent = {
-      ...content,
       id: this.nextContentId++,
+      title: content.title,
+      content: content.content,
+      contentType: content.contentType || 'general',
+      systemPrompt: content.systemPrompt || null,
+      userPrompt: content.userPrompt || null,
+      model: content.model || null,
+      temperature: content.temperature || null,
+      metadata: content.metadata || null,
       createdAt: now,
       updatedAt: now
     };
@@ -507,9 +538,20 @@ export class MemoryStorage implements IStorage {
 
   async saveBriefConversation(conversation: InsertBriefConversation): Promise<BriefConversation> {
     const now = new Date();
+    // Ensure messages is properly handled
+    const validMessages = Array.isArray(conversation.messages) ? 
+      conversation.messages.map(m => {
+        const msg = m as any;
+        return {
+          role: typeof msg.role === 'string' ? msg.role : 'user',
+          content: typeof msg.content === 'string' ? msg.content : ''
+        };
+      }) : [];
+    
     const newConversation: BriefConversation = {
-      ...conversation,
       id: this.nextConversationId++,
+      title: conversation.title,
+      messages: validMessages,
       createdAt: now,
       updatedAt: now
     };
@@ -521,11 +563,29 @@ export class MemoryStorage implements IStorage {
     const index = this.briefConversations.findIndex(c => c.id === id);
     if (index === -1) return undefined;
     
+    const existingConversation = this.briefConversations[index];
+    
+    // Handle updates properly
+    let validMessages = existingConversation.messages;
+    if (conversation.messages) {
+      validMessages = Array.isArray(conversation.messages) ? 
+        conversation.messages.map(m => {
+          const msg = m as any;
+          return {
+            role: typeof msg.role === 'string' ? msg.role : 'user',
+            content: typeof msg.content === 'string' ? msg.content : ''
+          };
+        }) : existingConversation.messages;
+    }
+    
     const updated: BriefConversation = {
-      ...this.briefConversations[index],
-      ...conversation,
+      id: existingConversation.id,
+      title: conversation.title || existingConversation.title,
+      messages: validMessages,
+      createdAt: existingConversation.createdAt,
       updatedAt: new Date()
     };
+    
     this.briefConversations[index] = updated;
     return updated;
   }
