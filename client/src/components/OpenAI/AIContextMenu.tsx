@@ -343,13 +343,13 @@ export function AIContextMenu({
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in an enthusiastic and energetic tone while maintaining similar length", "Enthusiastic Tone")}
+                onClick={() => startProcessWithAI("rewrite in an enthusiastic and energetic tone while maintaining similar length", "Enthusiastic")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Sparkle className="mr-2 h-4 w-4" />, 
                   "Enthusiastic", 
-                  processingOperation === "Enthusiastic Tone" && generateMutation.isPending
+                  processingOperation === "Enthusiastic" && generateMutation.isPending
                 )}
               </ContextMenuItem>
             </ContextMenuSubContent>
