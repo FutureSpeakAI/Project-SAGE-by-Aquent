@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichOutputPanel } from "@/components/OpenAI/RichOutputPanel";
 import { SavedPersona } from "@/lib/types";
-import { Loader2, Save, Send, Upload } from "lucide-react";
+import { FileText, Loader2, Save, Send, Upload } from "lucide-react";
 
 // Animation for chat messages
 const messageAnimation = {
@@ -109,10 +109,8 @@ export function BriefingTab({
         content: data.content
       }]);
       
-      // If enough conversation has happened, generate a briefing
-      if (messages.length >= 6) {
-        generateBriefing();
-      }
+      // No longer auto-generating briefing, now only happens when button is clicked
+      // Removed auto-generation code that was here previously
       
     } catch (err: any) {
       setError(err.message);
@@ -247,8 +245,10 @@ export function BriefingTab({
                 <Button 
                   onClick={generateBriefing}
                   variant="outline"
-                  disabled={isLoading || messages.length < 4}
+                  disabled={isLoading}
+                  className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
                 >
+                  <FileText className="h-4 w-4 mr-2" />
                   Generate Brief
                 </Button>
               </div>
@@ -259,7 +259,7 @@ export function BriefingTab({
         {/* Right side (briefing output) */}
         <div className="w-full lg:w-1/2">
           <div className="flex justify-between mb-4">
-            <h3 className="text-lg font-medium">Generated Briefing</h3>
+            <h3 className="text-lg font-medium">Generated Content</h3>
             <Button 
               variant="outline"
               onClick={() => handleSaveBriefing('Creative Brief', briefingContent)}
