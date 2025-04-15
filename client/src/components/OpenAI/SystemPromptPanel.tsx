@@ -85,10 +85,10 @@ export function SystemPromptPanel({
                 <SelectValue placeholder="Select an AI model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                <SelectItem value="gpt-4o">GPT-4o (Latest & Most Capable)</SelectItem>
+                <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
                 <SelectItem value="gpt-4">GPT-4</SelectItem>
                 <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                <SelectItem value="gpt-3.5-turbo-16k">GPT-3.5 Turbo (16K)</SelectItem>
               </SelectContent>
             </Select>
           </div>
