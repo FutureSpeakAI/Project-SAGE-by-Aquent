@@ -25,8 +25,8 @@ import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
 
 export default function Home() {
-  // API key state
-  const [apiKey, setApiKey] = useLocalStorage<string>("openai-api-key", "");
+  // API key state - we're moving away from this but keeping it for now to avoid breaking changes
+  const [apiKey, setApiKey] = useState("stored-in-environment");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   
   // Library dialog state
@@ -77,16 +77,6 @@ export default function Home() {
   });
 
   const handleGenerate = () => {
-    if (!apiKey) {
-      setApiKeyModalOpen(true);
-      toast({
-        title: "API Key Required",
-        description: "Please enter your OpenAI API key to generate content.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!userPrompt.trim()) {
       toast({
         title: "Empty Prompt",
@@ -97,7 +87,6 @@ export default function Home() {
     }
 
     generateMutation.mutate({
-      apiKey,
       model,
       systemPrompt,
       userPrompt,
@@ -260,12 +249,7 @@ export default function Home() {
       });
   };
 
-  // Check for API key on component mount
-  useEffect(() => {
-    if (!apiKey) {
-      setApiKeyModalOpen(true);
-    }
-  }, [apiKey]);
+  // No longer need to check for API key as it's stored in environment
 
   return (
     <div className="min-h-screen bg-gray-50">

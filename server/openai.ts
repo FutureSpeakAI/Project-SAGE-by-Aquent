@@ -2,7 +2,6 @@ import OpenAI from "openai";
 import { Request, Response } from "express";
 
 export interface GenerateContentRequest {
-  apiKey: string;
   model: string;
   systemPrompt: string;
   userPrompt: string;
@@ -11,19 +10,19 @@ export interface GenerateContentRequest {
 
 export const generateContent = async (req: Request, res: Response) => {
   try {
-    const { apiKey, model, systemPrompt, userPrompt, temperature } = req.body as GenerateContentRequest;
-
-    if (!apiKey) {
-      return res.status(400).json({ message: "API key is required" });
+    const { model, systemPrompt, userPrompt, temperature } = req.body as GenerateContentRequest;
+    
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ message: "Server API key configuration is missing" });
     }
 
     if (!userPrompt) {
       return res.status(400).json({ message: "User prompt is required" });
     }
 
-    // Initialize OpenAI with the provided API key
+    // Initialize OpenAI with the API key from environment variables
     // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const completion = await openai.chat.completions.create({
       model: model || "gpt-4o",

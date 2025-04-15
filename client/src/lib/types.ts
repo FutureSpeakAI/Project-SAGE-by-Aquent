@@ -1,5 +1,4 @@
 export interface GenerateRequest {
-  apiKey: string;
   model: string;
   systemPrompt: string;
   userPrompt: string;
