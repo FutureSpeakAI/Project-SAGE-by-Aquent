@@ -22,7 +22,7 @@ export function UserPromptPanel({
   return (
     <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200">
-        <CardTitle className="font-semibold text-white">Ninja Mission</CardTitle>
+        <CardTitle className="font-semibold text-white">User Prompt</CardTitle>
       </CardHeader>
       
       <CardContent className="p-4">

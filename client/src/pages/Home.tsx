@@ -181,12 +181,12 @@ export default function Home() {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          {/* Hero section with ninja theme */}
+          {/* Hero section */}
           <div className="mb-6 p-6 bg-gradient-to-r from-black to-gray-800 rounded-lg shadow-md text-white">
             <div className="flex flex-col md:flex-row items-center justify-between">
               <div className="mb-4 md:mb-0">
-                <h2 className="text-2xl font-bold mb-2">Welcome to <span className="text-[#FF6600]">MyMarketing</span>.Ninja</h2>
-                <p className="text-gray-300 max-w-xl">Unleash the power of AI to create stunning marketing content with ninja-like precision and stealth. Generate, edit, and transform text in seconds.</p>
+                <h2 className="text-2xl font-bold mb-2"><span className="text-[#FF6600]">Aquent</span> Content AI</h2>
+                <p className="text-gray-300 max-w-xl">Unleash the power of AI to create professional content with precision and efficiency. Generate, edit, and transform text in seconds.</p>
               </div>
               <div className="flex-shrink-0">
                 <svg width="80" height="80" viewBox="0 0 24 24" className="opacity-90 animate-spin-slow">

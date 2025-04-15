@@ -68,7 +68,7 @@ export function SystemPromptPanel({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">Ninja Agent Description</Label>
+            <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">System Prompt</Label>
             <Textarea
               id="systemPrompt"
               className="resize-none h-32"
@@ -79,7 +79,7 @@ export function SystemPromptPanel({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="model" className="text-[#FF6600] font-medium">Ninja AI Weapon</Label>
+            <Label htmlFor="model" className="text-[#FF6600] font-medium">AI Model</Label>
             <Select value={model} onValueChange={setModel}>
               <SelectTrigger id="model" className="border-gray-300 focus:ring-[#FF6600] focus:border-[#FF6600]">
                 <SelectValue placeholder="Select an AI model" />
@@ -96,7 +96,7 @@ export function SystemPromptPanel({
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="temperature" className="flex items-center">
-                <span className="text-[#FF6600] font-medium">Ninja Creativity:</span>
+                <span className="text-[#FF6600] font-medium">Creativity:</span>
                 <span className="ml-2">{temperature.toFixed(1)}</span>
               </Label>
             </div>
