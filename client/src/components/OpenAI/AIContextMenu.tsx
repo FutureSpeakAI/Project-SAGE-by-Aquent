@@ -406,7 +406,22 @@ export function AIContextMenu({
                   processingOperation === "Comedian" && generateMutation.isPending
                 )}
               </ContextMenuItem>
-              <ContextMenuSeparator />
+              
+              {onOpenPersonaLibrary && (
+                <>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenPersonaLibrary();
+                    }}
+                    className="text-primary"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Manage Personas...</span>
+                  </ContextMenuItem>
+                </>
+              )}
               <ContextMenuItem
                 onClick={() => {
                   // This will be implemented in the next phase
