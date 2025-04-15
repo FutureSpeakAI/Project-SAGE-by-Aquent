@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Library } from "lucide-react";
 
 interface HeaderProps {
   onOpenApiKeyModal: () => void;
@@ -33,16 +33,32 @@ export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary }: HeaderP
             </div>
           </div>
           
-          {/* API Key button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onOpenApiKeyModal}
-            className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600]"
-          >
-            <KeyRound className="h-4 w-4 mr-2" />
-            OpenAI API Key
-          </Button>
+          {/* Right side buttons */}
+          <div className="flex space-x-3">
+            {/* Saved Content Library button */}
+            {onOpenSavedContentLibrary && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onOpenSavedContentLibrary}
+                className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600]"
+              >
+                <Library className="h-4 w-4 mr-2" />
+                Ninja Memory
+              </Button>
+            )}
+            
+            {/* API Key button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onOpenApiKeyModal}
+              className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600]"
+            >
+              <KeyRound className="h-4 w-4 mr-2" />
+              OpenAI API Key
+            </Button>
+          </div>
         </div>
       </div>
     </header>
