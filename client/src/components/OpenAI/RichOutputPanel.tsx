@@ -16,7 +16,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ReactQuill from "react-quill";
 import 'react-quill/dist/quill.snow.css';
-import { exportAsPDF, exportAsDOCX } from "@/lib/export-utils";
+import { exportAsPDF, exportAsDOCX, exportAsHTML } from "@/lib/export-utils";
 import { useToast } from "@/hooks/use-toast";
 
 interface RichOutputPanelProps {
@@ -279,9 +279,11 @@ export function RichOutputPanel({
       });
   }, [toast]);
 
-  const handleExport = useCallback((format: 'pdf' | 'docx') => {
-    // For export, we want to get the raw text with newlines preserved
+  const handleExport = useCallback((format: 'pdf' | 'docx' | 'html') => {
+    // For export, we want to get the raw text with newlines preserved for PDF/DOCX
+    // For HTML we want the rich content with formatting
     const text = editorRef.current?.getEditor().getText() || '';
+    const htmlContent = editorRef.current?.getEditor().root.innerHTML || '';
     
     // Extract a potential title from the text (first line if it looks like a title)
     const lines = text.split('\n');
@@ -303,8 +305,11 @@ export function RichOutputPanel({
     
     if (format === 'pdf') {
       exportAsPDF(contentToExport, title);
-    } else {
+    } else if (format === 'docx') {
       exportAsDOCX(contentToExport, title);
+    } else if (format === 'html') {
+      // For HTML export, we use the rich content with all formatting preserved
+      exportAsHTML(htmlContent, title);
     }
   }, []);
 
@@ -360,6 +365,10 @@ export function RichOutputPanel({
                 </Tooltip>
               </TooltipProvider>
               <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleExport('html')}>
+                  <Code className="h-4 w-4 mr-2" />
+                  Export as HTML
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExport('pdf')}>
                   <File className="h-4 w-4 mr-2" />
                   Export as PDF

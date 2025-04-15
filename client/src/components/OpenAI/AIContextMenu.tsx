@@ -56,6 +56,8 @@ export function AIContextMenu({
       console.log("AI processing successful, response length:", data.content.length);
       // Always replace selection (true)
       onProcessText(data.content, true);
+      // Reset the processing operation indicator
+      setProcessingOperation(null);
     },
     onError: (error: Error) => {
       console.error("AI processing failed:", error);
@@ -64,6 +66,8 @@ export function AIContextMenu({
         description: error.message,
         variant: "destructive",
       });
+      // Reset the processing operation indicator even on error
+      setProcessingOperation(null);
     },
   });
 
@@ -114,8 +118,8 @@ export function AIContextMenu({
     const systemPrompt = `You are an expert editor and writer. Your task is to ${customInstructions.trim()} for the following text.
     Only return the processed text without any additional comments or explanations.`;
     
-    // Keep track of this instruction was created with selection
-    const wasOpenedWithSelection = openedWithSelection;
+    // Set the processing operation for display
+    setProcessingOperation("Custom Instructions");
     
     generateMutation.mutate({
       apiKey,
@@ -130,38 +134,79 @@ export function AIContextMenu({
     setOpenedWithSelection(false);
   };
 
+  // Track which operation is currently processing
+  const [processingOperation, setProcessingOperation] = useState<string | null>(null);
+
+  // Start processing with indicator
+  const startProcessWithAI = (instruction: string, displayName: string) => {
+    setProcessingOperation(displayName);
+    processWithAI(instruction);
+  };
+
+  // Show a loading animation for the selected item
+  const getContextMenuItemContent = (
+    icon: React.ReactNode, 
+    name: string, 
+    isProcessing: boolean
+  ) => {
+    return (
+      <>
+        {isProcessing ? (
+          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        ) : (
+          icon
+        )}
+        <span className={isProcessing ? "text-primary font-medium" : ""}>
+          {isProcessing ? `Processing ${name}...` : name}
+        </span>
+      </>
+    );
+  };
+
   return (
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-        <ContextMenuContent className="w-64">
+        <ContextMenuContent className="w-72">
           <ContextMenuItem
-            onClick={() => processWithAI("revise and improve")}
+            onClick={() => startProcessWithAI("revise and improve", "AI Revise")}
             disabled={!selectedText || generateMutation.isPending}
           >
-            <Wand2 className="mr-2 h-4 w-4" />
-            AI Revise
+            {getContextMenuItemContent(
+              <Wand2 className="mr-2 h-4 w-4" />, 
+              "AI Revise", 
+              processingOperation === "AI Revise" && generateMutation.isPending
+            )}
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={() => processWithAI("improve the clarity, flow, and grammar of")}
+            onClick={() => startProcessWithAI("improve the clarity, flow, and grammar of", "AI Improve")}
             disabled={!selectedText || generateMutation.isPending}
           >
-            <Zap className="mr-2 h-4 w-4" />
-            AI Improve
+            {getContextMenuItemContent(
+              <Zap className="mr-2 h-4 w-4" />, 
+              "AI Improve", 
+              processingOperation === "AI Improve" && generateMutation.isPending
+            )}
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={() => processWithAI("expand with more details and examples")}
+            onClick={() => startProcessWithAI("expand with more details and examples", "AI Expand")}
             disabled={!selectedText || generateMutation.isPending}
           >
-            <Expand className="mr-2 h-4 w-4" />
-            AI Expand
+            {getContextMenuItemContent(
+              <Expand className="mr-2 h-4 w-4" />, 
+              "AI Expand", 
+              processingOperation === "AI Expand" && generateMutation.isPending
+            )}
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={() => processWithAI("summarize concisely while keeping the key points")}
+            onClick={() => startProcessWithAI("summarize concisely while keeping the key points", "AI Summarize")}
             disabled={!selectedText || generateMutation.isPending}
           >
-            <Minimize className="mr-2 h-4 w-4" />
-            AI Summarize
+            {getContextMenuItemContent(
+              <Minimize className="mr-2 h-4 w-4" />, 
+              "AI Summarize", 
+              processingOperation === "AI Summarize" && generateMutation.isPending
+            )}
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem
