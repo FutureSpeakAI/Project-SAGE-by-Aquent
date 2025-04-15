@@ -1,7 +1,11 @@
-import { users, type User, type InsertUser } from "@shared/schema";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { 
+  users, type User, type InsertUser,
+  savedPrompts, type SavedPrompt as DbSavedPrompt, type InsertSavedPrompt,
+  savedPersonas, type SavedPersona as DbSavedPersona, type InsertSavedPersona,
+  generatedContents, type GeneratedContent, type InsertGeneratedContent
+} from "@shared/schema";
 
 export interface SavedPrompt {
   id: string;
@@ -39,121 +43,209 @@ export interface IStorage {
   savePersona(persona: Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedPersona>;
   updatePersona(id: string, persona: Partial<Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>>): Promise<SavedPersona | undefined>;
   deletePersona(id: string): Promise<boolean>;
+  
+  // Generated Content methods
+  getGeneratedContents(): Promise<GeneratedContent[]>;
+  getGeneratedContent(id: number): Promise<GeneratedContent | undefined>;
+  saveGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent>;
+  updateGeneratedContent(id: number, content: Partial<InsertGeneratedContent>): Promise<GeneratedContent | undefined>;
+  deleteGeneratedContent(id: number): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private prompts: Map<string, SavedPrompt>;
-  private personas: Map<string, SavedPersona>;
-  currentId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.prompts = new Map();
-    this.personas = new Map();
-    this.currentId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
+  // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   // Prompt Library Implementation
   async getPrompts(): Promise<SavedPrompt[]> {
-    return Array.from(this.prompts.values()).sort((a, b) => 
-      b.updatedAt.getTime() - a.updatedAt.getTime()
-    );
+    const dbPrompts = await db.select().from(savedPrompts).orderBy(savedPrompts.updatedAt);
+    
+    // Convert the DB format to the interface format
+    return dbPrompts.map(dbPrompt => ({
+      id: dbPrompt.id.toString(),
+      name: dbPrompt.name,
+      systemPrompt: dbPrompt.systemPrompt || undefined,
+      userPrompt: dbPrompt.userPrompt || undefined,
+      createdAt: dbPrompt.createdAt,
+      updatedAt: dbPrompt.updatedAt
+    }));
   }
 
   async getPrompt(id: string): Promise<SavedPrompt | undefined> {
-    return this.prompts.get(id);
+    const [dbPrompt] = await db.select().from(savedPrompts).where(eq(savedPrompts.id, parseInt(id)));
+    
+    if (!dbPrompt) return undefined;
+    
+    return {
+      id: dbPrompt.id.toString(),
+      name: dbPrompt.name,
+      systemPrompt: dbPrompt.systemPrompt || undefined,
+      userPrompt: dbPrompt.userPrompt || undefined,
+      createdAt: dbPrompt.createdAt,
+      updatedAt: dbPrompt.updatedAt
+    };
   }
 
   async savePrompt(prompt: Omit<SavedPrompt, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedPrompt> {
-    const id = `prompt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const now = new Date();
-    const savedPrompt: SavedPrompt = {
-      ...prompt,
-      id,
-      createdAt: now,
-      updatedAt: now
+    const [dbPrompt] = await db.insert(savedPrompts).values({
+      name: prompt.name,
+      systemPrompt: prompt.systemPrompt || null,
+      userPrompt: prompt.userPrompt || null,
+    }).returning();
+    
+    return {
+      id: dbPrompt.id.toString(),
+      name: dbPrompt.name,
+      systemPrompt: dbPrompt.systemPrompt || undefined,
+      userPrompt: dbPrompt.userPrompt || undefined,
+      createdAt: dbPrompt.createdAt,
+      updatedAt: dbPrompt.updatedAt
     };
-    this.prompts.set(id, savedPrompt);
-    return savedPrompt;
   }
 
   async updatePrompt(id: string, promptUpdate: Partial<Omit<SavedPrompt, 'id' | 'createdAt' | 'updatedAt'>>): Promise<SavedPrompt | undefined> {
-    const existingPrompt = this.prompts.get(id);
-    if (!existingPrompt) return undefined;
-
-    const updatedPrompt: SavedPrompt = {
-      ...existingPrompt,
-      ...promptUpdate,
-      updatedAt: new Date()
+    const [dbPrompt] = await db.update(savedPrompts)
+      .set({
+        ...promptUpdate,
+        updatedAt: new Date()
+      })
+      .where(eq(savedPrompts.id, parseInt(id)))
+      .returning();
+    
+    if (!dbPrompt) return undefined;
+    
+    return {
+      id: dbPrompt.id.toString(),
+      name: dbPrompt.name,
+      systemPrompt: dbPrompt.systemPrompt || undefined,
+      userPrompt: dbPrompt.userPrompt || undefined,
+      createdAt: dbPrompt.createdAt,
+      updatedAt: dbPrompt.updatedAt
     };
-
-    this.prompts.set(id, updatedPrompt);
-    return updatedPrompt;
   }
 
   async deletePrompt(id: string): Promise<boolean> {
-    return this.prompts.delete(id);
+    const result = await db.delete(savedPrompts).where(eq(savedPrompts.id, parseInt(id)));
+    return result.count > 0;
   }
 
   // Persona Library Implementation
   async getPersonas(): Promise<SavedPersona[]> {
-    return Array.from(this.personas.values()).sort((a, b) => 
-      b.updatedAt.getTime() - a.updatedAt.getTime()
-    );
+    const dbPersonas = await db.select().from(savedPersonas).orderBy(savedPersonas.updatedAt);
+    
+    // Convert the DB format to the interface format
+    return dbPersonas.map(dbPersona => ({
+      id: dbPersona.id.toString(),
+      name: dbPersona.name,
+      description: dbPersona.description || "",
+      instruction: dbPersona.instruction,
+      createdAt: dbPersona.createdAt,
+      updatedAt: dbPersona.updatedAt
+    }));
   }
 
   async getPersona(id: string): Promise<SavedPersona | undefined> {
-    return this.personas.get(id);
+    const [dbPersona] = await db.select().from(savedPersonas).where(eq(savedPersonas.id, parseInt(id)));
+    
+    if (!dbPersona) return undefined;
+    
+    return {
+      id: dbPersona.id.toString(),
+      name: dbPersona.name,
+      description: dbPersona.description || "",
+      instruction: dbPersona.instruction,
+      createdAt: dbPersona.createdAt,
+      updatedAt: dbPersona.updatedAt
+    };
   }
 
   async savePersona(persona: Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedPersona> {
-    const id = `persona_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const now = new Date();
-    const savedPersona: SavedPersona = {
-      ...persona,
-      id,
-      createdAt: now,
-      updatedAt: now
+    const [dbPersona] = await db.insert(savedPersonas).values({
+      name: persona.name,
+      description: persona.description || null,
+      instruction: persona.instruction,
+    }).returning();
+    
+    return {
+      id: dbPersona.id.toString(),
+      name: dbPersona.name,
+      description: dbPersona.description || "",
+      instruction: dbPersona.instruction,
+      createdAt: dbPersona.createdAt,
+      updatedAt: dbPersona.updatedAt
     };
-    this.personas.set(id, savedPersona);
-    return savedPersona;
   }
 
   async updatePersona(id: string, personaUpdate: Partial<Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>>): Promise<SavedPersona | undefined> {
-    const existingPersona = this.personas.get(id);
-    if (!existingPersona) return undefined;
-
-    const updatedPersona: SavedPersona = {
-      ...existingPersona,
-      ...personaUpdate,
-      updatedAt: new Date()
+    const [dbPersona] = await db.update(savedPersonas)
+      .set({
+        ...personaUpdate,
+        updatedAt: new Date()
+      })
+      .where(eq(savedPersonas.id, parseInt(id)))
+      .returning();
+    
+    if (!dbPersona) return undefined;
+    
+    return {
+      id: dbPersona.id.toString(),
+      name: dbPersona.name,
+      description: dbPersona.description || "",
+      instruction: dbPersona.instruction,
+      createdAt: dbPersona.createdAt,
+      updatedAt: dbPersona.updatedAt
     };
-
-    this.personas.set(id, updatedPersona);
-    return updatedPersona;
   }
 
   async deletePersona(id: string): Promise<boolean> {
-    return this.personas.delete(id);
+    const result = await db.delete(savedPersonas).where(eq(savedPersonas.id, parseInt(id)));
+    return result.count > 0;
+  }
+
+  // Generated Content Implementation
+  async getGeneratedContents(): Promise<GeneratedContent[]> {
+    return await db.select().from(generatedContents).orderBy(generatedContents.updatedAt);
+  }
+
+  async getGeneratedContent(id: number): Promise<GeneratedContent | undefined> {
+    const [content] = await db.select().from(generatedContents).where(eq(generatedContents.id, id));
+    return content;
+  }
+
+  async saveGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent> {
+    const [result] = await db.insert(generatedContents).values(content).returning();
+    return result;
+  }
+
+  async updateGeneratedContent(id: number, content: Partial<InsertGeneratedContent>): Promise<GeneratedContent | undefined> {
+    const [result] = await db.update(generatedContents)
+      .set({
+        ...content,
+        updatedAt: new Date()
+      })
+      .where(eq(generatedContents.id, id))
+      .returning();
+    
+    return result;
+  }
+
+  async deleteGeneratedContent(id: number): Promise<boolean> {
+    const result = await db.delete(generatedContents).where(eq(generatedContents.id, id));
+    return result.count > 0;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

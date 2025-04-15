@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, SavedPrompt, SavedPersona } from "./storage";
 import { generateContent } from "./openai";
+import { GeneratedContent, InsertGeneratedContent } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // OpenAI content generation endpoint
