@@ -340,7 +340,6 @@ export default function Home() {
         open={documentUploadOpen}
         onOpenChange={setDocumentUploadOpen}
         onDocumentProcessed={handleDocumentProcessed}
-        apiKey={apiKey}
       />
       
       <DataMigrationDialog

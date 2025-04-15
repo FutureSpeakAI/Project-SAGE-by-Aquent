@@ -16,8 +16,7 @@ interface DocumentUploadDialogProps {
 export function DocumentUploadDialog({
   open,
   onOpenChange,
-  onDocumentProcessed,
-  apiKey
+  onDocumentProcessed
 }: DocumentUploadDialogProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +51,7 @@ export function DocumentUploadDialog({
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !apiKey) return;
+    if (!selectedFile) return;
     
     setIsLoading(true);
     setError(null);
@@ -61,7 +60,6 @@ export function DocumentUploadDialog({
       // Create a form data object to send the file
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('apiKey', apiKey);
       
       // Extract the file extension
       const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
@@ -171,7 +169,7 @@ export function DocumentUploadDialog({
           </Button>
           <Button 
             onClick={handleUpload} 
-            disabled={!selectedFile || isLoading || !apiKey}
+            disabled={!selectedFile || isLoading}
           >
             {isLoading ? (
               <>
