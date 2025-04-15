@@ -585,6 +585,17 @@ export function RichOutputPanel({
                   placeholder="Generated content will appear here and can be edited..."
                   className="min-h-[400px]"
                 />
+                
+                {/* Save Button - Added for easier saving */}
+                <div className="mt-4 flex justify-center">
+                  <Button 
+                    onClick={() => setSaveDialogOpen(true)}
+                    className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border-2"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save to Ninja Memory
+                  </Button>
+                </div>
               </div>
             </AIContextMenu>
           )}

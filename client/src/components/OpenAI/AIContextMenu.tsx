@@ -31,6 +31,7 @@ interface AIContextMenuProps {
   model: string;
   temperature: number;
   onOpenPersonaLibrary?: () => void;
+  personas?: SavedPersona[];
 }
 
 export function AIContextMenu({
