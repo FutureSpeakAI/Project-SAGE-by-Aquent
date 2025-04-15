@@ -25,9 +25,11 @@ import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
 
 export default function Home() {
-  // API key state - we're moving away from this but keeping it for now to avoid breaking changes
-  const [apiKey, setApiKey] = useState("stored-in-environment");
+  // API key is now stored in environment variables on the server
+  // These state variables are kept to avoid breaking changes in the UI
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  // Dummy state for API key to maintain compatibility with existing components
+  const [apiKey, setApiKey] = useState("stored-in-environment");
   
   // Library dialog state
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -308,6 +310,7 @@ export default function Home() {
       </main>
 
       {/* Modals & Dialogs */}
+      {/* ApiKeyModal is no longer needed as we use server environment variables now */}
       <ApiKeyModal
         open={apiKeyModalOpen}
         onOpenChange={setApiKeyModalOpen}
