@@ -266,25 +266,6 @@ export default function Home() {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          {/* Hero section */}
-          <div className="mb-6 p-6 bg-black rounded-lg shadow-md text-white">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="mb-4 md:mb-0">
-                <h2 className="text-2xl font-bold mb-2"><span className="text-[#F15A22]">Aquent</span> Content AI</h2>
-                <p className="text-gray-300 max-w-xl">Unleash the power of AI to create professional content with precision and efficiency. Generate, edit, and transform text in seconds.</p>
-              </div>
-              <div className="flex-shrink-0">
-                <svg width="80" height="80" viewBox="0 0 80 80" className="opacity-90">
-                  {/* Aquent's distinctive "A" logo */}
-                  <path 
-                    fill="#F15A22" 
-                    d="M47,16 L64,64 H54 L50,54 H30 L26,64 H16 L33,16 H47 Z M40,24 L32,44 H48 L40,24 Z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
           {/* Tab navigation */}
           <TabNavigation activeTab={activeTab} onChangeTab={setActiveTab} />
           
