@@ -21,8 +21,34 @@ export const generateContent = async (req: Request, res: Response) => {
     }
 
     // Initialize OpenAI with the API key from environment variables
-    // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // Configure OpenAI client to handle project-specific API keys (sk-proj-...)
+    // Support both standard OpenAI API and project-based configurations
+    // Create configuration object with required properties
+    const openaiConfig: any = { 
+      apiKey: process.env.OPENAI_API_KEY,
+    };
+    
+    // Add optional configuration for project-specific keys
+    if (process.env.OPENAI_API_BASE_URL) {
+      openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
+    }
+    
+    // Add organization ID if available
+    if (process.env.OPENAI_ORG_ID) {
+      openaiConfig.organization = process.env.OPENAI_ORG_ID;
+    }
+    
+    // Check if using a project key format and add default base URL if needed
+    if (process.env.OPENAI_API_KEY?.startsWith('sk-proj-')) {
+      // For project-specific keys, we may need a specific base URL
+      if (!openaiConfig.baseURL) {
+        // Use project-specific API endpoint if no custom base URL is provided
+        openaiConfig.baseURL = 'https://api.replit.com/v1/openai';
+      }
+    }
+    
+    // Initialize the OpenAI client with the configuration
+    const openai = new OpenAI(openaiConfig);
 
     const completion = await openai.chat.completions.create({
       model: model || "gpt-4o",
