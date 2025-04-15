@@ -161,6 +161,11 @@ export default function Home() {
     setSavedContentLibraryOpen(true);
   };
   
+  // Handle opening the data migration dialog
+  const handleOpenDataMigration = () => {
+    setDataMigrationOpen(true);
+  };
+  
   // Handle selecting saved content from the library
   const handleSelectSavedContent = (content: GeneratedContent) => {
     setGeneratedContent(content.content);
@@ -267,6 +272,7 @@ export default function Home() {
       <Header 
         onOpenApiKeyModal={() => setApiKeyModalOpen(true)} 
         onOpenSavedContentLibrary={handleOpenSavedContentLibrary}
+        onOpenDataMigration={handleOpenDataMigration}
       />
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -353,6 +359,11 @@ export default function Home() {
         onOpenChange={setDocumentUploadOpen}
         onDocumentProcessed={handleDocumentProcessed}
         apiKey={apiKey}
+      />
+      
+      <DataMigrationDialog
+        open={dataMigrationOpen}
+        onOpenChange={setDataMigrationOpen}
       />
     </div>
   );
