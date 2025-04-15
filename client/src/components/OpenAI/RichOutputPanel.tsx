@@ -49,25 +49,55 @@ export function RichOutputPanel({
   useEffect(() => {
     // Process the content to preserve formatting
     if (content) {
-      // Convert markdown-like formatting to HTML
-      let processedContent = content
-        // Handle titles with asterisks
-        .replace(/\*\*(.*?)\*\*/g, '<h2>$1</h2>')
-        // Handle paragraphs (split by newlines)
-        .split('\n')
-        .map(line => {
-          // Skip empty lines
-          if (!line.trim()) return '';
-          // Check if the line is already a heading (from the previous regex)
-          if (line.startsWith('<h2>') && line.endsWith('</h2>')) {
-            return line;
-          }
-          // Wrap other lines in paragraph tags
-          return `<p>${line}</p>`;
-        })
-        .join('');
+      // First, handle common markdown-like formatting
+      let enhancedContent = content
+        // Handle titles with asterisks (bold)
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Handle emphasis with single asterisks (italic)
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Handle titles that start with "Title:" or "# "
+        .replace(/^(Title:)(.*?)$/gim, '<h1>$2</h1>')
+        .replace(/^(#{1}\s+)(.*?)$/gim, '<h1>$2</h1>')
+        .replace(/^(#{2}\s+)(.*?)$/gim, '<h2>$2</h2>')
+        .replace(/^(#{3}\s+)(.*?)$/gim, '<h3>$3</h3>');
+
+      // Split by paragraphs - looking for either single or double newlines
+      const paragraphs = enhancedContent.split(/\n{2,}/).filter(p => p.trim());
+      
+      // Process each paragraph, preserving any already-converted HTML tags
+      const processedContent = paragraphs.map(para => {
+        // Skip if paragraph is already fully wrapped in HTML
+        if (
+          (para.startsWith('<h1>') && para.endsWith('</h1>')) ||
+          (para.startsWith('<h2>') && para.endsWith('</h2>')) ||
+          (para.startsWith('<h3>') && para.endsWith('</h3>'))
+        ) {
+          return para;
+        }
         
-      setEditableContent(processedContent);
+        // Handle multiple lines within a paragraph (single newlines)
+        const lines = para.split('\n');
+        if (lines.length > 1) {
+          return lines.map(line => {
+            // Skip if line is already in HTML
+            if (
+              (line.startsWith('<h') && line.endsWith('</h')) ||
+              (line.startsWith('<p>') && line.endsWith('</p>'))
+            ) {
+              return line;
+            }
+            return `<p>${line}</p>`;
+          }).join('');
+        }
+        
+        // Simple paragraph
+        return `<p>${para}</p>`;
+      }).join('');
+        
+      // Replace consecutive <p></p> tags that might have been created
+      const cleanedContent = processedContent.replace(/<\/p>\s*<p>/g, '</p><p>');
+      
+      setEditableContent(cleanedContent);
     } else {
       setEditableContent('');
     }
@@ -90,23 +120,53 @@ export function RichOutputPanel({
   const handleProcessedText = useCallback((newText: string, replaceSelection: boolean) => {
     // Process the text to convert markdown to HTML
     const processFormattedText = (text: string) => {
-      // Convert markdown-like formatting to HTML
-      return text
-        // Handle titles with asterisks
-        .replace(/\*\*(.*?)\*\*/g, '<h2>$1</h2>')
-        // Handle paragraphs (split by newlines)
-        .split('\n')
-        .map(line => {
-          // Skip empty lines
-          if (!line.trim()) return '';
-          // Check if the line is already a heading
-          if (line.startsWith('<h2>') && line.endsWith('</h2>')) {
-            return line;
-          }
-          // Wrap other lines in paragraph tags
-          return `<p>${line}</p>`;
-        })
-        .join('');
+      // First, handle common markdown-like formatting
+      let enhancedContent = text
+        // Handle titles with asterisks (bold)
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Handle emphasis with single asterisks (italic)
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Handle titles that start with "Title:" or "# "
+        .replace(/^(Title:)(.*?)$/gim, '<h1>$2</h1>')
+        .replace(/^(#{1}\s+)(.*?)$/gim, '<h1>$2</h1>')
+        .replace(/^(#{2}\s+)(.*?)$/gim, '<h2>$2</h2>')
+        .replace(/^(#{3}\s+)(.*?)$/gim, '<h3>$3</h3>');
+
+      // Split by paragraphs - looking for either single or double newlines
+      const paragraphs = enhancedContent.split(/\n{2,}/).filter(p => p.trim());
+      
+      // Process each paragraph, preserving any already-converted HTML tags
+      const processedContent = paragraphs.map(para => {
+        // Skip if paragraph is already fully wrapped in HTML
+        if (
+          (para.startsWith('<h1>') && para.endsWith('</h1>')) ||
+          (para.startsWith('<h2>') && para.endsWith('</h2>')) ||
+          (para.startsWith('<h3>') && para.endsWith('</h3>'))
+        ) {
+          return para;
+        }
+        
+        // Handle multiple lines within a paragraph (single newlines)
+        const lines = para.split('\n');
+        if (lines.length > 1) {
+          return lines.map(line => {
+            // Skip if line is already in HTML
+            if (
+              (line.startsWith('<h') && line.endsWith('</h')) ||
+              (line.startsWith('<p>') && line.endsWith('</p>'))
+            ) {
+              return line;
+            }
+            return `<p>${line}</p>`;
+          }).join('');
+        }
+        
+        // Simple paragraph
+        return `<p>${para}</p>`;
+      }).join('');
+      
+      // Replace consecutive <p></p> tags that might have been created
+      return processedContent.replace(/<\/p>\s*<p>/g, '</p><p>');
     };
 
     const formattedNewText = processFormattedText(newText);

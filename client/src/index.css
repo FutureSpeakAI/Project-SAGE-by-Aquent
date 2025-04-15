@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom styles for ReactQuill editor */
+.ql-editor p {
+  margin-bottom: 1em;
+}
+
+.ql-editor h1, .ql-editor h2, .ql-editor h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.ql-editor h1 {
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.ql-editor h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.ql-editor h3 {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+/* Fix for consistent paragraph spacing */
+.ql-editor p + p {
+  margin-top: 0.5em;
+}
+
+/* Add space after lists */
+.ql-editor ul, .ql-editor ol {
+  margin-bottom: 1em;
+}
+
 @layer base {
   * {
     @apply border-border;
