@@ -54,7 +54,7 @@ export function ContentTab({
       animate="visible"
       exit="exit"
       variants={pageTransition}
-      className="w-full"
+      className="w-full relative overflow-hidden"
     >
       <div className="flex justify-end mb-4">
         <Button 

@@ -166,7 +166,7 @@ export function BriefingTab({
       animate="visible"
       exit="exit"
       variants={pageTransition}
-      className="w-full"
+      className="w-full relative overflow-hidden"
     >
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left side (chat interface) */}
