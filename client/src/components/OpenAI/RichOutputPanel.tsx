@@ -527,8 +527,8 @@ export function RichOutputPanel({
                     </g>
                   </svg>
                 </div>
-                <p className="mt-4 text-[#FF6600] text-base font-medium animate-pulse-subtle">Generating ninja content...</p>
-                <p className="text-xs text-gray-500 mt-1">Please wait while our ninja works magic</p>
+                <p className="mt-4 text-[#FF6600] text-base font-medium animate-pulse-subtle">Generating content...</p>
+                <p className="text-xs text-gray-500 mt-1">Please wait while the AI works its magic</p>
               </div>
             </div>
           )}
@@ -541,7 +541,7 @@ export function RichOutputPanel({
                   <path fill="currentColor" d="M12,2C6.5,2,2,6.5,2,12c0,5.5,4.5,10,10,10s10-4.5,10-10C22,6.5,17.5,2,12,2z M12,14c-1.1,0-2-0.9-2-2c0-0.6,0.4-1,1-1s1,0.4,1,1c0,0,0,0,0,0c0.6,0,1,0.4,1,1S12.6,14,12,14z"/>
                 </svg>
               </div>
-              <p className="text-gray-500 mb-1">Your ninja content will appear here</p>
+              <p className="text-gray-500 mb-1">Your generated content will appear here</p>
               <p className="text-xs text-gray-400">Configure your prompts and click "Generate"</p>
             </div>
           )}

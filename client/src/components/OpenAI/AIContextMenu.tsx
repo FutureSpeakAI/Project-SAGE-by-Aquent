@@ -491,7 +491,7 @@ export function AIContextMenu({
           <DialogHeader className="border-b border-gray-200 pb-2">
             <DialogTitle className="text-[#FF6600] flex items-center gap-2">
               <FileEdit className="h-5 w-5" />
-              Ninja AI Instructions
+              AI Processing Instructions
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -510,7 +510,7 @@ export function AIContextMenu({
               className="min-h-[100px]"
             />
             <div className="bg-black/5 p-3 rounded-md text-xs text-black border-l-2 border-[#FF6600]">
-              <p className="font-medium text-[#FF6600]">Ninja Tips:</p>
+              <p className="font-medium text-[#FF6600]">Helpful Tips:</p>
               <ul className="list-disc pl-4 mt-1 space-y-1">
                 <li>Be specific about the style, tone, or format you want</li>
                 <li>For multiple instructions, separate with commas</li>
