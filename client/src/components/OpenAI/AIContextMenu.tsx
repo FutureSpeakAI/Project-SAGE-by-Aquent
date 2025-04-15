@@ -39,17 +39,26 @@ export function AIContextMenu({
   const [customInstructionsOpen, setCustomInstructionsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState("");
   const [savedSelectedText, setSavedSelectedText] = useState("");
+  const [openedWithSelection, setOpenedWithSelection] = useState(false);
   const { toast } = useToast();
 
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateRequest) => {
+      console.log("Sending AI processing request with:", {
+        model: data.model,
+        promptLength: data.userPrompt.length,
+        systemPromptStart: data.systemPrompt.substring(0, 50) + "..."
+      });
       const response = await apiRequest("POST", "/api/generate", data);
       return response.json() as Promise<GenerateResponse>;
     },
     onSuccess: (data) => {
+      console.log("AI processing successful, response length:", data.content.length);
+      // Always replace selection (true)
       onProcessText(data.content, true);
     },
     onError: (error: Error) => {
+      console.error("AI processing failed:", error);
       toast({
         title: "AI processing failed",
         description: error.message,
@@ -100,8 +109,13 @@ export function AIContextMenu({
       return;
     }
 
+    console.log("Applying custom instructions to saved selected text:", savedSelectedText.substring(0, 50) + "...");
+    
     const systemPrompt = `You are an expert editor and writer. Your task is to ${customInstructions.trim()} for the following text.
     Only return the processed text without any additional comments or explanations.`;
+    
+    // Keep track of this instruction was created with selection
+    const wasOpenedWithSelection = openedWithSelection;
     
     generateMutation.mutate({
       apiKey,
@@ -113,6 +127,7 @@ export function AIContextMenu({
 
     setCustomInstructionsOpen(false);
     setCustomInstructions("");
+    setOpenedWithSelection(false);
   };
 
   return (
@@ -151,7 +166,9 @@ export function AIContextMenu({
           <ContextMenuSeparator />
           <ContextMenuItem
             onClick={() => {
+              console.log("Opening custom instructions with selected text:", selectedText.length > 0 ? selectedText.substring(0, 50) + "..." : "none");
               setSavedSelectedText(selectedText);
+              setOpenedWithSelection(true);
               setCustomInstructionsOpen(true);
             }}
             disabled={!selectedText || generateMutation.isPending}

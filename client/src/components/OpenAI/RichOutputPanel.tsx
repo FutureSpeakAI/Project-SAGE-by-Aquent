@@ -103,21 +103,35 @@ export function RichOutputPanel({
     }
   }, [content]);
 
+  // Store the current selection for use in context menu
+  const [currentSelection, setCurrentSelection] = useState<{ index: number, length: number } | null>(null);
+  
   // Handle text selection in the editor
   const handleTextSelection = useCallback(() => {
     if (editorRef.current) {
       const selection = editorRef.current.getEditor().getSelection();
       if (selection && selection.length > 0) {
         const text = editorRef.current.getEditor().getText(selection.index, selection.length);
+        // Save both the selected text and the selection range
         setSelectedText(text);
+        setCurrentSelection({ index: selection.index, length: selection.length });
+        console.log("Selection saved:", { index: selection.index, length: selection.length, text });
       } else {
         setSelectedText("");
+        setCurrentSelection(null);
       }
     }
   }, []);
 
   // Process text from AI operations
   const handleProcessedText = useCallback((newText: string, replaceSelection: boolean) => {
+    console.log("handleProcessedText called with:", {
+      textLength: newText.length, 
+      replaceSelection,
+      hasSelectedText: !!selectedText,
+      selectedTextLength: selectedText.length
+    });
+
     // Process the text to convert markdown to HTML
     const processFormattedText = (text: string) => {
       // First, handle common markdown-like formatting
@@ -169,37 +183,80 @@ export function RichOutputPanel({
       return processedContent.replace(/<\/p>\s*<p>/g, '</p><p>');
     };
 
+    // Format the new text with HTML for proper display
     const formattedNewText = processFormattedText(newText);
     
-    if (editorRef.current) {
-      if (replaceSelection) {
-        // When replacing selected text (context menu operations)
-        const selection = editorRef.current.getEditor().getSelection();
-        if (selection && selection.length > 0) {
-          // Delete the selected text
-          editorRef.current.getEditor().deleteText(selection.index, selection.length);
-          // Insert the formatted HTML at the selection point
-          editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(selection.index, formattedNewText);
-          // Update the state with the full content
-          setEditableContent(editorRef.current.getEditor().root.innerHTML);
+    // Check if we have a valid editor reference 
+    if (!editorRef.current) {
+      console.log("No editor reference, setting content directly");
+      setEditableContent(formattedNewText);
+      return;
+    }
+    
+    const editor = editorRef.current.getEditor();
+    
+    // Determine the action based on context
+    if (replaceSelection) {
+      // This is a context menu operation that should replace selected text
+      const selection = editor.getSelection();
+      
+      console.log("Current selection:", selection);
+      console.log("Saved selection:", currentSelection);
+      
+      if (selection && selection.length > 0) {
+        // We have an active selection, replace it
+        console.log("Replacing current active selection at index:", selection.index, "length:", selection.length);
+        
+        // Delete the selected text
+        editor.deleteText(selection.index, selection.length);
+        
+        // Insert the HTML content at the position where text was deleted
+        editor.clipboard.dangerouslyPasteHTML(selection.index, formattedNewText);
+        
+        // Update state with the updated content
+        setEditableContent(editor.root.innerHTML);
+      }
+      // If we don't have a current selection but have a saved one, use that
+      else if (currentSelection) {
+        console.log("Using saved selection for replacement at index:", currentSelection.index, "length:", currentSelection.length);
+        
+        // Delete the saved selection text
+        editor.deleteText(currentSelection.index, currentSelection.length);
+        
+        // Insert the HTML content at the saved position
+        editor.clipboard.dangerouslyPasteHTML(currentSelection.index, formattedNewText);
+        
+        // Update state with the updated content
+        setEditableContent(editor.root.innerHTML);
+        
+        // Clear the saved selection after using it
+        setCurrentSelection(null);
+      } 
+      else {
+        // No current or saved selection, but this was supposed to replace text
+        // This might happen if selection was completely lost between right-click and API response
+        console.warn("No selection available (current or saved) but replaceSelection is true");
+        
+        // Insert at the beginning as a fallback
+        if (editor.getText().trim() === '') {
+          // If editor is empty, just set the content
+          console.log("Editor is empty, setting full content");
+          setEditableContent(formattedNewText);
         } else {
-          // If no selection but replaceSelection was requested, this is likely
-          // from a context menu operation that lost its selection. In this case,
-          // we'll just append to avoid a confusing UX
-          const length = editorRef.current.getEditor().getLength();
-          editorRef.current.getEditor().insertText(length, '\n\n');
-          editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(length + 2, formattedNewText);
-          setEditableContent(editorRef.current.getEditor().root.innerHTML);
+          // Otherwise, append to the end with a clear separation
+          console.log("Appending at the end with separation");
+          const length = editor.getLength();
+          editor.insertText(length, '\n\n');
+          editor.clipboard.dangerouslyPasteHTML(length + 2, formattedNewText);
+          setEditableContent(editor.root.innerHTML);
         }
-      } else {
-        // Not replacing, so just set the entire content (this is likely the initial content load)
-        setEditableContent(formattedNewText);
       }
     } else {
-      // No editor reference, just set the content with formatting
+      // Not a selection replacement - usually initial content loading
+      console.log("Setting full content (not replacing selection)");
       setEditableContent(formattedNewText);
     }
-  }, []);
+  }, [selectedText, currentSelection]);
 
   const handleCopy = useCallback(() => {
     // Get plain text content from the editor to preserve formatting in a readable way
