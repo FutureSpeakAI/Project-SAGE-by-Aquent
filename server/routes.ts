@@ -36,6 +36,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add a data export/import endpoint for deployment migrations
+  app.get('/api/export-data', async (_req: Request, res: Response) => {
+    try {
+      // Export all data from the database
+      const [prompts, personas, contents, conversations] = await Promise.all([
+        storage.getPrompts(),
+        storage.getPersonas(),
+        storage.getGeneratedContents(),
+        storage.getBriefConversations()
+      ]);
+      
+      res.json({
+        prompts,
+        personas,
+        contents,
+        conversations,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Data export error:', error);
+      res.status(500).json({ 
+        error: 'Failed to export data',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Import data from a previous export
+  app.post('/api/import-data', async (req: Request, res: Response) => {
+    try {
+      const { prompts, personas, contents, conversations } = req.body;
+      
+      // Track import stats
+      const stats = {
+        promptsImported: 0,
+        personasImported: 0,
+        contentsImported: 0,
+        conversationsImported: 0
+      };
+      
+      // Import prompts
+      if (Array.isArray(prompts)) {
+        for (const prompt of prompts) {
+          try {
+            await storage.savePrompt({
+              name: prompt.name,
+              systemPrompt: prompt.systemPrompt,
+              userPrompt: prompt.userPrompt
+            });
+            stats.promptsImported++;
+          } catch (err) {
+            console.warn(`Failed to import prompt "${prompt.name}":`, err);
+          }
+        }
+      }
+      
+      // Import personas
+      if (Array.isArray(personas)) {
+        for (const persona of personas) {
+          try {
+            await storage.savePersona({
+              name: persona.name,
+              description: persona.description,
+              instruction: persona.instruction
+            });
+            stats.personasImported++;
+          } catch (err) {
+            console.warn(`Failed to import persona "${persona.name}":`, err);
+          }
+        }
+      }
+      
+      // Import generated contents
+      if (Array.isArray(contents)) {
+        for (const content of contents) {
+          try {
+            await storage.saveGeneratedContent({
+              title: content.title,
+              content: content.content,
+              contentType: content.contentType,
+              systemPrompt: content.systemPrompt,
+              userPrompt: content.userPrompt,
+              model: content.model,
+              temperature: content.temperature,
+              metadata: content.metadata
+            });
+            stats.contentsImported++;
+          } catch (err) {
+            console.warn(`Failed to import content "${content.title}":`, err);
+          }
+        }
+      }
+      
+      // Import brief conversations
+      if (Array.isArray(conversations)) {
+        for (const conversation of conversations) {
+          try {
+            await storage.saveBriefConversation({
+              title: conversation.title,
+              messages: conversation.messages
+            });
+            stats.conversationsImported++;
+          } catch (err) {
+            console.warn(`Failed to import conversation "${conversation.title}":`, err);
+          }
+        }
+      }
+      
+      res.json({
+        success: true,
+        stats,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Data import error:', error);
+      res.status(500).json({ 
+        error: 'Failed to import data',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
   // OpenAI content generation endpoint
   app.post("/api/generate", generateContent);
 

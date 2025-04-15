@@ -21,6 +21,7 @@ import { BriefingTab } from "@/components/Briefing/BriefingTab";
 import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
 import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
 import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
+import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
 
 export default function Home() {
@@ -34,6 +35,9 @@ export default function Home() {
   
   // Saved content library state
   const [savedContentLibraryOpen, setSavedContentLibraryOpen] = useState(false);
+  
+  // Data migration dialog state
+  const [dataMigrationOpen, setDataMigrationOpen] = useState(false);
   
   // Fetch personas for context menu
   const { data: personas = [] } = useQuery<SavedPersona[]>({ 

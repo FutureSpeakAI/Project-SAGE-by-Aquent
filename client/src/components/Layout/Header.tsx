@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { KeyRound, Library } from "lucide-react";
+import { KeyRound, Library, Database } from "lucide-react";
 
 interface HeaderProps {
   onOpenApiKeyModal: () => void;
   onOpenSavedContentLibrary?: () => void;
+  onOpenDataMigration?: () => void;
 }
 
-export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary }: HeaderProps) {
+export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary, onOpenDataMigration }: HeaderProps) {
   return (
     <header className="bg-black py-3 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,6 +43,19 @@ export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary }: HeaderP
               >
                 <Library className="h-4 w-4 mr-2" />
                 Content Library
+              </Button>
+            )}
+            
+            {/* Data Migration button */}
+            {onOpenDataMigration && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onOpenDataMigration}
+                className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
+              >
+                <Database className="h-4 w-4 mr-2" />
+                Data Migration
               </Button>
             )}
             
