@@ -38,6 +38,7 @@ export function AIContextMenu({
 }: AIContextMenuProps) {
   const [customInstructionsOpen, setCustomInstructionsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState("");
+  const [savedSelectedText, setSavedSelectedText] = useState("");
   const { toast } = useToast();
 
   const generateMutation = useMutation({
@@ -89,10 +90,10 @@ export function AIContextMenu({
       return;
     }
     
-    if (!selectedText) {
+    if (!savedSelectedText) {
       toast({
         title: "No text selected",
-        description: "Please select text to process.",
+        description: "Please select text first before applying instructions.",
         variant: "destructive",
       });
       return;
@@ -100,15 +101,12 @@ export function AIContextMenu({
 
     const systemPrompt = `You are an expert editor and writer. Your task is to ${customInstructions.trim()} for the following text.
     Only return the processed text without any additional comments or explanations.`;
-
-    console.log("Sending custom instructions:", customInstructions);
-    console.log("System prompt:", systemPrompt);
     
     generateMutation.mutate({
       apiKey,
       model,
       systemPrompt,
-      userPrompt: selectedText,
+      userPrompt: savedSelectedText,
       temperature,
     });
 
@@ -151,7 +149,10 @@ export function AIContextMenu({
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem
-            onClick={() => setCustomInstructionsOpen(true)}
+            onClick={() => {
+              setSavedSelectedText(selectedText);
+              setCustomInstructionsOpen(true);
+            }}
             disabled={!selectedText || generateMutation.isPending}
           >
             <FileEdit className="mr-2 h-4 w-4" />
@@ -160,7 +161,15 @@ export function AIContextMenu({
         </ContextMenuContent>
       </ContextMenu>
 
-      <Dialog open={customInstructionsOpen} onOpenChange={setCustomInstructionsOpen}>
+      <Dialog 
+        open={customInstructionsOpen} 
+        onOpenChange={(open) => {
+          setCustomInstructionsOpen(open);
+          if (!open) {
+            // Clear the form when closing the dialog without applying
+            setCustomInstructions("");
+          }
+        }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Custom AI Instructions</DialogTitle>
