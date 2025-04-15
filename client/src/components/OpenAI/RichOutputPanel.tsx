@@ -34,7 +34,6 @@ interface RichOutputPanelProps {
   error: string | null;
   onClear: () => void;
   onRetry: () => void;
-  apiKey: string;
   model: string;
   temperature: number;
   onOpenPersonaLibrary?: () => void;
@@ -47,7 +46,6 @@ export function RichOutputPanel({
   error,
   onClear,
   onRetry,
-  apiKey,
   model,
   temperature,
   onOpenPersonaLibrary,

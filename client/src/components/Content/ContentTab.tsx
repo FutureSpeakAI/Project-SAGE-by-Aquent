@@ -97,7 +97,6 @@ export function ContentTab({
             error={error}
             onClear={handleClearOutput}
             onRetry={handleGenerate}
-            apiKey={apiKey}
             model={model}
             temperature={temperature}
             onOpenPersonaLibrary={handleOpenPersonaLibrary}

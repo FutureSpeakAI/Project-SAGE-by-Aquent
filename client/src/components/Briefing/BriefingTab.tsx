@@ -288,7 +288,6 @@ export function BriefingTab({
             error={error}
             onClear={() => setBriefingContent("")}
             onRetry={generateBriefing}
-            apiKey={apiKey}
             model={model}
             temperature={temperature}
             onOpenPersonaLibrary={handleOpenPersonaLibrary}
