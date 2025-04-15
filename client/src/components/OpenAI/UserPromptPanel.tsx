@@ -21,8 +21,8 @@ export function UserPromptPanel({
 }: UserPromptPanelProps) {
   return (
     <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <CardHeader className="p-4 bg-gray-50 border-b border-gray-200">
-        <CardTitle className="font-semibold text-gray-700">User Prompt</CardTitle>
+      <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200">
+        <CardTitle className="font-semibold text-white">Ninja Mission</CardTitle>
       </CardHeader>
       
       <CardContent className="p-4">
@@ -36,7 +36,7 @@ export function UserPromptPanel({
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"
                 onClick={(e) => {
                   e.preventDefault();
                   onOpenPromptLibrary();
@@ -63,9 +63,10 @@ export function UserPromptPanel({
         <Button 
           onClick={onGenerate} 
           disabled={!userPrompt.trim() || isGenerating}
+          className="bg-[#FF6600] hover:bg-black hover:text-[#FF6600] border border-[#FF6600]"
         >
           <Zap className="mr-2 h-4 w-4" />
-          Generate
+          Generate Ninja Content
         </Button>
       </CardFooter>
     </Card>

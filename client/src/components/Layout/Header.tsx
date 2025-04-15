@@ -13,10 +13,15 @@ export function Header({ onOpenApiKeyModal }: HeaderProps) {
           {/* Logo and title */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg width="40" height="40" viewBox="0 0 24 24" className="text-[#FF6600]">
-                <path fill="currentColor" d="M12,2C6.5,2,2,6.5,2,12c0,5.5,4.5,10,10,10s10-4.5,10-10C22,6.5,17.5,2,12,2z"/>
-                <path fill="black" d="M12,7c-2.8,0-5,2.2-5,5c0,0.3,0,0.7,0.1,1h9.7c0.1-0.3,0.1-0.7,0.1-1C17,9.2,14.8,7,12,7z"/>
-                <path fill="white" d="M9,10c0.6,0,1,0.4,1,1s-0.4,1-1,1s-1-0.4-1-1S8.4,10,9,10z M15,10c0.6,0,1,0.4,1,1s-0.4,1-1,1s-1-0.4-1-1S14.4,10,15,10z"/>
+              <svg width="40" height="40" viewBox="0 0 24 24" className="text-[#FF6600] animate-spin-slow">
+                <g transform="translate(12, 12)">
+                  {/* Main star shape */}
+                  <path fill="currentColor" d="M0,-8 L2,-2 L8,0 L2,2 L0,8 L-2,2 L-8,0 L-2,-2 Z" />
+                  {/* Inner details */}
+                  <path fill="black" d="M0,-4 L1,-1 L4,0 L1,1 L0,4 L-1,1 L-4,0 L-1,-1 Z" />
+                  {/* Center circle */}
+                  <circle fill="white" cx="0" cy="0" r="1.5" />
+                </g>
               </svg>
             </div>
             <div className="ml-3">
