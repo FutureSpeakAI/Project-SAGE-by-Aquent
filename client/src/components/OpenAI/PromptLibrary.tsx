@@ -241,7 +241,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
                 <div className="flex flex-col md:flex-row gap-6">
                   {prompt.systemPrompt && (
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Ninja Agent Description:</h4>
+                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">System Prompt:</h4>
                       <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
                         <p className="text-sm">{prompt.systemPrompt}</p>
                       </div>
@@ -249,7 +249,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
                   )}
                   {prompt.userPrompt && (
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Ninja Mission:</h4>
+                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">User Prompt:</h4>
                       <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
                         <p className="text-sm">{prompt.userPrompt}</p>
                       </div>

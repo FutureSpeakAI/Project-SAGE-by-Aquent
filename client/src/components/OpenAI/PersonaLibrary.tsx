@@ -231,14 +231,14 @@ export function PersonaLibrary({ onSelectPersona }: PersonaLibraryProps) {
                 <div className="flex flex-col md:flex-row gap-6">
                   {persona.description && (
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Ninja Profile:</h4>
+                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Description:</h4>
                       <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
                         <p className="text-sm">{persona.description}</p>
                       </div>
                     </div>
                   )}
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Ninja Instructions:</h4>
+                    <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Instructions:</h4>
                     <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
                       <p className="text-sm">{persona.instruction}</p>
                     </div>
@@ -251,7 +251,7 @@ export function PersonaLibrary({ onSelectPersona }: PersonaLibraryProps) {
                   className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border-2 px-6"
                 >
                   <UserCircle2 className="h-4 w-4 mr-2" />
-                  <span>Choose This Ninja</span>
+                  <span>Choose This Persona</span>
                 </Button>
               </CardFooter>
             </Card>

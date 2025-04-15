@@ -34,7 +34,7 @@ export function SystemPromptPanel({
         <CollapsibleTrigger className="flex justify-between items-center w-full">
           <h2 className="font-semibold text-white flex items-center">
             <BookText className="h-4 w-4 mr-2 text-[#FF6600]" />
-            Choose Your Ninja
+            AI Configuration
           </h2>
           {isOpen ? (
             <ChevronUp className="h-4 w-4 text-[#FF6600]" />
@@ -96,7 +96,7 @@ export function SystemPromptPanel({
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="temperature" className="flex items-center">
-                <span className="text-[#FF6600] font-medium">Creativity:</span>
+                <span className="text-[#FF6600] font-medium">Temperature:</span>
                 <span className="ml-2">{temperature.toFixed(1)}</span>
               </Label>
             </div>
