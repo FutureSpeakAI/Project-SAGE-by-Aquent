@@ -47,7 +47,30 @@ export function RichOutputPanel({
 
   // Update editable content when content prop changes
   useEffect(() => {
-    setEditableContent(content);
+    // Process the content to preserve formatting
+    if (content) {
+      // Convert markdown-like formatting to HTML
+      let processedContent = content
+        // Handle titles with asterisks
+        .replace(/\*\*(.*?)\*\*/g, '<h2>$1</h2>')
+        // Handle paragraphs (split by newlines)
+        .split('\n')
+        .map(line => {
+          // Skip empty lines
+          if (!line.trim()) return '';
+          // Check if the line is already a heading (from the previous regex)
+          if (line.startsWith('<h2>') && line.endsWith('</h2>')) {
+            return line;
+          }
+          // Wrap other lines in paragraph tags
+          return `<p>${line}</p>`;
+        })
+        .join('');
+        
+      setEditableContent(processedContent);
+    } else {
+      setEditableContent('');
+    }
   }, [content]);
 
   // Handle text selection in the editor
@@ -65,26 +88,60 @@ export function RichOutputPanel({
 
   // Process text from AI operations
   const handleProcessedText = useCallback((newText: string, replaceSelection: boolean) => {
+    // Process the text to convert markdown to HTML
+    const processFormattedText = (text: string) => {
+      // Convert markdown-like formatting to HTML
+      return text
+        // Handle titles with asterisks
+        .replace(/\*\*(.*?)\*\*/g, '<h2>$1</h2>')
+        // Handle paragraphs (split by newlines)
+        .split('\n')
+        .map(line => {
+          // Skip empty lines
+          if (!line.trim()) return '';
+          // Check if the line is already a heading
+          if (line.startsWith('<h2>') && line.endsWith('</h2>')) {
+            return line;
+          }
+          // Wrap other lines in paragraph tags
+          return `<p>${line}</p>`;
+        })
+        .join('');
+    };
+
+    const formattedNewText = processFormattedText(newText);
+    
     if (editorRef.current && replaceSelection) {
       const selection = editorRef.current.getEditor().getSelection();
       if (selection && selection.length > 0) {
+        // Use the formatted HTML content
         editorRef.current.getEditor().deleteText(selection.index, selection.length);
-        editorRef.current.getEditor().insertText(selection.index, newText);
-        setEditableContent(editorRef.current.getEditor().getText());
+        editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(selection.index, formattedNewText);
+        
+        // Update the state with the full content
+        setEditableContent(editorRef.current.getEditor().root.innerHTML);
       } else {
         // If no selection, append to the end
         const length = editorRef.current.getEditor().getLength();
-        editorRef.current.getEditor().insertText(length, '\n\n' + newText);
-        setEditableContent(editorRef.current.getEditor().getText());
+        // First add newlines
+        editorRef.current.getEditor().insertText(length, '\n\n');
+        // Then paste the HTML content
+        editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(length + 2, formattedNewText);
+        
+        // Update the state with the full content
+        setEditableContent(editorRef.current.getEditor().root.innerHTML);
       }
     } else {
-      // If not replacing, just set the content
-      setEditableContent(newText);
+      // If not replacing, just set the content with formatting
+      setEditableContent(formattedNewText);
     }
   }, []);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(editorRef.current?.getEditor().getText() || editableContent)
+    // Get plain text content from the editor to preserve formatting in a readable way
+    const text = editorRef.current?.getEditor().getText() || '';
+    
+    navigator.clipboard.writeText(text)
       .then(() => {
         toast({
           title: "Copied to clipboard",
@@ -99,16 +156,36 @@ export function RichOutputPanel({
           variant: "destructive"
         });
       });
-  }, [editableContent, toast]);
+  }, [toast]);
 
   const handleExport = useCallback((format: 'pdf' | 'docx') => {
-    const text = editorRef.current?.getEditor().getText() || editableContent;
-    if (format === 'pdf') {
-      exportAsPDF(text);
-    } else {
-      exportAsDOCX(text);
+    // For export, we want to get the raw text with newlines preserved
+    const text = editorRef.current?.getEditor().getText() || '';
+    
+    // Extract a potential title from the text (first line if it looks like a title)
+    const lines = text.split('\n');
+    let title = "Generated Content";
+    let contentToExport = text;
+    
+    // If the first line is short and has "title" in it or is wrapped with asterisks, use it as title
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      if (
+        firstLine.toLowerCase().includes("title:") || 
+        (firstLine.startsWith("**") && firstLine.endsWith("**")) ||
+        firstLine.length < 50 // Simple heuristic for title length
+      ) {
+        title = firstLine.replace(/^\*\*|\*\*$/g, '').replace(/^title:\s*/i, '');
+        contentToExport = lines.slice(1).join('\n').trim();
+      }
     }
-  }, [editableContent]);
+    
+    if (format === 'pdf') {
+      exportAsPDF(contentToExport, title);
+    } else {
+      exportAsDOCX(contentToExport, title);
+    }
+  }, []);
 
   const hasContent = editableContent && editableContent.trim().length > 0;
   const showEmptyState = !isLoading && !error && !hasContent;
