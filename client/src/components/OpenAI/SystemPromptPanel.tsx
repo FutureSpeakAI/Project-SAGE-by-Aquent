@@ -45,7 +45,7 @@ export function SystemPromptPanel({
         <div className="p-4 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-gray-600">
-              Configure how the AI should behave when responding to your prompts.
+              Configure how the AI behaves.
             </p>
             
             {onOpenPromptLibrary && (
