@@ -1,6 +1,6 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { ChevronDown, ChevronUp, BookText } from "lucide-react";
+import { ChevronDown, ChevronUp, BookText, Settings } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -30,13 +30,16 @@ export function SystemPromptPanel({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="p-4 bg-gray-50 border-b border-gray-200">
+      <div className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200">
         <CollapsibleTrigger className="flex justify-between items-center w-full">
-          <h2 className="font-semibold text-gray-700">System Prompt</h2>
+          <h2 className="font-semibold text-white flex items-center">
+            <BookText className="h-4 w-4 mr-2 text-[#FF6600]" />
+            Ninja Training Instructions
+          </h2>
           {isOpen ? (
-            <ChevronUp className="h-4 w-4 text-gray-500" />
+            <ChevronUp className="h-4 w-4 text-[#FF6600]" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-500" />
+            <ChevronDown className="h-4 w-4 text-[#FF6600]" />
           )}
         </CollapsibleTrigger>
       </div>
@@ -52,7 +55,7 @@ export function SystemPromptPanel({
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"
                 onClick={(e) => {
                   e.preventDefault();
                   onOpenPromptLibrary();
@@ -65,7 +68,7 @@ export function SystemPromptPanel({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="systemPrompt">System Instructions</Label>
+            <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">Ninja System Instructions</Label>
             <Textarea
               id="systemPrompt"
               className="resize-none h-32"
@@ -76,10 +79,10 @@ export function SystemPromptPanel({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
+            <Label htmlFor="model" className="text-[#FF6600] font-medium">Ninja AI Weapon</Label>
             <Select value={model} onValueChange={setModel}>
-              <SelectTrigger id="model">
-                <SelectValue placeholder="Select a model" />
+              <SelectTrigger id="model" className="border-gray-300 focus:ring-[#FF6600] focus:border-[#FF6600]">
+                <SelectValue placeholder="Select an AI model" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="gpt-4o">GPT-4o</SelectItem>
@@ -92,7 +95,10 @@ export function SystemPromptPanel({
           
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <Label htmlFor="temperature">Temperature: {temperature.toFixed(1)}</Label>
+              <Label htmlFor="temperature" className="flex items-center">
+                <span className="text-[#FF6600] font-medium">Ninja Creativity:</span>
+                <span className="ml-2">{temperature.toFixed(1)}</span>
+              </Label>
             </div>
             <Slider
               id="temperature"
