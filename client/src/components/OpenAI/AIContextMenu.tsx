@@ -81,8 +81,26 @@ export function AIContextMenu({
       return;
     }
 
-    const systemPrompt = `You are an expert editor and writer. Your task is to ${instruction} the following text. 
+    // Create a more detailed system prompt that maintains the original format and scope
+    const systemPrompt = `You are an expert editor and writer. Your task is to ${instruction} the following text.
+
+    IMPORTANT RULES:
+    1. Preserve the original format and length of the text
+    2. If it's a title, keep it as a title (same approximate length)
+    3. If it's a paragraph, keep it as a paragraph
+    4. If it's a bullet point, keep it as a bullet point
+    5. DO NOT expand a title or short text into a full article or list
+    6. Do not add new sections or content beyond improving what exists
+    7. Return ONLY the improved version of exactly what was provided
+    
     Only return the processed text without any additional comments or explanations.`;
+
+    // Log the selection characteristics to help with debugging
+    console.log("Processing text:", {
+      length: selectedText.length,
+      isTitle: selectedText.length < 100,
+      firstFewWords: selectedText.substring(0, 30) + "..."
+    });
 
     // Always pass true to ensure selection replacement
     generateMutation.mutate({
@@ -116,6 +134,15 @@ export function AIContextMenu({
     console.log("Applying custom instructions to saved selected text:", savedSelectedText.substring(0, 50) + "...");
     
     const systemPrompt = `You are an expert editor and writer. Your task is to ${customInstructions.trim()} for the following text.
+
+    IMPORTANT RULES:
+    1. Preserve the original format of the text unless specifically instructed otherwise
+    2. If it's a title, keep it as a title (same approximate length) unless instructed to expand
+    3. If it's a paragraph, keep it as a paragraph unless instructed to change format
+    4. If it's a bullet point, keep it as a bullet point unless instructed otherwise
+    5. Do not add new sections or content beyond what was requested
+    6. Return ONLY the processed text without any additional comments or explanations
+    
     Only return the processed text without any additional comments or explanations.`;
     
     // Set the processing operation for display
@@ -168,46 +195,69 @@ export function AIContextMenu({
       <ContextMenu>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-72">
-          <ContextMenuItem
-            onClick={() => startProcessWithAI("revise and improve", "AI Revise")}
-            disabled={!selectedText || generateMutation.isPending}
-          >
-            {getContextMenuItemContent(
-              <Wand2 className="mr-2 h-4 w-4" />, 
-              "AI Revise", 
-              processingOperation === "AI Revise" && generateMutation.isPending
-            )}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => startProcessWithAI("improve the clarity, flow, and grammar of", "AI Improve")}
-            disabled={!selectedText || generateMutation.isPending}
-          >
-            {getContextMenuItemContent(
-              <Zap className="mr-2 h-4 w-4" />, 
-              "AI Improve", 
-              processingOperation === "AI Improve" && generateMutation.isPending
-            )}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => startProcessWithAI("expand with more details and examples", "AI Expand")}
-            disabled={!selectedText || generateMutation.isPending}
-          >
-            {getContextMenuItemContent(
-              <Expand className="mr-2 h-4 w-4" />, 
-              "AI Expand", 
-              processingOperation === "AI Expand" && generateMutation.isPending
-            )}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => startProcessWithAI("summarize concisely while keeping the key points", "AI Summarize")}
-            disabled={!selectedText || generateMutation.isPending}
-          >
-            {getContextMenuItemContent(
-              <Minimize className="mr-2 h-4 w-4" />, 
-              "AI Summarize", 
-              processingOperation === "AI Summarize" && generateMutation.isPending
-            )}
-          </ContextMenuItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger
+              disabled={!selectedText || generateMutation.isPending}
+              className="flex items-center"
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              <span>Enhance (Same Length)</span>
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent className="w-60">
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("revise and improve while maintaining similar length", "AI Revise")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Wand2 className="mr-2 h-4 w-4" />, 
+                  "Revise & Rewrite", 
+                  processingOperation === "AI Revise" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("improve the clarity, flow, and grammar while maintaining similar length", "AI Improve")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Zap className="mr-2 h-4 w-4" />, 
+                  "Improve Style & Clarity", 
+                  processingOperation === "AI Improve" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+
+          <ContextMenuSub>
+            <ContextMenuSubTrigger
+              disabled={!selectedText || generateMutation.isPending}
+              className="flex items-center"
+            >
+              <FileEdit className="mr-2 h-4 w-4" />
+              <span>Transform (Change Length)</span>
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent className="w-60">
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("expand with more details and examples", "AI Expand")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Expand className="mr-2 h-4 w-4" />, 
+                  "Expand with Details", 
+                  processingOperation === "AI Expand" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("summarize concisely while keeping the key points", "AI Summarize")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Minimize className="mr-2 h-4 w-4" />, 
+                  "Summarize Briefly", 
+                  processingOperation === "AI Summarize" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
           <ContextMenuSeparator />
           <ContextMenuItem
             onClick={() => {
