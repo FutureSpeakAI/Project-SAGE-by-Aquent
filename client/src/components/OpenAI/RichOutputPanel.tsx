@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AIContextMenu } from "./AIContextMenu";
 import { 
   Trash2, AlertCircle, Download, FileText, 
-  File, Copy, RotateCcw 
+  File, Copy, RotateCcw, Code
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { 
