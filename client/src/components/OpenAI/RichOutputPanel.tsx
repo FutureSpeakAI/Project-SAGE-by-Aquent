@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AIContextMenu } from "./AIContextMenu";
+import { SavedContentLibrary } from "./SavedContentLibrary";
 import { 
   Trash2, AlertCircle, Download, FileText, 
   File, Copy, RotateCcw, Code, Users, Save,
@@ -24,6 +25,7 @@ import ReactQuill from "react-quill";
 import 'react-quill/dist/quill.snow.css';
 import { exportAsPDF, exportAsDOCX, exportAsHTML } from "@/lib/export-utils";
 import { useToast } from "@/hooks/use-toast";
+import { GeneratedContent } from "@shared/schema";
 
 interface RichOutputPanelProps {
   content: string;
@@ -324,6 +326,67 @@ export function RichOutputPanel({
     }
   }, []);
 
+  // Save content mutation
+  const saveContentMutation = useMutation({
+    mutationFn: async ({ title, content }: { title: string; content: string }) => {
+      return await apiRequest('POST', '/api/generated-contents', { title, content });
+    },
+    onSuccess: () => {
+      setSaveDialogOpen(false);
+      toast({
+        title: "Content saved",
+        description: "Your content has been saved to the library.",
+      });
+      setContentTitle(""); // Reset title input
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save content",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle saving content
+  const handleSaveContent = () => {
+    if (!contentTitle.trim()) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get the content from the editor
+    const contentToSave = editorRef.current?.getEditor().getText() || '';
+    
+    if (!contentToSave.trim()) {
+      toast({
+        title: "No content to save",
+        description: "There is no content to save.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    saveContentMutation.mutate({ 
+      title: contentTitle, 
+      content: contentToSave 
+    });
+  };
+
+  // Handle loading content from library
+  const handleLoadContent = (content: GeneratedContent) => {
+    setSavedContentLibraryOpen(false);
+    handleProcessedText(content.content, false);
+    toast({
+      title: "Content loaded",
+      description: `"${content.title}" has been loaded into the editor.`,
+    });
+  };
+
   const hasContent = editableContent && editableContent.trim().length > 0;
   const showEmptyState = !isLoading && !error && !hasContent;
   const showErrorState = !isLoading && error !== null;
@@ -341,174 +404,231 @@ export function RichOutputPanel({
   };
 
   return (
-    <Card className="w-full h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-      <CardHeader className="p-4 bg-gray-50 border-b border-gray-200 flex flex-row items-center justify-between">
-        <CardTitle className="font-semibold text-gray-700">Generated Output</CardTitle>
-        
-        {showContent && (
-          <div className="flex gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={handleCopy}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Copy to clipboard</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <DropdownMenu>
+    <>
+      <Card className="w-full h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+        <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200 flex flex-row items-center justify-between">
+          <CardTitle className="font-semibold text-white">Ninja Output</CardTitle>
+          
+          {showContent && (
+            <div className="flex gap-2">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <Button variant="ghost" size="icon" onClick={handleCopy} className="text-white hover:bg-black/20">
+                      <Copy className="h-4 w-4" />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Export content</p>
+                    <p>Copy to clipboard</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleExport('html')}>
-                  <Code className="h-4 w-4 mr-2" />
-                  Export as HTML
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                  <File className="h-4 w-4 mr-2" />
-                  Export as PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('docx')}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Export as DOCX
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setSaveDialogOpen(true)}
-                    className="text-[#FF6600]"
-                  >
-                    <Bookmark className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Save to library</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+              <DropdownMenu>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-white hover:bg-black/20">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Export content</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleExport('html')}>
+                    <Code className="h-4 w-4 mr-2" />
+                    Export as HTML
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                    <File className="h-4 w-4 mr-2" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('docx')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export as DOCX
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setSavedContentLibraryOpen(true)}
-                  >
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Open content library</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setSaveDialogOpen(true)}
+                      className="text-[#FF6600] hover:bg-black/20"
+                    >
+                      <Bookmark className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Save to library</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={onClear}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Clear content</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
-      </CardHeader>
-      
-      <CardContent className="p-0 flex-1 overflow-auto relative">
-        {/* Loading state */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
-            <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-              <p className="mt-2 text-gray-600 text-sm">Generating content...</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setSavedContentLibraryOpen(true)}
+                      className="text-white hover:bg-black/20"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Open content library</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={onClear} className="text-white hover:bg-black/20">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Clear content</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-          </div>
-        )}
+          )}
+        </CardHeader>
         
-        {/* Empty state */}
-        {showEmptyState && (
-          <div className="text-center py-12 h-full flex flex-col items-center justify-center">
-            <div className="rounded-full bg-gray-100 p-3 mb-4">
-              <Trash2 className="text-gray-400 h-6 w-6" />
+        <CardContent className="p-0 flex-1 overflow-auto relative">
+          {/* Loading state */}
+          {isLoading && (
+            <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#FF6600]"></div>
+                <p className="mt-2 text-gray-600 text-sm">Generating ninja content...</p>
+              </div>
             </div>
-            <p className="text-gray-500">Generated content will appear here</p>
-          </div>
-        )}
-        
-        {/* Error state */}
-        {showErrorState && (
-          <div className="text-center py-12 h-full flex flex-col items-center justify-center">
-            <div className="rounded-full bg-red-100 p-3 mb-4">
-              <AlertCircle className="text-red-500 h-6 w-6" />
+          )}
+          
+          {/* Empty state */}
+          {showEmptyState && (
+            <div className="text-center py-12 h-full flex flex-col items-center justify-center">
+              <div className="rounded-full bg-gray-100 p-3 mb-4">
+                <svg width="36" height="36" viewBox="0 0 24 24" className="text-[#FF6600]">
+                  <path fill="currentColor" d="M12,2C6.5,2,2,6.5,2,12c0,5.5,4.5,10,10,10s10-4.5,10-10C22,6.5,17.5,2,12,2z M12,14c-1.1,0-2-0.9-2-2c0-0.6,0.4-1,1-1s1,0.4,1,1c0,0,0,0,0,0c0.6,0,1,0.4,1,1S12.6,14,12,14z"/>
+                </svg>
+              </div>
+              <p className="text-gray-500 mb-1">Your ninja content will appear here</p>
+              <p className="text-xs text-gray-400">Configure your prompts and click "Generate"</p>
             </div>
-            <p className="text-gray-700 font-medium">An error occurred</p>
-            <p className="text-gray-500 mt-2">{error}</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={onRetry}
+          )}
+          
+          {/* Error state */}
+          {showErrorState && (
+            <div className="text-center py-12 h-full flex flex-col items-center justify-center">
+              <div className="rounded-full bg-red-100 p-3 mb-4">
+                <AlertCircle className="text-red-500 h-6 w-6" />
+              </div>
+              <p className="text-gray-700 font-medium">An error occurred</p>
+              <p className="text-gray-500 mt-2">{error}</p>
+              <Button 
+                variant="outline" 
+                className="mt-4 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"
+                onClick={onRetry}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          )}
+          
+          {/* Rich Text Content */}
+          {showContent && (
+            <AIContextMenu 
+              selectedText={selectedText}
+              onProcessText={handleProcessedText}
+              apiKey={apiKey}
+              model={model}
+              temperature={temperature}
+              onOpenPersonaLibrary={onOpenPersonaLibrary}
             >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
-          </div>
-        )}
-        
-        {/* Rich Text Content */}
-        {showContent && (
-          <AIContextMenu 
-            selectedText={selectedText}
-            onProcessText={handleProcessedText}
-            apiKey={apiKey}
-            model={model}
-            temperature={temperature}
-            onOpenPersonaLibrary={onOpenPersonaLibrary}
-          >
-            <div 
-              className="p-4" 
-              onMouseUp={handleTextSelection} 
-              onKeyUp={handleTextSelection}
-            >
-              <ReactQuill
-                ref={editorRef}
-                value={editableContent}
-                onChange={setEditableContent}
-                modules={modules}
-                placeholder="Generated content will appear here and can be edited..."
-                className="min-h-[400px]"
+              <div 
+                className="p-4" 
+                onMouseUp={handleTextSelection} 
+                onKeyUp={handleTextSelection}
+              >
+                <ReactQuill
+                  ref={editorRef}
+                  value={editableContent}
+                  onChange={setEditableContent}
+                  modules={modules}
+                  placeholder="Generated content will appear here and can be edited..."
+                  className="min-h-[400px]"
+                />
+              </div>
+            </AIContextMenu>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Save Content Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save Content to Library</DialogTitle>
+            <DialogDescription>
+              Enter a title for this content to save it to your ninja library.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="content-title" className="text-right">
+                Title
+              </Label>
+              <Input
+                id="content-title"
+                value={contentTitle}
+                onChange={(e) => setContentTitle(e.target.value)}
+                placeholder="Enter a descriptive title"
+                className="col-span-3"
               />
             </div>
-          </AIContextMenu>
-        )}
-      </CardContent>
-    </Card>
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setSaveDialogOpen(false)}
+              disabled={saveContentMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleSaveContent}
+              disabled={saveContentMutation.isPending}
+              className="bg-[#FF6600] hover:bg-[#E65800]"
+            >
+              {saveContentMutation.isPending ? "Saving..." : "Save Content"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Content Library Dialog */}
+      <SavedContentLibrary
+        open={savedContentLibraryOpen}
+        onOpenChange={setSavedContentLibraryOpen}
+        onSelectContent={handleLoadContent}
+      />
+    </>
   );
 }
