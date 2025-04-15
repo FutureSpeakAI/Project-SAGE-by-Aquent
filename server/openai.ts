@@ -1,6 +1,5 @@
 import OpenAI from "openai";
 import { Request, Response } from "express";
-import { chat } from "@replit/ai-modelfarm";
 
 export interface GenerateContentRequest {
   model: string;
@@ -21,94 +20,47 @@ export const generateContent = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User prompt is required" });
     }
 
-    // Check if we're using a Replit project-specific API key
-    const isReplitProjectKey = process.env.OPENAI_API_KEY.startsWith('sk-proj-');
-    
-    // Log which API mode we're using
-    console.log(`Using ${isReplitProjectKey ? 'Replit ModelFarm' : 'standard OpenAI'} API`);
+    // Whether we're using a project key or standard key, just use the OpenAI SDK
+    // This provides a consistent interface and better model compatibility
+    console.log("Using OpenAI API with server-side API key");
     
     let content = "";
     
-    if (isReplitProjectKey) {
-      // Use the Replit ModelFarm SDK for project-specific keys
-      try {
-        console.log("Attempting to use ModelFarm API with project key");
-        
-        // Use the chat function from the ModelFarm package
-        const response = await chat({
-          apiKey: process.env.OPENAI_API_KEY,
-          model: model || "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt || "You are a helpful assistant."
-            },
-            {
-              role: "user",
-              content: userPrompt
-            }
-          ],
-          temperature: temperature || 0.7,
-        });
-        
-        // Check if the chat response was successful
-        if (response.ok) {
-          content = response.value.choices[0].message.content || "";
-        } else {
-          // Handle error from the ModelFarm API
-          console.error("ModelFarm API error:", response.error);
-          throw new Error(response.error.message || "Error generating content with ModelFarm");
-        }
-      } catch (modelFarmError) {
-        console.error("ModelFarm API error:", modelFarmError);
-        
-        // If ModelFarm has a network error, try falling back to direct OpenAI API
-        console.log("ModelFarm failed, attempting fallback to direct OpenAI API");
-        try {
-          // Try direct OpenAI access with the same key
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-          const completion = await openai.chat.completions.create({
-            model: model || "gpt-4o",
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt || "You are a helpful assistant."
-              },
-              {
-                role: "user",
-                content: userPrompt
-              }
-            ],
-            temperature: temperature || 0.7,
-          });
-          
-          content = completion.choices[0].message.content || "";
-          console.log("Fallback to direct OpenAI API successful");
-        } catch (fallbackError) {
-          console.error("Fallback to direct OpenAI API failed:", fallbackError);
-          throw modelFarmError; // Throw original error
-        }
-      }
-    } else {
-      // Use standard OpenAI API for regular API keys
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      const completion = await openai.chat.completions.create({
-        model: model || "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt || "You are a helpful assistant."
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
-        temperature: temperature || 0.7,
-      });
-      
-      content = completion.choices[0].message.content || "";
+    // Configure OpenAI client with optional parameters
+    const openaiConfig: any = { 
+      apiKey: process.env.OPENAI_API_KEY,
+    };
+    
+    // Add organization ID if available
+    if (process.env.OPENAI_ORG_ID) {
+      openaiConfig.organization = process.env.OPENAI_ORG_ID;
     }
+    
+    // Add base URL if specified
+    if (process.env.OPENAI_API_BASE_URL) {
+      openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
+    }
+    
+    // Initialize the OpenAI client
+    const openai = new OpenAI(openaiConfig);
+    
+    // Create completion with the OpenAI SDK
+    const completion = await openai.chat.completions.create({
+      model: model || "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt || "You are a helpful assistant."
+        },
+        {
+          role: "user",
+          content: userPrompt
+        }
+      ],
+      temperature: temperature || 0.7,
+    });
+    
+    content = completion.choices[0].message.content || "";
 
     return res.status(200).json({ content });
   } catch (error: any) {
