@@ -13,7 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Wand2, Expand, Minimize, Zap, FileEdit } from "lucide-react";
+import { 
+  Wand2, Expand, Minimize, Zap, FileEdit, MessageCircle, MessageSquare, 
+  Briefcase, Landmark, Smile, Lightbulb, GraduationCap, BookMarked, 
+  Sparkle, User, History, Rocket, Search, Laugh, Settings
+} from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
@@ -255,6 +259,165 @@ export function AIContextMenu({
                   "Summarize Briefly", 
                   processingOperation === "AI Summarize" && generateMutation.isPending
                 )}
+              </ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+          
+          <ContextMenuSub>
+            <ContextMenuSubTrigger
+              disabled={!selectedText || generateMutation.isPending}
+              className="flex items-center"
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              <span>Style & Tone</span>
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent className="w-60">
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in a formal and professional tone while maintaining similar length", "Formal Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Briefcase className="mr-2 h-4 w-4" />, 
+                  "Formal", 
+                  processingOperation === "Formal Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in a professional and authoritative tone while maintaining similar length", "Professional Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Landmark className="mr-2 h-4 w-4" />, 
+                  "Professional", 
+                  processingOperation === "Professional Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in a friendly and approachable tone while maintaining similar length", "Friendly Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Smile className="mr-2 h-4 w-4" />, 
+                  "Friendly", 
+                  processingOperation === "Friendly Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in a casual and conversational tone while maintaining similar length", "Chatty Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <MessageSquare className="mr-2 h-4 w-4" />, 
+                  "Conversational", 
+                  processingOperation === "Chatty Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in a witty and humorous tone while maintaining similar length", "Witty Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Lightbulb className="mr-2 h-4 w-4" />, 
+                  "Witty", 
+                  processingOperation === "Witty Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in an academic and scholarly tone while maintaining similar length", "Academic Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <GraduationCap className="mr-2 h-4 w-4" />, 
+                  "Academic", 
+                  processingOperation === "Academic Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in a poetic and lyrical tone while maintaining similar length", "Poetic Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <BookMarked className="mr-2 h-4 w-4" />, 
+                  "Poetic", 
+                  processingOperation === "Poetic Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite in an enthusiastic and energetic tone while maintaining similar length", "Enthusiastic Tone")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Sparkle className="mr-2 h-4 w-4" />, 
+                  "Enthusiastic", 
+                  processingOperation === "Enthusiastic Tone" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+          
+          <ContextMenuSub>
+            <ContextMenuSubTrigger
+              disabled={!selectedText || generateMutation.isPending}
+              className="flex items-center"
+            >
+              <User className="mr-2 h-4 w-4" />
+              <span>Rewrite with Persona</span>
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent className="w-60">
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite as if written by Shakespeare, maintaining his style, vocabulary, and characteristic phrasings", "Shakespeare")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <History className="mr-2 h-4 w-4" />, 
+                  "Shakespeare", 
+                  processingOperation === "Shakespeare" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite as if written by a tech entrepreneur like Elon Musk, using direct, concise language with occasional technical terms", "Tech Entrepreneur")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Rocket className="mr-2 h-4 w-4" />, 
+                  "Tech Entrepreneur", 
+                  processingOperation === "Tech Entrepreneur" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite as if written by a mystery novelist, using suspenseful and intriguing language", "Mystery Writer")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Search className="mr-2 h-4 w-4" />, 
+                  "Mystery Writer", 
+                  processingOperation === "Mystery Writer" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => startProcessWithAI("rewrite as if written by a stand-up comedian, incorporating humor and comedic timing", "Comedian")}
+                disabled={generateMutation.isPending}
+              >
+                {getContextMenuItemContent(
+                  <Laugh className="mr-2 h-4 w-4" />, 
+                  "Comedian", 
+                  processingOperation === "Comedian" && generateMutation.isPending
+                )}
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem
+                onClick={() => {
+                  // This will be implemented in the next phase
+                  toast({
+                    title: "Coming Soon",
+                    description: "Custom persona creation will be available in a future update.",
+                    variant: "default"
+                  });
+                }}
+                disabled={generateMutation.isPending}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                <span className="text-muted-foreground">Custom Persona (Coming Soon)</span>
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
