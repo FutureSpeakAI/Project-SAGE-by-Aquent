@@ -65,8 +65,17 @@ export function UserPromptPanel({
           disabled={!userPrompt.trim() || isGenerating}
           className="bg-[#FF6600] hover:bg-black hover:text-[#FF6600] border border-[#FF6600]"
         >
-          <Zap className="mr-2 h-4 w-4" />
-          Generate Ninja Content
+          {isGenerating ? (
+            <span className="flex items-center">
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Summoning Ninja...
+            </span>
+          ) : (
+            <>
+              <Zap className="mr-2 h-4 w-4" />
+              Generate Ninja Content
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>

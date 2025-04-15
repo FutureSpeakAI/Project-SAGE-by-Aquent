@@ -464,8 +464,11 @@ export function AIContextMenu({
           }
         }}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Custom AI Instructions</DialogTitle>
+          <DialogHeader className="border-b border-gray-200 pb-2">
+            <DialogTitle className="text-[#FF6600] flex items-center gap-2">
+              <FileEdit className="h-5 w-5" />
+              Ninja AI Instructions
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -482,8 +485,8 @@ export function AIContextMenu({
               onChange={(e) => setCustomInstructions(e.target.value)}
               className="min-h-[100px]"
             />
-            <div className="bg-blue-50 p-2 rounded-md text-xs text-blue-700">
-              <p className="font-medium">Tips:</p>
+            <div className="bg-black/5 p-3 rounded-md text-xs text-black border-l-2 border-[#FF6600]">
+              <p className="font-medium text-[#FF6600]">Ninja Tips:</p>
               <ul className="list-disc pl-4 mt-1 space-y-1">
                 <li>Be specific about the style, tone, or format you want</li>
                 <li>For multiple instructions, separate with commas</li>
@@ -499,8 +502,17 @@ export function AIContextMenu({
             >
               Cancel
             </Button>
-            <Button onClick={handleCustomInstructions} disabled={generateMutation.isPending}>
-              {generateMutation.isPending ? "Processing..." : "Apply"}
+            <Button 
+              onClick={handleCustomInstructions} 
+              disabled={generateMutation.isPending}
+              className="bg-[#FF6600] hover:bg-black hover:text-[#FF6600] border border-[#FF6600]"
+            >
+              {generateMutation.isPending ? (
+                <span className="flex items-center">
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Processing...
+                </span>
+              ) : "Apply"}
             </Button>
           </DialogFooter>
         </DialogContent>

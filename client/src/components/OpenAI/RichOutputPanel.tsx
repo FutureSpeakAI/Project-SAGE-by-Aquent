@@ -510,10 +510,22 @@ export function RichOutputPanel({
         <CardContent className="p-0 flex-1 overflow-auto relative">
           {/* Loading state */}
           {isLoading && (
-            <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
+            <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10 animate-fade-in">
               <div className="flex flex-col items-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#FF6600]"></div>
-                <p className="mt-2 text-gray-600 text-sm">Generating ninja content...</p>
+                <div className="relative">
+                  <svg width="60" height="60" viewBox="0 0 24 24" className="text-[#FF6600] animate-spin-slow">
+                    <g transform="translate(12, 12)">
+                      {/* Main star shape */}
+                      <path fill="currentColor" d="M0,-8 L2,-2 L8,0 L2,2 L0,8 L-2,2 L-8,0 L-2,-2 Z" />
+                      {/* Inner details */}
+                      <path fill="black" d="M0,-4 L1,-1 L4,0 L1,1 L0,4 L-1,1 L-4,0 L-1,-1 Z" />
+                      {/* Center circle */}
+                      <circle fill="white" cx="0" cy="0" r="1.5" />
+                    </g>
+                  </svg>
+                </div>
+                <p className="mt-4 text-[#FF6600] text-base font-medium animate-pulse-subtle">Generating ninja content...</p>
+                <p className="text-xs text-gray-500 mt-1">Please wait while our ninja works magic</p>
               </div>
             </div>
           )}
