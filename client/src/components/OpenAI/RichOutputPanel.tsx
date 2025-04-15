@@ -597,7 +597,7 @@ export function RichOutputPanel({
                     className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border-2"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    Save to Ninja Memory
+                    Save to Content Library
                   </Button>
                 </div>
               </div>
@@ -612,7 +612,7 @@ export function RichOutputPanel({
           <DialogHeader>
             <DialogTitle>Save Content to Library</DialogTitle>
             <DialogDescription>
-              Enter a title for this content to save it to your ninja library.
+              Enter a title for this content to save it to your content library.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

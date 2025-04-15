@@ -27,9 +27,9 @@ export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary }: HeaderP
             </div>
             <div className="ml-3">
               <h1 className="text-xl font-bold text-white">
-                <span className="text-[#FF6600]">MyMarketing</span>.Ninja
+                <span className="text-[#FF6600]">Aquent</span> Content AI
               </h1>
-              <p className="text-gray-300 text-xs">Smart content that cuts through the noise</p>
+              <p className="text-gray-300 text-xs">Smart content creation powered by AI</p>
             </div>
           </div>
           
@@ -44,7 +44,7 @@ export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary }: HeaderP
                 className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600]"
               >
                 <Library className="h-4 w-4 mr-2" />
-                Ninja Memory
+                Content Library
               </Button>
             )}
             

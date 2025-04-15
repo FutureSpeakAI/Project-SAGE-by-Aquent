@@ -68,12 +68,12 @@ export function UserPromptPanel({
           {isGenerating ? (
             <span className="flex items-center">
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Summoning Ninja...
+              Generating...
             </span>
           ) : (
             <>
               <Zap className="mr-2 h-4 w-4" />
-              Generate Ninja Content
+              Generate Content
             </>
           )}
         </Button>
