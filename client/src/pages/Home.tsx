@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Header } from "@/components/Layout/Header";
 import { SystemPromptPanel } from "@/components/OpenAI/SystemPromptPanel";
 import { UserPromptPanel } from "@/components/OpenAI/UserPromptPanel";
-import { OutputPanel } from "@/components/OpenAI/OutputPanel";
+import { RichOutputPanel } from "@/components/OpenAI/RichOutputPanel";
 import { ApiKeyModal } from "@/components/OpenAI/ApiKeyModal";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
@@ -115,12 +115,15 @@ export default function Home() {
             
             {/* Right side (output) */}
             <div className="w-full lg:w-1/2">
-              <OutputPanel
+              <RichOutputPanel
                 content={generatedContent}
                 isLoading={generateMutation.isPending}
                 error={generateMutation.error?.message || null}
                 onClear={handleClearOutput}
                 onRetry={handleGenerate}
+                apiKey={apiKey}
+                model={model}
+                temperature={temperature}
               />
             </div>
           </div>
