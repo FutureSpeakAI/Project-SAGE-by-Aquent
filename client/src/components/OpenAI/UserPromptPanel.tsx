@@ -63,7 +63,7 @@ export function UserPromptPanel({
         <Button 
           onClick={onGenerate} 
           disabled={!userPrompt.trim() || isGenerating}
-          className="bg-[#FF6600] hover:bg-black hover:text-[#FF6600] border border-[#FF6600]"
+          className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border border-[#FF6600]"
         >
           {isGenerating ? (
             <span className="flex items-center">

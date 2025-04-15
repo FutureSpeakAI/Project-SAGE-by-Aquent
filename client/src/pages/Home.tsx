@@ -159,18 +159,6 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Library button */}
-          <div className="mb-4 flex justify-end">
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"
-              onClick={() => setLibraryOpen(true)}
-            >
-              <Library className="h-4 w-4" />
-              <span>Open Library</span>
-            </Button>
-          </div>
-          
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left side (input) */}
             <div className="w-full lg:w-1/2 space-y-6">

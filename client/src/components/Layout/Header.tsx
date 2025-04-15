@@ -37,7 +37,7 @@ export function Header({ onOpenApiKeyModal }: HeaderProps) {
             variant="outline" 
             size="sm" 
             onClick={onOpenApiKeyModal}
-            className="text-white hover:bg-[#FF6600] hover:text-white border-white hover:border-[#FF6600]"
+            className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600]"
           >
             <KeyRound className="h-4 w-4 mr-2" />
             OpenAI API Key
