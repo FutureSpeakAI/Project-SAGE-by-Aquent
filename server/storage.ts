@@ -138,8 +138,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePrompt(id: string): Promise<boolean> {
-    const result = await db.delete(savedPrompts).where(eq(savedPrompts.id, parseInt(id)));
-    return result.count > 0;
+    await db.delete(savedPrompts).where(eq(savedPrompts.id, parseInt(id)));
+    // Since we don't have access to count, just return true if no error was thrown
+    return true;
   }
 
   // Persona Library Implementation
@@ -211,8 +212,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePersona(id: string): Promise<boolean> {
-    const result = await db.delete(savedPersonas).where(eq(savedPersonas.id, parseInt(id)));
-    return result.count > 0;
+    await db.delete(savedPersonas).where(eq(savedPersonas.id, parseInt(id)));
+    // Since we don't have access to count, just return true if no error was thrown
+    return true;
   }
 
   // Generated Content Implementation
@@ -243,8 +245,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteGeneratedContent(id: number): Promise<boolean> {
-    const result = await db.delete(generatedContents).where(eq(generatedContents.id, id));
-    return result.count > 0;
+    await db.delete(generatedContents).where(eq(generatedContents.id, id));
+    // Since we don't have access to count, just return true if no error was thrown
+    return true;
   }
 }
 

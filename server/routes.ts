@@ -182,6 +182,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generated Content API Routes
+  app.get("/api/generated-contents", async (_req: Request, res: Response) => {
+    try {
+      const contents = await storage.getGeneratedContents();
+      res.json(contents);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch generated contents" });
+    }
+  });
+
+  app.get("/api/generated-contents/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const content = await storage.getGeneratedContent(id);
+      
+      if (!content) {
+        return res.status(404).json({ error: "Generated content not found" });
+      }
+      
+      res.json(content);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch generated content" });
+    }
+  });
+
+  app.post("/api/generated-contents", async (req: Request, res: Response) => {
+    try {
+      const { title, content, systemPrompt, userPrompt, model, temperature, metadata } = req.body;
+      
+      if (!title || !content) {
+        return res.status(400).json({ error: "Title and content are required" });
+      }
+      
+      const savedContent = await storage.saveGeneratedContent({
+        title,
+        content,
+        systemPrompt: systemPrompt || null,
+        userPrompt: userPrompt || null,
+        model: model || null,
+        temperature: temperature?.toString() || null,
+        metadata: metadata || null,
+      });
+      
+      res.status(201).json(savedContent);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save generated content" });
+    }
+  });
+
+  app.put("/api/generated-contents/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { title, content, systemPrompt, userPrompt, model, temperature, metadata } = req.body;
+      
+      if (!title && !content) {
+        return res.status(400).json({ error: "At least title or content must be provided for update" });
+      }
+      
+      const updatedContent = await storage.updateGeneratedContent(id, {
+        ...(title && { title }),
+        ...(content && { content }),
+        ...(systemPrompt !== undefined && { systemPrompt }),
+        ...(userPrompt !== undefined && { userPrompt }),
+        ...(model !== undefined && { model }),
+        ...(temperature !== undefined && { temperature: temperature?.toString() }),
+        ...(metadata !== undefined && { metadata }),
+      });
+      
+      if (!updatedContent) {
+        return res.status(404).json({ error: "Generated content not found" });
+      }
+      
+      res.json(updatedContent);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update generated content" });
+    }
+  });
+
+  app.delete("/api/generated-contents/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const result = await storage.deleteGeneratedContent(id);
+      
+      if (!result) {
+        return res.status(404).json({ error: "Generated content not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete generated content" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
