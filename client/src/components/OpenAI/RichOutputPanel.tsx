@@ -171,28 +171,32 @@ export function RichOutputPanel({
 
     const formattedNewText = processFormattedText(newText);
     
-    if (editorRef.current && replaceSelection) {
-      const selection = editorRef.current.getEditor().getSelection();
-      if (selection && selection.length > 0) {
-        // Use the formatted HTML content
-        editorRef.current.getEditor().deleteText(selection.index, selection.length);
-        editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(selection.index, formattedNewText);
-        
-        // Update the state with the full content
-        setEditableContent(editorRef.current.getEditor().root.innerHTML);
+    if (editorRef.current) {
+      if (replaceSelection) {
+        // When replacing selected text (context menu operations)
+        const selection = editorRef.current.getEditor().getSelection();
+        if (selection && selection.length > 0) {
+          // Delete the selected text
+          editorRef.current.getEditor().deleteText(selection.index, selection.length);
+          // Insert the formatted HTML at the selection point
+          editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(selection.index, formattedNewText);
+          // Update the state with the full content
+          setEditableContent(editorRef.current.getEditor().root.innerHTML);
+        } else {
+          // If no selection but replaceSelection was requested, this is likely
+          // from a context menu operation that lost its selection. In this case,
+          // we'll just append to avoid a confusing UX
+          const length = editorRef.current.getEditor().getLength();
+          editorRef.current.getEditor().insertText(length, '\n\n');
+          editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(length + 2, formattedNewText);
+          setEditableContent(editorRef.current.getEditor().root.innerHTML);
+        }
       } else {
-        // If no selection, append to the end
-        const length = editorRef.current.getEditor().getLength();
-        // First add newlines
-        editorRef.current.getEditor().insertText(length, '\n\n');
-        // Then paste the HTML content
-        editorRef.current.getEditor().clipboard.dangerouslyPasteHTML(length + 2, formattedNewText);
-        
-        // Update the state with the full content
-        setEditableContent(editorRef.current.getEditor().root.innerHTML);
+        // Not replacing, so just set the entire content (this is likely the initial content load)
+        setEditableContent(formattedNewText);
       }
     } else {
-      // If not replacing, just set the content with formatting
+      // No editor reference, just set the content with formatting
       setEditableContent(formattedNewText);
     }
   }, []);

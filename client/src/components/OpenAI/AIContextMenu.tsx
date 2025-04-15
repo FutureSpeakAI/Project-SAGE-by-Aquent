@@ -58,7 +58,7 @@ export function AIContextMenu({
     },
   });
 
-  const processWithAI = (instruction: string, replaceSelection = true) => {
+  const processWithAI = (instruction: string) => {
     if (!selectedText) {
       toast({
         title: "No text selected",
@@ -71,6 +71,7 @@ export function AIContextMenu({
     const systemPrompt = `You are an expert editor and writer. Your task is to ${instruction} the following text. 
     Only return the processed text without any additional comments or explanations.`;
 
+    // Always pass true to ensure selection replacement
     generateMutation.mutate({
       apiKey,
       model,
@@ -120,28 +121,28 @@ export function AIContextMenu({
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-64">
           <ContextMenuItem
-            onClick={() => processWithAI("revise and improve", true)}
+            onClick={() => processWithAI("revise and improve")}
             disabled={!selectedText || generateMutation.isPending}
           >
             <Wand2 className="mr-2 h-4 w-4" />
             AI Revise
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={() => processWithAI("improve the clarity, flow, and grammar of", true)}
+            onClick={() => processWithAI("improve the clarity, flow, and grammar of")}
             disabled={!selectedText || generateMutation.isPending}
           >
             <Zap className="mr-2 h-4 w-4" />
             AI Improve
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={() => processWithAI("expand with more details and examples", true)}
+            onClick={() => processWithAI("expand with more details and examples")}
             disabled={!selectedText || generateMutation.isPending}
           >
             <Expand className="mr-2 h-4 w-4" />
             AI Expand
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={() => processWithAI("summarize concisely while keeping the key points", true)}
+            onClick={() => processWithAI("summarize concisely while keeping the key points")}
             disabled={!selectedText || generateMutation.isPending}
           >
             <Minimize className="mr-2 h-4 w-4" />
