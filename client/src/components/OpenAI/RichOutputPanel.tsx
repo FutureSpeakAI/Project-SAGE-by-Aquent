@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AIContextMenu } from "./AIContextMenu";
 import { 
   Trash2, AlertCircle, Download, FileText, 
-  File, Copy, RotateCcw, Code
+  File, Copy, RotateCcw, Code, Users
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -446,6 +446,7 @@ export function RichOutputPanel({
             apiKey={apiKey}
             model={model}
             temperature={temperature}
+            onOpenPersonaLibrary={onOpenPersonaLibrary}
           >
             <div 
               className="p-4" 

@@ -30,6 +30,7 @@ interface AIContextMenuProps {
   apiKey: string;
   model: string;
   temperature: number;
+  onOpenPersonaLibrary?: () => void;
 }
 
 export function AIContextMenu({
@@ -39,6 +40,7 @@ export function AIContextMenu({
   apiKey,
   model,
   temperature,
+  onOpenPersonaLibrary,
 }: AIContextMenuProps) {
   const [customInstructionsOpen, setCustomInstructionsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState("");
