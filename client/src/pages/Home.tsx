@@ -70,9 +70,18 @@ export default function Home() {
       setGeneratedContent(data.content);
     },
     onError: (error: Error) => {
+      // Check if this is an API key related error
+      const isApiKeyError = error.message && (
+        error.message.includes("API key") || 
+        error.message.includes("authentication") || 
+        error.message.includes("401")
+      );
+      
       toast({
-        title: "Generation failed",
-        description: error.message,
+        title: isApiKeyError ? "API Authentication Error" : "Generation failed",
+        description: isApiKeyError 
+          ? "The server's OpenAI API key appears to be invalid. Please contact the administrator."
+          : error.message,
         variant: "destructive",
       });
     },

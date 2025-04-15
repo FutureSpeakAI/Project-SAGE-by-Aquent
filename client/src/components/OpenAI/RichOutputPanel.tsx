@@ -552,6 +552,15 @@ export function RichOutputPanel({
               </div>
               <p className="text-gray-700 font-medium">An error occurred</p>
               <p className="text-gray-500 mt-2">{error}</p>
+              {error && error.includes("API key") && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md max-w-md">
+                  <p className="text-amber-700 text-sm">
+                    <strong>Note:</strong> The server is having issues with the OpenAI API key.
+                    This is a server configuration issue and not related to your account.
+                    Please contact the administrator for assistance.
+                  </p>
+                </div>
+              )}
               <Button 
                 variant="outline" 
                 className="mt-4 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"

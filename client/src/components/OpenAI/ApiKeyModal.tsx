@@ -56,6 +56,11 @@ export function ApiKeyModal({
                     Your requests will still work as before, but now the API key is
                     managed by the server administrator.
                   </p>
+                  <p className="mt-2">
+                    <strong>Note:</strong> If you're experiencing API errors, please 
+                    contact the administrator to verify that a valid OpenAI API key 
+                    has been configured on the server.
+                  </p>
                 </div>
               </div>
             </div>

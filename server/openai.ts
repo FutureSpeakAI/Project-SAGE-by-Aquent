@@ -47,7 +47,11 @@ export const generateContent = async (req: Request, res: Response) => {
     
     // Handle common OpenAI API errors
     if (error.status === 401) {
-      return res.status(401).json({ message: "Invalid API key. Please check your OpenAI API key and try again." });
+      console.error("OpenAI API key error details:", error.error);
+      return res.status(401).json({ 
+        message: "Invalid API key. Please check your OpenAI API key and try again.", 
+        details: "The server is using an invalid or expired API key. Please contact the administrator."
+      });
     } 
     
     if (error.status === 429) {
