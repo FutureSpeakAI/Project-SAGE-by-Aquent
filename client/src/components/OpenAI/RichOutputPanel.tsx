@@ -1,10 +1,16 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AIContextMenu } from "./AIContextMenu";
 import { 
   Trash2, AlertCircle, Download, FileText, 
-  File, Copy, RotateCcw, Code, Users
+  File, Copy, RotateCcw, Code, Users, Save,
+  BookmarkIcon, Bookmark
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -44,6 +50,9 @@ export function RichOutputPanel({
 }: RichOutputPanelProps) {
   const [editableContent, setEditableContent] = useState(content);
   const [selectedText, setSelectedText] = useState("");
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [contentTitle, setContentTitle] = useState("");
+  const [savedContentLibraryOpen, setSavedContentLibraryOpen] = useState(false);
   const editorRef = useRef<ReactQuill>(null);
   const { toast } = useToast();
 
@@ -381,6 +390,41 @@ export function RichOutputPanel({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setSaveDialogOpen(true)}
+                    className="text-[#FF6600]"
+                  >
+                    <Bookmark className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Save to library</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setSavedContentLibraryOpen(true)}
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Open content library</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <TooltipProvider>
               <Tooltip>

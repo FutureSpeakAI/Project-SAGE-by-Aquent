@@ -25,7 +25,7 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
   const [editTitle, setEditTitle] = useState("");
 
   // Fetch saved content
-  const { data: savedContents, isLoading } = useQuery({
+  const { data: savedContents = [], isLoading } = useQuery<GeneratedContent[]>({
     queryKey: ['/api/generated-contents'],
     enabled: open,
   });
@@ -33,9 +33,7 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
   // Delete content mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest('/api/generated-contents/' + id, {
-        method: 'DELETE',
-      });
+      return await apiRequest('DELETE', `/api/generated-contents/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/generated-contents'] });
@@ -56,10 +54,7 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
   // Update content mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, title }: { id: number; title: string }) => {
-      return await apiRequest('/api/generated-contents/' + id, {
-        method: 'PUT',
-        body: JSON.stringify({ title }),
-      });
+      return await apiRequest('PUT', `/api/generated-contents/${id}`, { title });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/generated-contents'] });
