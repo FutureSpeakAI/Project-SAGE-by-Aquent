@@ -20,6 +20,7 @@ import { ContentTab } from "@/components/Content/ContentTab";
 import { BriefingTab } from "@/components/Briefing/BriefingTab";
 import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
 import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
+import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
 import { AppTab } from "@/App";
 
 export default function Home() {
@@ -266,6 +267,9 @@ export default function Home() {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
+          {/* Database status alert */}
+          <DatabaseStatusAlert />
+          
           {/* Tab navigation */}
           <TabNavigation activeTab={activeTab} onChangeTab={setActiveTab} />
           
