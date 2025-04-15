@@ -40,7 +40,6 @@ export function ContentTab({
   handleOpenPersonaLibrary,
   handleOpenPromptLibrary,
   handleOpenBriefingLibrary,
-  apiKey,
   model,
   setModel,
   temperature,

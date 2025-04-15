@@ -21,7 +21,6 @@ interface Message {
 }
 
 interface BriefingTabProps {
-  apiKey: string;
   model: string;
   temperature: number;
   personas: SavedPersona[] | undefined;
@@ -31,7 +30,6 @@ interface BriefingTabProps {
 }
 
 export function BriefingTab({
-  apiKey,
   model,
   temperature,
   personas,
@@ -65,7 +63,7 @@ export function BriefingTab({
   }, [messages]);
   
   const sendMessage = async () => {
-    if (!userInput.trim() || !apiKey) return;
+    if (!userInput.trim()) return;
     
     const newMessage: Message = {
       role: 'user',
@@ -86,7 +84,6 @@ export function BriefingTab({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey,
           model,
           systemPrompt: messages[0].content,
           userPrompt: [...messages.slice(1), newMessage]
@@ -120,8 +117,6 @@ export function BriefingTab({
   };
   
   const generateBriefing = async () => {
-    if (!apiKey) return;
-    
     setIsLoading(true);
     setError(null);
     
@@ -133,7 +128,6 @@ export function BriefingTab({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey,
           model,
           systemPrompt: "Based on the conversation, create a comprehensive creative briefing document that will serve as a detailed guide for content creators. Include these sections:\n\n1. Project Overview (detailed project description, context, and background)\n2. Objectives (specific, measurable goals of the project)\n3. Target Audience (detailed persona descriptions including demographics, pain points, and motivations)\n4. Key Messages (primary communication points and value propositions)\n5. Deliverables (detailed specifications for each deliverable including format, length, tone, style, and technical requirements)\n6. Content Creation Guidelines (specific instructions on voice, tone, specific terminology to use or avoid)\n7. Timeline (comprehensive schedule with milestones and deadlines)\n8. Success Metrics (how the content's performance will be measured)\n\nPay special attention to the Deliverables and Content Creation Guidelines sections - these should contain extremely specific instructions that would allow someone to immediately start creating the required content.\n\nUSE HTML FORMATTING for rich text output with these guidelines:\n1. Use <h1>, <h2>, <h3> tags for headings\n2. Use <ul> and <li> for bullet points\n3. Use <ol> and <li> for numbered steps\n4. Use <p> for paragraphs\n5. Use <strong> for emphasis\n6. Use <hr> for section dividers\n7. Use <blockquote> for highlighted information\n\nMake the document visually organized, professional, and comprehensive. The HTML will be rendered directly in a rich text editor.",
           userPrompt: messages

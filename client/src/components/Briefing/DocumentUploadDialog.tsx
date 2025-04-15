@@ -11,7 +11,6 @@ interface DocumentUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDocumentProcessed: (content: string) => void;
-  apiKey: string;
 }
 
 export function DocumentUploadDialog({

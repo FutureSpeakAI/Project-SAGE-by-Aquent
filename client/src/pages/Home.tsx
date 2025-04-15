@@ -285,7 +285,6 @@ export default function Home() {
                   handleOpenPersonaLibrary={handleOpenPersonaLibrary}
                   handleOpenPromptLibrary={handleOpenPromptLibrary}
                   handleOpenBriefingLibrary={handleOpenBriefingLibrary}
-                  apiKey={apiKey}
                   model={model}
                   setModel={setModel}
                   temperature={temperature}
@@ -295,7 +294,6 @@ export default function Home() {
               ) : (
                 <BriefingTab
                   key="briefing-tab"
-                  apiKey={apiKey}
                   model={model}
                   temperature={temperature}
                   personas={personas}
