@@ -185,11 +185,11 @@ export function AIContextMenu({
     return (
       <>
         {isProcessing ? (
-          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#FF6600] border-t-transparent" />
         ) : (
           icon
         )}
-        <span className={isProcessing ? "text-primary font-medium" : ""}>
+        <span className={isProcessing ? "text-[#FF6600] font-medium" : ""}>
           {isProcessing ? `Processing ${name}...` : name}
         </span>
       </>
