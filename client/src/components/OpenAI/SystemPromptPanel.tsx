@@ -1,10 +1,11 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, BookText } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 
 interface SystemPromptPanelProps {
   systemPrompt: string;
@@ -13,6 +14,7 @@ interface SystemPromptPanelProps {
   setModel: (model: string) => void;
   temperature: number;
   setTemperature: (temp: number) => void;
+  onOpenPromptLibrary?: () => void;
 }
 
 export function SystemPromptPanel({
@@ -22,6 +24,7 @@ export function SystemPromptPanel({
   setModel,
   temperature,
   setTemperature,
+  onOpenPromptLibrary,
 }: SystemPromptPanelProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -40,9 +43,26 @@ export function SystemPromptPanel({
       
       <CollapsibleContent>
         <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600">
-            Configure how the AI should behave when responding to your prompts.
-          </p>
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              Configure how the AI should behave when responding to your prompts.
+            </p>
+            
+            {onOpenPromptLibrary && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenPromptLibrary();
+                }}
+              >
+                <BookText className="h-4 w-4" />
+                <span>Prompt Library</span>
+              </Button>
+            )}
+          </div>
           
           <div className="space-y-2">
             <Label htmlFor="systemPrompt">System Instructions</Label>

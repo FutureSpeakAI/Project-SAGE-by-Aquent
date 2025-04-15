@@ -28,6 +28,7 @@ interface RichOutputPanelProps {
   apiKey: string;
   model: string;
   temperature: number;
+  onOpenPersonaLibrary?: () => void;
 }
 
 export function RichOutputPanel({
@@ -38,7 +39,8 @@ export function RichOutputPanel({
   onRetry,
   apiKey,
   model,
-  temperature
+  temperature,
+  onOpenPersonaLibrary
 }: RichOutputPanelProps) {
   const [editableContent, setEditableContent] = useState(content);
   const [selectedText, setSelectedText] = useState("");

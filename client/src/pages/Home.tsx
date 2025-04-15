@@ -7,13 +7,20 @@ import { SystemPromptPanel } from "@/components/OpenAI/SystemPromptPanel";
 import { UserPromptPanel } from "@/components/OpenAI/UserPromptPanel";
 import { RichOutputPanel } from "@/components/OpenAI/RichOutputPanel";
 import { ApiKeyModal } from "@/components/OpenAI/ApiKeyModal";
+import { LibraryDialog } from "@/components/OpenAI/LibraryDialog";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { GenerateRequest, GenerateResponse } from "@/lib/types";
+import { GenerateRequest, GenerateResponse, SavedPrompt, SavedPersona } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Library } from "lucide-react";
 
 export default function Home() {
   // API key state
   const [apiKey, setApiKey] = useLocalStorage<string>("openai-api-key", "");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  
+  // Library dialog state
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [activeLibraryTab, setActiveLibraryTab] = useState<"prompts" | "personas">("prompts");
   
   // Configuration state
   const [systemPrompt, setSystemPrompt] = useLocalStorage<string>(
@@ -80,6 +87,43 @@ export default function Home() {
     setGeneratedContent("");
   };
 
+  // Handle selecting a saved prompt
+  const handleSelectPrompt = (prompt: SavedPrompt) => {
+    if (prompt.systemPrompt) {
+      setSystemPrompt(prompt.systemPrompt);
+    }
+    
+    if (prompt.userPrompt) {
+      setUserPrompt(prompt.userPrompt);
+    }
+    
+    toast({
+      title: "Prompt Loaded",
+      description: `The prompt "${prompt.name}" has been loaded.`,
+    });
+  };
+
+  // Handle selecting a persona for the context menu
+  const handleSelectPersona = (persona: SavedPersona) => {
+    // This will be used in the context menu component
+    toast({
+      title: "Persona Selected",
+      description: `The persona "${persona.name}" is now active for text transformations.`,
+    });
+  };
+
+  // Open the library dialog to the prompts tab
+  const handleOpenPromptLibrary = () => {
+    setActiveLibraryTab("prompts");
+    setLibraryOpen(true);
+  };
+
+  // Open the library dialog to the personas tab
+  const handleOpenPersonaLibrary = () => {
+    setActiveLibraryTab("personas");
+    setLibraryOpen(true);
+  };
+
   // Check for API key on component mount
   useEffect(() => {
     if (!apiKey) {
@@ -93,6 +137,18 @@ export default function Home() {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
+          {/* Library button */}
+          <div className="mb-4 flex justify-end">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => setLibraryOpen(true)}
+            >
+              <Library className="h-4 w-4" />
+              <span>Open Library</span>
+            </Button>
+          </div>
+          
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left side (input) */}
             <div className="w-full lg:w-1/2 space-y-6">
@@ -103,6 +159,7 @@ export default function Home() {
                 setModel={setModel}
                 temperature={temperature}
                 setTemperature={setTemperature}
+                onOpenPromptLibrary={handleOpenPromptLibrary}
               />
               
               <UserPromptPanel
@@ -124,17 +181,27 @@ export default function Home() {
                 apiKey={apiKey}
                 model={model}
                 temperature={temperature}
+                onOpenPersonaLibrary={handleOpenPersonaLibrary}
               />
             </div>
           </div>
         </div>
       </main>
 
+      {/* Modals & Dialogs */}
       <ApiKeyModal
         open={apiKeyModalOpen}
         onOpenChange={setApiKeyModalOpen}
         apiKey={apiKey}
         setApiKey={setApiKey}
+      />
+      
+      <LibraryDialog
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        onSelectPrompt={handleSelectPrompt}
+        onSelectPersona={handleSelectPersona}
+        initialTab={activeLibraryTab}
       />
     </div>
   );
