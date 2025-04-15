@@ -241,23 +241,23 @@ export function AIContextMenu({
             </ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-60">
               <ContextMenuItem
-                onClick={() => startProcessWithAI("expand with more details and examples", "AI Expand")}
+                onClick={() => startProcessWithAI("expand with more details and examples", "Expand with Details")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Expand className="mr-2 h-4 w-4" />, 
                   "Expand with Details", 
-                  processingOperation === "AI Expand" && generateMutation.isPending
+                  processingOperation === "Expand with Details" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("summarize concisely while keeping the key points", "AI Summarize")}
+                onClick={() => startProcessWithAI("summarize concisely while keeping the key points", "Summarize Briefly")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Minimize className="mr-2 h-4 w-4" />, 
                   "Summarize Briefly", 
-                  processingOperation === "AI Summarize" && generateMutation.isPending
+                  processingOperation === "Summarize Briefly" && generateMutation.isPending
                 )}
               </ContextMenuItem>
             </ContextMenuSubContent>
@@ -273,73 +273,73 @@ export function AIContextMenu({
             </ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-60">
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in a formal and professional tone while maintaining similar length", "Formal Tone")}
+                onClick={() => startProcessWithAI("rewrite in a formal and professional tone while maintaining similar length", "Formal")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Briefcase className="mr-2 h-4 w-4" />, 
                   "Formal", 
-                  processingOperation === "Formal Tone" && generateMutation.isPending
+                  processingOperation === "Formal" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in a professional and authoritative tone while maintaining similar length", "Professional Tone")}
+                onClick={() => startProcessWithAI("rewrite in a professional and authoritative tone while maintaining similar length", "Professional")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Landmark className="mr-2 h-4 w-4" />, 
                   "Professional", 
-                  processingOperation === "Professional Tone" && generateMutation.isPending
+                  processingOperation === "Professional" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in a friendly and approachable tone while maintaining similar length", "Friendly Tone")}
+                onClick={() => startProcessWithAI("rewrite in a friendly and approachable tone while maintaining similar length", "Friendly")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Smile className="mr-2 h-4 w-4" />, 
                   "Friendly", 
-                  processingOperation === "Friendly Tone" && generateMutation.isPending
+                  processingOperation === "Friendly" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in a casual and conversational tone while maintaining similar length", "Chatty Tone")}
+                onClick={() => startProcessWithAI("rewrite in a casual and conversational tone while maintaining similar length", "Conversational")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <MessageSquare className="mr-2 h-4 w-4" />, 
                   "Conversational", 
-                  processingOperation === "Chatty Tone" && generateMutation.isPending
+                  processingOperation === "Conversational" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in a witty and humorous tone while maintaining similar length", "Witty Tone")}
+                onClick={() => startProcessWithAI("rewrite in a witty and humorous tone while maintaining similar length", "Witty")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Lightbulb className="mr-2 h-4 w-4" />, 
                   "Witty", 
-                  processingOperation === "Witty Tone" && generateMutation.isPending
+                  processingOperation === "Witty" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in an academic and scholarly tone while maintaining similar length", "Academic Tone")}
+                onClick={() => startProcessWithAI("rewrite in an academic and scholarly tone while maintaining similar length", "Academic")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <GraduationCap className="mr-2 h-4 w-4" />, 
                   "Academic", 
-                  processingOperation === "Academic Tone" && generateMutation.isPending
+                  processingOperation === "Academic" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("rewrite in a poetic and lyrical tone while maintaining similar length", "Poetic Tone")}
+                onClick={() => startProcessWithAI("rewrite in a poetic and lyrical tone while maintaining similar length", "Poetic")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <BookMarked className="mr-2 h-4 w-4" />, 
                   "Poetic", 
-                  processingOperation === "Poetic Tone" && generateMutation.isPending
+                  processingOperation === "Poetic" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
