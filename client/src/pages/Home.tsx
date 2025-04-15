@@ -3,17 +3,21 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Header } from "@/components/Layout/Header";
-import { SystemPromptPanel } from "@/components/OpenAI/SystemPromptPanel";
-import { UserPromptPanel } from "@/components/OpenAI/UserPromptPanel";
-import { RichOutputPanel } from "@/components/OpenAI/RichOutputPanel";
 import { ApiKeyModal } from "@/components/OpenAI/ApiKeyModal";
 import { LibraryDialog } from "@/components/OpenAI/LibraryDialog";
 import { SavedContentLibrary } from "@/components/OpenAI/SavedContentLibrary";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { GenerateRequest, GenerateResponse, SavedPrompt, SavedPersona } from "@/lib/types";
-import { GeneratedContent } from "@shared/schema";
+import { ContentType, GeneratedContent } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Library } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { TabNavigation } from "@/components/Layout/TabNavigation";
+import { ContentTab } from "@/components/Content/ContentTab";
+import { BriefingTab } from "@/components/Briefing/BriefingTab";
+import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
+import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
+import { AppTab } from "@/App";
 
 export default function Home() {
   // API key state
@@ -164,6 +168,84 @@ export default function Home() {
       description: `The content "${content.title}" has been loaded.`,
     });
   };
+  
+  // Tab-related state
+  const [activeTab, setActiveTab] = useState<AppTab>(AppTab.CONTENT);
+  const [briefingLibraryOpen, setBriefingLibraryOpen] = useState(false);
+  const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
+  const [briefingContent, setBriefingContent] = useState("");
+  
+  // Handle briefing-related actions
+  const handleOpenBriefingLibrary = () => {
+    setBriefingLibraryOpen(true);
+  };
+  
+  const handleSelectBriefing = (content: GeneratedContent) => {
+    // Set briefing content to the user prompt as a reference
+    setUserPrompt(content.content);
+    
+    toast({
+      title: "Briefing Selected",
+      description: `The briefing "${content.title}" has been loaded into your prompt.`,
+    });
+    
+    setBriefingLibraryOpen(false);
+  };
+  
+  const handleOpenDocumentUpload = () => {
+    setDocumentUploadOpen(true);
+  };
+  
+  const handleDocumentProcessed = (content: string) => {
+    // Set the processed document content as the user prompt
+    setUserPrompt(content);
+    
+    toast({
+      title: "Document Processed",
+      description: "Your document has been processed and loaded into the prompt.",
+    });
+  };
+  
+  const handleSaveBriefing = (title: string, content: string) => {
+    // Create a new saved content record with type 'briefing'
+    const newBriefing = {
+      title,
+      content,
+      contentType: ContentType.BRIEFING,
+      systemPrompt: null,
+      userPrompt: null,
+      model: null,
+      temperature: null,
+      metadata: null
+    };
+    
+    fetch('/api/generated-contents', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newBriefing),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to save briefing');
+        }
+        return response.json();
+      })
+      .then(() => {
+        toast({
+          title: "Briefing Saved",
+          description: "Your briefing has been saved to the library.",
+        });
+      })
+      .catch(error => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to save briefing.",
+          variant: "destructive",
+        });
+      });
+  };
 
   // Check for API key on component mount
   useEffect(() => {
@@ -200,43 +282,47 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left side (input) */}
-            <div className="w-full lg:w-1/2 space-y-6">
-              <SystemPromptPanel
-                systemPrompt={systemPrompt}
-                setSystemPrompt={setSystemPrompt}
-                model={model}
-                setModel={setModel}
-                temperature={temperature}
-                setTemperature={setTemperature}
-                onOpenPersonaLibrary={handleOpenPersonaLibrary}
-              />
-              
-              <UserPromptPanel
-                userPrompt={userPrompt}
-                setUserPrompt={setUserPrompt}
-                onGenerate={handleGenerate}
-                isGenerating={generateMutation.isPending}
-                onOpenPromptLibrary={handleOpenPromptLibrary}
-              />
-            </div>
-            
-            {/* Right side (output) */}
-            <div className="w-full lg:w-1/2">
-              <RichOutputPanel
-                content={generatedContent}
-                isLoading={generateMutation.isPending}
-                error={generateMutation.error?.message || null}
-                onClear={handleClearOutput}
-                onRetry={handleGenerate}
-                apiKey={apiKey}
-                model={model}
-                temperature={temperature}
-                onOpenPersonaLibrary={handleOpenPersonaLibrary}
-                personas={personas}
-              />
-            </div>
+          {/* Tab navigation */}
+          <TabNavigation activeTab={activeTab} onChangeTab={setActiveTab} />
+          
+          {/* Tab content with animations */}
+          <div className="mt-6">
+            <AnimatePresence mode="wait">
+              {activeTab === AppTab.CONTENT ? (
+                <ContentTab 
+                  key="content-tab"
+                  systemPrompt={systemPrompt}
+                  setSystemPrompt={setSystemPrompt}
+                  userPrompt={userPrompt}
+                  setUserPrompt={setUserPrompt}
+                  generatedContent={generatedContent}
+                  isGenerating={generateMutation.isPending}
+                  error={generateMutation.error?.message || null}
+                  handleGenerate={handleGenerate}
+                  handleClearOutput={handleClearOutput}
+                  handleOpenPersonaLibrary={handleOpenPersonaLibrary}
+                  handleOpenPromptLibrary={handleOpenPromptLibrary}
+                  handleOpenBriefingLibrary={handleOpenBriefingLibrary}
+                  apiKey={apiKey}
+                  model={model}
+                  setModel={setModel}
+                  temperature={temperature}
+                  setTemperature={setTemperature}
+                  personas={personas}
+                />
+              ) : (
+                <BriefingTab
+                  key="briefing-tab"
+                  apiKey={apiKey}
+                  model={model}
+                  temperature={temperature}
+                  personas={personas}
+                  handleOpenPersonaLibrary={handleOpenPersonaLibrary}
+                  handleSaveBriefing={handleSaveBriefing}
+                  handleUploadDocument={handleOpenDocumentUpload}
+                />
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </main>
@@ -261,6 +347,20 @@ export default function Home() {
         open={savedContentLibraryOpen}
         onOpenChange={setSavedContentLibraryOpen}
         onSelectContent={handleSelectSavedContent}
+      />
+      
+      <BriefingLibrary
+        open={briefingLibraryOpen}
+        onOpenChange={setBriefingLibraryOpen}
+        onSelectBriefing={handleSelectBriefing}
+        onUploadDocument={handleOpenDocumentUpload}
+      />
+      
+      <DocumentUploadDialog
+        open={documentUploadOpen}
+        onOpenChange={setDocumentUploadOpen}
+        onDocumentProcessed={handleDocumentProcessed}
+        apiKey={apiKey}
       />
     </div>
   );
