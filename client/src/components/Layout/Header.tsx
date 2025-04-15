@@ -1,13 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { KeyRound, Library, Database } from "lucide-react";
+import { Library, Database } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HeaderProps {
-  onOpenApiKeyModal: () => void;
   onOpenSavedContentLibrary?: () => void;
   onOpenDataMigration?: () => void;
+  // Keeping this to avoid breaking existing code, but we won't use it anymore
+  onOpenApiKeyModal?: () => void;
 }
 
-export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary, onOpenDataMigration }: HeaderProps) {
+export function Header({ onOpenSavedContentLibrary, onOpenDataMigration, onOpenApiKeyModal }: HeaderProps) {
+  const isMobile = useIsMobile();
   return (
     <header className="bg-black py-3 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,7 +35,7 @@ export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary, onOpenDat
           </div>
           
           {/* Right side buttons */}
-          <div className="flex space-x-3">
+          <div className="flex space-x-2 md:space-x-3">
             {/* Saved Content Library button */}
             {onOpenSavedContentLibrary && (
               <Button 
@@ -41,8 +44,9 @@ export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary, onOpenDat
                 onClick={onOpenSavedContentLibrary}
                 className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
               >
-                <Library className="h-4 w-4 mr-2" />
-                Content Library
+                <Library className="h-4 w-4 mr-1 flex-shrink-0" />
+                {!isMobile && <span>Content Library</span>}
+                {isMobile && <span className="sr-only">Content Library</span>}
               </Button>
             )}
             
@@ -54,21 +58,11 @@ export function Header({ onOpenApiKeyModal, onOpenSavedContentLibrary, onOpenDat
                 onClick={onOpenDataMigration}
                 className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
               >
-                <Database className="h-4 w-4 mr-2" />
-                Data Migration
+                <Database className="h-4 w-4 mr-1 flex-shrink-0" />
+                {!isMobile && <span>Data Migration</span>}
+                {isMobile && <span className="sr-only">Data Migration</span>}
               </Button>
             )}
-            
-            {/* API Key button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onOpenApiKeyModal}
-              className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
-            >
-              <KeyRound className="h-4 w-4 mr-2" />
-              OpenAI API Key
-            </Button>
           </div>
         </div>
       </div>

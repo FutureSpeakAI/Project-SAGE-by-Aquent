@@ -32,7 +32,8 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
         title: 'Data Exported',
         description: 'Your data has been successfully exported.',
       });
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: 'Export Failed',
         description: error.message || 'Failed to export data.',
@@ -81,8 +82,8 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to import data');
+        const errorData = await response.json();
+        throw new Error(typeof errorData.message === 'string' ? errorData.message : 'Failed to import data');
       }
 
       toast({
@@ -92,7 +93,8 @@ export function DataMigrationDialog({ open, onOpenChange }: DataMigrationDialogP
       
       // Reset input field after successful import
       setImportData('');
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: 'Import Failed',
         description: error.message || 'Failed to import data.',
