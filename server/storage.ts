@@ -4,7 +4,9 @@ import {
   users, type User, type InsertUser,
   savedPrompts, type SavedPrompt as DbSavedPrompt, type InsertSavedPrompt,
   savedPersonas, type SavedPersona as DbSavedPersona, type InsertSavedPersona,
-  generatedContents, type GeneratedContent, type InsertGeneratedContent
+  generatedContents, type GeneratedContent, type InsertGeneratedContent,
+  briefConversations, type BriefConversation, type InsertBriefConversation,
+  ContentType
 } from "@shared/schema";
 
 export interface SavedPrompt {
@@ -45,11 +47,18 @@ export interface IStorage {
   deletePersona(id: string): Promise<boolean>;
   
   // Generated Content methods
-  getGeneratedContents(): Promise<GeneratedContent[]>;
+  getGeneratedContents(contentType?: string): Promise<GeneratedContent[]>;
   getGeneratedContent(id: number): Promise<GeneratedContent | undefined>;
   saveGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent>;
   updateGeneratedContent(id: number, content: Partial<InsertGeneratedContent>): Promise<GeneratedContent | undefined>;
   deleteGeneratedContent(id: number): Promise<boolean>;
+  
+  // Brief Conversation methods
+  getBriefConversations(): Promise<BriefConversation[]>;
+  getBriefConversation(id: number): Promise<BriefConversation | undefined>;
+  saveBriefConversation(conversation: InsertBriefConversation): Promise<BriefConversation>;
+  updateBriefConversation(id: number, conversation: Partial<InsertBriefConversation>): Promise<BriefConversation | undefined>;
+  deleteBriefConversation(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {

@@ -2,6 +2,12 @@ import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzl
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Define an enum for content types
+export enum ContentType {
+  GENERAL = 'general',
+  BRIEFING = 'briefing'
+}
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -59,6 +65,7 @@ export const generatedContents = pgTable("generated_contents", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
+  contentType: text("content_type").default('general').notNull(), // 'general' or 'briefing'
   systemPrompt: text("system_prompt"),
   userPrompt: text("user_prompt"),
   model: text("model"),
@@ -76,3 +83,21 @@ export const insertGeneratedContentSchema = createInsertSchema(generatedContents
 
 export type InsertGeneratedContent = z.infer<typeof insertGeneratedContentSchema>;
 export type GeneratedContent = typeof generatedContents.$inferSelect;
+
+// Table for storing brief conversations
+export const briefConversations = pgTable("brief_conversations", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  messages: json("messages").$type<Array<{role: string, content: string}>>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertBriefConversationSchema = createInsertSchema(briefConversations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertBriefConversation = z.infer<typeof insertBriefConversationSchema>;
+export type BriefConversation = typeof briefConversations.$inferSelect;
