@@ -296,6 +296,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Brief Conversations API Routes
+  app.get("/api/brief-conversations", async (_req: Request, res: Response) => {
+    try {
+      const conversations = await storage.getBriefConversations();
+      res.json(conversations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch brief conversations" });
+    }
+  });
+
+  app.get("/api/brief-conversations/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const conversation = await storage.getBriefConversation(id);
+      
+      if (!conversation) {
+        return res.status(404).json({ error: "Brief conversation not found" });
+      }
+      
+      res.json(conversation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch brief conversation" });
+    }
+  });
+
+  app.post("/api/brief-conversations", async (req: Request, res: Response) => {
+    try {
+      const { title, messages } = req.body;
+      
+      if (!title || !messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: "Title and valid messages array are required" });
+      }
+      
+      const savedConversation = await storage.saveBriefConversation({
+        title,
+        messages: messages
+      });
+      
+      res.status(201).json(savedConversation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save brief conversation" });
+    }
+  });
+
+  app.put("/api/brief-conversations/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { title, messages } = req.body;
+      
+      if (!title && !messages) {
+        return res.status(400).json({ error: "At least title or messages must be provided for update" });
+      }
+      
+      // If messages is provided, ensure it's a valid array
+      if (messages && !Array.isArray(messages)) {
+        return res.status(400).json({ error: "Messages must be a valid array" });
+      }
+      
+      const updatedConversation = await storage.updateBriefConversation(id, {
+        ...(title && { title }),
+        ...(messages && { messages })
+      });
+      
+      if (!updatedConversation) {
+        return res.status(404).json({ error: "Brief conversation not found" });
+      }
+      
+      res.json(updatedConversation);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update brief conversation" });
+    }
+  });
+
+  app.delete("/api/brief-conversations/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const result = await storage.deleteBriefConversation(id);
+      
+      if (!result) {
+        return res.status(404).json({ error: "Brief conversation not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete brief conversation" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

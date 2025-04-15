@@ -276,16 +276,53 @@ export class DatabaseStorage implements IStorage {
   }
   
   async saveBriefConversation(conversation: InsertBriefConversation): Promise<BriefConversation> {
-    const [result] = await db.insert(briefConversations).values(conversation).returning();
+    const { title, messages } = conversation;
+    // Ensure messages is an array of { role: string, content: string }
+    const validMessages = Array.isArray(messages) ? 
+      messages.map(m => {
+        // Safely access properties from potentially unknown object
+        const msg = m as any;
+        return {
+          role: typeof msg.role === 'string' ? msg.role : 'user',
+          content: typeof msg.content === 'string' ? msg.content : ''
+        };
+      }) : [];
+      
+    const [result] = await db.insert(briefConversations).values({
+      title,
+      messages: validMessages
+    }).returning();
     return result;
   }
   
   async updateBriefConversation(id: number, conversation: Partial<InsertBriefConversation>): Promise<BriefConversation | undefined> {
+    const { title, messages } = conversation;
+    
+    const updateData: Record<string, any> = {
+      updatedAt: new Date()
+    };
+    
+    if (title) {
+      updateData.title = title;
+    }
+    
+    if (messages) {
+      // Ensure messages is an array of { role: string, content: string }
+      const validMessages = Array.isArray(messages) ? 
+        messages.map(m => {
+          // Safely access properties from potentially unknown object
+          const msg = m as any;
+          return {
+            role: typeof msg.role === 'string' ? msg.role : 'user',
+            content: typeof msg.content === 'string' ? msg.content : ''
+          };
+        }) : [];
+      
+      updateData.messages = validMessages;
+    }
+    
     const [result] = await db.update(briefConversations)
-      .set({
-        ...conversation,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(briefConversations.id, id))
       .returning();
     
