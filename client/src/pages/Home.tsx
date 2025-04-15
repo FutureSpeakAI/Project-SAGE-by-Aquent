@@ -137,11 +137,28 @@ export default function Home() {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
+          {/* Hero section with ninja theme */}
+          <div className="mb-6 p-6 bg-gradient-to-r from-black to-gray-800 rounded-lg shadow-md text-white">
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <div className="mb-4 md:mb-0">
+                <h2 className="text-2xl font-bold mb-2">Welcome to <span className="text-[#FF6600]">MyMarketing</span>.Ninja</h2>
+                <p className="text-gray-300 max-w-xl">Unleash the power of AI to create stunning marketing content with ninja-like precision and stealth. Generate, edit, and transform text in seconds.</p>
+              </div>
+              <div className="flex-shrink-0">
+                <svg width="80" height="80" viewBox="0 0 24 24" className="opacity-80">
+                  <path fill="#FF6600" d="M12,2C6.5,2,2,6.5,2,12c0,5.5,4.5,10,10,10s10-4.5,10-10C22,6.5,17.5,2,12,2z"/>
+                  <path fill="black" d="M12,7c-2.8,0-5,2.2-5,5c0,0.3,0,0.7,0.1,1h9.7c0.1-0.3,0.1-0.7,0.1-1C17,9.2,14.8,7,12,7z"/>
+                  <path fill="white" d="M9,10c0.6,0,1,0.4,1,1s-0.4,1-1,1s-1-0.4-1-1S8.4,10,9,10z M15,10c0.6,0,1,0.4,1,1s-0.4,1-1,1s-1-0.4-1-1S14.4,10,15,10z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          
           {/* Library button */}
           <div className="mb-4 flex justify-end">
             <Button 
               variant="outline" 
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"
               onClick={() => setLibraryOpen(true)}
             >
               <Library className="h-4 w-4" />
