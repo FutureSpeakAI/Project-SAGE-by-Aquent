@@ -209,23 +209,23 @@ export function AIContextMenu({
             </ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-60">
               <ContextMenuItem
-                onClick={() => startProcessWithAI("revise and improve while maintaining similar length", "AI Revise")}
+                onClick={() => startProcessWithAI("revise and improve while maintaining similar length", "Revise & Rewrite")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Wand2 className="mr-2 h-4 w-4" />, 
                   "Revise & Rewrite", 
-                  processingOperation === "AI Revise" && generateMutation.isPending
+                  processingOperation === "Revise & Rewrite" && generateMutation.isPending
                 )}
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => startProcessWithAI("improve the clarity, flow, and grammar while maintaining similar length", "AI Improve")}
+                onClick={() => startProcessWithAI("improve the clarity, flow, and grammar while maintaining similar length", "Improve Style & Clarity")}
                 disabled={generateMutation.isPending}
               >
                 {getContextMenuItemContent(
                   <Zap className="mr-2 h-4 w-4" />, 
                   "Improve Style & Clarity", 
-                  processingOperation === "AI Improve" && generateMutation.isPending
+                  processingOperation === "Improve Style & Clarity" && generateMutation.isPending
                 )}
               </ContextMenuItem>
             </ContextMenuSubContent>
