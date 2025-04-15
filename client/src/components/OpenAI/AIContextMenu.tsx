@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { GenerateRequest, GenerateResponse } from "@/lib/types";
+import { GenerateRequest, GenerateResponse, SavedPersona } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 interface AIContextMenuProps {
@@ -42,6 +42,7 @@ export function AIContextMenu({
   model,
   temperature,
   onOpenPersonaLibrary,
+  personas = [],
 }: AIContextMenuProps) {
   const [customInstructionsOpen, setCustomInstructionsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState("");
@@ -407,6 +408,28 @@ export function AIContextMenu({
                   processingOperation === "Comedian" && generateMutation.isPending
                 )}
               </ContextMenuItem>
+              
+              {/* Display saved personas if available */}
+              {personas && personas.length > 0 && (
+                <>
+                  <ContextMenuSeparator />
+                  {personas.map((persona) => (
+                    <ContextMenuItem
+                      key={persona.id}
+                      onClick={() => {
+                        startProcessWithAI(`rewrite following the character and style of: ${persona.instruction}`, persona.name);
+                      }}
+                      disabled={generateMutation.isPending}
+                    >
+                      {getContextMenuItemContent(
+                        <User className="mr-2 h-4 w-4" />,
+                        persona.name,
+                        processingOperation === persona.name && generateMutation.isPending
+                      )}
+                    </ContextMenuItem>
+                  ))}
+                </>
+              )}
               
               {onOpenPersonaLibrary && (
                 <>

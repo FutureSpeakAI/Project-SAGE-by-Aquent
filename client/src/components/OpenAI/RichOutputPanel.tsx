@@ -26,6 +26,7 @@ import 'react-quill/dist/quill.snow.css';
 import { exportAsPDF, exportAsDOCX, exportAsHTML } from "@/lib/export-utils";
 import { useToast } from "@/hooks/use-toast";
 import { GeneratedContent } from "@shared/schema";
+import { SavedPersona } from "@/lib/types";
 
 interface RichOutputPanelProps {
   content: string;
@@ -37,6 +38,7 @@ interface RichOutputPanelProps {
   model: string;
   temperature: number;
   onOpenPersonaLibrary?: () => void;
+  personas?: SavedPersona[];
 }
 
 export function RichOutputPanel({
@@ -48,7 +50,8 @@ export function RichOutputPanel({
   apiKey,
   model,
   temperature,
-  onOpenPersonaLibrary
+  onOpenPersonaLibrary,
+  personas = []
 }: RichOutputPanelProps) {
   const [editableContent, setEditableContent] = useState(content);
   const [selectedText, setSelectedText] = useState("");
