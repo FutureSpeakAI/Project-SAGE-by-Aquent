@@ -203,64 +203,67 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {prompts.map((prompt) => (
-            <Card key={prompt.id} className="flex flex-col">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl truncate" title={prompt.name}>
-                    {prompt.name}
-                  </CardTitle>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditPrompt(prompt)} className="flex items-center gap-2">
-                        <Pencil className="h-4 w-4" />
-                        <span>Edit</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => {
-                          setSelectedPrompt(prompt);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                        className="text-destructive flex items-center gap-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span>Delete</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            <Card key={prompt.id} className="flex flex-col overflow-hidden border-2 hover:border-[#FF6600]/70 transition-all">
+              <CardHeader className="pb-3 bg-gray-50">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-xl font-bold" title={prompt.name}>
+                      {prompt.name}
+                    </CardTitle>
+                    <CardDescription className="mt-1">Updated: {formatDate(prompt.updatedAt)}</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      onClick={() => handleEditPrompt(prompt)} 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setSelectedPrompt(prompt);
+                        setIsDeleteDialogOpen(true);
+                      }} 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <CardDescription>{formatDate(prompt.updatedAt)}</CardDescription>
               </CardHeader>
-              <CardContent className="py-2 flex-grow">
-                <div className="flex flex-col h-full">
+              <CardContent className="py-4 flex-grow">
+                <div className="flex flex-col md:flex-row gap-6">
                   {prompt.systemPrompt && (
-                    <div className="mb-2">
-                      <span className="text-xs font-medium text-muted-foreground">System Prompt:</span>
-                      <p className="text-sm line-clamp-3">{prompt.systemPrompt}</p>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Ninja Agent Description:</h4>
+                      <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
+                        <p className="text-sm">{prompt.systemPrompt}</p>
+                      </div>
                     </div>
                   )}
                   {prompt.userPrompt && (
-                    <div>
-                      <span className="text-xs font-medium text-muted-foreground">User Prompt:</span>
-                      <p className="text-sm line-clamp-3">{prompt.userPrompt}</p>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">Ninja Mission:</h4>
+                      <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
+                        <p className="text-sm">{prompt.userPrompt}</p>
+                      </div>
                     </div>
                   )}
                 </div>
               </CardContent>
-              <CardFooter className="pt-2">
+              <CardFooter className="pt-2 pb-4 flex justify-end">
                 <Button 
                   onClick={() => onSelectPrompt(prompt)} 
-                  variant="secondary" 
-                  className="w-full flex items-center gap-2"
+                  className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border-2 px-6"
                 >
-                  <Save className="h-4 w-4" />
-                  <span>Use This Prompt</span>
+                  <Save className="h-4 w-4 mr-2" />
+                  <span>Deploy This Prompt</span>
                 </Button>
               </CardFooter>
             </Card>

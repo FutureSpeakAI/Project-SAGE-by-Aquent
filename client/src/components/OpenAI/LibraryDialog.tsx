@@ -35,9 +35,9 @@ export function LibraryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>AI Content Library</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-[#FF6600]">AI Content Library</DialogTitle>
         </DialogHeader>
         
         <Tabs
@@ -46,14 +46,20 @@ export function LibraryDialog({
           onValueChange={setActiveTab}
           className="mt-4"
         >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="prompts" className="flex items-center gap-2">
-              <BookText className="h-4 w-4" />
-              <span>Prompts</span>
+          <TabsList className="grid w-full grid-cols-2 p-1 bg-gray-100">
+            <TabsTrigger 
+              value="prompts" 
+              className="flex items-center gap-2 py-3 data-[state=active]:bg-white data-[state=active]:text-[#FF6600] data-[state=active]:shadow-md"
+            >
+              <BookText className="h-5 w-5" />
+              <span className="font-medium">Prompt Library</span>
             </TabsTrigger>
-            <TabsTrigger value="personas" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>Personas</span>
+            <TabsTrigger 
+              value="personas" 
+              className="flex items-center gap-2 py-3 data-[state=active]:bg-white data-[state=active]:text-[#FF6600] data-[state=active]:shadow-md"
+            >
+              <Users className="h-5 w-5" />
+              <span className="font-medium">Persona Library</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="prompts" className="pt-4">
