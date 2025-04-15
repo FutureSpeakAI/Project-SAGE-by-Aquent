@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Header } from "@/components/Layout/Header";
 import { SystemPromptPanel } from "@/components/OpenAI/SystemPromptPanel";
@@ -26,6 +26,11 @@ export default function Home() {
   
   // Saved content library state
   const [savedContentLibraryOpen, setSavedContentLibraryOpen] = useState(false);
+  
+  // Fetch personas for context menu
+  const { data: personas = [] } = useQuery<SavedPersona[]>({ 
+    queryKey: ["/api/personas"],
+  });
   
   // Configuration state
   const [systemPrompt, setSystemPrompt] = useLocalStorage<string>(
@@ -232,6 +237,7 @@ export default function Home() {
                 model={model}
                 temperature={temperature}
                 onOpenPersonaLibrary={handleOpenPersonaLibrary}
+                personas={personas}
               />
             </div>
           </div>

@@ -574,6 +574,7 @@ export function RichOutputPanel({
               model={model}
               temperature={temperature}
               onOpenPersonaLibrary={onOpenPersonaLibrary}
+              personas={personas}
             >
               <div 
                 className="p-4" 
