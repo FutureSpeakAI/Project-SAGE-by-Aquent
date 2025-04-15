@@ -9,6 +9,9 @@ import {
   ContentType
 } from "@shared/schema";
 
+// Flag to check if database is available
+const isDatabaseAvailable = !!db;
+
 export interface SavedPrompt {
   id: string;
   name: string;
@@ -336,4 +339,207 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Memory Storage implementation for when database is not available
+export class MemoryStorage implements IStorage {
+  private users: User[] = [];
+  private prompts: SavedPrompt[] = [];
+  private personas: SavedPersona[] = [];
+  private generatedContents: GeneratedContent[] = [];
+  private briefConversations: BriefConversation[] = [];
+  private nextUserId = 1;
+  private nextPromptId = 1;
+  private nextPersonaId = 1;
+  private nextContentId = 1;
+  private nextConversationId = 1;
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.find(u => u.id === id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this.users.find(u => u.username === username);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const newUser: User = { ...user, id: this.nextUserId++ };
+    this.users.push(newUser);
+    return newUser;
+  }
+
+  // Prompt Library methods
+  async getPrompts(): Promise<SavedPrompt[]> {
+    return this.prompts;
+  }
+
+  async getPrompt(id: string): Promise<SavedPrompt | undefined> {
+    return this.prompts.find(p => p.id === id);
+  }
+
+  async savePrompt(prompt: Omit<SavedPrompt, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedPrompt> {
+    const now = new Date();
+    const newPrompt: SavedPrompt = {
+      ...prompt,
+      id: String(this.nextPromptId++),
+      createdAt: now,
+      updatedAt: now
+    };
+    this.prompts.push(newPrompt);
+    return newPrompt;
+  }
+
+  async updatePrompt(id: string, prompt: Partial<Omit<SavedPrompt, 'id' | 'createdAt' | 'updatedAt'>>): Promise<SavedPrompt | undefined> {
+    const index = this.prompts.findIndex(p => p.id === id);
+    if (index === -1) return undefined;
+    
+    const updated: SavedPrompt = {
+      ...this.prompts[index],
+      ...prompt,
+      updatedAt: new Date()
+    };
+    this.prompts[index] = updated;
+    return updated;
+  }
+
+  async deletePrompt(id: string): Promise<boolean> {
+    const index = this.prompts.findIndex(p => p.id === id);
+    if (index === -1) return false;
+    
+    this.prompts.splice(index, 1);
+    return true;
+  }
+
+  // Persona Library methods
+  async getPersonas(): Promise<SavedPersona[]> {
+    return this.personas;
+  }
+
+  async getPersona(id: string): Promise<SavedPersona | undefined> {
+    return this.personas.find(p => p.id === id);
+  }
+
+  async savePersona(persona: Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedPersona> {
+    const now = new Date();
+    const newPersona: SavedPersona = {
+      ...persona,
+      id: String(this.nextPersonaId++),
+      createdAt: now,
+      updatedAt: now
+    };
+    this.personas.push(newPersona);
+    return newPersona;
+  }
+
+  async updatePersona(id: string, persona: Partial<Omit<SavedPersona, 'id' | 'createdAt' | 'updatedAt'>>): Promise<SavedPersona | undefined> {
+    const index = this.personas.findIndex(p => p.id === id);
+    if (index === -1) return undefined;
+    
+    const updated: SavedPersona = {
+      ...this.personas[index],
+      ...persona,
+      updatedAt: new Date()
+    };
+    this.personas[index] = updated;
+    return updated;
+  }
+
+  async deletePersona(id: string): Promise<boolean> {
+    const index = this.personas.findIndex(p => p.id === id);
+    if (index === -1) return false;
+    
+    this.personas.splice(index, 1);
+    return true;
+  }
+
+  // Generated Content methods
+  async getGeneratedContents(contentType?: string): Promise<GeneratedContent[]> {
+    if (contentType) {
+      return this.generatedContents.filter(c => c.contentType === contentType);
+    }
+    return this.generatedContents;
+  }
+
+  async getGeneratedContent(id: number): Promise<GeneratedContent | undefined> {
+    return this.generatedContents.find(c => c.id === id);
+  }
+
+  async saveGeneratedContent(content: InsertGeneratedContent): Promise<GeneratedContent> {
+    const now = new Date();
+    const newContent: GeneratedContent = {
+      ...content,
+      id: this.nextContentId++,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.generatedContents.push(newContent);
+    return newContent;
+  }
+
+  async updateGeneratedContent(id: number, content: Partial<InsertGeneratedContent>): Promise<GeneratedContent | undefined> {
+    const index = this.generatedContents.findIndex(c => c.id === id);
+    if (index === -1) return undefined;
+    
+    const updated: GeneratedContent = {
+      ...this.generatedContents[index],
+      ...content,
+      updatedAt: new Date()
+    };
+    this.generatedContents[index] = updated;
+    return updated;
+  }
+
+  async deleteGeneratedContent(id: number): Promise<boolean> {
+    const index = this.generatedContents.findIndex(c => c.id === id);
+    if (index === -1) return false;
+    
+    this.generatedContents.splice(index, 1);
+    return true;
+  }
+
+  // Brief Conversation methods
+  async getBriefConversations(): Promise<BriefConversation[]> {
+    return this.briefConversations;
+  }
+
+  async getBriefConversation(id: number): Promise<BriefConversation | undefined> {
+    return this.briefConversations.find(c => c.id === id);
+  }
+
+  async saveBriefConversation(conversation: InsertBriefConversation): Promise<BriefConversation> {
+    const now = new Date();
+    const newConversation: BriefConversation = {
+      ...conversation,
+      id: this.nextConversationId++,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.briefConversations.push(newConversation);
+    return newConversation;
+  }
+
+  async updateBriefConversation(id: number, conversation: Partial<InsertBriefConversation>): Promise<BriefConversation | undefined> {
+    const index = this.briefConversations.findIndex(c => c.id === id);
+    if (index === -1) return undefined;
+    
+    const updated: BriefConversation = {
+      ...this.briefConversations[index],
+      ...conversation,
+      updatedAt: new Date()
+    };
+    this.briefConversations[index] = updated;
+    return updated;
+  }
+
+  async deleteBriefConversation(id: number): Promise<boolean> {
+    const index = this.briefConversations.findIndex(c => c.id === id);
+    if (index === -1) return false;
+    
+    this.briefConversations.splice(index, 1);
+    return true;
+  }
+}
+
+// Use DatabaseStorage if database is available, otherwise use MemoryStorage
+export const storage: IStorage = isDatabaseAvailable 
+  ? new DatabaseStorage() 
+  : new MemoryStorage();

@@ -41,6 +41,12 @@ app.use((req, res, next) => {
 // Function to initialize the database tables
 async function initializeDatabase() {
   try {
+    // Skip if database is not available
+    if (!db) {
+      log('Database connection not available. Skipping initialization.');
+      return false;
+    }
+
     // Check if database connection is working
     log('Checking database connection...');
     await db.execute(sql`SELECT 1`);
