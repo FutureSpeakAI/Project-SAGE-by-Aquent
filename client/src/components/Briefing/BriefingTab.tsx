@@ -29,6 +29,67 @@ interface BriefingTabProps {
   handleUploadDocument: () => void;
 }
 
+// Helper function for properly formatting HTML lists
+// This is moved outside the component to avoid TypeScript errors
+const wrapListItems = (content: string): string => {
+  let modified = content;
+  // Find potential list items
+  const listItemRegex = /<li>.*?<\/li>/g;
+  const listItems = content.match(listItemRegex);
+  
+  if (listItems) {
+    // Identify consecutive list items
+    let consecutiveItems = '';
+    let count = 0;
+    
+    for (let i = 0; i < listItems.length; i++) {
+      if (i > 0 && content.indexOf(listItems[i]) - 
+          (content.indexOf(listItems[i-1]) + listItems[i-1].length) < 10) {
+        // These list items are consecutive or close
+        if (count === 0) {
+          consecutiveItems = listItems[i-1];
+          count = 1;
+        }
+        consecutiveItems += listItems[i];
+        count++;
+      } else if (count > 0) {
+        // We found the end of a sequence - wrap it
+        if (count > 1) {
+          // Determine if these were numbered items originally
+          const originalContext = content.substring(
+            Math.max(0, content.indexOf(consecutiveItems) - 20),
+            content.indexOf(consecutiveItems)
+          );
+          
+          const isNumbered = /\d+\.\s/.test(originalContext);
+          const tagName = isNumbered ? 'ol' : 'ul';
+          
+          modified = modified.replace(consecutiveItems, 
+            `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+        }
+        consecutiveItems = '';
+        count = 0;
+      }
+    }
+    
+    // Handle the last sequence if there is one
+    if (count > 1) {
+      const originalContext = content.substring(
+        Math.max(0, content.indexOf(consecutiveItems) - 20),
+        content.indexOf(consecutiveItems)
+      );
+      
+      const isNumbered = /\d+\.\s/.test(originalContext);
+      const tagName = isNumbered ? 'ol' : 'ul';
+      
+      modified = modified.replace(consecutiveItems, 
+        `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+    }
+  }
+  
+  return modified;
+};
+
 export function BriefingTab({
   model,
   temperature,
@@ -107,6 +168,17 @@ export function BriefingTab({
       // Remove ending ``` and any text after it if present
       cleanedContent = cleanedContent.replace(/```[\s\S]*$/i, '');
       
+      // Fix improperly formatted lists - Convert plain bullet lists into HTML lists
+      
+      // Convert bullet points to list items
+      cleanedContent = cleanedContent.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
+      
+      // Convert numbered points to list items (1. 2. 3. etc)
+      cleanedContent = cleanedContent.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
+     
+      // Use the same helper function to wrap list items in proper list tags
+      cleanedContent = wrapListItems(cleanedContent);
+      
       // Add assistant response to chat
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -136,7 +208,7 @@ export function BriefingTab({
         },
         body: JSON.stringify({
           model,
-          systemPrompt: "Based on the conversation, create a comprehensive creative briefing document that will serve as a detailed guide for content creators. Important: The briefing you create will be used as a direct prompt for content generation, so write it in a way that clearly instructs a content creator what to make, not as a briefing report.\n\nInclude these sections:\n\n1. Project Overview (detailed project description, context, and background)\n2. Objectives (specific, measurable goals of the project)\n3. Target Audience (detailed persona descriptions including demographics, pain points, and motivations)\n4. Key Messages (primary communication points and value propositions)\n5. Deliverables (detailed specifications for each deliverable including format, length, tone, style, and technical requirements)\n6. Content Creation Guidelines (specific instructions on voice, tone, specific terminology to use or avoid)\n7. Timeline (comprehensive schedule with milestones and deadlines)\n8. Success Metrics (how the content's performance will be measured)\n\nCRITICAL - Your final section must be titled \"Content Creation Instructions\" and must contain SPECIFIC, DETAILED INSTRUCTIONS for the content creator. These instructions should be in an imperative voice (e.g., \"Create a blog post about...\", \"Write a social media caption that...\") rather than descriptive. This section must be actionable and clear so the content creator knows EXACTLY what to produce.\n\nUSE HTML FORMATTING for rich text output with these guidelines:\n1. Use <h1>, <h2>, <h3> tags for headings\n2. Use <ul> and <li> for bullet points\n3. Use <ol> and <li> for numbered steps\n4. Use <p> for paragraphs\n5. Use <strong> for emphasis\n6. Use <hr> for section dividers\n7. Use <blockquote> for highlighted information\n\nVERY IMPORTANT FORMATTING RULES:\n- DO NOT include any markdown code block markers like ```html, ```, or any variation\n- DO NOT add any concluding remarks, summary, or sign-off at the end of the document\n- DO NOT include any meta-commentary about the brief itself\n- ONLY include the HTML content with no markdown wrapper or commentary\n- END the document with the final HTML tag - don't add anything after it\n\nMake the document visually organized, professional, and comprehensive, with clear instruction-based language throughout. The HTML will be rendered directly in a rich text editor.",
+          systemPrompt: "Based on the conversation, create a comprehensive creative briefing document that will serve as a detailed guide for content creators. Important: The briefing you create will be used as a direct prompt for content generation, so write it in a way that clearly instructs a content creator what to make, not as a briefing report.\n\nInclude these sections:\n\n1. Project Overview (detailed project description, context, and background)\n2. Objectives (specific, measurable goals of the project)\n3. Target Audience (detailed persona descriptions including demographics, pain points, and motivations)\n4. Key Messages (primary communication points and value propositions)\n5. Deliverables (detailed specifications for each deliverable including format, length, tone, style, and technical requirements)\n6. Content Creation Guidelines (specific instructions on voice, tone, specific terminology to use or avoid)\n7. Timeline (comprehensive schedule with milestones and deadlines)\n8. Success Metrics (how the content's performance will be measured)\n\nCRITICAL - Your final section must be titled \"Content Creation Instructions\" and must contain SPECIFIC, DETAILED INSTRUCTIONS for the content creator. These instructions should be in an imperative voice (e.g., \"Create a blog post about...\", \"Write a social media caption that...\") rather than descriptive. This section must be actionable and clear so the content creator knows EXACTLY what to produce.\n\nUSE HTML FORMATTING for rich text output with these guidelines:\n1. Use <h1> for the main title and <h2> for section headings\n2. ALWAYS wrap bullet points in proper HTML: <ul><li>First point</li><li>Second point</li></ul>\n3. ALWAYS wrap numbered lists in proper HTML: <ol><li>First item</li><li>Second item</li></ol>\n4. Use <p> tags for ALL paragraphs with proper closing tags\n5. Use <strong> for emphasis\n6. Use <hr> for section dividers\n7. Use <blockquote> for highlighted information\n8. Maintain proper spacing between elements for readability\n9. Ensure proper nesting of HTML tags\n\nEXAMPLE OF CORRECT LIST FORMATTING:\n<ul>\n  <li>This is the first bullet point</li>\n  <li>This is the second bullet point</li>\n</ul>\n\nVERY IMPORTANT FORMATTING RULES:\n- DO NOT include any markdown code block markers like ```html, ```, or any variation\n- DO NOT add any concluding remarks, summary, or sign-off at the end of the document\n- DO NOT include any meta-commentary about the brief itself\n- ONLY include the HTML content with no markdown wrapper or commentary\n- END the document with the final HTML tag - don't add anything after it\n- DO NOT use plain text for lists - ALWAYS use proper <ul>/<li> or <ol>/<li> tags\n\nMake the document visually organized, professional, and comprehensive, with clear instruction-based language throughout. The HTML will be rendered directly in a rich text editor.",
           userPrompt: messages
             .map(msg => `${msg.role === 'user' ? 'User' : msg.role === 'assistant' ? 'Assistant' : 'System'}: ${msg.content}`)
             .join('\n\n'),
@@ -159,6 +231,17 @@ export function BriefingTab({
       cleanedContent = cleanedContent.replace(/```[\s\S]*$/i, '');
       // Remove any final generic commentary about the brief (often added by AI models)
       cleanedContent = cleanedContent.replace(/\n+This comprehensive brief provides[\s\S]*$/i, '');
+      
+      // Fix improperly formatted lists - Convert plain bullet lists into HTML lists
+      
+      // Convert bullet points to list items
+      cleanedContent = cleanedContent.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
+      
+      // Convert numbered points to list items (1. 2. 3. etc)
+      cleanedContent = cleanedContent.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
+     
+      // Use our helper function to wrap list items properly
+      cleanedContent = wrapListItems(cleanedContent);
       
       setBriefingContent(cleanedContent);
       

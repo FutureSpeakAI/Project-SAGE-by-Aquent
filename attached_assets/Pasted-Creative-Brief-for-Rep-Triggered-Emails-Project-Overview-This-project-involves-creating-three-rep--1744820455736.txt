@@ -1,0 +1,60 @@
+Creative Brief for Rep-Triggered Emails
+Project Overview
+This project involves creating three rep-triggered emails targeting healthcare providers in the lung specialty fields who may see COPD patients. The focus is on educating them about Medicine X, a new therapy, and encouraging them to recommend it to their patients. These emails will be formal, educated, and trustworthy, reflecting the brand's confident and curious style.
+
+Objectives
+
+Educate healthcare providers about Medicine X's safety and efficacy.
+
+Encourage providers to educate their patients about Medicine X.
+
+Motivate providers to learn more about the therapy through a clear call-to-action.
+Target Audience
+The target audience comprises healthcare providers in lung specialties, including pulmonologists, respiratory therapists, and nurse practitioners. They are professionals who often encounter COPD patients struggling to breathe. The emails should address their need for safe and effective treatments and highlight Medicine X as a new solution that can help their patients breathe easier.
+
+Key Messages
+
+Medicine X is a safe and well-reviewed therapy for COPD patients.
+
+Emphasize the therapy's ability to help patients breathe easier.
+
+Encourage healthcare providers to learn more about Medicine X.
+Deliverables
+
+Three emails, each no more than 200 words.
+
+Format: HTML email.
+
+Tone: Formal, educated, and trustworthy.
+
+Style: Confident and curious, consistent with the brand.
+Content Creation Guidelines
+
+Use a formal and authoritative tone to reflect professionalism.
+
+Maintain a confident and curious brand style.
+
+Avoid overly technical jargon; keep language accessible yet informed.
+
+Include a call-to-action that encourages learning more about Medicine X.
+Timeline
+The content creation process is to be completed within two weeks, with the following milestones:
+
+
+Week 1: Draft and review the first set of emails.
+
+Week 2: Finalize content and prepare for deployment.
+Success Metrics
+Success metrics are not a consideration for this campaign as per current priorities.
+
+Content Creation Instructions
+
+Create three separate emails, each focusing on the key messages about Medicine X.
+
+In each email, emphasize the safety and positive reviews of Medicine X.
+
+Incorporate a call-to-action that prompts healthcare providers to learn more about the therapy.
+
+Ensure the content maintains a formal, educated tone while reflecting the brand's confident and curious style.
+
+Keep each email concise, with a maximum of 200 words, and formatted for HTML email delivery.
