@@ -9,8 +9,8 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // Tabs for our application
 export enum AppTab {
-  CONTENT = "content",
-  BRIEFING = "briefing"
+  BRIEFING = "briefing",  // Making briefing the first tab
+  CONTENT = "content"
 }
 
 // Page transition animations

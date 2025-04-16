@@ -183,7 +183,7 @@ export default function Home() {
   };
   
   // Tab-related state
-  const [activeTab, setActiveTab] = useState<AppTab>(AppTab.CONTENT);
+  const [activeTab, setActiveTab] = useState<AppTab>(AppTab.BRIEFING);
   const [briefingLibraryOpen, setBriefingLibraryOpen] = useState(false);
   const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
   const [briefingContent, setBriefingContent] = useState("");

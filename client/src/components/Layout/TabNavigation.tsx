@@ -17,18 +17,18 @@ export function TabNavigation({ activeTab, onChangeTab }: TabNavigationProps) {
       >
         <TabsList className="grid grid-cols-2 w-full relative overflow-hidden">
           <TabsTrigger
-            value={AppTab.CONTENT}
-            className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            <span>Content</span>
-          </TabsTrigger>
-          <TabsTrigger
             value={AppTab.BRIEFING}
             className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
           >
             <MessageSquare className="h-4 w-4" />
             <span>Briefing</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value={AppTab.CONTENT}
+            className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            <span>Content</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>
