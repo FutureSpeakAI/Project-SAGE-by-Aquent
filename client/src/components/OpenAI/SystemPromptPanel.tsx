@@ -32,9 +32,8 @@ export function SystemPromptPanel({
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200">
         <CollapsibleTrigger className="flex justify-between items-center w-full">
-          <h2 className="font-semibold text-white flex items-center">
-            <BookText className="h-4 w-4 mr-2 text-[#FF6600]" />
-            AI Configuration
+          <h2 className="font-semibold text-white">
+            System Prompt
           </h2>
           {isOpen ? (
             <ChevronUp className="h-4 w-4 text-[#FF6600]" />
@@ -46,11 +45,7 @@ export function SystemPromptPanel({
       
       <CollapsibleContent>
         <div className="p-4 space-y-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">
-              This is the system prompt field.
-            </p>
-            
+          <div className="flex justify-end items-center">
             {onOpenPersonaLibrary && (
               <Button 
                 variant="outline" 
@@ -68,7 +63,6 @@ export function SystemPromptPanel({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">System Prompt</Label>
             <Textarea
               id="systemPrompt"
               className="resize-vertical h-32"

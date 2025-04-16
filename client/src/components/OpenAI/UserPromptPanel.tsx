@@ -27,11 +27,7 @@ export function UserPromptPanel({
       
       <CardContent className="p-4">
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">
-              Enter your prompt below to generate content.
-            </p>
-            
+          <div className="flex justify-end items-center">
             {onOpenPromptLibrary && (
               <Button 
                 variant="outline" 

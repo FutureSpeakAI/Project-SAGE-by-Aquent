@@ -264,14 +264,14 @@ export function BriefingTab({
         {/* Left side (chat interface) */}
         <div className="w-full lg:w-1/2 flex flex-col">
           <div className="flex justify-between mb-4">
-            <h3 className="text-lg font-medium">Chat with AI Assistant</h3>
+            <h3 className="text-lg font-medium">Briefing Generation Agent</h3>
             <Button 
               variant="outline"
               onClick={handleUploadDocument}
               className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
             >
               <Upload className="h-4 w-4 mr-2" />
-              Upload Document
+              Upload Briefing
             </Button>
           </div>
           
