@@ -50,7 +50,7 @@ export function UserPromptPanel({
           
           <div className="space-y-2">
             <Textarea
-              className="min-h-[160px] resize-none"
+              className="min-h-[160px] resize-vertical"
               placeholder="Type your prompt here..."
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}

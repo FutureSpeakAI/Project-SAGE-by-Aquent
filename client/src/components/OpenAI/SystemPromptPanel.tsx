@@ -71,7 +71,7 @@ export function SystemPromptPanel({
             <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">System Prompt</Label>
             <Textarea
               id="systemPrompt"
-              className="resize-none h-32"
+              className="resize-vertical h-32"
               placeholder="You are a helpful assistant..."
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}

@@ -61,6 +61,89 @@ export const generateContent = async (req: Request, res: Response) => {
     });
     
     content = completion.choices[0].message.content || "";
+    
+    // Clean the content of any markdown code block markers and concluding commentary
+    // Remove starting ```html or ``` if present (common with code-like responses)
+    content = content.replace(/^```(?:html|markdown|json|javascript|typescript|css|jsx|tsx|python)?\s*\n?/i, '');
+    // Remove ending ``` and any text after it if present
+    content = content.replace(/```[\s\S]*$/i, '');
+    
+    // Remove common AI commentary that can appear after the main output
+    content = content.replace(/\n+In summary[\s\S]*$/i, '');
+    content = content.replace(/\n+To summarize[\s\S]*$/i, '');
+    content = content.replace(/\n+I hope this helps[\s\S]*$/i, '');
+    content = content.replace(/\n+Hope this helps[\s\S]*$/i, '');
+    content = content.replace(/\n+Let me know if[\s\S]*$/i, '');
+    content = content.replace(/\n+Please let me know[\s\S]*$/i, '');
+    content = content.replace(/\n+Is there anything else[\s\S]*$/i, '');
+    
+    // Fix improperly formatted lists - Convert plain bullet lists into HTML lists
+    // Convert bullet points to list items
+    content = content.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
+    // Convert numbered points to list items (1. 2. 3. etc)
+    content = content.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
+    
+    // Helper function to wrap list items in proper list tags
+    const wrapListItems = (content: string): string => {
+      let modified = content;
+      // Find potential list items
+      const listItemRegex = /<li>.*?<\/li>/g;
+      const listItems = content.match(listItemRegex);
+      
+      if (listItems) {
+        // Identify consecutive list items
+        let consecutiveItems = '';
+        let count = 0;
+        
+        for (let i = 0; i < listItems.length; i++) {
+          if (i > 0 && content.indexOf(listItems[i]) - 
+              (content.indexOf(listItems[i-1]) + listItems[i-1].length) < 10) {
+            // These list items are consecutive or close
+            if (count === 0) {
+              consecutiveItems = listItems[i-1];
+              count = 1;
+            }
+            consecutiveItems += listItems[i];
+            count++;
+          } else if (count > 0) {
+            // We found the end of a sequence - wrap it
+            if (count > 1) {
+              // Determine if these were numbered items originally
+              const originalContext = content.substring(
+                Math.max(0, content.indexOf(consecutiveItems) - 20),
+                content.indexOf(consecutiveItems)
+              );
+              
+              const isNumbered = /\d+\.\s/.test(originalContext);
+              const tagName = isNumbered ? 'ol' : 'ul';
+              
+              modified = modified.replace(consecutiveItems, 
+                `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+            }
+            consecutiveItems = '';
+            count = 0;
+          }
+        }
+        
+        // Handle the last sequence if there is one
+        if (count > 1) {
+          const originalContext = content.substring(
+            Math.max(0, content.indexOf(consecutiveItems) - 20),
+            content.indexOf(consecutiveItems)
+          );
+          
+          const isNumbered = /\d+\.\s/.test(originalContext);
+          const tagName = isNumbered ? 'ol' : 'ul';
+          
+          modified = modified.replace(consecutiveItems, 
+            `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+        }
+      }
+      
+      return modified;
+    };
+    
+    content = wrapListItems(content);
 
     return res.status(200).json({ content });
   } catch (error: any) {
