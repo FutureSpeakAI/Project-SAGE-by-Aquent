@@ -63,19 +63,41 @@ export const generateContent = async (req: Request, res: Response) => {
     content = completion.choices[0].message.content || "";
     
     // Clean the content of any markdown code block markers and concluding commentary
-    // Remove starting ```html or ``` if present (common with code-like responses)
-    content = content.replace(/^```(?:html|markdown|json|javascript|typescript|css|jsx|tsx|python)?\s*\n?/i, '');
-    // Remove ending ``` and any text after it if present
-    content = content.replace(/```[\s\S]*$/i, '');
     
-    // Remove common AI commentary that can appear after the main output
-    content = content.replace(/\n+In summary[\s\S]*$/i, '');
-    content = content.replace(/\n+To summarize[\s\S]*$/i, '');
-    content = content.replace(/\n+I hope this helps[\s\S]*$/i, '');
-    content = content.replace(/\n+Hope this helps[\s\S]*$/i, '');
-    content = content.replace(/\n+Let me know if[\s\S]*$/i, '');
-    content = content.replace(/\n+Please let me know[\s\S]*$/i, '');
-    content = content.replace(/\n+Is there anything else[\s\S]*$/i, '');
+    // Handle code blocks with language identifier (```html, ```js, etc.)
+    content = content.replace(/^```(?:html|markdown|md|json|javascript|js|typescript|ts|css|jsx|tsx|python|py)?\s*\n?/i, '');
+    
+    // Handle any code block endings and remove everything after them (often commentary)
+    const codeBlockEndMatch = content.match(/```[\s\S]*$/i);
+    if (codeBlockEndMatch) {
+      content = content.slice(0, codeBlockEndMatch.index);
+    }
+    
+    // More aggressive removal of closing commentary by detecting sign-off patterns
+    const commentPatterns = [
+      /\n+[\s\n]*In summary[\s\S]*$/i,
+      /\n+[\s\n]*To summarize[\s\S]*$/i,
+      /\n+[\s\n]*I hope (this|these|that)[\s\S]*$/i, 
+      /\n+[\s\n]*Hope (this|these|that)[\s\S]*$/i,
+      /\n+[\s\n]*Let me know[\s\S]*$/i,
+      /\n+[\s\n]*Please let me know[\s\S]*$/i,
+      /\n+[\s\n]*Is there anything else[\s\S]*$/i,
+      /\n+[\s\n]*Would you like me to[\s\S]*$/i,
+      /\n+[\s\n]*Feel free to[\s\S]*$/i,
+      /\n+[\s\n]*Do you want me to[\s\S]*$/i,
+      /\n+[\s\n]*If you need any changes[\s\S]*$/i,
+      /\n+[\s\n]*If you have any questions[\s\S]*$/i,
+      /\n+[\s\n]*If you need more[\s\S]*$/i,
+      /\n+[\s\n]*These (templates|examples|samples)[\s\S]*$/i
+    ];
+    
+    // Apply each pattern
+    for (const pattern of commentPatterns) {
+      const match = content.match(pattern);
+      if (match && match.index) {
+        content = content.slice(0, match.index);
+      }
+    }
     
     // Fix improperly formatted lists - Convert plain bullet lists into HTML lists
     // Convert bullet points to list items
