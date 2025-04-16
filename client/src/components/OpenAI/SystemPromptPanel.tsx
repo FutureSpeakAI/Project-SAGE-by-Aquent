@@ -26,7 +26,7 @@ export function SystemPromptPanel({
   setTemperature,
   onOpenPersonaLibrary,
 }: SystemPromptPanelProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   return (
     <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
