@@ -100,10 +100,17 @@ export function BriefingTab({
       
       const data = await response.json();
       
+      // Clean the response content if needed
+      let cleanedContent = data.content;
+      // Remove starting ```html or ``` if present
+      cleanedContent = cleanedContent.replace(/^```(?:html)?\s*\n?/i, '');
+      // Remove ending ``` and any text after it if present
+      cleanedContent = cleanedContent.replace(/```[\s\S]*$/i, '');
+      
       // Add assistant response to chat
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.content
+        content: cleanedContent
       }]);
       
       // No longer auto-generating briefing, now only happens when button is clicked
@@ -129,7 +136,7 @@ export function BriefingTab({
         },
         body: JSON.stringify({
           model,
-          systemPrompt: "Based on the conversation, create a comprehensive creative briefing document that will serve as a detailed guide for content creators. Important: The briefing you create will be used as a direct prompt for content generation, so write it in a way that clearly instructs a content creator what to make, not as a briefing report.\n\nInclude these sections:\n\n1. Project Overview (detailed project description, context, and background)\n2. Objectives (specific, measurable goals of the project)\n3. Target Audience (detailed persona descriptions including demographics, pain points, and motivations)\n4. Key Messages (primary communication points and value propositions)\n5. Deliverables (detailed specifications for each deliverable including format, length, tone, style, and technical requirements)\n6. Content Creation Guidelines (specific instructions on voice, tone, specific terminology to use or avoid)\n7. Timeline (comprehensive schedule with milestones and deadlines)\n8. Success Metrics (how the content's performance will be measured)\n\nCRITICAL - Your final section must be titled \"Content Creation Instructions\" and must contain SPECIFIC, DETAILED INSTRUCTIONS for the content creator. These instructions should be in an imperative voice (e.g., \"Create a blog post about...\", \"Write a social media caption that...\") rather than descriptive. This section must be actionable and clear so the content creator knows EXACTLY what to produce.\n\nUSE HTML FORMATTING for rich text output with these guidelines:\n1. Use <h1>, <h2>, <h3> tags for headings\n2. Use <ul> and <li> for bullet points\n3. Use <ol> and <li> for numbered steps\n4. Use <p> for paragraphs\n5. Use <strong> for emphasis\n6. Use <hr> for section dividers\n7. Use <blockquote> for highlighted information\n\nMake the document visually organized, professional, and comprehensive, with clear instruction-based language throughout. The HTML will be rendered directly in a rich text editor.",
+          systemPrompt: "Based on the conversation, create a comprehensive creative briefing document that will serve as a detailed guide for content creators. Important: The briefing you create will be used as a direct prompt for content generation, so write it in a way that clearly instructs a content creator what to make, not as a briefing report.\n\nInclude these sections:\n\n1. Project Overview (detailed project description, context, and background)\n2. Objectives (specific, measurable goals of the project)\n3. Target Audience (detailed persona descriptions including demographics, pain points, and motivations)\n4. Key Messages (primary communication points and value propositions)\n5. Deliverables (detailed specifications for each deliverable including format, length, tone, style, and technical requirements)\n6. Content Creation Guidelines (specific instructions on voice, tone, specific terminology to use or avoid)\n7. Timeline (comprehensive schedule with milestones and deadlines)\n8. Success Metrics (how the content's performance will be measured)\n\nCRITICAL - Your final section must be titled \"Content Creation Instructions\" and must contain SPECIFIC, DETAILED INSTRUCTIONS for the content creator. These instructions should be in an imperative voice (e.g., \"Create a blog post about...\", \"Write a social media caption that...\") rather than descriptive. This section must be actionable and clear so the content creator knows EXACTLY what to produce.\n\nUSE HTML FORMATTING for rich text output with these guidelines:\n1. Use <h1>, <h2>, <h3> tags for headings\n2. Use <ul> and <li> for bullet points\n3. Use <ol> and <li> for numbered steps\n4. Use <p> for paragraphs\n5. Use <strong> for emphasis\n6. Use <hr> for section dividers\n7. Use <blockquote> for highlighted information\n\nVERY IMPORTANT FORMATTING RULES:\n- DO NOT include any markdown code block markers like ```html, ```, or any variation\n- DO NOT add any concluding remarks, summary, or sign-off at the end of the document\n- DO NOT include any meta-commentary about the brief itself\n- ONLY include the HTML content with no markdown wrapper or commentary\n- END the document with the final HTML tag - don't add anything after it\n\nMake the document visually organized, professional, and comprehensive, with clear instruction-based language throughout. The HTML will be rendered directly in a rich text editor.",
           userPrompt: messages
             .map(msg => `${msg.role === 'user' ? 'User' : msg.role === 'assistant' ? 'Assistant' : 'System'}: ${msg.content}`)
             .join('\n\n'),
@@ -143,7 +150,17 @@ export function BriefingTab({
       }
       
       const data = await response.json();
-      setBriefingContent(data.content);
+      
+      // Clean the content of any markdown code block markers and concluding commentary
+      let cleanedContent = data.content;
+      // Remove starting ```html or ``` if present
+      cleanedContent = cleanedContent.replace(/^```(?:html)?\s*\n?/i, '');
+      // Remove ending ``` and any text after it if present
+      cleanedContent = cleanedContent.replace(/```[\s\S]*$/i, '');
+      // Remove any final generic commentary about the brief (often added by AI models)
+      cleanedContent = cleanedContent.replace(/\n+This comprehensive brief provides[\s\S]*$/i, '');
+      
+      setBriefingContent(cleanedContent);
       
     } catch (err: any) {
       setError(err.message);
