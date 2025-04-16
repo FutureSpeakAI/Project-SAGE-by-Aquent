@@ -194,12 +194,17 @@ export default function Home() {
   };
   
   const handleSelectBriefing = (content: GeneratedContent) => {
-    // Set briefing content to the user prompt as a reference
+    // Set briefing content to the user prompt
+    // This now contains direct instructions for content creation
     setUserPrompt(content.content);
     
+    // Switch to the Content tab after selecting a briefing
+    setActiveTab(AppTab.CONTENT);
+    
+    // Show a toast notification with clearer instructions
     toast({
       title: "Briefing Selected",
-      description: `The briefing "${content.title}" has been loaded into your prompt.`,
+      description: `The briefing "${content.title}" has been loaded as your prompt. Click "Generate" to create content based on these instructions.`,
     });
     
     setBriefingLibraryOpen(false);
