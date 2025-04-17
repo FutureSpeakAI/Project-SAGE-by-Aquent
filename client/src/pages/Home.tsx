@@ -193,10 +193,53 @@ export default function Home() {
     setBriefingLibraryOpen(true);
   };
   
+  // Helper function to convert HTML to plain text
+  const convertHtmlToPlainText = (html: string): string => {
+    // Create a temporary element to handle HTML content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Strip out head and style sections that shouldn't be included in prompt
+    const headElements = tempDiv.getElementsByTagName('head');
+    while (headElements.length > 0) {
+      headElements[0].parentNode?.removeChild(headElements[0]);
+    }
+    
+    const styleElements = tempDiv.getElementsByTagName('style');
+    while (styleElements.length > 0) {
+      styleElements[0].parentNode?.removeChild(styleElements[0]);
+    }
+    
+    // Get text content (automatically strips HTML tags)
+    let text = tempDiv.textContent || tempDiv.innerText || "";
+    
+    // Clean up whitespace
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    // Format headings and list items for better readability
+    // This preserves some structure from the HTML when converted to plain text
+    const formattedText = html
+      // Add newlines before headings (h1, h2, etc.)
+      .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '\n\n$1\n')
+      // Format list items with bullet points or numbers
+      .replace(/<li[^>]*>(.*?)<\/li>/gi, '\n• $1')
+      // Add newlines after paragraphs
+      .replace(/<\/p>/gi, '\n\n')
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Remove excess whitespace
+      .replace(/\n\s*\n/g, '\n\n')
+      .trim();
+    
+    return formattedText;
+  };
+
   const handleSelectBriefing = (content: GeneratedContent) => {
-    // Set briefing content to the user prompt
-    // This now contains direct instructions for content creation
-    setUserPrompt(content.content);
+    // Convert HTML content to plain text for better usage in the content prompt
+    const plainTextContent = convertHtmlToPlainText(content.content);
+    
+    // Set the converted plain text briefing as the user prompt
+    setUserPrompt(plainTextContent);
     
     // Switch to the Content tab after selecting a briefing
     setActiveTab(AppTab.CONTENT);
@@ -215,8 +258,16 @@ export default function Home() {
   };
   
   const handleDocumentProcessed = (content: string) => {
-    // Set the processed document content as the user prompt
-    setUserPrompt(content);
+    // Check if the content appears to be HTML and convert it if needed
+    const isHtml = /<\/?[a-z][\s\S]*>/i.test(content);
+    
+    // Set the processed document content as the user prompt, converting if it's HTML
+    if (isHtml) {
+      const plainTextContent = convertHtmlToPlainText(content);
+      setUserPrompt(plainTextContent);
+    } else {
+      setUserPrompt(content);
+    }
     
     toast({
       title: "Document Processed",

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Brief for COPD Treatment X Emails</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            padding: 0;
+        }
+        h1, h2 {
+            color: #2E86C1;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Creative Brief for COPD Treatment X Emails</h1>
+
+    <h2>1. Project Overview</h2>
+    <p>
+        <strong>Project Name:</strong> COPD Treatment X<br>
+        <strong>Project Description:</strong> Develop three rep-triggered emails promoting our new COPD treatment. These emails will be sent following representative visits to healthcare providers, offering three levels of interaction based on provider engagement.
+    </p>
+    <p>
+        <strong>Background/Context:</strong> The emails are intended to reinforce the information shared during in-person visits and encourage healthcare providers to prescribe our new COPD treatment. The emails will provide additional insights and resources to support their decision-making process.
+    </p>
+
+    <h2>2. Objectives</h2>
+    <ul>
+        <li>Encourage healthcare providers to prescribe the new COPD treatment.</li>
+        <li>Reinforce the safety and popularity of the treatment.</li>
+        <li>Increase awareness and familiarity with the treatment among providers.</li>
+    </ul>
+
+    <h2>3. Target Audience</h2>
+    <p>
+        <strong>Primary Audience:</strong> Healthcare providers who see COPD patients.
+    </p>
+    <ul>
+        <li>Role: Physicians, pulmonologists, and healthcare specialists dealing with COPD patients.</li>
+        <li>Needs: Reliable, evidence-based treatment options for COPD.</li>
+        <li>Challenges: Managing patient outcomes while ensuring treatment safety and efficacy.</li>
+    </ul>
+
+    <h2>4. Key Messages</h2>
+    <ul>
+        <li>Our COPD treatment is exceptionally safe and well-received by the medical community.</li>
+        <li>Evidence-based studies demonstrate the treatment's efficacy in improving patient outcomes.</li>
+        <li>Healthcare providers can confidently prescribe our treatment, knowing it is backed by robust clinical data.</li>
+    </ul>
+
+    <h2>5. Deliverables</h2>
+    <ul>
+        <li>Three separate emails, each tailored to a different level of provider engagement:</li>
+        <ol>
+            <li>Email 1: Introduction and overview of the COPD treatment.</li>
+            <li>Email 2: In-depth analysis of treatment safety and efficacy.</li>
+            <li>Email 3: Case studies and testimonials from other healthcare providers.</li>
+        </ol>
+    </ul>
+
+    <h2>6. Content Creation Guidelines</h2>
+    <ul>
+        <li><strong>Tone/Voice:</strong> Educational, authoritative, and supportive.</li>
+        <li><strong>Length:</strong> Each email should be medium-length, ranging from 500 to 1000 words.</li>
+        <li><strong>Terminology:</strong> Use medical terminology appropriately, ensuring clarity and understanding.</li>
+    </ul>
+
+    <h2>7. Timeline</h2>
+    <ul>
+        <li><strong>Start Date:</strong> Immediate</li>
+        <li><strong>Deadline:</strong> Two weeks from project start</li>
+        <li><strong>Milestones:</strong></li>
+        <ul>
+            <li>Week 1: Drafts of all three emails completed.</li>
+            <li>Week 2: Review, revisions, and final approval.</li>
+        </ul>
+    </ul>
+
+    <h2>8. Content Creation Instructions</h2>
+    <ol>
+        <li>Create an engaging subject line for each email that highlights the treatment's safety and popularity.</li>
+        <li>Begin each email with a brief introduction that re-establishes the context of the representative's visit.</li>
+        <li>For Email 1, provide a comprehensive overview of the COPD treatment, highlighting key benefits and features.</li>
+        <li>For Email 2, dive deeper into the clinical safety data, providing evidence and studies that support the treatment's efficacy.</li>
+        <li>For Email 3, incorporate real-world testimonials and case studies from other healthcare providers who have successfully prescribed the treatment.</li>
+        <li>Include a call-to-action in each email, encouraging providers to contact their representative for more information or to initiate the prescription process.</li>
+        <li>Ensure all content is proofread for accuracy, clarity, and grammatical correctness.</li>
+    </ol>
+
+</body>
+</html>
