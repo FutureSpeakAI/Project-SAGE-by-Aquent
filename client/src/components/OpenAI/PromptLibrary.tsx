@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { SavedPrompt, CreatePromptRequest, UpdatePromptRequest } from "@/lib/types";
 import { apiRequest } from "@/lib/queryClient";
@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { BookMarked, MoreVertical, Pencil, Save, Trash2, PlusCircle } from "lucide-react";
+import { BookMarked, MoreVertical, Pencil, Save, Trash2, PlusCircle, Filter, Tag } from "lucide-react";
 
 interface PromptLibraryProps {
   onSelectPrompt: (prompt: SavedPrompt) => void;
@@ -26,8 +29,10 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
   const [isPromptFormOpen, setIsPromptFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<SavedPrompt | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [formData, setFormData] = useState<CreatePromptRequest>({
     name: "",
+    category: "General",
     systemPrompt: "",
     userPrompt: ""
   });
@@ -42,6 +47,20 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
       return response.json() as Promise<SavedPrompt[]>;
     }
   });
+
+  // Extract unique categories from prompts
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>(prompts.map(prompt => prompt.category || "General"));
+    return ["all", ...Array.from(uniqueCategories)];
+  }, [prompts]);
+
+  // Filter prompts by category
+  const filteredPrompts = useMemo(() => {
+    if (activeCategory === "all") {
+      return prompts;
+    }
+    return prompts.filter(prompt => (prompt.category || "General") === activeCategory);
+  }, [prompts, activeCategory]);
 
   // Create a new prompt
   const createPromptMutation = useMutation({
@@ -116,6 +135,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
   const handleCreateNew = () => {
     setFormData({
       name: "",
+      category: "General",
       systemPrompt: "",
       userPrompt: ""
     });
@@ -128,6 +148,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
     setSelectedPrompt(prompt);
     setFormData({
       name: prompt.name,
+      category: prompt.category || "General",
       systemPrompt: prompt.systemPrompt || "",
       userPrompt: prompt.userPrompt || ""
     });
@@ -171,6 +192,11 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle selecting a category
+  const handleCategoryChange = (category: string) => {
+    setFormData(prev => ({ ...prev, category }));
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -183,35 +209,67 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-2xl font-bold">Prompt Library</h2>
-        <Button onClick={handleCreateNew} className="flex items-center gap-2">
-          <PlusCircle className="h-4 w-4" />
-          <span>New Prompt</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select
+            value={activeCategory}
+            onValueChange={setActiveCategory}
+          >
+            <SelectTrigger className="w-[180px]">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                <SelectValue placeholder="Filter by category" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category === "all" ? "All Categories" : category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleCreateNew} className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            <span>New Prompt</span>
+          </Button>
+        </div>
       </div>
 
-      {prompts.length === 0 ? (
+      {filteredPrompts.length === 0 ? (
         <div className="border rounded-lg p-8 text-center bg-muted/50">
           <BookMarked className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No saved prompts</h3>
+          <h3 className="text-lg font-medium mb-2">
+            {prompts.length === 0 
+              ? "No saved prompts" 
+              : `No prompts found in "${activeCategory === "all" ? "All Categories" : activeCategory}"`}
+          </h3>
           <p className="text-muted-foreground mb-4">
-            Save your favorite prompts to quickly use them later.
+            {prompts.length === 0 
+              ? "Save your favorite prompts to quickly use them later."
+              : "Try selecting a different category or create a new prompt."}
           </p>
           <Button onClick={handleCreateNew} variant="outline">
-            Create Your First Prompt
+            Create {prompts.length === 0 ? "Your First" : "A New"} Prompt
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {prompts.map((prompt) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredPrompts.map((prompt) => (
             <Card key={prompt.id} className="flex flex-col overflow-hidden border-2 hover:border-[#FF6600]/70 transition-all">
               <CardHeader className="pb-3 bg-gray-50">
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle className="text-xl font-bold" title={prompt.name}>
-                      {prompt.name}
-                    </CardTitle>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <CardTitle className="text-xl font-bold" title={prompt.name}>
+                        {prompt.name}
+                      </CardTitle>
+                      <Badge variant="outline" className="bg-[#FF6600]/10 text-[#FF6600] border-[#FF6600]/20 capitalize">
+                        <Tag className="h-3 w-3 mr-1" />
+                        {prompt.category || "General"}
+                      </Badge>
+                    </div>
                     <CardDescription className="mt-1">Updated: {formatDate(prompt.updatedAt)}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
@@ -238,7 +296,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
                 </div>
               </CardHeader>
               <CardContent className="py-4 flex-grow">
-                <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col gap-4">
                   {prompt.systemPrompt && (
                     <div className="flex-1">
                       <h4 className="font-medium text-sm mb-2 text-[#FF6600]">System Prompt:</h4>
@@ -279,6 +337,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
           if (!open) {
             setFormData({
               name: "",
+              category: "General",
               systemPrompt: "",
               userPrompt: ""
             });
@@ -295,15 +354,40 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Prompt Name</Label>
-              <Input 
-                id="name" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleInputChange}
-                placeholder="Enter a descriptive name" 
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Prompt Name</Label>
+                <Input 
+                  id="name" 
+                  name="name" 
+                  value={formData.name} 
+                  onChange={handleInputChange}
+                  placeholder="Enter a descriptive name" 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="General">General</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Sales">Sales</SelectItem>
+                    <SelectItem value="Email">Email</SelectItem>
+                    <SelectItem value="Social Media">Social Media</SelectItem>
+                    <SelectItem value="Technical">Technical</SelectItem>
+                    <SelectItem value="Creative">Creative</SelectItem>
+                    <SelectItem value="Academic">Academic</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <div className="space-y-2">

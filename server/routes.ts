@@ -188,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/prompts", async (req: Request, res: Response) => {
     try {
-      const { name, systemPrompt, userPrompt } = req.body;
+      const { name, category, systemPrompt, userPrompt } = req.body;
       
       if (!name) {
         return res.status(400).json({ error: "Prompt name is required" });
@@ -200,6 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const savedPrompt = await storage.savePrompt({
         name,
+        category: category || "General",
         systemPrompt,
         userPrompt
       });
