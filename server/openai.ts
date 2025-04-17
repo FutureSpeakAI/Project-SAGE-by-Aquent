@@ -44,11 +44,11 @@ export const generateContent = async (req: Request, res: Response) => {
     // Initialize the OpenAI client
     const openai = new OpenAI(openaiConfig);
     
-    // Enhance system prompt to avoid commentary
+    // Enhance system prompt with strict instructions to avoid commentary
     let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
     
-    // Add explicit instructions to avoid commentary at the end
-    enhancedSystemPrompt += "\n\nIMPORTANT: Provide ONLY the requested deliverable content. Do NOT add any comments, explanations, notes, or disclaimers at the end. Do NOT add signatures like 'I hope this helps' or 'Let me know if you need changes'. Do NOT add horizontal lines (---, ***, ___) or any separators at the end. End your response with the last line of actual content.";
+    // Add more explicit instructions to prevent ANY commentary, introduction, or explanation
+    enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT FORMATTING INSTRUCTIONS: Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. DO NOT include ANY explanatory text before or after the content. DO NOT add ANY signatures, disclaimers, or notes at the end. DO NOT include any separators like '---' or '***'. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. No introduction, no explanation, no commentary, no conclusion.";
     
     // Create completion with the OpenAI SDK
     const completion = await openai.chat.completions.create({
@@ -70,6 +70,24 @@ export const generateContent = async (req: Request, res: Response) => {
     
     // Clean the content of any markdown code block markers and concluding commentary
     
+    // Remove introductory AI commentary at the beginning
+    const introPatterns = [
+      // Common AI introductions
+      /^(Certainly|Sure|Here are|Below are|Here is|Below is)[^.]*\.\s*/i,
+      /^(I've created|I've drafted|I've prepared|As requested|Based on your request)[^.]*\.\s*/i,
+      /^(Following|In accordance with|As per|Following your)[^.]*\.\s*/i,
+      /^(These are|This is|I'd like to present|I'm happy to provide)[^.]*\.\s*/i,
+      /^(Please find|Please see|As you requested|As per your instructions)[^.]*\.\s*/i,
+      /^(Here's|The following|Based on the creative brief|I've developed)[^.]*\.\s*/i,
+      // Specifically match the example seen
+      /^Certainly! Below are drafts for the three rep-triggered emails[^.]*\.\s*/i,
+    ];
+    
+    // Apply each intro pattern
+    for (const pattern of introPatterns) {
+      content = content.replace(pattern, '');
+    }
+    
     // Handle code blocks with language identifier (```html, ```js, etc.)
     content = content.replace(/^```(?:html|markdown|md|json|javascript|js|typescript|ts|css|jsx|tsx|python|py)?\s*\n?/i, '');
     
@@ -78,6 +96,10 @@ export const generateContent = async (req: Request, res: Response) => {
     if (codeBlockEndMatch) {
       content = content.slice(0, codeBlockEndMatch.index);
     }
+    
+    // Remove standalone delimiter lines that separate emails or sections but might not be part of commentary
+    content = content.replace(/^\s*---\s*$/gm, '');
+    content = content.replace(/^\s*\*\*\*\s*$/gm, '');
     
     // More aggressive removal of closing commentary by detecting sign-off patterns
     const commentPatterns = [
