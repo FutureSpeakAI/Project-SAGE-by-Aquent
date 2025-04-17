@@ -195,43 +195,83 @@ export default function Home() {
   
   // Helper function to convert HTML to plain text
   const convertHtmlToPlainText = (html: string): string => {
+    // First, remove any CSS/style content completely
+    let cleanedHtml = html
+      // Remove any <style> tags and their contents
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      // Remove any inline style attributes
+      .replace(/\s+style=["'][^"']*["']/gi, '')
+      // Remove any <head> section completely
+      .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
+      // Remove any DOCTYPE, html, and body tags
+      .replace(/<!DOCTYPE[^>]*>/gi, '')
+      .replace(/<\/?html[^>]*>/gi, '')
+      .replace(/<\/?body[^>]*>/gi, '');
+    
     // Create a temporary element to handle HTML content
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
+    tempDiv.innerHTML = cleanedHtml;
     
-    // Strip out head and style sections that shouldn't be included in prompt
-    const headElements = tempDiv.getElementsByTagName('head');
-    while (headElements.length > 0) {
-      headElements[0].parentNode?.removeChild(headElements[0]);
-    }
-    
-    const styleElements = tempDiv.getElementsByTagName('style');
-    while (styleElements.length > 0) {
-      styleElements[0].parentNode?.removeChild(styleElements[0]);
-    }
-    
-    // Get text content (automatically strips HTML tags)
-    let text = tempDiv.textContent || tempDiv.innerText || "";
-    
-    // Clean up whitespace
-    text = text.replace(/\s+/g, ' ').trim();
-    
-    // Format headings and list items for better readability
-    // This preserves some structure from the HTML when converted to plain text
-    const formattedText = html
-      // Add newlines before headings (h1, h2, etc.)
-      .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '\n\n$1\n')
-      // Format list items with bullet points or numbers
+    // Format the HTML into a structured text
+    let formattedText = cleanedHtml
+      // Add newlines and spacing for headings
+      .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\n\n# $1\n\n')
+      .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n## $1\n\n')
+      .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n\n### $1\n\n')
+      .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '\n\n#### $1\n\n')
+      .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '\n\n##### $1\n\n')
+      .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '\n\n###### $1\n\n')
+      
+      // Format strong and bold text
+      .replace(/<(strong|b)[^>]*>(.*?)<\/(strong|b)>/gi, '**$2**')
+      
+      // Format italic text
+      .replace(/<(em|i)[^>]*>(.*?)<\/(em|i)>/gi, '*$2*')
+      
+      // Format list items with bullet points
       .replace(/<li[^>]*>(.*?)<\/li>/gi, '\n• $1')
-      // Add newlines after paragraphs
+      
+      // Fix nested lists
+      .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, '\n$1\n')
+      .replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, '\n$1\n')
+      
+      // Add newlines after paragraphs and divs
       .replace(/<\/p>/gi, '\n\n')
-      // Remove HTML tags
+      .replace(/<\/div>/gi, '\n')
+      
+      // Add spacing for horizontal rules
+      .replace(/<hr[^>]*>/gi, '\n\n---\n\n')
+      
+      // Handle line breaks
+      .replace(/<br[^>]*>/gi, '\n')
+      
+      // Remove all remaining HTML tags
       .replace(/<[^>]*>/g, '')
-      // Remove excess whitespace
-      .replace(/\n\s*\n/g, '\n\n')
+      
+      // Decode HTML entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      
+      // Fix multiple consecutive line breaks
+      .replace(/\n\s*\n\s*\n/g, '\n\n')
+      
+      // Trim leading/trailing whitespace
       .trim();
-    
-    return formattedText;
+      
+    // Final cleanup to improve readability
+    return formattedText
+      // Ensure sections and list items are properly spaced
+      .replace(/•\s*\n\s*•/g, '•\n•')
+      // Make sure numbered sections stand out
+      .replace(/\n(\d+)\.\s/g, '\n\n$1. ')
+      // Remove any residual indentation that might have come from HTML
+      .replace(/\n\s{2,}/g, '\n')
+      // Add a blank line after main title
+      .replace(/(^.+$)/, '$1\n');
   };
 
   const handleSelectBriefing = (content: GeneratedContent) => {

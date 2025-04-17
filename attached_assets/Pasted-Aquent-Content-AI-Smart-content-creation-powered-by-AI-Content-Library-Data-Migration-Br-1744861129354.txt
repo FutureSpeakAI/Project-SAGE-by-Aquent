@@ -1,0 +1,117 @@
+Aquent Content AI
+Smart content creation powered by AI
+
+
+Content Library
+
+Data Migration
+
+Briefing
+
+Content
+Select Briefing
+System Prompt
+User Prompt
+
+Deploy From Library
+Creative Brief for COPD Treatment X Emails
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            padding: 0;
+        }
+        h1, h2 {
+            color: #2E86C1;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+
+Creative Brief for COPD Treatment X Emails
+
+1. Project Overview
+
+        Project Name: COPD Treatment X
+        Project Description: Develop three rep-triggered emails promoting our new COPD treatment. These emails will be sent following representative visits to healthcare providers, offering three levels of interaction based on provider engagement.
+
+        Background/Context: The emails are intended to reinforce the information shared during in-person visits and encourage healthcare providers to prescribe our new COPD treatment. The emails will provide additional insights and resources to support their decision-making process.
+
+2. Objectives
+
+• Encourage healthcare providers to prescribe the new COPD treatment.
+
+• Reinforce the safety and popularity of the treatment.
+
+• Increase awareness and familiarity with the treatment among providers.
+
+3. Target Audience
+
+        Primary Audience: Healthcare providers who see COPD patients.
+
+• Role: Physicians, pulmonologists, and healthcare specialists dealing with COPD patients.
+
+• Needs: Reliable, evidence-based treatment options for COPD.
+
+• Challenges: Managing patient outcomes while ensuring treatment safety and efficacy.
+
+4. Key Messages
+
+• Our COPD treatment is exceptionally safe and well-received by the medical community.
+
+• Evidence-based studies demonstrate the treatment's efficacy in improving patient outcomes.
+
+• Healthcare providers can confidently prescribe our treatment, knowing it is backed by robust clinical data.
+
+5. Deliverables
+
+• Three separate emails, each tailored to a different level of provider engagement:
+
+• Email 1: Introduction and overview of the COPD treatment.
+
+• Email 2: In-depth analysis of treatment safety and efficacy.
+
+• Email 3: Case studies and testimonials from other healthcare providers.
+
+6. Content Creation Guidelines
+
+• Tone/Voice: Educational, authoritative, and supportive.
+
+• Length: Each email should be medium-length, ranging from 500 to 1000 words.
+
+• Terminology: Use medical terminology appropriately, ensuring clarity and understanding.
+
+7. Timeline
+
+• Start Date: Immediate
+
+• Deadline: Two weeks from project start
+
+• Milestones:
+
+• Week 1: Drafts of all three emails completed.
+
+• Week 2: Review, revisions, and final approval.
+
+8. Content Creation Instructions
+
+• Create an engaging subject line for each email that highlights the treatment's safety and popularity.
+
+• Begin each email with a brief introduction that re-establishes the context of the representative's visit.
+
+• For Email 1, provide a comprehensive overview of the COPD treatment, highlighting key benefits and features.
+
+• For Email 2, dive deeper into the clinical safety data, providing evidence and studies that support the treatment's efficacy.
+
+• For Email 3, incorporate real-world testimonials and case studies from other healthcare providers who have successfully prescribed the treatment.
+
+• Include a call-to-action in each email, encouraging providers to contact their representative for more information or to initiate the prescription process.
+
+• Ensure all content is proofread for accuracy, clarity, and grammatical correctness.
+Generate Content
+Generated Content
+Your generated content will appear here
+
+Configure your prompts and click "Generate"
+
