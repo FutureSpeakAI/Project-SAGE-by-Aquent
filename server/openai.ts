@@ -44,13 +44,19 @@ export const generateContent = async (req: Request, res: Response) => {
     // Initialize the OpenAI client
     const openai = new OpenAI(openaiConfig);
     
+    // Enhance system prompt to avoid commentary
+    let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
+    
+    // Add explicit instructions to avoid commentary at the end
+    enhancedSystemPrompt += "\n\nIMPORTANT: Provide ONLY the requested deliverable content. Do NOT add any comments, explanations, notes, or disclaimers at the end. Do NOT add signatures like 'I hope this helps' or 'Let me know if you need changes'. Do NOT add horizontal lines (---, ***, ___) or any separators at the end. End your response with the last line of actual content.";
+    
     // Create completion with the OpenAI SDK
     const completion = await openai.chat.completions.create({
       model: model || "gpt-4o",
       messages: [
         {
           role: "system",
-          content: systemPrompt || "You are a helpful assistant."
+          content: enhancedSystemPrompt
         },
         {
           role: "user",
@@ -75,6 +81,12 @@ export const generateContent = async (req: Request, res: Response) => {
     
     // More aggressive removal of closing commentary by detecting sign-off patterns
     const commentPatterns = [
+      // Common ending with a horizontal line followed by comments
+      /\n+[\s\n]*---[\s\n]*[\s\S]*$/i,
+      /\n+[\s\n]*\*\*\*[\s\n]*[\s\S]*$/i,
+      /\n+[\s\n]*___[\s\n]*[\s\S]*$/i,
+      
+      // Standard AI signoffs
       /\n+[\s\n]*In summary[\s\S]*$/i,
       /\n+[\s\n]*To summarize[\s\S]*$/i,
       /\n+[\s\n]*I hope (this|these|that)[\s\S]*$/i, 
@@ -85,10 +97,26 @@ export const generateContent = async (req: Request, res: Response) => {
       /\n+[\s\n]*Would you like me to[\s\S]*$/i,
       /\n+[\s\n]*Feel free to[\s\S]*$/i,
       /\n+[\s\n]*Do you want me to[\s\S]*$/i,
+      
+      // Suggestions for revisions
       /\n+[\s\n]*If you need any changes[\s\S]*$/i,
       /\n+[\s\n]*If you have any questions[\s\S]*$/i,
-      /\n+[\s\n]*If you need more[\s\S]*$/i,
-      /\n+[\s\n]*These (templates|examples|samples)[\s\S]*$/i
+      /\n+[\s\n]*If you need (any )?(additional|more)[\s\S]*$/i,
+      /\n+[\s\n]*If you(\'d like| would like| want)[\s\S]*$/i,
+      
+      // Common template patterns
+      /\n+[\s\n]*These (templates|examples|samples|emails)[\s\S]*$/i,
+      /\n+[\s\n]*This (template|example|sample|email)[\s\S]*$/i,
+      /\n+[\s\n]*The (above|provided) (template|example|sample|email|content)[\s\S]*$/i,
+      
+      // Standard call to actions/offers
+      /\n+[\s\n]*Please (ensure|make sure|review|adjust|modify|tailor|customize)[\s\S]*$/i,
+      /\n+[\s\n]*(Remember|Note) that[\s\S]*$/i,
+      /\n+[\s\n]*You (can|could|may|should)[\s\S]*$/i,
+      /\n+[\s\n]*Don't hesitate to[\s\S]*$/i,
+      
+      // Specifically for the pattern shown in user example
+      /\n+[\s\n]*These emails are crafted[\s\S]*$/i
     ];
     
     // Apply each pattern
