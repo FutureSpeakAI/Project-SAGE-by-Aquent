@@ -82,6 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             await storage.savePrompt({
               name: prompt.name,
+              category: prompt.category || "General",
               systemPrompt: prompt.systemPrompt,
               userPrompt: prompt.userPrompt
             });
@@ -98,6 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             await storage.savePersona({
               name: persona.name,
+              category: persona.category || "General",
               description: persona.description,
               instruction: persona.instruction
             });
@@ -214,14 +216,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/prompts/:id", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { name, systemPrompt, userPrompt } = req.body;
+      const { name, category, systemPrompt, userPrompt } = req.body;
       
-      if (!name && !systemPrompt && !userPrompt) {
+      if (!name && !category && !systemPrompt && !userPrompt) {
         return res.status(400).json({ error: "At least one field must be provided for update" });
       }
       
       const updatedPrompt = await storage.updatePrompt(id, {
         ...(name && { name }),
+        ...(category && { category }),
         ...(systemPrompt !== undefined && { systemPrompt }),
         ...(userPrompt !== undefined && { userPrompt })
       });
@@ -232,6 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedPrompt);
     } catch (error) {
+      console.error("Error updating prompt:", error);
       res.status(500).json({ error: "Failed to update prompt" });
     }
   });
