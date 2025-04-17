@@ -48,7 +48,7 @@ export const generateContent = async (req: Request, res: Response) => {
     let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
     
     // Add more explicit instructions to prevent ANY commentary, introduction, or explanation
-    enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT INSTRUCTIONS: \n1. If the user prompt contains a creative brief or instructions, DO NOT REPEAT OR SUMMARIZE THE BRIEF ITSELF. Instead, create the ACTUAL CONTENT requested by the brief.\n2. Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. \n3. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. \n4. DO NOT include ANY explanatory text before or after the content. \n5. DO NOT add ANY signatures, disclaimers, or notes at the end. \n6. DO NOT include any separators like '---' or '***'. \n7. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. \n8. No introduction, no explanation, no commentary, no conclusion. \n9. If the user provides a creative brief labeled as such, ONLY GENERATE THE END DELIVERABLE described in the brief, not a restatement of the brief itself.";
+    enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT INSTRUCTIONS: \n1. If the user prompt contains a creative brief or instructions, DO NOT REPEAT OR SUMMARIZE THE BRIEF ITSELF. Instead, create the ACTUAL CONTENT requested by the brief.\n2. Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. \n3. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. \n4. DO NOT include ANY explanatory text before or after the content. \n5. DO NOT add ANY signatures, disclaimers, or notes at the end. \n6. DO NOT include any separators like '---' or '***'. \n7. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. \n8. No introduction, no explanation, no commentary, no conclusion. \n9. If the user provides a creative brief labeled as such, ONLY GENERATE THE END DELIVERABLE described in the brief, not a restatement of the brief itself.\n10. Use proper HTML tags for formatting: <h1> for main titles, <h2> for section headers, <h3> for subsections. Don't use markdown or asterisks for headings.\n11. For emphasis, use <strong> or <em> tags instead of markdown syntax.\n12. Format lists using <ol> and <ul> with <li> elements for proper structure.";
     
     // Create completion with the OpenAI SDK
     const completion = await openai.chat.completions.create({
@@ -69,6 +69,32 @@ export const generateContent = async (req: Request, res: Response) => {
     content = completion.choices[0].message.content || "";
     
     // Clean the content of any markdown code block markers and concluding commentary
+    
+    // Convert markdown headers to proper HTML headers
+    content = content.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+    content = content.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+    content = content.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+    content = content.replace(/^#### (.*)$/gm, '<h4>$1</h4>');
+    content = content.replace(/^##### (.*)$/gm, '<h5>$1</h5>');
+    
+    // Convert markdown bold syntax to HTML strong tags
+    content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Convert markdown italic syntax to HTML em tags
+    content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    content = content.replace(/_([^_]+)_/g, '<em>$1</em>');
+    
+    // Detect lines that look like titles but aren't marked as headers
+    // Check for short, centered, or all-caps lines at the beginning of paragraphs
+    content = content.replace(/^([A-Z][^.!?]{3,50}[A-Z])$/gm, '<h2>$1</h2>');
+    content = content.replace(/^(<strong>[^<]{3,50}<\/strong>)$/gm, '<h2>$1</h2>');
+    
+    // Title case words in a short paragraph are likely a title
+    content = content.replace(/^([A-Z][a-z]+(?: [A-Z][a-z]+){1,7})$/gm, '<h2>$1</h2>');
+    
+    // Special handling for email subject lines
+    content = content.replace(/^Subject:(.{3,100})$/gm, '<h3>Subject:$1</h3>');
+    content = content.replace(/^(From|To|Date):(.{3,100})$/gm, '<p><strong>$1:</strong>$2</p>');
     
     // Remove introductory AI commentary at the beginning
     const introPatterns = [
@@ -220,8 +246,9 @@ export const generateContent = async (req: Request, res: Response) => {
     // Final safety check: detect if the output seems like it's just repeating the creative brief
     // and if so, attempt to fix it by generating a new response
     if (userPrompt.includes("CREATIVE BRIEF") || userPrompt.includes("creative brief")) {
-      // Extract the brief portion
-      const briefMatch = userPrompt.match(/CREATIVE BRIEF.*?:(.+?)(?=Based on the creative brief|$)/is);
+      // Extract the brief portion - use a simpler regex pattern to avoid flag compatibility issues
+      const briefPattern = new RegExp("CREATIVE BRIEF[^:]*:(.+?)(?=Based on the creative brief|$)", "i");
+      const briefMatch = userPrompt.match(briefPattern);
       
       if (briefMatch && briefMatch[1]) {
         const briefContent = briefMatch[1].trim();
