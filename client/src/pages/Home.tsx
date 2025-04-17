@@ -321,8 +321,10 @@ export default function Home() {
     });
   };
   
-  const handleSaveBriefing = (title: string, content: string) => {
+  const handleSaveBriefing = (title: string, content: string, category: string = "General") => {
     // Create a new saved content record with type 'briefing'
+    const metadata = JSON.stringify({ category });
+    
     const newBriefing = {
       title,
       content,
@@ -331,7 +333,7 @@ export default function Home() {
       userPrompt: null,
       model: null,
       temperature: null,
-      metadata: null
+      metadata
     };
     
     fetch('/api/generated-contents', {
