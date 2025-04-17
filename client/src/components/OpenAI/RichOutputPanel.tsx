@@ -63,8 +63,46 @@ export function RichOutputPanel({
   useEffect(() => {
     // Process the content to preserve formatting
     if (content) {
-      // First, handle common markdown-like formatting
-      let enhancedContent = content
+      // First, clean any markdown code blocks and trailing commentary
+      let cleanedContent = content;
+      
+      // Remove starting ```html or ``` if present (common with code-like responses)
+      cleanedContent = cleanedContent.replace(/^```(?:html|markdown|md|json|javascript|js|typescript|ts|css|jsx|tsx|python|py)?\s*\n?/i, '');
+      
+      // Handle any code block endings and remove everything after them (often commentary)
+      const codeBlockEndMatch = cleanedContent.match(/```[\s\S]*$/i);
+      if (codeBlockEndMatch && codeBlockEndMatch.index) {
+        cleanedContent = cleanedContent.slice(0, codeBlockEndMatch.index);
+      }
+      
+      // Remove common AI commentary that can appear after the main output
+      const commentPatterns = [
+        /\n+[\s\n]*In summary[\s\S]*$/i,
+        /\n+[\s\n]*To summarize[\s\S]*$/i,
+        /\n+[\s\n]*I hope (this|these|that)[\s\S]*$/i, 
+        /\n+[\s\n]*Hope (this|these|that)[\s\S]*$/i,
+        /\n+[\s\n]*Let me know[\s\S]*$/i,
+        /\n+[\s\n]*Please let me know[\s\S]*$/i,
+        /\n+[\s\n]*Is there anything else[\s\S]*$/i,
+        /\n+[\s\n]*Would you like me to[\s\S]*$/i,
+        /\n+[\s\n]*Feel free to[\s\S]*$/i,
+        /\n+[\s\n]*Do you want me to[\s\S]*$/i,
+        /\n+[\s\n]*If you need any changes[\s\S]*$/i,
+        /\n+[\s\n]*If you have any questions[\s\S]*$/i,
+        /\n+[\s\n]*If you need more[\s\S]*$/i,
+        /\n+[\s\n]*These (templates|examples|samples)[\s\S]*$/i
+      ];
+      
+      // Apply each pattern
+      for (const pattern of commentPatterns) {
+        const match = cleanedContent.match(pattern);
+        if (match && match.index) {
+          cleanedContent = cleanedContent.slice(0, match.index);
+        }
+      }
+      
+      // Now format with HTML
+      let enhancedContent = cleanedContent
         // Handle titles with asterisks (bold)
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         // Handle emphasis with single asterisks (italic)
@@ -75,6 +113,76 @@ export function RichOutputPanel({
         .replace(/^(#{2}\s+)(.*?)$/gim, '<h2>$2</h2>')
         .replace(/^(#{3}\s+)(.*?)$/gim, '<h3>$3</h3>');
 
+      // Fix lists - convert plain bullet lists into HTML lists
+      
+      // Convert bullet points to list items
+      enhancedContent = enhancedContent.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
+      
+      // Convert numbered points to list items (1. 2. 3. etc)
+      enhancedContent = enhancedContent.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
+      
+      // Helper function to wrap list items in proper list tags
+      const wrapListItems = (content: string): string => {
+        let modified = content;
+        // Find potential list items
+        const listItemRegex = /<li>.*?<\/li>/g;
+        const listItems = content.match(listItemRegex);
+        
+        if (listItems) {
+          // Identify consecutive list items
+          let consecutiveItems = '';
+          let count = 0;
+          
+          for (let i = 0; i < listItems.length; i++) {
+            if (i > 0 && content.indexOf(listItems[i]) - 
+                (content.indexOf(listItems[i-1]) + listItems[i-1].length) < 10) {
+              // These list items are consecutive or close
+              if (count === 0) {
+                consecutiveItems = listItems[i-1];
+                count = 1;
+              }
+              consecutiveItems += listItems[i];
+              count++;
+            } else if (count > 0) {
+              // We found the end of a sequence - wrap it
+              if (count > 1) {
+                // Determine if these were numbered items originally
+                const originalContext = content.substring(
+                  Math.max(0, content.indexOf(consecutiveItems) - 20),
+                  content.indexOf(consecutiveItems)
+                );
+                
+                const isNumbered = /\d+\.\s/.test(originalContext);
+                const tagName = isNumbered ? 'ol' : 'ul';
+                
+                modified = modified.replace(consecutiveItems, 
+                  `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+              }
+              consecutiveItems = '';
+              count = 0;
+            }
+          }
+          
+          // Handle the last sequence if there is one
+          if (count > 1) {
+            const originalContext = content.substring(
+              Math.max(0, content.indexOf(consecutiveItems) - 20),
+              content.indexOf(consecutiveItems)
+            );
+            
+            const isNumbered = /\d+\.\s/.test(originalContext);
+            const tagName = isNumbered ? 'ol' : 'ul';
+            
+            modified = modified.replace(consecutiveItems, 
+              `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+          }
+        }
+        
+        return modified;
+      };
+      
+      enhancedContent = wrapListItems(enhancedContent);
+
       // Split by paragraphs - looking for either single or double newlines
       const paragraphs = enhancedContent.split(/\n{2,}/).filter(p => p.trim());
       
@@ -84,7 +192,9 @@ export function RichOutputPanel({
         if (
           (para.startsWith('<h1>') && para.endsWith('</h1>')) ||
           (para.startsWith('<h2>') && para.endsWith('</h2>')) ||
-          (para.startsWith('<h3>') && para.endsWith('</h3>'))
+          (para.startsWith('<h3>') && para.endsWith('</h3>')) ||
+          (para.startsWith('<ul>') && para.endsWith('</ul>')) ||
+          (para.startsWith('<ol>') && para.endsWith('</ol>'))
         ) {
           return para;
         }
@@ -96,7 +206,8 @@ export function RichOutputPanel({
             // Skip if line is already in HTML
             if (
               (line.startsWith('<h') && line.endsWith('</h')) ||
-              (line.startsWith('<p>') && line.endsWith('</p>'))
+              (line.startsWith('<p>') && line.endsWith('</p>')) ||
+              (line.startsWith('<li>') && line.endsWith('</li>'))
             ) {
               return line;
             }
@@ -109,9 +220,9 @@ export function RichOutputPanel({
       }).join('');
         
       // Replace consecutive <p></p> tags that might have been created
-      const cleanedContent = processedContent.replace(/<\/p>\s*<p>/g, '</p><p>');
+      const finalContent = processedContent.replace(/<\/p>\s*<p>/g, '</p><p>');
       
-      setEditableContent(cleanedContent);
+      setEditableContent(finalContent);
     } else {
       setEditableContent('');
     }
@@ -148,8 +259,46 @@ export function RichOutputPanel({
 
     // Process the text to convert markdown to HTML
     const processFormattedText = (text: string) => {
-      // First, handle common markdown-like formatting
-      let enhancedContent = text
+      // First, clean any markdown code blocks and trailing commentary
+      let cleanedContent = text;
+      
+      // Remove starting ```html or ``` if present (common with code-like responses)
+      cleanedContent = cleanedContent.replace(/^```(?:html|markdown|md|json|javascript|js|typescript|ts|css|jsx|tsx|python|py)?\s*\n?/i, '');
+      
+      // Handle any code block endings and remove everything after them (often commentary)
+      const codeBlockEndMatch = cleanedContent.match(/```[\s\S]*$/i);
+      if (codeBlockEndMatch && codeBlockEndMatch.index) {
+        cleanedContent = cleanedContent.slice(0, codeBlockEndMatch.index);
+      }
+      
+      // Remove common AI commentary that can appear after the main output
+      const commentPatterns = [
+        /\n+[\s\n]*In summary[\s\S]*$/i,
+        /\n+[\s\n]*To summarize[\s\S]*$/i,
+        /\n+[\s\n]*I hope (this|these|that)[\s\S]*$/i, 
+        /\n+[\s\n]*Hope (this|these|that)[\s\S]*$/i,
+        /\n+[\s\n]*Let me know[\s\S]*$/i,
+        /\n+[\s\n]*Please let me know[\s\S]*$/i,
+        /\n+[\s\n]*Is there anything else[\s\S]*$/i,
+        /\n+[\s\n]*Would you like me to[\s\S]*$/i,
+        /\n+[\s\n]*Feel free to[\s\S]*$/i,
+        /\n+[\s\n]*Do you want me to[\s\S]*$/i,
+        /\n+[\s\n]*If you need any changes[\s\S]*$/i,
+        /\n+[\s\n]*If you have any questions[\s\S]*$/i,
+        /\n+[\s\n]*If you need more[\s\S]*$/i,
+        /\n+[\s\n]*These (templates|examples|samples)[\s\S]*$/i
+      ];
+      
+      // Apply each pattern
+      for (const pattern of commentPatterns) {
+        const match = cleanedContent.match(pattern);
+        if (match && match.index) {
+          cleanedContent = cleanedContent.slice(0, match.index);
+        }
+      }
+      
+      // Now format with HTML
+      let enhancedContent = cleanedContent
         // Handle titles with asterisks (bold)
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         // Handle emphasis with single asterisks (italic)
@@ -160,6 +309,76 @@ export function RichOutputPanel({
         .replace(/^(#{2}\s+)(.*?)$/gim, '<h2>$2</h2>')
         .replace(/^(#{3}\s+)(.*?)$/gim, '<h3>$3</h3>');
 
+      // Fix lists - convert plain bullet lists into HTML lists
+      
+      // Convert bullet points to list items
+      enhancedContent = enhancedContent.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
+      
+      // Convert numbered points to list items (1. 2. 3. etc)
+      enhancedContent = enhancedContent.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
+      
+      // Helper function to wrap list items in proper list tags
+      const wrapListItems = (content: string): string => {
+        let modified = content;
+        // Find potential list items
+        const listItemRegex = /<li>.*?<\/li>/g;
+        const listItems = content.match(listItemRegex);
+        
+        if (listItems) {
+          // Identify consecutive list items
+          let consecutiveItems = '';
+          let count = 0;
+          
+          for (let i = 0; i < listItems.length; i++) {
+            if (i > 0 && content.indexOf(listItems[i]) - 
+                (content.indexOf(listItems[i-1]) + listItems[i-1].length) < 10) {
+              // These list items are consecutive or close
+              if (count === 0) {
+                consecutiveItems = listItems[i-1];
+                count = 1;
+              }
+              consecutiveItems += listItems[i];
+              count++;
+            } else if (count > 0) {
+              // We found the end of a sequence - wrap it
+              if (count > 1) {
+                // Determine if these were numbered items originally
+                const originalContext = content.substring(
+                  Math.max(0, content.indexOf(consecutiveItems) - 20),
+                  content.indexOf(consecutiveItems)
+                );
+                
+                const isNumbered = /\d+\.\s/.test(originalContext);
+                const tagName = isNumbered ? 'ol' : 'ul';
+                
+                modified = modified.replace(consecutiveItems, 
+                  `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+              }
+              consecutiveItems = '';
+              count = 0;
+            }
+          }
+          
+          // Handle the last sequence if there is one
+          if (count > 1) {
+            const originalContext = content.substring(
+              Math.max(0, content.indexOf(consecutiveItems) - 20),
+              content.indexOf(consecutiveItems)
+            );
+            
+            const isNumbered = /\d+\.\s/.test(originalContext);
+            const tagName = isNumbered ? 'ol' : 'ul';
+            
+            modified = modified.replace(consecutiveItems, 
+              `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+          }
+        }
+        
+        return modified;
+      };
+      
+      enhancedContent = wrapListItems(enhancedContent);
+
       // Split by paragraphs - looking for either single or double newlines
       const paragraphs = enhancedContent.split(/\n{2,}/).filter(p => p.trim());
       
@@ -169,7 +388,9 @@ export function RichOutputPanel({
         if (
           (para.startsWith('<h1>') && para.endsWith('</h1>')) ||
           (para.startsWith('<h2>') && para.endsWith('</h2>')) ||
-          (para.startsWith('<h3>') && para.endsWith('</h3>'))
+          (para.startsWith('<h3>') && para.endsWith('</h3>')) ||
+          (para.startsWith('<ul>') && para.endsWith('</ul>')) ||
+          (para.startsWith('<ol>') && para.endsWith('</ol>'))
         ) {
           return para;
         }
@@ -181,7 +402,8 @@ export function RichOutputPanel({
             // Skip if line is already in HTML
             if (
               (line.startsWith('<h') && line.endsWith('</h')) ||
-              (line.startsWith('<p>') && line.endsWith('</p>'))
+              (line.startsWith('<p>') && line.endsWith('</p>')) ||
+              (line.startsWith('<li>') && line.endsWith('</li>'))
             ) {
               return line;
             }
