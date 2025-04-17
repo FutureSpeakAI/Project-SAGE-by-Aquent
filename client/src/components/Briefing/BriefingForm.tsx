@@ -35,7 +35,7 @@ export function BriefingForm({
     
     // Content Parameters
     contentType: "Blog Post", // Default content type
-    contentTone: "Professional",
+    contentTones: ["Professional"], // Default tone(s) - now an array
     contentLength: "Medium (500-1000 words)",
     
     // Deliverables & Timeline
@@ -125,7 +125,7 @@ Key Messages: ${formData.keyMessages}
 
 CONTENT PARAMETERS:
 Content Type: ${formData.contentType}
-Tone/Voice: ${formData.contentTone}
+Tone/Voice: ${formData.contentTones.join(', ')}
 Length: ${formData.contentLength}
 
 DELIVERABLES & TIMELINE:
@@ -417,15 +417,28 @@ IMPORTANT FORMATTING REQUIREMENTS:
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="contentTone">Tone/Voice</Label>
+                  <Label htmlFor="contentTone">Tone/Voice (select multiple)</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {contentTones.map(tone => (
                       <Button
                         key={tone}
                         type="button"
-                        variant={formData.contentTone === tone ? "default" : "outline"}
-                        className={formData.contentTone === tone ? "bg-[#F15A22] hover:bg-[#F15A22]/90" : ""}
-                        onClick={() => setFormData(prev => ({...prev, contentTone: tone}))}
+                        variant={formData.contentTones.includes(tone) ? "default" : "outline"}
+                        className={formData.contentTones.includes(tone) ? "bg-[#F15A22] hover:bg-[#F15A22]/90" : ""}
+                        onClick={() => {
+                          setFormData(prev => {
+                            // If tone is already selected, remove it, otherwise add it
+                            const newTones = prev.contentTones.includes(tone)
+                              ? prev.contentTones.filter(t => t !== tone)
+                              : [...prev.contentTones, tone];
+                            
+                            // Ensure at least one tone is always selected
+                            return {
+                              ...prev,
+                              contentTones: newTones.length > 0 ? newTones : prev.contentTones
+                            };
+                          });
+                        }}
                       >
                         {tone}
                       </Button>
