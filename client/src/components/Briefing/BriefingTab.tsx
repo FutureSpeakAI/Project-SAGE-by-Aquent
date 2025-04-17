@@ -257,6 +257,7 @@ export function BriefingTab({
   // Handle form-generated briefing
   const handleFormGeneratedBriefing = (content: string) => {
     setBriefingContent(content);
+    setIsLoading(false); // Ensure loading state is turned off when form generation completes
   };
 
   return (

@@ -200,8 +200,94 @@ IMPORTANT FORMATTING REQUIREMENTS:
         }
       }
       
+      // Fix lists if needed (similar to the chat interface)
+      // Convert bullet points to list items if they aren't already
+      if (!cleanedContent.includes('<ul>') && !cleanedContent.includes('<ol>')) {
+        // Convert bullet points to list items
+        cleanedContent = cleanedContent.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
+        
+        // Convert numbered points to list items (1. 2. 3. etc)
+        cleanedContent = cleanedContent.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
+        
+        // Find and wrap consecutive li elements
+        const liRegex = /<li>.*?<\/li>/g;
+        const matches = [...cleanedContent.matchAll(liRegex)];
+        
+        if (matches.length > 0) {
+          let lastIndex = 0;
+          let result = '';
+          
+          for (let i = 0; i < matches.length; i++) {
+            if (matches[i].index === undefined) continue;
+            
+            // Check if this is consecutive with the previous match
+            if (i > 0 && matches[i].index && matches[i-1].index !== undefined && 
+                matches[i].index - (matches[i-1].index + matches[i-1][0].length) < 10) {
+              
+              // If this is the start of a consecutive group
+              if (lastIndex !== matches[i-1].index) {
+                // Add the text between the last group and this one
+                result += cleanedContent.substring(lastIndex, matches[i-1].index);
+                
+                // Determine if numbered or bulleted list based on context
+                const prevText = cleanedContent.substring(
+                  Math.max(0, matches[i-1].index - 20), 
+                  matches[i-1].index
+                );
+                const isNumbered = /\d+\.\s/.test(prevText);
+                
+                // Start the list
+                result += isNumbered ? '<ol>' : '<ul>';
+                result += matches[i-1][0];
+              }
+              
+              // Add this item
+              result += matches[i][0];
+              
+              // If this is the last item or the next isn't consecutive, close the list
+              if (i === matches.length - 1 || 
+                  (matches[i+1].index && matches[i].index !== undefined && 
+                  matches[i+1].index - (matches[i].index + matches[i][0].length) >= 10)) {
+                // Determine if this is a numbered list based on previous text
+                const prevContext = cleanedContent.substring(
+                  Math.max(0, matches[i-1].index !== undefined ? matches[i-1].index - 20 : 0), 
+                  matches[i-1].index !== undefined ? matches[i-1].index : 0
+                );
+                const isNumberedList = /\d+\.\s/.test(prevContext);
+                
+                result += isNumberedList ? '</ol>' : '</ul>';
+                lastIndex = matches[i].index + matches[i][0].length;
+              }
+            } else if (i === 0 || 
+                      (matches[i].index && matches[i-1].index !== undefined && 
+                      matches[i].index - (matches[i-1].index + matches[i-1][0].length) >= 10)) {
+              // This is a standalone list item, add the text before it
+              result += cleanedContent.substring(lastIndex, matches[i].index);
+              
+              // Wrap it in a list
+              const isNumbered = /\d+\.\s/.test(
+                cleanedContent.substring(Math.max(0, matches[i].index - 20), matches[i].index)
+              );
+              result += (isNumbered ? '<ol>' : '<ul>') + matches[i][0] + (isNumbered ? '</ol>' : '</ul>');
+              
+              lastIndex = matches[i].index + matches[i][0].length;
+            }
+          }
+          
+          // Add the remaining text
+          result += cleanedContent.substring(lastIndex);
+          cleanedContent = result;
+        }
+      }
+      
       // Pass the generated content up to the parent component
       onGenerateBriefing(cleanedContent);
+      
+      // Show success toast
+      toast({
+        title: "Brief generated",
+        description: "Your creative brief has been generated successfully.",
+      });
       
     } catch (err: any) {
       toast({
@@ -426,7 +512,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
+                  Generating Brief...
                 </>
               ) : (
                 'Generate Creative Brief'
