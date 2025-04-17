@@ -48,7 +48,7 @@ export const generateContent = async (req: Request, res: Response) => {
     let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
     
     // Add more explicit instructions to prevent ANY commentary, introduction, or explanation
-    enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT FORMATTING INSTRUCTIONS: Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. DO NOT include ANY explanatory text before or after the content. DO NOT add ANY signatures, disclaimers, or notes at the end. DO NOT include any separators like '---' or '***'. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. No introduction, no explanation, no commentary, no conclusion.";
+    enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT INSTRUCTIONS: \n1. If the user prompt contains a creative brief or instructions, DO NOT REPEAT OR SUMMARIZE THE BRIEF ITSELF. Instead, create the ACTUAL CONTENT requested by the brief.\n2. Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. \n3. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. \n4. DO NOT include ANY explanatory text before or after the content. \n5. DO NOT add ANY signatures, disclaimers, or notes at the end. \n6. DO NOT include any separators like '---' or '***'. \n7. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. \n8. No introduction, no explanation, no commentary, no conclusion. \n9. If the user provides a creative brief labeled as such, ONLY GENERATE THE END DELIVERABLE described in the brief, not a restatement of the brief itself.";
     
     // Create completion with the OpenAI SDK
     const completion = await openai.chat.completions.create({
@@ -216,6 +216,45 @@ export const generateContent = async (req: Request, res: Response) => {
     };
     
     content = wrapListItems(content);
+
+    // Final safety check: detect if the output seems like it's just repeating the creative brief
+    // and if so, attempt to fix it by generating a new response
+    if (userPrompt.includes("CREATIVE BRIEF") || userPrompt.includes("creative brief")) {
+      // Extract the brief portion
+      const briefMatch = userPrompt.match(/CREATIVE BRIEF.*?:(.+?)(?=Based on the creative brief|$)/is);
+      
+      if (briefMatch && briefMatch[1]) {
+        const briefContent = briefMatch[1].trim();
+        
+        // Detect overlap with generated content by checking for sentences from the brief
+        let briefSentences = briefContent.split(/[.!?]+/).filter(s => s.trim().length > 20);
+        let matchCount = 0;
+        
+        for (const sentence of briefSentences) {
+          if (content.includes(sentence.trim())) {
+            matchCount++;
+          }
+        }
+        
+        // If more than 25% of the brief sentences appear in the output,
+        // or if there's substantial text overlap, we assume it's repeating the brief
+        if (matchCount > briefSentences.length * 0.25 || 
+            (briefContent.length > 100 && content.includes(briefContent.substring(0, 100)))) {
+          
+          console.warn("Detected potential brief repetition. Applying stronger content transformation.");
+          
+          // Remove any content that directly matches the brief
+          content = content.replace(briefContent, "");
+          
+          // If after cleaning the content seems too short, it was likely just repeating the brief
+          if (content.trim().length < 100) {
+            return res.status(500).json({ 
+              message: "The AI generated a response that was too similar to the creative brief. Please try again with a clearer instruction to create content based on the brief, not repeat it."
+            });
+          }
+        }
+      }
+    }
 
     return res.status(200).json({ content });
   } catch (error: any) {

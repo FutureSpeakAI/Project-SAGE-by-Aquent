@@ -278,8 +278,14 @@ export default function Home() {
     // Convert HTML content to plain text for better usage in the content prompt
     const plainTextContent = convertHtmlToPlainText(content.content);
     
-    // Set the converted plain text briefing as the user prompt
-    setUserPrompt(plainTextContent);
+    // Add a clear instruction prefix to ensure the AI doesn't just repeat the briefing
+    const enhancedPrompt = `CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT):\n\n${plainTextContent}\n\nBased on the creative brief above, create the actual deliverable content. Do not restate or summarize the brief. Produce only the final content as specified in the brief.`;
+    
+    // Set the system prompt to reinforce the instruction
+    setSystemPrompt("You are a professional content creator. Your task is to create original content based on creative briefs. DO NOT repeat or summarize the brief itself. Produce ONLY the deliverable content described in the brief.");
+    
+    // Set the enhanced user prompt
+    setUserPrompt(enhancedPrompt);
     
     // Switch to the Content tab after selecting a briefing
     setActiveTab(AppTab.CONTENT);
