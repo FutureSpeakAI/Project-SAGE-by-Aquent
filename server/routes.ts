@@ -278,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/personas", async (req: Request, res: Response) => {
     try {
-      const { name, description, instruction } = req.body;
+      const { name, category, description, instruction } = req.body;
       
       if (!name || !instruction) {
         return res.status(400).json({ error: "Name and instruction are required" });
@@ -286,12 +286,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const savedPersona = await storage.savePersona({
         name,
+        category: category || "General",
         description: description || "",
         instruction
       });
       
       res.status(201).json(savedPersona);
     } catch (error) {
+      console.error("Error saving persona:", error);
       res.status(500).json({ error: "Failed to save persona" });
     }
   });
@@ -299,14 +301,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/personas/:id", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { name, description, instruction } = req.body;
+      const { name, category, description, instruction } = req.body;
       
-      if (!name && !description && !instruction) {
+      if (!name && !category && !description && !instruction) {
         return res.status(400).json({ error: "At least one field must be provided for update" });
       }
       
       const updatedPersona = await storage.updatePersona(id, {
         ...(name && { name }),
+        ...(category && { category }),
         ...(description !== undefined && { description }),
         ...(instruction && { instruction })
       });
@@ -317,6 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedPersona);
     } catch (error) {
+      console.error("Error updating persona:", error);
       res.status(500).json({ error: "Failed to update persona" });
     }
   });
