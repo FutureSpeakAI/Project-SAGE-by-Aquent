@@ -208,17 +208,22 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl font-bold">Prompt Library</h2>
-        <div className="flex items-center gap-2">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div>
+          <h2 className="text-2xl font-bold text-[#FF6600]">Prompt Library</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Browse and manage your saved prompt templates
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <Select
             value={activeCategory}
             onValueChange={setActiveCategory}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] border-[#FF6600]/20 focus:ring-[#FF6600]/20">
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
+                <Filter className="h-4 w-4 text-[#FF6600]" />
                 <SelectValue placeholder="Filter by category" />
               </div>
             </SelectTrigger>
@@ -230,7 +235,10 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={handleCreateNew} className="flex items-center gap-2">
+          <Button 
+            onClick={handleCreateNew} 
+            className="flex items-center gap-2 bg-[#FF6600] hover:bg-[#FF6600]/90"
+          >
             <PlusCircle className="h-4 w-4" />
             <span>New Prompt</span>
           </Button>
@@ -238,95 +246,117 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
       </div>
 
       {filteredPrompts.length === 0 ? (
-        <div className="border rounded-lg p-8 text-center bg-muted/50">
-          <BookMarked className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">
+        <div className="border rounded-lg p-8 text-center bg-white shadow-sm">
+          <BookMarked className="h-16 w-16 mx-auto text-[#FF6600]/30 mb-4" />
+          <h3 className="text-xl font-medium mb-2">
             {prompts.length === 0 
               ? "No saved prompts" 
               : `No prompts found in "${activeCategory === "all" ? "All Categories" : activeCategory}"`}
           </h3>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             {prompts.length === 0 
-              ? "Save your favorite prompts to quickly use them later."
-              : "Try selecting a different category or create a new prompt."}
+              ? "Save your favorite prompts to quickly use them later and streamline your content creation workflow."
+              : "Try selecting a different category or create a new prompt to add to this collection."}
           </p>
-          <Button onClick={handleCreateNew} variant="outline">
+          <Button 
+            onClick={handleCreateNew} 
+            className="bg-[#FF6600] hover:bg-[#FF6600]/90"
+          >
             Create {prompts.length === 0 ? "Your First" : "A New"} Prompt
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredPrompts.map((prompt) => (
-            <Card key={prompt.id} className="flex flex-col overflow-hidden border-2 hover:border-[#FF6600]/70 transition-all">
-              <CardHeader className="pb-3 bg-gray-50">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <CardTitle className="text-xl font-bold" title={prompt.name}>
-                        {prompt.name}
-                      </CardTitle>
-                      <Badge variant="outline" className="bg-[#FF6600]/10 text-[#FF6600] border-[#FF6600]/20 capitalize">
-                        <Tag className="h-3 w-3 mr-1" />
-                        {prompt.category || "General"}
-                      </Badge>
-                    </div>
-                    <CardDescription className="mt-1">Updated: {formatDate(prompt.updatedAt)}</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      onClick={() => handleEditPrompt(prompt)} 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        setSelectedPrompt(prompt);
-                        setIsDeleteDialogOpen(true);
-                      }} 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="py-4 flex-grow">
-                <div className="flex flex-col gap-4">
-                  {prompt.systemPrompt && (
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">System Prompt:</h4>
-                      <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
-                        <p className="text-sm">{prompt.systemPrompt}</p>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            {filteredPrompts.map((prompt) => (
+              <Card key={prompt.id} className="flex flex-col overflow-hidden border hover:border-[#FF6600]/70 transition-all shadow-sm hover:shadow-md bg-white group">
+                <CardHeader className="pb-3 bg-gray-50 group-hover:bg-[#FF6600]/5">
+                  <div className="flex justify-between items-start">
+                    <div className="w-4/5">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <CardTitle className="text-lg font-bold truncate" title={prompt.name}>
+                          {prompt.name}
+                        </CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-[#FF6600]/10 text-[#FF6600] border-[#FF6600]/20 capitalize">
+                          <Tag className="h-3 w-3 mr-1" />
+                          {prompt.category || "General"}
+                        </Badge>
+                        <CardDescription className="text-xs">
+                          {formatDate(prompt.updatedAt)}
+                        </CardDescription>
                       </div>
                     </div>
-                  )}
-                  {prompt.userPrompt && (
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm mb-2 text-[#FF6600]">User Prompt:</h4>
-                      <div className="bg-gray-50 p-3 rounded-md border min-h-[80px] max-h-[120px] overflow-y-auto">
-                        <p className="text-sm">{prompt.userPrompt}</p>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        onClick={() => handleEditPrompt(prompt)} 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          setSelectedPrompt(prompt);
+                          setIsDeleteDialogOpen(true);
+                        }} 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="pt-2 pb-4 flex justify-end">
-                <Button 
-                  onClick={() => onSelectPrompt(prompt)} 
-                  className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border-2 px-6"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  <span>Deploy This Prompt</span>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="py-3 flex-grow">
+                  <div className="flex flex-col gap-3">
+                    {prompt.systemPrompt && (
+                      <div className="flex-1">
+                        <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
+                          System Prompt:
+                        </h4>
+                        <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
+                          <p className="text-xs leading-relaxed line-clamp-4">{prompt.systemPrompt}</p>
+                        </div>
+                      </div>
+                    )}
+                    {prompt.userPrompt && (
+                      <div className="flex-1">
+                        <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
+                          User Prompt:
+                        </h4>
+                        <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
+                          <p className="text-xs leading-relaxed line-clamp-4">{prompt.userPrompt}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-1 pb-3 flex justify-end">
+                  <Button 
+                    onClick={() => onSelectPrompt(prompt)} 
+                    className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border w-full sm:w-auto"
+                  >
+                    <Save className="h-4 w-4 mr-1.5" />
+                    <span>Deploy Prompt</span>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+
+          {filteredPrompts.length > 0 && filteredPrompts.length % 4 === 0 && (
+            <div className="flex justify-center mt-6">
+              <div className="text-sm text-muted-foreground">
+                Showing {filteredPrompts.length} {filteredPrompts.length === 1 ? 'prompt' : 'prompts'} 
+                {activeCategory !== 'all' ? ` in category "${activeCategory}"` : ''}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Form Dialog for Creating/Editing Prompts */}
@@ -344,35 +374,39 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[650px]">
           <DialogHeader>
-            <DialogTitle>{selectedPrompt ? 'Edit Prompt' : 'Create New Prompt'}</DialogTitle>
+            <DialogTitle className="text-xl flex items-center gap-2 text-[#FF6600]">
+              <BookMarked className="h-5 w-5" />
+              {selectedPrompt ? 'Edit Prompt' : 'Create New Prompt'}
+            </DialogTitle>
             <DialogDescription>
               {selectedPrompt 
                 ? 'Make changes to your saved prompt.' 
-                : 'Create a new prompt to save to your library.'}
+                : 'Create a new prompt to save to your library for quicker content generation.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Prompt Name</Label>
+                <Label htmlFor="name" className="text-[#FF6600] font-medium">Prompt Name</Label>
                 <Input 
                   id="name" 
                   name="name" 
                   value={formData.name} 
                   onChange={handleInputChange}
                   placeholder="Enter a descriptive name" 
+                  className="border-gray-300 focus-visible:ring-[#FF6600]/30"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-[#FF6600] font-medium">Category</Label>
                 <Select
                   value={formData.category}
                   onValueChange={handleCategoryChange}
                 >
-                  <SelectTrigger id="category">
+                  <SelectTrigger id="category" className="border-gray-300 focus-visible:ring-[#FF6600]/30">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -391,37 +425,41 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="systemPrompt">System Prompt (Optional)</Label>
+              <Label htmlFor="systemPrompt" className="text-[#FF6600] font-medium">System Prompt (Optional)</Label>
               <Textarea 
                 id="systemPrompt" 
                 name="systemPrompt" 
                 value={formData.systemPrompt} 
                 onChange={handleInputChange}
                 placeholder="Enter system instructions for the AI"
-                className="min-h-[100px]"
+                className="min-h-[100px] border-gray-300 focus-visible:ring-[#FF6600]/30"
               />
+              <p className="text-xs text-muted-foreground">
+                System prompts set the general behavior, capabilities, and limitations of the AI. They define how the model should operate overall.
+              </p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="userPrompt">User Prompt (Optional)</Label>
+              <Label htmlFor="userPrompt" className="text-[#FF6600] font-medium">User Prompt (Optional)</Label>
               <Textarea 
                 id="userPrompt" 
                 name="userPrompt" 
                 value={formData.userPrompt} 
                 onChange={handleInputChange}
                 placeholder="Enter the prompt text"
-                className="min-h-[100px]"
+                className="min-h-[100px] border-gray-300 focus-visible:ring-[#FF6600]/30"
               />
-              <p className="text-sm text-muted-foreground">
-                At least one of System Prompt or User Prompt must be provided.
+              <p className="text-xs text-muted-foreground">
+                User prompts are the specific requests or questions for the AI. At least one of System Prompt or User Prompt must be provided.
               </p>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button 
               variant="outline" 
               onClick={() => setIsPromptFormOpen(false)}
               disabled={createPromptMutation.isPending || updatePromptMutation.isPending}
+              className="border-gray-300"
             >
               Cancel
             </Button>
@@ -433,10 +471,11 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
                 createPromptMutation.isPending || 
                 updatePromptMutation.isPending
               }
+              className="bg-[#FF6600] hover:bg-[#FF6600]/90"
             >
               {createPromptMutation.isPending || updatePromptMutation.isPending ? (
                 <span className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                   Saving...
                 </span>
               ) : (
