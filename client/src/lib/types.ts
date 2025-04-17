@@ -13,6 +13,7 @@ export interface GenerateResponse {
 export interface SavedPrompt {
   id: string;
   name: string;
+  category: string;
   systemPrompt?: string;
   userPrompt?: string;
   createdAt: string;
@@ -21,12 +22,14 @@ export interface SavedPrompt {
 
 export interface CreatePromptRequest {
   name: string;
+  category: string;
   systemPrompt?: string;
   userPrompt?: string;
 }
 
 export interface UpdatePromptRequest {
   name?: string;
+  category?: string;
   systemPrompt?: string;
   userPrompt?: string;
 }
@@ -35,6 +38,7 @@ export interface UpdatePromptRequest {
 export interface SavedPersona {
   id: string;
   name: string;
+  category: string;
   description: string;
   instruction: string;
   createdAt: string;
@@ -43,12 +47,14 @@ export interface SavedPersona {
 
 export interface CreatePersonaRequest {
   name: string;
+  category: string;
   description?: string;
   instruction: string;
 }
 
 export interface UpdatePersonaRequest {
   name?: string;
+  category?: string;
   description?: string;
   instruction?: string;
 }

@@ -26,6 +26,7 @@ export type User = typeof users.$inferSelect;
 export const savedPrompts = pgTable("saved_prompts", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  category: text("category").default("General"),
   systemPrompt: text("system_prompt"),
   userPrompt: text("user_prompt"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -45,6 +46,7 @@ export type SavedPrompt = typeof savedPrompts.$inferSelect;
 export const savedPersonas = pgTable("saved_personas", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  category: text("category").default("General"),
   description: text("description"),
   instruction: text("instruction").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

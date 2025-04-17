@@ -15,6 +15,7 @@ const isDatabaseAvailable = !!db;
 export interface SavedPrompt {
   id: string;
   name: string;
+  category: string;
   systemPrompt?: string;
   userPrompt?: string;
   createdAt: Date;
@@ -24,6 +25,7 @@ export interface SavedPrompt {
 export interface SavedPersona {
   id: string;
   name: string;
+  category: string;
   description: string;
   instruction: string;
   createdAt: Date;
