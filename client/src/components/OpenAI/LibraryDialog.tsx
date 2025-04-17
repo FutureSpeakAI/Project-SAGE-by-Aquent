@@ -36,7 +36,7 @@ export function LibraryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[100vw] w-full h-[100vh] max-h-[100vh] overflow-hidden p-0 md:p-0 rounded-none">
+      <DialogContent className="max-w-[100vw] w-full h-[100vh] max-h-[100vh] overflow-hidden p-0 md:p-0 rounded-none" hideDefaultCloseButton>
         <div className="flex flex-col h-full">
           <div className="p-4 md:p-6 border-b bg-[#FF6600]/5">
             <div className="flex justify-between items-center max-w-screen-2xl mx-auto">
