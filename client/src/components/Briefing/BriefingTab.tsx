@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichOutputPanel } from "@/components/OpenAI/RichOutputPanel";
 import { SavedPersona } from "@/lib/types";
-import { FileText, Loader2, Save, Send, Upload } from "lucide-react";
+import { FileText, Loader2, Save, Send, Upload, FormInput, MessageSquare } from "lucide-react";
+import { BriefingForm } from "./BriefingForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Animation for chat messages
 const messageAnimation = {
@@ -252,6 +254,11 @@ export function BriefingTab({
     }
   };
   
+  // Handle form-generated briefing
+  const handleFormGeneratedBriefing = (content: string) => {
+    setBriefingContent(content);
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -261,93 +268,120 @@ export function BriefingTab({
       className="w-full relative overflow-hidden"
     >
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left side (chat interface) */}
+        {/* Left side with input methods */}
         <div className="w-full lg:w-1/2 flex flex-col">
-          <div className="flex justify-between mb-4">
-            <h3 className="text-lg font-medium">Briefing Generation Agent</h3>
-            <Button 
-              variant="outline"
-              onClick={handleUploadDocument}
-              className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Briefing
-            </Button>
-          </div>
-          
-          <Card className="flex-grow">
-            <CardContent className="p-4">
-              <div 
-                ref={chatContainerRef}
-                className="h-[500px] overflow-y-auto flex flex-col space-y-4 mb-4"
-              >
-                {messages.slice(1).map((message, index) => (
-                  <motion.div
-                    key={index}
-                    variants={messageAnimation}
-                    initial="initial"
-                    animate="animate"
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`max-w-[80%] p-3 rounded-lg ${
-                        message.role === 'user' 
-                          ? 'bg-[#F15A22] text-white rounded-tr-none' 
-                          : 'bg-gray-200 text-gray-800 rounded-tl-none'
-                      }`}
-                    >
-                      {message.content}
-                    </div>
-                  </motion.div>
-                ))}
-                
-                {isLoading && !briefingContent && (
-                  <motion.div
-                    variants={messageAnimation}
-                    initial="initial"
-                    animate="animate"
-                    className="flex justify-start"
-                  >
-                    <div className="max-w-[80%] p-3 rounded-lg bg-gray-200 text-gray-800 rounded-tl-none flex items-center">
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Thinking...
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-              
-              <div className="flex gap-2">
-                <Input
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  placeholder="Type your message..."
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  disabled={isLoading}
-                  className="flex-grow"
-                />
-                <Button 
-                  onClick={sendMessage} 
-                  disabled={isLoading || !userInput.trim()}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
+          <div className="flex justify-between mb-4 items-center">
+            <Tabs defaultValue="chat" className="w-full">
+              <div className="flex justify-between items-center mb-4">
+                <TabsList>
+                  <TabsTrigger value="chat" className="flex items-center gap-1">
+                    <MessageSquare className="h-4 w-4" />
+                    Conversation
+                  </TabsTrigger>
+                  <TabsTrigger value="form" className="flex items-center gap-1">
+                    <FormInput className="h-4 w-4" />
+                    Form
+                  </TabsTrigger>
+                </TabsList>
                 
                 <Button 
-                  onClick={generateBriefing}
                   variant="outline"
-                  disabled={isLoading}
+                  onClick={handleUploadDocument}
                   className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
                 >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Generate Brief
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Briefing
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Chat Interface */}
+              <TabsContent value="chat" className="mt-0">
+                <Card className="flex-grow">
+                  <CardContent className="p-4">
+                    <div 
+                      ref={chatContainerRef}
+                      className="h-[500px] overflow-y-auto flex flex-col space-y-4 mb-4"
+                    >
+                      {messages.slice(1).map((message, index) => (
+                        <motion.div
+                          key={index}
+                          variants={messageAnimation}
+                          initial="initial"
+                          animate="animate"
+                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div 
+                            className={`max-w-[80%] p-3 rounded-lg ${
+                              message.role === 'user' 
+                                ? 'bg-[#F15A22] text-white rounded-tr-none' 
+                                : 'bg-gray-200 text-gray-800 rounded-tl-none'
+                            }`}
+                          >
+                            {message.content}
+                          </div>
+                        </motion.div>
+                      ))}
+                      
+                      {isLoading && !briefingContent && (
+                        <motion.div
+                          variants={messageAnimation}
+                          initial="initial"
+                          animate="animate"
+                          className="flex justify-start"
+                        >
+                          <div className="max-w-[80%] p-3 rounded-lg bg-gray-200 text-gray-800 rounded-tl-none flex items-center">
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Thinking...
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        placeholder="Type your message..."
+                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                        disabled={isLoading}
+                        className="flex-grow"
+                      />
+                      <Button 
+                        onClick={sendMessage} 
+                        disabled={isLoading || !userInput.trim()}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                      
+                      <Button 
+                        onClick={generateBriefing}
+                        variant="outline"
+                        disabled={isLoading}
+                        className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Generate Brief
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              {/* Form Interface */}
+              <TabsContent value="form" className="mt-0">
+                <BriefingForm
+                  model={model}
+                  temperature={temperature}
+                  onGenerateBriefing={handleFormGeneratedBriefing}
+                  isLoading={isLoading}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
         
         {/* Right side (briefing output) */}
@@ -378,7 +412,7 @@ export function BriefingTab({
           
           <RichOutputPanel
             content={briefingContent}
-            isLoading={isLoading && !messages.some(m => m.role === 'assistant')}
+            isLoading={isLoading && !briefingContent}
             error={error}
             onClear={() => setBriefingContent("")}
             onRetry={generateBriefing}
