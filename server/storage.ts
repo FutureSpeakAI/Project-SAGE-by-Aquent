@@ -95,6 +95,7 @@ export class DatabaseStorage implements IStorage {
     return dbPrompts.map(dbPrompt => ({
       id: dbPrompt.id.toString(),
       name: dbPrompt.name,
+      category: dbPrompt.category || "General",
       systemPrompt: dbPrompt.systemPrompt || undefined,
       userPrompt: dbPrompt.userPrompt || undefined,
       createdAt: dbPrompt.createdAt,
@@ -111,6 +112,7 @@ export class DatabaseStorage implements IStorage {
     return {
       id: dbPrompt.id.toString(),
       name: dbPrompt.name,
+      category: dbPrompt.category || "General",
       systemPrompt: dbPrompt.systemPrompt || undefined,
       userPrompt: dbPrompt.userPrompt || undefined,
       createdAt: dbPrompt.createdAt,
@@ -122,6 +124,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not available");
     const [dbPrompt] = await db.insert(savedPrompts).values({
       name: prompt.name,
+      category: prompt.category || "General",
       systemPrompt: prompt.systemPrompt || null,
       userPrompt: prompt.userPrompt || null,
     }).returning();
@@ -129,6 +132,7 @@ export class DatabaseStorage implements IStorage {
     return {
       id: dbPrompt.id.toString(),
       name: dbPrompt.name,
+      category: dbPrompt.category || "General",
       systemPrompt: dbPrompt.systemPrompt || undefined,
       userPrompt: dbPrompt.userPrompt || undefined,
       createdAt: dbPrompt.createdAt,
@@ -151,6 +155,7 @@ export class DatabaseStorage implements IStorage {
     return {
       id: dbPrompt.id.toString(),
       name: dbPrompt.name,
+      category: dbPrompt.category || "General",
       systemPrompt: dbPrompt.systemPrompt || undefined,
       userPrompt: dbPrompt.userPrompt || undefined,
       createdAt: dbPrompt.createdAt,
@@ -174,6 +179,7 @@ export class DatabaseStorage implements IStorage {
     return dbPersonas.map(dbPersona => ({
       id: dbPersona.id.toString(),
       name: dbPersona.name,
+      category: dbPersona.category || "General",
       description: dbPersona.description || "",
       instruction: dbPersona.instruction,
       createdAt: dbPersona.createdAt,
@@ -190,6 +196,7 @@ export class DatabaseStorage implements IStorage {
     return {
       id: dbPersona.id.toString(),
       name: dbPersona.name,
+      category: dbPersona.category || "General",
       description: dbPersona.description || "",
       instruction: dbPersona.instruction,
       createdAt: dbPersona.createdAt,
@@ -201,6 +208,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not available");
     const [dbPersona] = await db.insert(savedPersonas).values({
       name: persona.name,
+      category: persona.category || "General",
       description: persona.description || null,
       instruction: persona.instruction,
     }).returning();
@@ -208,6 +216,7 @@ export class DatabaseStorage implements IStorage {
     return {
       id: dbPersona.id.toString(),
       name: dbPersona.name,
+      category: dbPersona.category || "General",
       description: dbPersona.description || "",
       instruction: dbPersona.instruction,
       createdAt: dbPersona.createdAt,
@@ -230,6 +239,7 @@ export class DatabaseStorage implements IStorage {
     return {
       id: dbPersona.id.toString(),
       name: dbPersona.name,
+      category: dbPersona.category || "General",
       description: dbPersona.description || "",
       instruction: dbPersona.instruction,
       createdAt: dbPersona.createdAt,
