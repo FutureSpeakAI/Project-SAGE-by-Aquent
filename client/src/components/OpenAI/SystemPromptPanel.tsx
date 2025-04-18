@@ -29,8 +29,8 @@ export function SystemPromptPanel({
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   return (
-    <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden min-h-[230px]">
-      <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200 cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
+    <Card className={`w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${!isCollapsed ? 'min-h-[230px]' : ''}`}>
+      <CardHeader className={`p-4 bg-gradient-to-r from-black to-gray-800 ${!isCollapsed ? 'border-b border-gray-200' : ''} cursor-pointer`} onClick={() => setIsCollapsed(!isCollapsed)}>
         <div className="flex justify-between items-center w-full">
           <CardTitle className="font-semibold text-white">System Prompt</CardTitle>
           {isCollapsed ? (
