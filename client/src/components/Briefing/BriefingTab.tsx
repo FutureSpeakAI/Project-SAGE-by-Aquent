@@ -273,13 +273,13 @@ export function BriefingTab({
         <div className="w-full lg:w-1/2 flex flex-col">
           <div className="flex justify-between mb-4 items-center">
             <Tabs defaultValue="chat" className="w-full">
-              <div className="flex justify-between items-center mb-4">
-                <TabsList>
-                  <TabsTrigger value="chat" className="flex items-center gap-1">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
+                <TabsList className="w-full sm:w-auto">
+                  <TabsTrigger value="chat" className="flex items-center gap-1 flex-1">
                     <MessageSquare className="h-4 w-4" />
                     Conversation
                   </TabsTrigger>
-                  <TabsTrigger value="form" className="flex items-center gap-1">
+                  <TabsTrigger value="form" className="flex items-center gap-1 flex-1">
                     <FormInput className="h-4 w-4" />
                     Form
                   </TabsTrigger>
@@ -288,7 +288,7 @@ export function BriefingTab({
                 <Button 
                   variant="outline"
                   onClick={handleUploadDocument}
-                  className="bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
+                  className="w-full sm:w-auto bg-white text-[#F15A22] hover:bg-[#F15A22] hover:text-white border-[#F15A22]"
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Briefing
