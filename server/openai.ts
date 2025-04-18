@@ -50,6 +50,22 @@ export const generateContent = async (req: Request, res: Response) => {
     // Add more explicit instructions to prevent ANY commentary, introduction, or explanation
     enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT INSTRUCTIONS: \n1. If the user prompt contains a creative brief or instructions, DO NOT REPEAT OR SUMMARIZE THE BRIEF ITSELF. Instead, create the ACTUAL CONTENT requested by the brief.\n2. Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. \n3. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. \n4. DO NOT include ANY explanatory text before or after the content. \n5. DO NOT add ANY signatures, disclaimers, or notes at the end. \n6. DO NOT include any separators like '---' or '***'. \n7. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. \n8. No introduction, no explanation, no commentary, no conclusion. \n9. If the user provides a creative brief labeled as such, ONLY GENERATE THE END DELIVERABLE described in the brief, not a restatement of the brief itself.\n10. Use proper HTML tags for formatting: <h1> for main titles, <h2> for section headers, <h3> for subsections. Don't use markdown or asterisks for headings.\n11. For emphasis, use <strong> or <em> tags instead of markdown syntax.\n12. Format lists using <ol> and <ul> with <li> elements for proper structure.\n13. ALWAYS PROVIDE LONG-FORM CONTENT. Generate a MINIMUM of 1800-3000 words for articles, blog posts, whitepapers, or any content where length is appropriate. Never abbreviate or summarize - deliver comprehensive, detailed content.\n14. Structure long-form content with at least 5-8 detailed sections with appropriate subheadings, thorough explanations, and deep exploration of the topic from multiple angles.\n15. Don't self-censor or artificially limit the length of the content - when in doubt, write more detailed and comprehensive content.\n16. For article-style content, include an introduction, at least 5-7 body sections, and a conclusion. Make each body section substantial with 300-500 words minimum.\n17. When creating long-form content, provide thorough explanations and examples for each point, developing ideas fully rather than briefly mentioning them.";
     
+    // Add specific word count instructions directly in the user prompt
+    let enhancedUserPrompt = userPrompt;
+    
+    // If the prompt contains any mention of word count, we'll emphasize it
+    if (userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i)) {
+      // Extract the requested word count
+      const match = userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i);
+      const requestedWordCount = match ? parseInt(match[1]) : 1800;
+      
+      // Add a final reminder at the end of the user prompt
+      enhancedUserPrompt += `\n\nIMPORTANT: Please ensure your response is at least ${requestedWordCount} words in length, preferably longer. Be extremely detailed and comprehensive.`;
+    } else {
+      // If no specific word count was specified, add a default instruction for long-form content
+      enhancedUserPrompt += "\n\nIMPORTANT: Please provide a detailed, comprehensive response of at least 2000 words. Be thorough and expansive in your coverage of the topic.";
+    }
+    
     // Create completion with the OpenAI SDK
     const completion = await openai.chat.completions.create({
       model: model || "gpt-4o",
@@ -60,14 +76,18 @@ export const generateContent = async (req: Request, res: Response) => {
         },
         {
           role: "user",
-          content: userPrompt
+          content: enhancedUserPrompt
         }
       ],
       temperature: temperature || 0.7,
-      max_tokens: 6000, // Increased token limit to allow for approximately 4500 words
+      max_tokens: 8000, // Further increased token limit to allow for approximately 6000 words
     });
     
     content = completion.choices[0].message.content || "";
+    
+    // Log the approximate word count of the raw response
+    const wordCount = content.split(/\s+/).length;
+    console.log(`Generated content before cleaning - approximate word count: ${wordCount}`);
     
     // Clean the content of any markdown code block markers and concluding commentary
     
@@ -282,6 +302,13 @@ export const generateContent = async (req: Request, res: Response) => {
           }
         }
       }
+    }
+    
+    // Log the word count after all processing
+    const finalWordCount = content.split(/\s+/).length;
+    console.log(`Final content after cleaning - approximate word count: ${finalWordCount}`);
+    if (finalWordCount < 1800) {
+      console.warn(`WARNING: Generated content is shorter than 1800 words (${finalWordCount} words). This may not meet user expectations for long-form content.`);
     }
 
     return res.status(200).json({ content });
