@@ -97,12 +97,19 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl" hideDefaultCloseButton>
         <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" className="mr-2 text-[#FF6600]">
-              <path fill="currentColor" d="M3,3h18v18H3V3z M13,15l3-3l-3-3v6z M9,9l-3,3l3,3V9z"/>
-            </svg>
-            <span className="text-xl">Content Library</span>
-          </DialogTitle>
+          <div className="flex justify-between items-center">
+            <DialogTitle className="flex items-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" className="mr-2 text-[#FF6600]">
+                <path fill="currentColor" d="M3,3h18v18H3V3z M13,15l3-3l-3-3v6z M9,9l-3,3l3,3V9z"/>
+              </svg>
+              <span className="text-xl">Content Library</span>
+            </DialogTitle>
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-[#FF6600]/10">
+                <X className="h-5 w-5" />
+              </Button>
+            </DialogClose>
+          </div>
           <DialogDescription>
             View and manage your saved generated content. Click on any content to load it into the editor.
           </DialogDescription>
@@ -185,7 +192,14 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent hideDefaultCloseButton>
           <DialogHeader>
-            <DialogTitle>Edit Content Title</DialogTitle>
+            <div className="flex justify-between items-center">
+              <DialogTitle>Edit Content Title</DialogTitle>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-gray-100">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
+            </div>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
