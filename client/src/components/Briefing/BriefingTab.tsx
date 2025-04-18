@@ -297,11 +297,11 @@ export function BriefingTab({
 
               {/* Chat Interface */}
               <TabsContent value="chat" className="mt-0">
-                <Card className="flex-grow">
+                <Card className="flex-grow min-h-[500px] border border-gray-200 shadow-sm">
                   <CardContent className="p-4">
                     <div 
                       ref={chatContainerRef}
-                      className="h-[500px] overflow-y-auto flex flex-col space-y-4 mb-4"
+                      className="h-[400px] overflow-y-auto flex flex-col space-y-4 mb-4"
                     >
                       {messages.slice(1).map((message, index) => (
                         <motion.div

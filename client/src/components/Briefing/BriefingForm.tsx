@@ -299,11 +299,11 @@ IMPORTANT FORMATTING REQUIREMENTS:
   };
   
   return (
-    <Card className="w-full">
-      <CardHeader className="bg-gradient-to-r from-black to-gray-800 text-white">
+    <Card className="w-full min-h-[500px] shadow-sm border border-gray-200">
+      <CardHeader className="bg-gradient-to-r from-black to-gray-800 text-white border-b border-gray-200">
         <CardTitle>Creative Brief Builder</CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-6 overflow-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           <Accordion type="single" collapsible className="w-full" defaultValue="project-details">
             <AccordionItem value="project-details">
