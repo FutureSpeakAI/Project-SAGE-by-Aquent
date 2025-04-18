@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Pencil, Trash2, ExternalLink, Plus } from "lucide-react";
+import { Pencil, Trash2, ExternalLink, Plus, X } from "lucide-react";
 import { GeneratedContent } from "@shared/schema";
 
 interface SavedContentLibraryProps {
@@ -95,7 +95,7 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl" hideDefaultCloseButton>
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <svg width="24" height="24" viewBox="0 0 24 24" className="mr-2 text-[#FF6600]">
@@ -183,7 +183,7 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
+        <DialogContent hideDefaultCloseButton>
           <DialogHeader>
             <DialogTitle>Edit Content Title</DialogTitle>
           </DialogHeader>

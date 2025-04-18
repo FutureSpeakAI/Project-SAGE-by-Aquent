@@ -132,7 +132,7 @@ export function BriefingLibrary({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
+      <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden" hideDefaultCloseButton>
         <DialogHeader className="p-4 md:p-6 border-b bg-[#FF6600]/5">
           <div className="flex justify-between items-center">
             <DialogTitle className="text-2xl font-bold text-[#FF6600]">Briefing Library</DialogTitle>
