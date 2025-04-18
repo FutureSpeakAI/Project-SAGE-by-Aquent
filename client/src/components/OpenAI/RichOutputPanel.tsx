@@ -628,7 +628,7 @@ export function RichOutputPanel({
 
   return (
     <>
-      <Card className="w-full h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+      <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[500px]">
         <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200 flex flex-row items-center justify-between">
           <CardTitle className="font-semibold text-white">Generated Content</CardTitle>
           
@@ -730,7 +730,7 @@ export function RichOutputPanel({
           )}
         </CardHeader>
         
-        <CardContent className="p-0 flex-1 overflow-auto relative">
+        <CardContent className="p-0 flex-1 overflow-auto relative border-b border-gray-200">
           {/* Loading state */}
           {isLoading && (
             <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10 animate-fade-in">
@@ -829,7 +829,7 @@ export function RichOutputPanel({
                 />
                 
                 {/* Save Button - Added for easier saving */}
-                <div className="mt-4 flex justify-center">
+                <div className="mt-6 mb-4 flex justify-center">
                   <Button 
                     onClick={() => setSaveDialogOpen(true)}
                     className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border-2"
@@ -842,6 +842,7 @@ export function RichOutputPanel({
             </AIContextMenu>
           )}
         </CardContent>
+        <div className="p-3 bg-white border-t border-gray-200"></div>
       </Card>
 
       {/* Save Content Dialog */}
