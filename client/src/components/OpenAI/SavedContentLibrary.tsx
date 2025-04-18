@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Pencil, Trash2, ExternalLink, Plus, X } from "lucide-react";
+import { Pencil, Trash2, ExternalLink, Plus, X, Loader2, FileText, Calendar } from "lucide-react";
 import { GeneratedContent } from "@shared/schema";
 
 interface SavedContentLibraryProps {
@@ -95,97 +95,121 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl" hideDefaultCloseButton>
-        <DialogHeader>
+      <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden" hideDefaultCloseButton>
+        <DialogHeader className="p-4 md:p-6 border-b bg-[#FF6600]/5">
           <div className="flex justify-between items-center">
-            <DialogTitle className="flex items-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" className="mr-2 text-[#FF6600]">
-                <path fill="currentColor" d="M3,3h18v18H3V3z M13,15l3-3l-3-3v6z M9,9l-3,3l3,3V9z"/>
-              </svg>
-              <span className="text-xl">Content Library</span>
-            </DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-[#FF6600]">Content Library</DialogTitle>
             <DialogClose asChild>
               <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-[#FF6600]/10">
                 <X className="h-5 w-5" />
               </Button>
             </DialogClose>
           </div>
-          <DialogDescription>
-            View and manage your saved generated content. Click on any content to load it into the editor.
+          <DialogDescription className="text-sm mt-1">
+            Browse and select from your saved generated content
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="py-8 text-center">
-            <div className="inline-block w-8 h-8 border-4 border-[#FF6600] border-t-transparent rounded-full animate-spin mb-2"></div>
-            <p>Loading saved content...</p>
-          </div>
-        ) : savedContents && savedContents.length > 0 ? (
-          <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-4">
-              {savedContents.map((content: GeneratedContent) => (
-                <Card key={content.id} className="relative hover:shadow-md transition-shadow group">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex justify-between items-center">
-                      <span className="truncate">{content.title}</span>
-                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 hover:text-[#FF6600]"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditContent(content);
-                          }}
+        <div className="flex flex-col h-[calc(90vh-90px)] overflow-hidden">
+          {/* Header with filter options could go here later */}
+
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-40">
+                <Loader2 className="h-6 w-6 animate-spin text-[#FF6600]" />
+              </div>
+            ) : savedContents.length === 0 ? (
+              <div className="border rounded-lg p-8 text-center bg-white shadow-sm">
+                <FileText className="h-16 w-16 mx-auto text-[#FF6600]/30 mb-4" />
+                <h3 className="text-xl font-medium mb-2">No saved content yet</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Generate content and save it to build your library.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {savedContents.map((content: GeneratedContent) => (
+                    <Card key={content.id} className="flex flex-col overflow-hidden border hover:border-[#FF6600]/70 transition-all shadow-sm hover:shadow-md bg-white group">
+                      <CardHeader className="pb-3 bg-gray-50 group-hover:bg-[#FF6600]/5">
+                        <div className="flex justify-between items-start">
+                          <div className="w-4/5">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <CardTitle className="text-lg font-bold truncate" title={content.title}>
+                                {content.title}
+                              </CardTitle>
+                            </div>
+                            <CardDescription className="text-xs flex items-center">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {new Date(content.createdAt).toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </CardDescription>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditContent(content);
+                              }}
+                              variant="ghost" 
+                              size="icon"
+                              className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10 text-[#FF6600]"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteContent(content.id);
+                              }}
+                              variant="ghost" 
+                              size="icon"
+                              className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="py-3 flex-grow">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
+                              Content Preview:
+                            </h4>
+                            <div className="bg-gray-50 p-2.5 rounded-md border min-h-[100px] max-h-[150px] overflow-y-auto">
+                              <p className="text-xs leading-relaxed line-clamp-6">{content.content.replace(/<[^>]*>/g, '').substring(0, 300)}...</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="pt-1 pb-3 flex justify-end">
+                        <Button 
+                          onClick={() => onSelectContent(content)} 
+                          className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border w-full sm:w-auto"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <ExternalLink className="h-4 w-4 mr-1.5" />
+                          <span>Load Content</span>
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 hover:text-red-500"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteContent(content.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      {new Date(content.createdAt).toLocaleString()}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <p className="text-sm text-gray-600 line-clamp-2">{content.content.substring(0, 150)}...</p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white"
-                      onClick={() => onSelectContent(content)}
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Load this content
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        ) : (
-          <div className="py-12 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <Plus className="h-6 w-6 text-gray-500" />
-            </div>
-            <h3 className="text-lg font-medium mb-1">No saved content yet</h3>
-            <p className="text-gray-500 mb-4">
-              Generate content and save it to build your library.
-            </p>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+
+                {savedContents.length > 0 && (
+                  <div className="flex justify-center mt-6">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {savedContents.length} {savedContents.length === 1 ? 'content' : 'contents'}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </DialogContent>
 
       {/* Edit Dialog */}
