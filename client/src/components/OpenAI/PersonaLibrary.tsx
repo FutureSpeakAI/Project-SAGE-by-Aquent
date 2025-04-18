@@ -197,8 +197,8 @@ export function PersonaLibrary({ onSelectPersona }: PersonaLibraryProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
+    <>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm mb-6">
         <div>
           <h2 className="text-2xl font-bold text-[#FF6600]">Persona Library</h2>
           <p className="text-muted-foreground text-sm mt-1">
@@ -233,118 +233,120 @@ export function PersonaLibrary({ onSelectPersona }: PersonaLibraryProps) {
           </Button>
         </div>
       </div>
-
-      {filteredPersonas.length === 0 ? (
-        <div className="border rounded-lg p-8 text-center bg-white shadow-sm">
-          <UserCircle2 className="h-16 w-16 mx-auto text-[#FF6600]/30 mb-4" />
-          <h3 className="text-xl font-medium mb-2">
-            {personas.length === 0 
-              ? "No saved personas" 
-              : `No personas found in "${activeCategory === "all" ? "All Categories" : activeCategory}"`}
-          </h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            {personas.length === 0 
-              ? "Create personas to quickly transform your text with distinct writing styles and voice characteristics."
-              : "Try selecting a different category or create a new persona to add to this collection."}
-          </p>
-          <Button 
-            onClick={handleCreateNew} 
-            className="bg-[#FF6600] hover:bg-[#FF6600]/90"
-          >
-            Create {personas.length === 0 ? "Your First" : "A New"} Persona
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-            {filteredPersonas.map((persona) => (
-              <Card key={persona.id} className="flex flex-col overflow-hidden border hover:border-[#FF6600]/70 transition-all shadow-sm hover:shadow-md bg-white group">
-                <CardHeader className="pb-3 bg-gray-50 group-hover:bg-[#FF6600]/5">
-                  <div className="flex justify-between items-start">
-                    <div className="w-4/5">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <CardTitle className="text-lg font-bold truncate" title={persona.name}>
-                          {persona.name}
-                        </CardTitle>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-[#FF6600]/10 text-[#FF6600] border-[#FF6600]/20 capitalize">
-                          <Tag className="h-3 w-3 mr-1" />
-                          {persona.category || "General"}
-                        </Badge>
-                        <CardDescription className="text-xs">
-                          {formatDate(persona.updatedAt)}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        onClick={() => handleEditPersona(persona)} 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          setSelectedPersona(persona);
-                          setIsDeleteDialogOpen(true);
-                        }} 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="py-3 flex-grow">
-                  <div className="flex flex-col gap-3">
-                    {persona.description && (
-                      <div className="flex-1">
-                        <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
-                          Description:
-                        </h4>
-                        <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
-                          <p className="text-xs leading-relaxed line-clamp-4">{persona.description}</p>
+      
+      <div className="overflow-y-auto pr-2 pb-6 space-y-6">
+        {filteredPersonas.length === 0 ? (
+          <div className="border rounded-lg p-8 text-center bg-white shadow-sm">
+            <UserCircle2 className="h-16 w-16 mx-auto text-[#FF6600]/30 mb-4" />
+            <h3 className="text-xl font-medium mb-2">
+              {personas.length === 0 
+                ? "No saved personas" 
+                : `No personas found in "${activeCategory === "all" ? "All Categories" : activeCategory}"`}
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              {personas.length === 0 
+                ? "Create personas to quickly transform your text with distinct writing styles and voice characteristics."
+                : "Try selecting a different category or create a new persona to add to this collection."}
+            </p>
+            <Button 
+              onClick={handleCreateNew} 
+              className="bg-[#FF6600] hover:bg-[#FF6600]/90"
+            >
+              Create {personas.length === 0 ? "Your First" : "A New"} Persona
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              {filteredPersonas.map((persona) => (
+                <Card key={persona.id} className="flex flex-col overflow-hidden border hover:border-[#FF6600]/70 transition-all shadow-sm hover:shadow-md bg-white group">
+                  <CardHeader className="pb-3 bg-gray-50 group-hover:bg-[#FF6600]/5">
+                    <div className="flex justify-between items-start">
+                      <div className="w-4/5">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <CardTitle className="text-lg font-bold truncate" title={persona.name}>
+                            {persona.name}
+                          </CardTitle>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-[#FF6600]/10 text-[#FF6600] border-[#FF6600]/20 capitalize">
+                            <Tag className="h-3 w-3 mr-1" />
+                            {persona.category || "General"}
+                          </Badge>
+                          <CardDescription className="text-xs">
+                            {formatDate(persona.updatedAt)}
+                          </CardDescription>
                         </div>
                       </div>
-                    )}
-                    <div className="flex-1">
-                      <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
-                        Instructions:
-                      </h4>
-                      <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
-                        <p className="text-xs leading-relaxed line-clamp-4">{persona.instruction}</p>
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          onClick={() => handleEditPersona(persona)} 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            setSelectedPersona(persona);
+                            setIsDeleteDialogOpen(true);
+                          }} 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-1 pb-3 flex justify-end">
-                  <Button 
-                    onClick={() => onSelectPersona(persona)} 
-                    className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border w-full sm:w-auto"
-                  >
-                    <UserCircle2 className="h-4 w-4 mr-1.5" />
-                    <span>Choose Persona</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-
-          {filteredPersonas.length > 0 && filteredPersonas.length % 4 === 0 && (
-            <div className="flex justify-center mt-6">
-              <div className="text-sm text-muted-foreground">
-                Showing {filteredPersonas.length} {filteredPersonas.length === 1 ? 'persona' : 'personas'} 
-                {activeCategory !== 'all' ? ` in category "${activeCategory}"` : ''}
-              </div>
+                  </CardHeader>
+                  <CardContent className="py-3 flex-grow">
+                    <div className="flex flex-col gap-3">
+                      {persona.description && (
+                        <div className="flex-1">
+                          <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
+                            Description:
+                          </h4>
+                          <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
+                            <p className="text-xs leading-relaxed line-clamp-4">{persona.description}</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
+                          Instructions:
+                        </h4>
+                        <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
+                          <p className="text-xs leading-relaxed line-clamp-4">{persona.instruction}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-1 pb-3 flex justify-end">
+                    <Button 
+                      onClick={() => onSelectPersona(persona)} 
+                      className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border w-full sm:w-auto"
+                    >
+                      <UserCircle2 className="h-4 w-4 mr-1.5" />
+                      <span>Choose Persona</span>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {filteredPersonas.length > 0 && filteredPersonas.length % 4 === 0 && (
+              <div className="flex justify-center mt-6">
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredPersonas.length} {filteredPersonas.length === 1 ? 'persona' : 'personas'} 
+                  {activeCategory !== 'all' ? ` in category "${activeCategory}"` : ''}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Form Dialog for Creating/Editing Personas */}
       <Dialog 
@@ -496,6 +498,6 @@ export function PersonaLibrary({ onSelectPersona }: PersonaLibraryProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

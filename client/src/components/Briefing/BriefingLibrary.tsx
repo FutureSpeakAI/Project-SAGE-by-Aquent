@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,7 +15,8 @@ import {
   Upload, 
   FileText, 
   Calendar, 
-  ExternalLink 
+  ExternalLink,
+  X
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { ContentType, GeneratedContent } from "@shared/schema";
@@ -131,23 +132,24 @@ export function BriefingLibrary({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="px-1">
-          <DialogTitle className="sr-only">Briefing Library</DialogTitle>
-          <DialogDescription className="sr-only">
-            Select a briefing to use as a reference for content creation.
+      <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden">
+        <DialogHeader className="p-4 md:p-6 border-b bg-[#FF6600]/5">
+          <div className="flex justify-between items-center">
+            <DialogTitle className="text-2xl font-bold text-[#FF6600]">Briefing Library</DialogTitle>
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-[#FF6600]/10">
+                <X className="h-5 w-5" />
+              </Button>
+            </DialogClose>
+          </div>
+          <DialogDescription className="text-sm mt-1">
+            Browse and select from your saved creative briefs
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
-            <div>
-              <h2 className="text-2xl font-bold text-[#FF6600]">Briefing Library</h2>
-              <p className="text-muted-foreground text-sm mt-1">
-                Browse and select from your saved creative briefs
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col h-[calc(90vh-90px)] overflow-hidden">
+          <div className="flex justify-between items-center gap-4 bg-white p-4 border-b">
+            <div className="flex-1">
               <Select
                 value={activeCategory}
                 onValueChange={setActiveCategory}
@@ -166,17 +168,17 @@ export function BriefingLibrary({
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                onClick={onUploadDocument} 
-                className="flex items-center gap-2 bg-[#FF6600] hover:bg-[#FF6600]/90"
-              >
-                <Upload className="h-4 w-4" />
-                <span>Upload Briefing</span>
-              </Button>
             </div>
+            <Button 
+              onClick={onUploadDocument} 
+              className="flex items-center gap-2 bg-[#FF6600] hover:bg-[#FF6600]/90"
+            >
+              <Upload className="h-4 w-4" />
+              <span>Upload Briefing</span>
+            </Button>
           </div>
 
-          <div className="overflow-y-auto pr-1 flex-1">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
             {isLoading ? (
               <div className="flex justify-center items-center h-40">
                 <Loader2 className="h-6 w-6 animate-spin text-[#FF6600]" />

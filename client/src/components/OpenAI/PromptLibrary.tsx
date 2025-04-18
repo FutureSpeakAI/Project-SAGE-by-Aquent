@@ -208,8 +208,8 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm mb-6">
         <div>
           <h2 className="text-2xl font-bold text-[#FF6600]">Prompt Library</h2>
           <p className="text-muted-foreground text-sm mt-1">
@@ -244,120 +244,122 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
           </Button>
         </div>
       </div>
-
-      {filteredPrompts.length === 0 ? (
-        <div className="border rounded-lg p-8 text-center bg-white shadow-sm">
-          <BookMarked className="h-16 w-16 mx-auto text-[#FF6600]/30 mb-4" />
-          <h3 className="text-xl font-medium mb-2">
-            {prompts.length === 0 
-              ? "No saved prompts" 
-              : `No prompts found in "${activeCategory === "all" ? "All Categories" : activeCategory}"`}
-          </h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            {prompts.length === 0 
-              ? "Save your favorite prompts to quickly use them later and streamline your content creation workflow."
-              : "Try selecting a different category or create a new prompt to add to this collection."}
-          </p>
-          <Button 
-            onClick={handleCreateNew} 
-            className="bg-[#FF6600] hover:bg-[#FF6600]/90"
-          >
-            Create {prompts.length === 0 ? "Your First" : "A New"} Prompt
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-            {filteredPrompts.map((prompt) => (
-              <Card key={prompt.id} className="flex flex-col overflow-hidden border hover:border-[#FF6600]/70 transition-all shadow-sm hover:shadow-md bg-white group">
-                <CardHeader className="pb-3 bg-gray-50 group-hover:bg-[#FF6600]/5">
-                  <div className="flex justify-between items-start">
-                    <div className="w-4/5">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <CardTitle className="text-lg font-bold truncate" title={prompt.name}>
-                          {prompt.name}
-                        </CardTitle>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-[#FF6600]/10 text-[#FF6600] border-[#FF6600]/20 capitalize">
-                          <Tag className="h-3 w-3 mr-1" />
-                          {prompt.category || "General"}
-                        </Badge>
-                        <CardDescription className="text-xs">
-                          {formatDate(prompt.updatedAt)}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        onClick={() => handleEditPrompt(prompt)} 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          setSelectedPrompt(prompt);
-                          setIsDeleteDialogOpen(true);
-                        }} 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="py-3 flex-grow">
-                  <div className="flex flex-col gap-3">
-                    {prompt.systemPrompt && (
-                      <div className="flex-1">
-                        <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
-                          System Prompt:
-                        </h4>
-                        <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
-                          <p className="text-xs leading-relaxed line-clamp-4">{prompt.systemPrompt}</p>
-                        </div>
-                      </div>
-                    )}
-                    {prompt.userPrompt && (
-                      <div className="flex-1">
-                        <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
-                          User Prompt:
-                        </h4>
-                        <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
-                          <p className="text-xs leading-relaxed line-clamp-4">{prompt.userPrompt}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-1 pb-3 flex justify-end">
-                  <Button 
-                    onClick={() => onSelectPrompt(prompt)} 
-                    className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border w-full sm:w-auto"
-                  >
-                    <Save className="h-4 w-4 mr-1.5" />
-                    <span>Deploy Prompt</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+      
+      <div className="flex-1 overflow-y-auto pr-2 pb-6 space-y-6">
+        {filteredPrompts.length === 0 ? (
+          <div className="border rounded-lg p-8 text-center bg-white shadow-sm">
+            <BookMarked className="h-16 w-16 mx-auto text-[#FF6600]/30 mb-4" />
+            <h3 className="text-xl font-medium mb-2">
+              {prompts.length === 0 
+                ? "No saved prompts" 
+                : `No prompts found in "${activeCategory === "all" ? "All Categories" : activeCategory}"`}
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              {prompts.length === 0 
+                ? "Save your favorite prompts to quickly use them later and streamline your content creation workflow."
+                : "Try selecting a different category or create a new prompt to add to this collection."}
+            </p>
+            <Button 
+              onClick={handleCreateNew} 
+              className="bg-[#FF6600] hover:bg-[#FF6600]/90"
+            >
+              Create {prompts.length === 0 ? "Your First" : "A New"} Prompt
+            </Button>
           </div>
-
-          {filteredPrompts.length > 0 && filteredPrompts.length % 4 === 0 && (
-            <div className="flex justify-center mt-6">
-              <div className="text-sm text-muted-foreground">
-                Showing {filteredPrompts.length} {filteredPrompts.length === 1 ? 'prompt' : 'prompts'} 
-                {activeCategory !== 'all' ? ` in category "${activeCategory}"` : ''}
-              </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              {filteredPrompts.map((prompt) => (
+                <Card key={prompt.id} className="flex flex-col overflow-hidden border hover:border-[#FF6600]/70 transition-all shadow-sm hover:shadow-md bg-white group">
+                  <CardHeader className="pb-3 bg-gray-50 group-hover:bg-[#FF6600]/5">
+                    <div className="flex justify-between items-start">
+                      <div className="w-4/5">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <CardTitle className="text-lg font-bold truncate" title={prompt.name}>
+                            {prompt.name}
+                          </CardTitle>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-[#FF6600]/10 text-[#FF6600] border-[#FF6600]/20 capitalize">
+                            <Tag className="h-3 w-3 mr-1" />
+                            {prompt.category || "General"}
+                          </Badge>
+                          <CardDescription className="text-xs">
+                            {formatDate(prompt.updatedAt)}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          onClick={() => handleEditPrompt(prompt)} 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full hover:bg-[#FF6600]/10"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            setSelectedPrompt(prompt);
+                            setIsDeleteDialogOpen(true);
+                          }} 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8 rounded-full hover:bg-red-100 text-red-500"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="py-3 flex-grow">
+                    <div className="flex flex-col gap-3">
+                      {prompt.systemPrompt && (
+                        <div className="flex-1">
+                          <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
+                            System Prompt:
+                          </h4>
+                          <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
+                            <p className="text-xs leading-relaxed line-clamp-4">{prompt.systemPrompt}</p>
+                          </div>
+                        </div>
+                      )}
+                      {prompt.userPrompt && (
+                        <div className="flex-1">
+                          <h4 className="font-medium text-xs mb-1.5 text-[#FF6600] flex items-center">
+                            User Prompt:
+                          </h4>
+                          <div className="bg-gray-50 p-2.5 rounded-md border min-h-[60px] max-h-[100px] overflow-y-auto">
+                            <p className="text-xs leading-relaxed line-clamp-4">{prompt.userPrompt}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-1 pb-3 flex justify-end">
+                    <Button 
+                      onClick={() => onSelectPrompt(prompt)} 
+                      className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border-[#FF6600] border w-full sm:w-auto"
+                    >
+                      <Save className="h-4 w-4 mr-1.5" />
+                      <span>Deploy Prompt</span>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {filteredPrompts.length > 0 && filteredPrompts.length % 4 === 0 && (
+              <div className="flex justify-center mt-6">
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredPrompts.length} {filteredPrompts.length === 1 ? 'prompt' : 'prompts'} 
+                  {activeCategory !== 'all' ? ` in category "${activeCategory}"` : ''}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Form Dialog for Creating/Editing Prompts */}
       <Dialog 
