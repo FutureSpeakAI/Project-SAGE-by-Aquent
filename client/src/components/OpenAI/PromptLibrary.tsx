@@ -157,16 +157,6 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
 
   // Handle saving a prompt (create or update)
   const handleSavePrompt = () => {
-    // Validate that at least one of systemPrompt or userPrompt is provided
-    if (!formData.systemPrompt && !formData.userPrompt) {
-      toast({
-        title: "Validation Error",
-        description: "Either a system prompt or user prompt must be provided.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (selectedPrompt) {
       // Update existing prompt
       updatePromptMutation.mutate({
@@ -208,7 +198,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm mb-6">
         <div>
           <h2 className="text-2xl font-bold text-[#FF6600]">Prompt Library</h2>
@@ -245,7 +235,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto pr-2 pb-6 space-y-6">
+      <div className="overflow-y-auto pr-2 pb-6 space-y-6">
         {filteredPrompts.length === 0 ? (
           <div className="border rounded-lg p-8 text-center bg-white shadow-sm">
             <BookMarked className="h-16 w-16 mx-auto text-[#FF6600]/30 mb-4" />
@@ -510,6 +500,6 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
