@@ -88,10 +88,10 @@ export function LibraryDialog({
             </div>
             <div className="flex-1 overflow-y-auto bg-gray-50/50">
               <div className="max-w-screen-2xl mx-auto">
-                <TabsContent value="prompts" className="p-4 md:p-6 m-0 h-full">
+                <TabsContent value="prompts" className="p-4 md:p-6 m-0 overflow-y-auto">
                   <PromptLibrary onSelectPrompt={handleSelectPrompt} />
                 </TabsContent>
-                <TabsContent value="personas" className="p-4 md:p-6 m-0 h-full">
+                <TabsContent value="personas" className="p-4 md:p-6 m-0 overflow-y-auto">
                   <PersonaLibrary onSelectPersona={handleSelectPersona} />
                 </TabsContent>
               </div>
