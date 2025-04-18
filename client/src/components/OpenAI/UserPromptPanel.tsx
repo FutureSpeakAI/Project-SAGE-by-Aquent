@@ -20,12 +20,12 @@ export function UserPromptPanel({
   onOpenPromptLibrary
 }: UserPromptPanelProps) {
   return (
-    <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden min-h-[220px]">
       <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200">
         <CardTitle className="font-semibold text-white">User Prompt</CardTitle>
       </CardHeader>
       
-      <CardContent className="p-4">
+      <CardContent className="p-4 overflow-auto">
         <div className="space-y-4">
           <div className="flex justify-end items-center">
             {onOpenPromptLibrary && (
