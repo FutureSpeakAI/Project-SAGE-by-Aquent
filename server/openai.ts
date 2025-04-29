@@ -56,26 +56,33 @@ export const generateContent = async (req: Request, res: Response) => {
     // Initialize the OpenAI client
     const openai = new OpenAI(openaiConfig);
     
-    // Enhance system prompt with strict instructions to avoid commentary
+    // Check if this is a request from the image prompt agent
+    const isImagePromptAgent = systemPrompt.includes("CONVERSATIONAL DIALOGUE") && 
+                              systemPrompt.includes("Image Generation Prompt Expert");
+    
     let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
-    
-    // Add more explicit instructions to prevent ANY commentary, introduction, or explanation
-    enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT INSTRUCTIONS: \n1. If the user prompt contains a creative brief or instructions, DO NOT REPEAT OR SUMMARIZE THE BRIEF ITSELF. Instead, create the ACTUAL CONTENT requested by the brief.\n2. Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. \n3. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. \n4. DO NOT include ANY explanatory text before or after the content. \n5. DO NOT add ANY signatures, disclaimers, or notes at the end. \n6. DO NOT include any separators like '---' or '***'. \n7. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. \n8. No introduction, no explanation, no commentary, no conclusion. \n9. If the user provides a creative brief labeled as such, ONLY GENERATE THE END DELIVERABLE described in the brief, not a restatement of the brief itself.\n10. Use proper HTML tags for formatting: <h1> for main titles, <h2> for section headers, <h3> for subsections. Don't use markdown or asterisks for headings.\n11. For emphasis, use <strong> or <em> tags instead of markdown syntax.\n12. Format lists using <ol> and <ul> with <li> elements for proper structure.\n13. ALWAYS PROVIDE LONG-FORM CONTENT. Generate a MINIMUM of 1800-3000 words for articles, blog posts, whitepapers, or any content where length is appropriate. Never abbreviate or summarize - deliver comprehensive, detailed content.\n14. Structure long-form content with at least 5-8 detailed sections with appropriate subheadings, thorough explanations, and deep exploration of the topic from multiple angles.\n15. Don't self-censor or artificially limit the length of the content - when in doubt, write more detailed and comprehensive content.\n16. For article-style content, include an introduction, at least 5-7 body sections, and a conclusion. Make each body section substantial with 300-500 words minimum.\n17. When creating long-form content, provide thorough explanations and examples for each point, developing ideas fully rather than briefly mentioning them.";
-    
-    // Add specific word count instructions directly in the user prompt
     let enhancedUserPrompt = userPrompt;
     
-    // If the prompt contains any mention of word count, we'll emphasize it
-    if (userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i)) {
-      // Extract the requested word count
-      const match = userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i);
-      const requestedWordCount = match ? parseInt(match[1]) : 1800;
-      
-      // Add a final reminder at the end of the user prompt
-      enhancedUserPrompt += `\n\nIMPORTANT: Please ensure your response is at least ${requestedWordCount} words in length, preferably longer. Be extremely detailed and comprehensive.`;
-    } else {
-      // If no specific word count was specified, add a default instruction for long-form content
-      enhancedUserPrompt += "\n\nIMPORTANT: Please provide a detailed, comprehensive response of at least 2000 words. Be thorough and expansive in your coverage of the topic.";
+    // Only add formatting and content guidance for regular content generation, not for the image prompt agent
+    if (!isImagePromptAgent) {
+      // Add more explicit instructions to prevent ANY commentary, introduction, or explanation
+      enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT INSTRUCTIONS: \n1. If the user prompt contains a creative brief or instructions, DO NOT REPEAT OR SUMMARIZE THE BRIEF ITSELF. Instead, create the ACTUAL CONTENT requested by the brief.\n2. Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. \n3. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. \n4. DO NOT include ANY explanatory text before or after the content. \n5. DO NOT add ANY signatures, disclaimers, or notes at the end. \n6. DO NOT include any separators like '---' or '***'. \n7. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. \n8. No introduction, no explanation, no commentary, no conclusion. \n9. If the user provides a creative brief labeled as such, ONLY GENERATE THE END DELIVERABLE described in the brief, not a restatement of the brief itself.\n10. Use proper HTML tags for formatting: <h1> for main titles, <h2> for section headers, <h3> for subsections. Don't use markdown or asterisks for headings.\n11. For emphasis, use <strong> or <em> tags instead of markdown syntax.\n12. Format lists using <ol> and <ul> with <li> elements for proper structure.\n13. ALWAYS PROVIDE LONG-FORM CONTENT. Generate a MINIMUM of 1800-3000 words for articles, blog posts, whitepapers, or any content where length is appropriate. Never abbreviate or summarize - deliver comprehensive, detailed content.\n14. Structure long-form content with at least 5-8 detailed sections with appropriate subheadings, thorough explanations, and deep exploration of the topic from multiple angles.\n15. Don't self-censor or artificially limit the length of the content - when in doubt, write more detailed and comprehensive content.\n16. For article-style content, include an introduction, at least 5-7 body sections, and a conclusion. Make each body section substantial with 300-500 words minimum.\n17. When creating long-form content, provide thorough explanations and examples for each point, developing ideas fully rather than briefly mentioning them.";
+    }
+    
+    // Only add word count requirements for regular content, not for the image prompt agent
+    if (!isImagePromptAgent) {
+      // If the prompt contains any mention of word count, we'll emphasize it
+      if (userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i)) {
+        // Extract the requested word count
+        const match = userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i);
+        const requestedWordCount = match ? parseInt(match[1]) : 1800;
+        
+        // Add a final reminder at the end of the user prompt
+        enhancedUserPrompt += `\n\nIMPORTANT: Please ensure your response is at least ${requestedWordCount} words in length, preferably longer. Be extremely detailed and comprehensive.`;
+      } else {
+        // If no specific word count was specified, add a default instruction for long-form content
+        enhancedUserPrompt += "\n\nIMPORTANT: Please provide a detailed, comprehensive response of at least 2000 words. Be thorough and expansive in your coverage of the topic.";
+      }
     }
     
     // Create completion with the OpenAI SDK
@@ -103,178 +110,200 @@ export const generateContent = async (req: Request, res: Response) => {
     
     // Clean the content of any markdown code block markers and concluding commentary
     
-    // Convert markdown headers to proper HTML headers
-    content = content.replace(/^# (.*)$/gm, '<h1>$1</h1>');
-    content = content.replace(/^## (.*)$/gm, '<h2>$1</h2>');
-    content = content.replace(/^### (.*)$/gm, '<h3>$1</h3>');
-    content = content.replace(/^#### (.*)$/gm, '<h4>$1</h4>');
-    content = content.replace(/^##### (.*)$/gm, '<h5>$1</h5>');
-    
-    // Convert markdown bold syntax to HTML strong tags
-    content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Convert markdown italic syntax to HTML em tags
-    content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    content = content.replace(/_([^_]+)_/g, '<em>$1</em>');
-    
-    // Detect lines that look like titles but aren't marked as headers
-    // Check for short, centered, or all-caps lines at the beginning of paragraphs
-    content = content.replace(/^([A-Z][^.!?]{3,50}[A-Z])$/gm, '<h2>$1</h2>');
-    content = content.replace(/^(<strong>[^<]{3,50}<\/strong>)$/gm, '<h2>$1</h2>');
-    
-    // Title case words in a short paragraph are likely a title
-    content = content.replace(/^([A-Z][a-z]+(?: [A-Z][a-z]+){1,7})$/gm, '<h2>$1</h2>');
-    
-    // Special handling for email subject lines
-    content = content.replace(/^Subject:(.{3,100})$/gm, '<h3>Subject:$1</h3>');
-    content = content.replace(/^(From|To|Date):(.{3,100})$/gm, '<p><strong>$1:</strong>$2</p>');
-    
-    // Remove introductory AI commentary at the beginning
-    const introPatterns = [
-      // Common AI introductions
-      /^(Certainly|Sure|Here are|Below are|Here is|Below is)[^.]*\.\s*/i,
-      /^(I've created|I've drafted|I've prepared|As requested|Based on your request)[^.]*\.\s*/i,
-      /^(Following|In accordance with|As per|Following your)[^.]*\.\s*/i,
-      /^(These are|This is|I'd like to present|I'm happy to provide)[^.]*\.\s*/i,
-      /^(Please find|Please see|As you requested|As per your instructions)[^.]*\.\s*/i,
-      /^(Here's|The following|Based on the creative brief|I've developed)[^.]*\.\s*/i,
-      // Specifically match the example seen
-      /^Certainly! Below are drafts for the three rep-triggered emails[^.]*\.\s*/i,
-    ];
-    
-    // Apply each intro pattern
-    for (const pattern of introPatterns) {
-      content = content.replace(pattern, '');
+    // Only apply HTML formatting if this is NOT the image prompt agent
+    if (!isImagePromptAgent) {
+      // Convert markdown headers to proper HTML headers
+      content = content.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+      content = content.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+      content = content.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+      content = content.replace(/^#### (.*)$/gm, '<h4>$1</h4>');
+      content = content.replace(/^##### (.*)$/gm, '<h5>$1</h5>');
+      
+      // Convert markdown bold syntax to HTML strong tags
+      content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      
+      // Convert markdown italic syntax to HTML em tags
+      content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      content = content.replace(/_([^_]+)_/g, '<em>$1</em>');
+      
+      // Detect lines that look like titles but aren't marked as headers
+      // Check for short, centered, or all-caps lines at the beginning of paragraphs
+      content = content.replace(/^([A-Z][^.!?]{3,50}[A-Z])$/gm, '<h2>$1</h2>');
+      content = content.replace(/^(<strong>[^<]{3,50}<\/strong>)$/gm, '<h2>$1</h2>');
+      
+      // Title case words in a short paragraph are likely a title
+      content = content.replace(/^([A-Z][a-z]+(?: [A-Z][a-z]+){1,7})$/gm, '<h2>$1</h2>');
     }
     
-    // Handle code blocks with language identifier (```html, ```js, etc.)
-    content = content.replace(/^```(?:html|markdown|md|json|javascript|js|typescript|ts|css|jsx|tsx|python|py)?\s*\n?/i, '');
-    
-    // Handle any code block endings and remove everything after them (often commentary)
-    const codeBlockEndMatch = content.match(/```[\s\S]*$/i);
-    if (codeBlockEndMatch) {
-      content = content.slice(0, codeBlockEndMatch.index);
-    }
-    
-    // Remove standalone delimiter lines that separate emails or sections but might not be part of commentary
-    content = content.replace(/^\s*---\s*$/gm, '');
-    content = content.replace(/^\s*\*\*\*\s*$/gm, '');
-    
-    // More aggressive removal of closing commentary by detecting sign-off patterns
-    const commentPatterns = [
-      // Common ending with a horizontal line followed by comments
-      /\n+[\s\n]*---[\s\n]*[\s\S]*$/i,
-      /\n+[\s\n]*\*\*\*[\s\n]*[\s\S]*$/i,
-      /\n+[\s\n]*___[\s\n]*[\s\S]*$/i,
+    // Only continue with advanced formatting for regular content, not for the image prompt agent
+    if (!isImagePromptAgent) {
+      // Special handling for email subject lines
+      content = content.replace(/^Subject:(.{3,100})$/gm, '<h3>Subject:$1</h3>');
+      content = content.replace(/^(From|To|Date):(.{3,100})$/gm, '<p><strong>$1:</strong>$2</p>');
       
-      // Standard AI signoffs
-      /\n+[\s\n]*In summary[\s\S]*$/i,
-      /\n+[\s\n]*To summarize[\s\S]*$/i,
-      /\n+[\s\n]*I hope (this|these|that)[\s\S]*$/i, 
-      /\n+[\s\n]*Hope (this|these|that)[\s\S]*$/i,
-      /\n+[\s\n]*Let me know[\s\S]*$/i,
-      /\n+[\s\n]*Please let me know[\s\S]*$/i,
-      /\n+[\s\n]*Is there anything else[\s\S]*$/i,
-      /\n+[\s\n]*Would you like me to[\s\S]*$/i,
-      /\n+[\s\n]*Feel free to[\s\S]*$/i,
-      /\n+[\s\n]*Do you want me to[\s\S]*$/i,
+      // Remove introductory AI commentary at the beginning
+      const introPatterns = [
+        // Common AI introductions
+        /^(Certainly|Sure|Here are|Below are|Here is|Below is)[^.]*\.\s*/i,
+        /^(I've created|I've drafted|I've prepared|As requested|Based on your request)[^.]*\.\s*/i,
+        /^(Following|In accordance with|As per|Following your)[^.]*\.\s*/i,
+        /^(These are|This is|I'd like to present|I'm happy to provide)[^.]*\.\s*/i,
+        /^(Please find|Please see|As you requested|As per your instructions)[^.]*\.\s*/i,
+        /^(Here's|The following|Based on the creative brief|I've developed)[^.]*\.\s*/i,
+        // Specifically match the example seen
+        /^Certainly! Below are drafts for the three rep-triggered emails[^.]*\.\s*/i,
+      ];
       
-      // Suggestions for revisions
-      /\n+[\s\n]*If you need any changes[\s\S]*$/i,
-      /\n+[\s\n]*If you have any questions[\s\S]*$/i,
-      /\n+[\s\n]*If you need (any )?(additional|more)[\s\S]*$/i,
-      /\n+[\s\n]*If you(\'d like| would like| want)[\s\S]*$/i,
-      
-      // Common template patterns
-      /\n+[\s\n]*These (templates|examples|samples|emails)[\s\S]*$/i,
-      /\n+[\s\n]*This (template|example|sample|email)[\s\S]*$/i,
-      /\n+[\s\n]*The (above|provided) (template|example|sample|email|content)[\s\S]*$/i,
-      
-      // Standard call to actions/offers
-      /\n+[\s\n]*Please (ensure|make sure|review|adjust|modify|tailor|customize)[\s\S]*$/i,
-      /\n+[\s\n]*(Remember|Note) that[\s\S]*$/i,
-      /\n+[\s\n]*You (can|could|may|should)[\s\S]*$/i,
-      /\n+[\s\n]*Don't hesitate to[\s\S]*$/i,
-      
-      // Specifically for the pattern shown in user example
-      /\n+[\s\n]*These emails are crafted[\s\S]*$/i
-    ];
-    
-    // Apply each pattern
-    for (const pattern of commentPatterns) {
-      const match = content.match(pattern);
-      if (match && match.index) {
-        content = content.slice(0, match.index);
+      // Apply each intro pattern
+      for (const pattern of introPatterns) {
+        content = content.replace(pattern, '');
       }
     }
     
-    // Fix improperly formatted lists - Convert plain bullet lists into HTML lists
-    // Convert bullet points to list items
-    content = content.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
-    // Convert numbered points to list items (1. 2. 3. etc)
-    content = content.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
-    
-    // Helper function to wrap list items in proper list tags
-    const wrapListItems = (content: string): string => {
-      let modified = content;
-      // Find potential list items
-      const listItemRegex = /<li>.*?<\/li>/g;
-      const listItems = content.match(listItemRegex);
+    // For image prompt agent, only do minimal formatting
+    if (isImagePromptAgent) {
+      // For the image prompt agent, we only want to extract the final prompt
+      // and leave the rest of the conversational content untouched
       
-      if (listItems) {
-        // Identify consecutive list items
-        let consecutiveItems = '';
-        let count = 0;
+      // Only handle basic code blocks to avoid any rendering issues
+      content = content.replace(/^```(?:html|markdown|md|json|javascript|js|typescript|ts|css|jsx|tsx|python|py)?\s*\n?/i, '');
+      const codeBlockEndMatch = content.match(/```[\s\S]*$/i);
+      if (codeBlockEndMatch) {
+        content = content.slice(0, codeBlockEndMatch.index);
+      }
+    }
+    else {
+      // For regular content, do full clean-up and formatting
+      
+      // Handle code blocks with language identifier (```html, ```js, etc.)
+      content = content.replace(/^```(?:html|markdown|md|json|javascript|js|typescript|ts|css|jsx|tsx|python|py)?\s*\n?/i, '');
+      
+      // Handle any code block endings and remove everything after them (often commentary)
+      const codeBlockEndMatch = content.match(/```[\s\S]*$/i);
+      if (codeBlockEndMatch) {
+        content = content.slice(0, codeBlockEndMatch.index);
+      }
+      
+      // Remove standalone delimiter lines that separate emails or sections but might not be part of commentary
+      content = content.replace(/^\s*---\s*$/gm, '');
+      content = content.replace(/^\s*\*\*\*\s*$/gm, '');
+      
+      // More aggressive removal of closing commentary by detecting sign-off patterns
+      const commentPatterns = [
+        // Common ending with a horizontal line followed by comments
+        /\n+[\s\n]*---[\s\n]*[\s\S]*$/i,
+        /\n+[\s\n]*\*\*\*[\s\n]*[\s\S]*$/i,
+        /\n+[\s\n]*___[\s\n]*[\s\S]*$/i,
         
-        for (let i = 0; i < listItems.length; i++) {
-          if (i > 0 && content.indexOf(listItems[i]) - 
-              (content.indexOf(listItems[i-1]) + listItems[i-1].length) < 10) {
-            // These list items are consecutive or close
-            if (count === 0) {
-              consecutiveItems = listItems[i-1];
-              count = 1;
+        // Standard AI signoffs
+        /\n+[\s\n]*In summary[\s\S]*$/i,
+        /\n+[\s\n]*To summarize[\s\S]*$/i,
+        /\n+[\s\n]*I hope (this|these|that)[\s\S]*$/i, 
+        /\n+[\s\n]*Hope (this|these|that)[\s\S]*$/i,
+        /\n+[\s\n]*Let me know[\s\S]*$/i,
+        /\n+[\s\n]*Please let me know[\s\S]*$/i,
+        /\n+[\s\n]*Is there anything else[\s\S]*$/i,
+        /\n+[\s\n]*Would you like me to[\s\S]*$/i,
+        /\n+[\s\n]*Feel free to[\s\S]*$/i,
+        /\n+[\s\n]*Do you want me to[\s\S]*$/i,
+        
+        // Suggestions for revisions
+        /\n+[\s\n]*If you need any changes[\s\S]*$/i,
+        /\n+[\s\n]*If you have any questions[\s\S]*$/i,
+        /\n+[\s\n]*If you need (any )?(additional|more)[\s\S]*$/i,
+        /\n+[\s\n]*If you(\'d like| would like| want)[\s\S]*$/i,
+        
+        // Common template patterns
+        /\n+[\s\n]*These (templates|examples|samples|emails)[\s\S]*$/i,
+        /\n+[\s\n]*This (template|example|sample|email)[\s\S]*$/i,
+        /\n+[\s\n]*The (above|provided) (template|example|sample|email|content)[\s\S]*$/i,
+        
+        // Standard call to actions/offers
+        /\n+[\s\n]*Please (ensure|make sure|review|adjust|modify|tailor|customize)[\s\S]*$/i,
+        /\n+[\s\n]*(Remember|Note) that[\s\S]*$/i,
+        /\n+[\s\n]*You (can|could|may|should)[\s\S]*$/i,
+        /\n+[\s\n]*Don't hesitate to[\s\S]*$/i,
+        
+        // Specifically for the pattern shown in user example
+        /\n+[\s\n]*These emails are crafted[\s\S]*$/i
+      ];
+      
+      // Apply each pattern
+      for (const pattern of commentPatterns) {
+        const match = content.match(pattern);
+        if (match && match.index) {
+          content = content.slice(0, match.index);
+        }
+      }
+      
+      // Fix improperly formatted lists - Convert plain bullet lists into HTML lists
+      // Convert bullet points to list items
+      content = content.replace(/\n\s*•\s*(.*?)(?=\n|$)/g, '\n<li>$1</li>');
+      // Convert numbered points to list items (1. 2. 3. etc)
+      content = content.replace(/\n\s*(\d+)\.\s*(.*?)(?=\n|$)/g, '\n<li>$2</li>');
+      
+      // Helper function to wrap list items in proper list tags
+      const wrapListItems = (content: string): string => {
+        let modified = content;
+        // Find potential list items
+        const listItemRegex = /<li>.*?<\/li>/g;
+        const listItems = content.match(listItemRegex);
+        
+        if (listItems) {
+          // Identify consecutive list items
+          let consecutiveItems = '';
+          let count = 0;
+          
+          for (let i = 0; i < listItems.length; i++) {
+            if (i > 0 && content.indexOf(listItems[i]) - 
+                (content.indexOf(listItems[i-1]) + listItems[i-1].length) < 10) {
+              // These list items are consecutive or close
+              if (count === 0) {
+                consecutiveItems = listItems[i-1];
+                count = 1;
+              }
+              consecutiveItems += listItems[i];
+              count++;
+            } else if (count > 0) {
+              // We found the end of a sequence - wrap it
+              if (count > 1) {
+                // Determine if these were numbered items originally
+                const originalContext = content.substring(
+                  Math.max(0, content.indexOf(consecutiveItems) - 20),
+                  content.indexOf(consecutiveItems)
+                );
+                
+                const isNumbered = /\d+\.\s/.test(originalContext);
+                const tagName = isNumbered ? 'ol' : 'ul';
+                
+                modified = modified.replace(consecutiveItems, 
+                  `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
+              }
+              consecutiveItems = '';
+              count = 0;
             }
-            consecutiveItems += listItems[i];
-            count++;
-          } else if (count > 0) {
-            // We found the end of a sequence - wrap it
-            if (count > 1) {
-              // Determine if these were numbered items originally
-              const originalContext = content.substring(
-                Math.max(0, content.indexOf(consecutiveItems) - 20),
-                content.indexOf(consecutiveItems)
-              );
-              
-              const isNumbered = /\d+\.\s/.test(originalContext);
-              const tagName = isNumbered ? 'ol' : 'ul';
-              
-              modified = modified.replace(consecutiveItems, 
-                `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
-            }
-            consecutiveItems = '';
-            count = 0;
+          }
+          
+          // Handle the last sequence if there is one
+          if (count > 1) {
+            const originalContext = content.substring(
+              Math.max(0, content.indexOf(consecutiveItems) - 20),
+              content.indexOf(consecutiveItems)
+            );
+            
+            const isNumbered = /\d+\.\s/.test(originalContext);
+            const tagName = isNumbered ? 'ol' : 'ul';
+            
+            modified = modified.replace(consecutiveItems, 
+              `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
           }
         }
         
-        // Handle the last sequence if there is one
-        if (count > 1) {
-          const originalContext = content.substring(
-            Math.max(0, content.indexOf(consecutiveItems) - 20),
-            content.indexOf(consecutiveItems)
-          );
-          
-          const isNumbered = /\d+\.\s/.test(originalContext);
-          const tagName = isNumbered ? 'ol' : 'ul';
-          
-          modified = modified.replace(consecutiveItems, 
-            `<${tagName}>\n${consecutiveItems}\n</${tagName}>`);
-        }
-      }
+        return modified;
+      };
       
-      return modified;
-    };
-    
-    content = wrapListItems(content);
+      content = wrapListItems(content);
+    }
 
     // Final safety check: detect if the output seems like it's just repeating the creative brief
     // and if so, attempt to fix it by generating a new response
