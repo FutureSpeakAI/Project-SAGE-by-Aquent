@@ -8,12 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, ImagePlus, Save, Library } from "lucide-react";
+import { Loader2, ImagePlus, Save, Library, Trash2, Download } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 
 interface GenerateImageResponse {
-  imageUrl: string;
+  images: Array<{
+    url: string;
+    revised_prompt?: string;
+  }>;
+  model: string;
+  prompt: string;
 }
 
 interface GenerateImageRequest {
