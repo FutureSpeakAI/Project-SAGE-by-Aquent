@@ -189,7 +189,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
       ? referenceImages.map(img => ({
           image_url: {
             url: img.base64,
-            detail: "auto" // You can make this configurable if needed
+            detail: "auto" as const // Using 'as const' to create a literal type
           }
         }))
       : undefined;

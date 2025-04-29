@@ -391,7 +391,8 @@ export const generateImage = async (req: Request, res: Response) => {
       size = "1024x1024", 
       quality = "high", 
       background = "auto",
-      n = 1
+      n = 1,
+      reference_images
     } = req.body as GenerateImageRequest;
     
     if (!process.env.OPENAI_API_KEY) {
@@ -430,16 +431,29 @@ export const generateImage = async (req: Request, res: Response) => {
     let revisedPrompt;
     
     try {
+      // Log if reference images are provided
+      if (reference_images && reference_images.length > 0) {
+        console.log(`Using ${reference_images.length} reference image(s) for generation`);
+      }
+      
       // Use GPT Image model for generation (new endpoint structure)
-      const response = await openai.images.generate({
+      // Create a params object with type assertion to handle reference_images
+      const params: any = {
         model: "gpt-image-1", // The latest and most advanced model for image generation
         prompt: prompt,
         n: n,
         size: size as any, // Type assertion to satisfy TypeScript
         quality: quality as any, // Type assertion to satisfy TypeScript
-        background: background as any // Type assertion to satisfy TypeScript
-        // GPT Image model doesn't support response_format
-      });
+        background: background as any, // Type assertion to satisfy TypeScript
+      };
+      
+      // Add reference images if they exist
+      if (reference_images && reference_images.length > 0) {
+        params.reference_images = reference_images;
+      }
+      
+      // Make the API call with the prepared parameters
+      const response = await openai.images.generate(params);
       
       if (!response.data || response.data.length === 0) {
         return res.status(500).json({ message: "No images were generated" });
