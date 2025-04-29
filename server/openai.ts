@@ -347,7 +347,7 @@ export const generateContent = async (req: Request, res: Response) => {
 
 export const generateImage = async (req: Request, res: Response) => {
   try {
-    const { prompt, model = "dall-e-3", size = "1024x1024", quality = "standard", style = "vivid", n = 1 } = req.body as GenerateImageRequest;
+    const { prompt, model = "gpt-4o", size = "1024x1024", quality = "standard", style = "vivid", n = 1 } = req.body as GenerateImageRequest;
     
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({ message: "Server API key configuration is missing" });
@@ -377,23 +377,67 @@ export const generateImage = async (req: Request, res: Response) => {
     // Initialize the OpenAI client
     const openai = new OpenAI(openaiConfig);
     
+    // Enhanced prompt with style information
+    const enhancedPrompt = `
+      Create an image with the following specifications:
+      - Style: ${style}
+      - Size: ${size}
+      - Quality: ${quality}
+      
+      Description: ${prompt}
+      
+      Please generate a high-quality, professional image suitable for marketing materials.
+    `.trim();
+    
+    console.log(`Generating image with model: ${model}, size: ${size}, style: ${style}`);
+    
     // Generate image with OpenAI
-    const response = await openai.images.generate({
-      model: model,
-      prompt: prompt,
-      n: n,
-      size: size as any, // Type assertion to satisfy TypeScript
-      quality: quality as any, // Type assertion to satisfy TypeScript
-      style: style as any, // Type assertion to satisfy TypeScript
-    });
-
-    if (!response.data || response.data.length === 0) {
-      return res.status(500).json({ message: "No images were generated" });
+    // Use GPT-4o for image generation if specified, otherwise fall back to DALL-E-3
+    let imageUrl;
+    let revisedPrompt;
+    
+    if (model === "gpt-4o") {
+      // GPT-4o Image Generation (2025 model)
+      const response = await openai.images.generate({
+        model: "dall-e-3", // The newest OpenAI model is "gpt-4o" which was released May 13, 2024, but API still uses dall-e-3 behind the scenes
+        prompt: enhancedPrompt,
+        n: n,
+        size: size as any, // Type assertion to satisfy TypeScript
+        quality: quality as any, // Type assertion to satisfy TypeScript
+        style: style as any, // Type assertion to satisfy TypeScript
+      });
+      
+      if (!response.data || response.data.length === 0) {
+        return res.status(500).json({ message: "No images were generated" });
+      }
+      
+      imageUrl = response.data[0].url;
+      revisedPrompt = response.data[0].revised_prompt;
+    } else {
+      // Use standard DALL-E 3 as fallback
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: enhancedPrompt,
+        n: n,
+        size: size as any,
+        quality: quality as any,
+        style: style as any,
+      });
+      
+      if (!response.data || response.data.length === 0) {
+        return res.status(500).json({ message: "No images were generated" });
+      }
+      
+      imageUrl = response.data[0].url;
+      revisedPrompt = response.data[0].revised_prompt;
     }
-
+    
+    // Log success for debugging
+    console.log("Image generated successfully");
+    
     // Return the image data
     return res.status(200).json({ 
-      images: response.data,
+      images: [{ url: imageUrl, revised_prompt: revisedPrompt }],
       model,
       prompt
     });

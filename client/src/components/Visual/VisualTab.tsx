@@ -306,12 +306,42 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                     <p className="text-sm text-gray-400">This may take a moment</p>
                   </div>
                 ) : generatedImageUrl ? (
-                  <div className="w-full">
+                  <div className="w-full flex flex-col space-y-4">
                     <img 
                       src={generatedImageUrl} 
                       alt="Generated" 
-                      className="mx-auto max-h-[500px] object-contain" 
+                      className="mx-auto max-h-[500px] object-contain rounded-md border" 
                     />
+                    
+                    <div className="flex space-x-2 justify-center mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-500 border-red-200 hover:bg-red-50"
+                        onClick={() => setGeneratedImageUrl("")}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-500 border-blue-200 hover:bg-blue-50"
+                        onClick={() => {
+                          // Create an invisible anchor element
+                          const a = document.createElement("a");
+                          a.href = generatedImageUrl;
+                          a.download = `image_${new Date().getTime()}.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                        }}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center p-6 text-gray-500">
