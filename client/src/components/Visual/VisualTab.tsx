@@ -149,15 +149,22 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
         }
       }
       
+      // Determine which model was used for this image
+      // If we have reference images in state, it means we used DALL-E 3
+      const usedModel = referenceImages.length > 0 ? "dall-e-3" : model;
+      
       const response = await apiRequest("POST", "/api/generated-images", {
         title: imageTitle,
         prompt: imagePrompt,
         imageUrl: processedImageUrl, // Use the reduced size image
-        model: "gpt-image-1",
+        model: usedModel,
         size,
         quality,
-        background,
-        metadata: JSON.stringify({ savedAt: new Date().toISOString() })
+        background: usedModel === "gpt-image-1" ? background : null,
+        metadata: JSON.stringify({ 
+          savedAt: new Date().toISOString(),
+          isVariation: referenceImages.length > 0
+        })
       });
       
       return response.json();
@@ -197,12 +204,23 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
         }))
       : undefined;
     
+    // Determine which model to use:
+    // If we have reference images, use dall-e-3 which supports reference_images
+    // Otherwise use the selected model (default: gpt-image-1)
+    const effectiveModel = referenceImagesFormatted && referenceImagesFormatted.length > 0 
+      ? "dall-e-3"
+      : model;
+    
+    if (referenceImagesFormatted && referenceImagesFormatted.length > 0) {
+      console.log("Using dall-e-3 model for reference images/variations");
+    }
+    
     generateImageMutation.mutate({
       prompt: imagePrompt,
-      model: "gpt-image-1", // Use GPT Image model for all image generation
+      model: effectiveModel,
       size,
       quality,
-      background,
+      background: effectiveModel === "gpt-image-1" ? background : undefined,
       reference_images: referenceImagesFormatted
     });
   };
@@ -378,7 +396,8 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                           <SelectValue placeholder="Select model" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="gpt-4o">GPT Image Generator (2025)</SelectItem>
+                          <SelectItem value="gpt-image-1">GPT Image (Best for text)</SelectItem>
+                          <SelectItem value="dall-e-3">DALL-E 3 (Best for variations)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

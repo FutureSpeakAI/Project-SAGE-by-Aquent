@@ -436,20 +436,35 @@ export const generateImage = async (req: Request, res: Response) => {
         console.log(`Using ${reference_images.length} reference image(s) for generation`);
       }
       
-      // Use GPT Image model for generation (new endpoint structure)
-      // Create a params object with type assertion to handle reference_images
-      const params: any = {
-        model: "gpt-image-1", // The latest and most advanced model for image generation
+      // Create a params object with type assertion to handle different models
+      let params: any = {
+        model: model || "gpt-image-1", // Use the model passed in or default to gpt-image-1
         prompt: prompt,
         n: n,
         size: size as any, // Type assertion to satisfy TypeScript
         quality: quality as any, // Type assertion to satisfy TypeScript
-        background: background as any, // Type assertion to satisfy TypeScript
       };
       
-      // Add reference images if they exist
-      if (reference_images && reference_images.length > 0) {
+      // Add background parameter only for gpt-image model
+      if (model === "gpt-image-1") {
+        params.background = background as any;
+      }
+      
+      // Add reference images only for dall-e-3 model (which supports this feature)
+      // gpt-image-1 doesn't support reference_images parameter
+      if (reference_images && reference_images.length > 0 && model === "dall-e-3") {
         params.reference_images = reference_images;
+        console.log("Adding reference images for DALL-E 3 model");
+      } else if (reference_images && reference_images.length > 0) {
+        console.log("Reference images provided but using " + model + " which doesn't support reference_images parameter");
+        // If we're using gpt-image-1 but have reference images, switch to dall-e-3
+        if (model === "gpt-image-1") {
+          console.log("Switching to dall-e-3 model to support reference images");
+          params.model = "dall-e-3";
+          params.reference_images = reference_images;
+          // Remove gpt-image-1 specific parameters
+          delete params.background;
+        }
       }
       
       // Make the API call with the prepared parameters

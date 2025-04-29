@@ -53,7 +53,7 @@ export default function Home() {
     "system-prompt",
     "You are a helpful assistant that responds to user questions with clear, factual, and concise information. If you're unsure about something, acknowledge your uncertainty. Write in a friendly, conversational tone."
   );
-  const [model, setModel] = useLocalStorage<string>("openai-model", "gpt-4o");
+  const [model, setModel] = useLocalStorage<string>("openai-model", "gpt-image-1");
   const [temperature, setTemperature] = useLocalStorage<number>("openai-temperature", 0.7);
   
   // User input state
