@@ -9,11 +9,12 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, FileText } from "lucide-react";
+import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, FileText, Image } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 import { ImagePromptAgent } from "./ImagePromptAgent";
 import { BriefInterpreter } from "./BriefInterpreter/BriefInterpreter";
+import { ImageUploader } from "./ImageUploader";
 
 interface GenerateImageResponse {
   images: Array<{
