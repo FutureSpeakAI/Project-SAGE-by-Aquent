@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, ImagePlus, Save, Library, Trash2, Download } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
+import { ImagePromptAgent } from "./ImagePromptAgent";
 
 interface GenerateImageResponse {
   images: Array<{
@@ -165,6 +167,15 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
     saveImageMutation.mutate();
   };
   
+  // Handle prompt from the agent
+  const handlePromptFromAgent = (prompt: string) => {
+    setImagePrompt(prompt);
+    toast({
+      title: "Prompt Applied",
+      description: "The AI-generated prompt has been applied. You can now generate your image.",
+    });
+  };
+
   return (
     <motion.div
       className="space-y-6"
@@ -185,221 +196,377 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
           View Image Library
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left column - Input controls */}
-        <div className="space-y-6">
-          <Card className="p-4 shadow-md">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="image-prompt">Image Prompt</Label>
-                <Textarea
-                  id="image-prompt"
-                  placeholder="Describe the image you want to generate..."
-                  className="min-h-[200px] resize-y"
-                  value={imagePrompt}
-                  onChange={(e) => setImagePrompt(e.target.value)}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="model-select">Model</Label>
-                  <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger id="model-select">
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-4o">GPT-4o Image Generator (2025)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="size-select">Size</Label>
-                  <Select value={size} onValueChange={setSize}>
-                    <SelectTrigger id="size-select">
-                      <SelectValue placeholder="Select size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {/* General Formats */}
-                      <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
-                      <SelectItem value="1792x1024">Landscape (1792×1024)</SelectItem>
-                      <SelectItem value="1024x1792">Portrait (1024×1792)</SelectItem>
-                      
-                      {/* Social Media */}
-                      <SelectItem value="1200x630">Facebook Post (1200×630)</SelectItem>
-                      <SelectItem value="1080x1080">Instagram Post (1080×1080)</SelectItem>
-                      <SelectItem value="1080x1350">Instagram Portrait (1080×1350)</SelectItem>
-                      <SelectItem value="1080x1920">Instagram Story (1080×1920)</SelectItem>
-                      <SelectItem value="1200x628">Twitter Post (1200×628)</SelectItem>
-                      <SelectItem value="1080x1920">TikTok Video (1080×1920)</SelectItem>
-                      <SelectItem value="1500x500">LinkedIn Banner (1500×500)</SelectItem>
-                      
-                      {/* Display Ads */}
-                      <SelectItem value="728x90">Leaderboard Ad (728×90)</SelectItem>
-                      <SelectItem value="300x250">Medium Rectangle Ad (300×250)</SelectItem>
-                      <SelectItem value="300x600">Half Page Ad (300×600)</SelectItem>
-                      <SelectItem value="970x250">Billboard Ad (970×250)</SelectItem>
-                      <SelectItem value="320x50">Mobile Banner (320×50)</SelectItem>
-                      
-                      {/* Print Media */}
-                      <SelectItem value="1275x1650">Magazine Full Page (1275×1650)</SelectItem>
-                      <SelectItem value="1275x825">Magazine Half Page (1275×825)</SelectItem>
-                      <SelectItem value="1200x1500">Newspaper Ad (1200×1500)</SelectItem>
-                      
-                      {/* Marketing Materials */}
-                      <SelectItem value="1500x844">Website Hero Banner (1500×844)</SelectItem>
-                      <SelectItem value="600x900">Poster (600×900)</SelectItem>
-                      <SelectItem value="1050x600">Postcard (1050×600)</SelectItem>
-                      <SelectItem value="1200x900">Product Photo (1200×900)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="quality-select">Quality</Label>
-                  <Select value={quality} onValueChange={setQuality}>
-                    <SelectTrigger id="quality-select">
-                      <SelectValue placeholder="Select quality" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low (Faster)</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High (Best Quality)</SelectItem>
-                      <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="background-select">Background</Label>
-                  <Select value={background} onValueChange={setBackground}>
-                    <SelectTrigger id="background-select">
-                      <SelectValue placeholder="Select background" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
-                      <SelectItem value="transparent">Transparent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-                onClick={handleGenerateImage}
-                disabled={generateImageMutation.isPending || !imagePrompt.trim()}
-              >
-                {generateImageMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <ImagePlus className="mr-2 h-4 w-4" />
-                    Generate Image
-                  </>
-                )}
-              </Button>
-            </div>
-          </Card>
-        </div>
+      
+      {/* Main content tabs */}
+      <Tabs defaultValue="standard" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="standard" className="flex items-center">
+            <ImagePlus className="mr-2 h-4 w-4" />
+            Standard Mode
+          </TabsTrigger>
+          <TabsTrigger value="assistant" className="flex items-center">
+            <BrainCircuit className="mr-2 h-4 w-4" />
+            Prompt Assistant
+          </TabsTrigger>
+        </TabsList>
         
-        {/* Right column - Output display */}
-        <div className="space-y-6">
-          <Card className="p-4 shadow-md">
-            <div className="space-y-4">
-              <Label htmlFor="image-output">Generated Image</Label>
-              <div className="min-h-[300px] border rounded-md flex items-center justify-center">
-                {generateImageMutation.isPending ? (
-                  <div className="text-center p-6">
-                    <Loader2 className="mx-auto h-12 w-12 animate-spin text-[#F15A22]" />
-                    <p className="mt-4 text-gray-500">Generating your image...</p>
-                    <p className="text-sm text-gray-400">This may take a moment</p>
-                  </div>
-                ) : generatedImageUrl ? (
-                  <div className="w-full flex flex-col space-y-4">
-                    <img 
-                      src={generatedImageUrl} 
-                      alt="Generated" 
-                      className="mx-auto max-h-[500px] object-contain rounded-md border" 
-                    />
-                    
-                    <div className="flex space-x-2 justify-center mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-500 border-red-200 hover:bg-red-50"
-                        onClick={() => setGeneratedImageUrl("")}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-blue-500 border-blue-200 hover:bg-blue-50"
-                        onClick={() => {
-                          // Create an invisible anchor element
-                          const a = document.createElement("a");
-                          a.href = generatedImageUrl;
-                          a.download = `image_${new Date().getTime()}.png`;
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                        }}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center p-6 text-gray-500">
-                    <ImagePlus className="mx-auto h-12 w-12 opacity-20" />
-                    <p className="mt-2">Your generated image will appear here</p>
-                  </div>
-                )}
-              </div>
-              
-              {generatedImageUrl && (
+        {/* Standard Mode Content */}
+        <TabsContent value="standard">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left column - Input controls */}
+            <div className="space-y-6">
+              <Card className="p-4 shadow-md">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="image-title">Image Title</Label>
+                    <Label htmlFor="image-prompt">Image Prompt</Label>
                     <Textarea
-                      id="image-title"
-                      placeholder="Enter a title for your image..."
-                      value={imageTitle}
-                      onChange={(e) => setImageTitle(e.target.value)}
-                      className="resize-none"
+                      id="image-prompt"
+                      placeholder="Describe the image you want to generate..."
+                      className="min-h-[200px] resize-y"
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
                     />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="model-select">Model</Label>
+                      <Select value={model} onValueChange={setModel}>
+                        <SelectTrigger id="model-select">
+                          <SelectValue placeholder="Select model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gpt-4o">GPT Image Generator (2025)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="size-select">Size</Label>
+                      <Select value={size} onValueChange={setSize}>
+                        <SelectTrigger id="size-select">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* General Formats */}
+                          <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
+                          <SelectItem value="1792x1024">Landscape (1792×1024)</SelectItem>
+                          <SelectItem value="1024x1792">Portrait (1024×1792)</SelectItem>
+                          
+                          {/* Social Media */}
+                          <SelectItem value="1200x630">Facebook Post (1200×630)</SelectItem>
+                          <SelectItem value="1080x1080">Instagram Post (1080×1080)</SelectItem>
+                          <SelectItem value="1080x1350">Instagram Portrait (1080×1350)</SelectItem>
+                          <SelectItem value="1080x1920">Instagram Story (1080×1920)</SelectItem>
+                          <SelectItem value="1200x628">Twitter Post (1200×628)</SelectItem>
+                          <SelectItem value="1080x1920">TikTok Video (1080×1920)</SelectItem>
+                          <SelectItem value="1500x500">LinkedIn Banner (1500×500)</SelectItem>
+                          
+                          {/* Display Ads */}
+                          <SelectItem value="728x90">Leaderboard Ad (728×90)</SelectItem>
+                          <SelectItem value="300x250">Medium Rectangle Ad (300×250)</SelectItem>
+                          <SelectItem value="300x600">Half Page Ad (300×600)</SelectItem>
+                          <SelectItem value="970x250">Billboard Ad (970×250)</SelectItem>
+                          <SelectItem value="320x50">Mobile Banner (320×50)</SelectItem>
+                          
+                          {/* Print Media */}
+                          <SelectItem value="1275x1650">Magazine Full Page (1275×1650)</SelectItem>
+                          <SelectItem value="1275x825">Magazine Half Page (1275×825)</SelectItem>
+                          <SelectItem value="1200x1500">Newspaper Ad (1200×1500)</SelectItem>
+                          
+                          {/* Marketing Materials */}
+                          <SelectItem value="1500x844">Website Hero Banner (1500×844)</SelectItem>
+                          <SelectItem value="600x900">Poster (600×900)</SelectItem>
+                          <SelectItem value="1050x600">Postcard (1050×600)</SelectItem>
+                          <SelectItem value="1200x900">Product Photo (1200×900)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="quality-select">Quality</Label>
+                      <Select value={quality} onValueChange={setQuality}>
+                        <SelectTrigger id="quality-select">
+                          <SelectValue placeholder="Select quality" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low (Faster)</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High (Best Quality)</SelectItem>
+                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="background-select">Background</Label>
+                      <Select value={background} onValueChange={setBackground}>
+                        <SelectTrigger id="background-select">
+                          <SelectValue placeholder="Select background" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                          <SelectItem value="transparent">Transparent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
                   <Button 
                     className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-                    onClick={handleSaveImage}
-                    disabled={saveImageMutation.isPending || !imageTitle.trim()}
+                    onClick={handleGenerateImage}
+                    disabled={generateImageMutation.isPending || !imagePrompt.trim()}
                   >
-                    {saveImageMutation.isPending ? (
+                    {generateImageMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        Generating...
                       </>
                     ) : (
                       <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save to Library
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                        Generate Image
                       </>
                     )}
                   </Button>
                 </div>
-              )}
+              </Card>
             </div>
-          </Card>
-        </div>
-      </div>
+            
+            {/* Right column - Output display */}
+            <div className="space-y-6">
+              <Card className="p-4 shadow-md">
+                <div className="space-y-4">
+                  <Label htmlFor="image-output">Generated Image</Label>
+                  <div className="min-h-[300px] border rounded-md flex items-center justify-center">
+                    {generateImageMutation.isPending ? (
+                      <div className="text-center p-6">
+                        <Loader2 className="mx-auto h-12 w-12 animate-spin text-[#F15A22]" />
+                        <p className="mt-4 text-gray-500">Generating your image...</p>
+                        <p className="text-sm text-gray-400">This may take a moment</p>
+                      </div>
+                    ) : generatedImageUrl ? (
+                      <div className="w-full flex flex-col space-y-4">
+                        <img 
+                          src={generatedImageUrl} 
+                          alt="Generated" 
+                          className="mx-auto max-h-[500px] object-contain rounded-md border" 
+                        />
+                        
+                        <div className="flex space-x-2 justify-center mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500 border-red-200 hover:bg-red-50"
+                            onClick={() => setGeneratedImageUrl("")}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-500 border-blue-200 hover:bg-blue-50"
+                            onClick={() => {
+                              // Create an invisible anchor element
+                              const a = document.createElement("a");
+                              a.href = generatedImageUrl;
+                              a.download = `image_${new Date().getTime()}.png`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                            }}
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            Download
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-6 text-gray-500">
+                        <ImagePlus className="mx-auto h-12 w-12 opacity-20" />
+                        <p className="mt-2">Your generated image will appear here</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {generatedImageUrl && (
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="image-title">Image Title</Label>
+                        <Textarea
+                          id="image-title"
+                          placeholder="Enter a title for your image..."
+                          value={imageTitle}
+                          onChange={(e) => setImageTitle(e.target.value)}
+                          className="resize-none"
+                        />
+                      </div>
+                      
+                      <Button 
+                        className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                        onClick={handleSaveImage}
+                        disabled={saveImageMutation.isPending || !imageTitle.trim()}
+                      >
+                        {saveImageMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save to Library
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+        
+        {/* Prompt Assistant Content */}
+        <TabsContent value="assistant">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left column - Prompt Assistant */}
+            <div className="md:col-span-2">
+              <ImagePromptAgent onPromptReady={handlePromptFromAgent} />
+            </div>
+            
+            {/* Right column - Preview and Controls */}
+            <div className="space-y-6">
+              <Card className="p-4 shadow-md">
+                <div className="space-y-4">
+                  <Label>Current Prompt</Label>
+                  <Textarea
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    className="h-32 resize-none"
+                    placeholder="Your prompt will appear here after using the assistant..."
+                    readOnly
+                  />
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="size-preview">Size</Label>
+                      <Select value={size} onValueChange={setSize}>
+                        <SelectTrigger id="size-preview">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
+                          <SelectItem value="1792x1024">Landscape (1792×1024)</SelectItem>
+                          <SelectItem value="1024x1792">Portrait (1024×1792)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="quality-preview">Quality</Label>
+                      <Select value={quality} onValueChange={setQuality}>
+                        <SelectTrigger id="quality-preview">
+                          <SelectValue placeholder="Select quality" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low (Faster)</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High (Best Quality)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                    onClick={handleGenerateImage}
+                    disabled={generateImageMutation.isPending || !imagePrompt.trim()}
+                  >
+                    {generateImageMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                        Generate Image
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Display generated image if available */}
+                  {generatedImageUrl && (
+                    <div className="mt-4 space-y-4">
+                      <Label>Generated Image</Label>
+                      <div className="border rounded-md p-2">
+                        <img 
+                          src={generatedImageUrl} 
+                          alt="Generated" 
+                          className="mx-auto max-h-[300px] object-contain rounded-md" 
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            // Create an invisible anchor element
+                            const a = document.createElement("a");
+                            a.href = generatedImageUrl;
+                            a.download = `image_${new Date().getTime()}.png`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setGeneratedImageUrl("")}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Discard
+                        </Button>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="image-title-assistant">Image Title</Label>
+                        <Textarea
+                          id="image-title-assistant"
+                          placeholder="Enter a title for your image..."
+                          value={imageTitle}
+                          onChange={(e) => setImageTitle(e.target.value)}
+                          className="resize-none"
+                        />
+                      </div>
+                      
+                      <Button 
+                        className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                        onClick={handleSaveImage}
+                        disabled={saveImageMutation.isPending || !imageTitle.trim()}
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        Save to Library
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </motion.div>
   );
 }
