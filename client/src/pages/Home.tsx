@@ -419,6 +419,7 @@ export default function Home() {
                   key="visual-tab"
                   model={model}
                   setModel={setModel}
+                  onOpenImageLibrary={handleOpenImageLibrary}
                 />
               ) : (
                 <BriefingTab
