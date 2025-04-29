@@ -13,8 +13,11 @@ export interface GenerateImageRequest {
   model?: string;
   size?: string;
   quality?: string;
-  style?: string;
+  background?: string;
+  moderation?: string;
   n?: number;
+  output_format?: string;
+  output_compression?: number;
 }
 
 export const generateContent = async (req: Request, res: Response) => {
@@ -347,7 +350,14 @@ export const generateContent = async (req: Request, res: Response) => {
 
 export const generateImage = async (req: Request, res: Response) => {
   try {
-    const { prompt, model = "gpt-4o", size = "1024x1024", quality = "standard", style = "vivid", n = 1 } = req.body as GenerateImageRequest;
+    const { 
+      prompt, 
+      model = "gpt-image-1", 
+      size = "1024x1024", 
+      quality = "high", 
+      background = "auto",
+      n = 1
+    } = req.body as GenerateImageRequest;
     
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({ message: "Server API key configuration is missing" });
@@ -377,68 +387,55 @@ export const generateImage = async (req: Request, res: Response) => {
     // Initialize the OpenAI client
     const openai = new OpenAI(openaiConfig);
     
-    // Enhanced prompt with style information and special instructions for text rendering
-    const enhancedPrompt = `
-      Create an image with the following specifications:
-      - Style: ${style}
-      - Size: ${size}
-      - Quality: ${quality}
-      
-      Description: ${prompt}
-      
-      IMPORTANT INSTRUCTIONS FOR TEXT RENDERING:
-      - If text is included in the image, ensure it is rendered with perfect spelling and clarity
-      - Use clear, highly legible typography for any text elements
-      - Text should be properly centered and aligned within the composition
-      - Maintain consistent font size and style throughout text portions
-      - Avoid stylized fonts that might reduce legibility
-      - Ensure high contrast between text and background
-      - Text should appear as if it was typeset rather than drawn or painted
-      
-      Please generate a high-quality, professional image suitable for marketing materials.
-    `.trim();
+    console.log(`Generating image with GPT Image model: ${model}, size: ${size}, quality: ${quality}, background: ${background}`);
     
-    console.log(`Generating image with model: ${model}, size: ${size}, style: ${style}`);
-    
-    // Generate image with OpenAI
-    // Use GPT-4o for image generation if specified, otherwise fall back to DALL-E-3
+    // Generate image with OpenAI using GPT Image model
     let imageUrl;
+    let imageBase64;
     let revisedPrompt;
     
-    if (model === "gpt-4o") {
-      // GPT-4o Image Generation (2025 model)
+    try {
+      // Use GPT Image model for generation (new endpoint structure)
       const response = await openai.images.generate({
-        model: "dall-e-3", // The newest OpenAI model is "gpt-4o" which was released May 13, 2024, but API still uses dall-e-3 behind the scenes
-        prompt: enhancedPrompt,
+        model: "gpt-image-1", // The latest and most advanced model for image generation
+        prompt: prompt,
         n: n,
         size: size as any, // Type assertion to satisfy TypeScript
         quality: quality as any, // Type assertion to satisfy TypeScript
-        style: style as any, // Type assertion to satisfy TypeScript
+        background: background as any, // Type assertion to satisfy TypeScript
+        response_format: "b64_json" // Request base64 encoded image
       });
       
       if (!response.data || response.data.length === 0) {
         return res.status(500).json({ message: "No images were generated" });
       }
       
-      imageUrl = response.data[0].url;
-      revisedPrompt = response.data[0].revised_prompt;
-    } else {
-      // Use standard DALL-E 3 as fallback
-      const response = await openai.images.generate({
-        model: "dall-e-3",
-        prompt: enhancedPrompt,
-        n: n,
-        size: size as any,
-        quality: quality as any,
-        style: style as any,
-      });
+      // Get base64 encoded image
+      imageBase64 = response.data[0].b64_json;
+      revisedPrompt = response.data[0].revised_prompt || prompt;
       
-      if (!response.data || response.data.length === 0) {
-        return res.status(500).json({ message: "No images were generated" });
+      // If base64 is available, create a data URL
+      if (imageBase64 && typeof imageBase64 === 'string') {
+        // Convert base64 to URL for frontend display
+        const imageBuffer = Buffer.from(imageBase64, 'base64');
+        
+        // If we wanted to save the image to disk (optional, not implementing for now)
+        // const timestamp = Date.now();
+        // const filename = `generated_${timestamp}.png`;
+        // fs.writeFileSync(`./generated/${filename}`, imageBuffer);
+        // imageUrl = `/generated/${filename}`;
+        
+        // Instead, just use the base64 data directly
+        imageUrl = `data:image/png;base64,${imageBase64}`;
+      } else if (response.data[0].url) {
+        // Fallback to the URL if provided
+        imageUrl = response.data[0].url;
+      } else {
+        throw new Error("No image data returned from API");
       }
-      
-      imageUrl = response.data[0].url;
-      revisedPrompt = response.data[0].revised_prompt;
+    } catch (apiError) {
+      console.error("API Error:", apiError);
+      throw apiError;
     }
     
     // Log success for debugging

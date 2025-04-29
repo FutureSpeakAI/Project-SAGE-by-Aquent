@@ -26,7 +26,10 @@ interface GenerateImageRequest {
   model?: string;
   size?: string;
   quality?: string;
-  style?: string;
+  background?: string;
+  moderation?: string;
+  output_format?: string;
+  output_compression?: number;
 }
 
 interface VisualTabProps {
@@ -39,8 +42,8 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
   const [imagePrompt, setImagePrompt] = useState("");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [size, setSize] = useState<string>("1024x1024");
-  const [quality, setQuality] = useState<string>("standard");
-  const [style, setStyle] = useState<string>("natural");
+  const [quality, setQuality] = useState<string>("high");
+  const [background, setBackground] = useState<string>("auto");
   const [imageTitle, setImageTitle] = useState<string>("");
   
   const { toast } = useToast();
@@ -97,10 +100,10 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
         title: imageTitle,
         prompt: imagePrompt,
         imageUrl: generatedImageUrl,
-        model,
+        model: "gpt-image-1",
         size,
         quality,
-        style,
+        background,
         metadata: JSON.stringify({ savedAt: new Date().toISOString() })
       });
       
@@ -133,10 +136,10 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
     
     generateImageMutation.mutate({
       prompt: imagePrompt,
-      model: model === "gpt-4o" ? "dall-e-3" : model, // Use DALL-E 3 when GPT-4o is selected
+      model: "gpt-image-1", // Use GPT Image model for all image generation
       size,
       quality,
-      style,
+      background,
     });
   };
   
@@ -260,32 +263,23 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                       <SelectValue placeholder="Select quality" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="standard">Standard</SelectItem>
-                      <SelectItem value="hd">HD</SelectItem>
+                      <SelectItem value="low">Low (Faster)</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High (Best Quality)</SelectItem>
+                      <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div>
-                  <Label htmlFor="style-select">Style</Label>
-                  <Select value={style} onValueChange={setStyle}>
-                    <SelectTrigger id="style-select">
-                      <SelectValue placeholder="Select style" />
+                  <Label htmlFor="background-select">Background</Label>
+                  <Select value={background} onValueChange={setBackground}>
+                    <SelectTrigger id="background-select">
+                      <SelectValue placeholder="Select background" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="natural">Natural</SelectItem>
-                      <SelectItem value="vivid">Vivid</SelectItem>
-                      <SelectItem value="cinematic">Cinematic</SelectItem>
-                      <SelectItem value="minimalist">Minimalist</SelectItem>
-                      <SelectItem value="corporate">Corporate</SelectItem>
-                      <SelectItem value="vintage">Vintage</SelectItem>
-                      <SelectItem value="retro">Retro</SelectItem>
-                      <SelectItem value="flat">Flat Design</SelectItem>
-                      <SelectItem value="3d">3D Render</SelectItem>
-                      <SelectItem value="illustration">Illustration</SelectItem>
-                      <SelectItem value="watercolor">Watercolor</SelectItem>
-                      <SelectItem value="sketch">Sketch</SelectItem>
-                      <SelectItem value="photorealistic">Photorealistic</SelectItem>
+                      <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                      <SelectItem value="transparent">Transparent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
