@@ -98,10 +98,49 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
         throw new Error("Image URL and title are required");
       }
       
+      // Process image URL to reduce size if it's a data URL
+      let processedImageUrl = generatedImageUrl;
+      
+      // If it's a base64 data URL, extract the thumbnail version to reduce size
+      if (generatedImageUrl.startsWith('data:image')) {
+        try {
+          // Create a smaller thumbnail version
+          const img = new Image();
+          img.src = generatedImageUrl;
+          
+          // Wait for image to load
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error("Failed to load image"));
+            // Set timeout in case image loading hangs
+            setTimeout(() => reject(new Error("Image loading timed out")), 5000);
+          });
+          
+          // Create a canvas to resize the image
+          const canvas = document.createElement('canvas');
+          // Resize to 300px width while maintaining aspect ratio
+          const MAX_WIDTH = 300;
+          const scaleFactor = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleFactor;
+          
+          // Draw image on canvas at reduced size
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            // Get as JPEG with reduced quality (0.6 = 60% quality)
+            processedImageUrl = canvas.toDataURL('image/jpeg', 0.6);
+          }
+        } catch (error) {
+          console.error("Error processing image:", error);
+          // Fall back to original URL if something goes wrong
+        }
+      }
+      
       const response = await apiRequest("POST", "/api/generated-images", {
         title: imageTitle,
         prompt: imagePrompt,
-        imageUrl: generatedImageUrl,
+        imageUrl: processedImageUrl, // Use the reduced size image
         model: "gpt-image-1",
         size,
         quality,
@@ -248,37 +287,11 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                           <SelectValue placeholder="Select size" />
                         </SelectTrigger>
                         <SelectContent>
-                          {/* General Formats */}
+                          {/* GPT Image Model only supports these specific sizes */}
                           <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
-                          <SelectItem value="1792x1024">Landscape (1792×1024)</SelectItem>
-                          <SelectItem value="1024x1792">Portrait (1024×1792)</SelectItem>
-                          
-                          {/* Social Media */}
-                          <SelectItem value="1200x630">Facebook Post (1200×630)</SelectItem>
-                          <SelectItem value="1080x1080">Instagram Post (1080×1080)</SelectItem>
-                          <SelectItem value="1080x1350">Instagram Portrait (1080×1350)</SelectItem>
-                          <SelectItem value="1080x1920">Instagram Story (1080×1920)</SelectItem>
-                          <SelectItem value="1200x628">Twitter Post (1200×628)</SelectItem>
-                          <SelectItem value="1080x1920">TikTok Video (1080×1920)</SelectItem>
-                          <SelectItem value="1500x500">LinkedIn Banner (1500×500)</SelectItem>
-                          
-                          {/* Display Ads */}
-                          <SelectItem value="728x90">Leaderboard Ad (728×90)</SelectItem>
-                          <SelectItem value="300x250">Medium Rectangle Ad (300×250)</SelectItem>
-                          <SelectItem value="300x600">Half Page Ad (300×600)</SelectItem>
-                          <SelectItem value="970x250">Billboard Ad (970×250)</SelectItem>
-                          <SelectItem value="320x50">Mobile Banner (320×50)</SelectItem>
-                          
-                          {/* Print Media */}
-                          <SelectItem value="1275x1650">Magazine Full Page (1275×1650)</SelectItem>
-                          <SelectItem value="1275x825">Magazine Half Page (1275×825)</SelectItem>
-                          <SelectItem value="1200x1500">Newspaper Ad (1200×1500)</SelectItem>
-                          
-                          {/* Marketing Materials */}
-                          <SelectItem value="1500x844">Website Hero Banner (1500×844)</SelectItem>
-                          <SelectItem value="600x900">Poster (600×900)</SelectItem>
-                          <SelectItem value="1050x600">Postcard (1050×600)</SelectItem>
-                          <SelectItem value="1200x900">Product Photo (1200×900)</SelectItem>
+                          <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
+                          <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
+                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -459,8 +472,9 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
-                          <SelectItem value="1792x1024">Landscape (1792×1024)</SelectItem>
-                          <SelectItem value="1024x1792">Portrait (1024×1792)</SelectItem>
+                          <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
+                          <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
+                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
