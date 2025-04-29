@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, ImagePlus, Save } from "lucide-react";
+import { Loader2, ImagePlus, Save, Library } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 
@@ -27,9 +27,10 @@ interface GenerateImageRequest {
 interface VisualTabProps {
   model: string;
   setModel: (model: string) => void;
+  onOpenImageLibrary?: () => void;
 }
 
-export function VisualTab({ model, setModel }: VisualTabProps) {
+export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProps) {
   const [imagePrompt, setImagePrompt] = useState("");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [size, setSize] = useState<string>("1024x1024");
@@ -150,6 +151,18 @@ export function VisualTab({ model, setModel }: VisualTabProps) {
       exit="exit"
       variants={pageTransition}
     >
+      {/* Library Access Button */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          onClick={onOpenImageLibrary}
+          className="mb-2"
+          disabled={!onOpenImageLibrary}
+        >
+          <Library className="mr-2 h-4 w-4" />
+          View Image Library
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column - Input controls */}
         <div className="space-y-6">

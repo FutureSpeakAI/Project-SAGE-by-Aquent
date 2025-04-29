@@ -23,6 +23,19 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Utility function to safely parse metadata
+  const parseMetadata = (metadata: any): Record<string, any> => {
+    if (!metadata) return {};
+    if (typeof metadata === 'string') {
+      try {
+        return JSON.parse(metadata);
+      } catch {
+        return {};
+      }
+    }
+    return metadata as Record<string, any>;
+  };
+  
   // Fetch images
   const { data: images = [], isLoading, error } = useQuery<GeneratedImage[]>({
     queryKey: ["/api/generated-images"],
@@ -58,20 +71,10 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
   const getCategories = () => {
     const categories = new Set<string>();
     images.forEach(image => {
-      try {
-        if (image.metadata) {
-          const metadata = typeof image.metadata === 'string' 
-            ? JSON.parse(image.metadata) 
-            : image.metadata;
-          if (metadata?.category) {
-            categories.add(metadata.category);
-          } else {
-            categories.add("Uncategorized");
-          }
-        } else {
-          categories.add("Uncategorized");
-        }
-      } catch {
+      const metadata = parseMetadata(image.metadata);
+      if (metadata?.category) {
+        categories.add(metadata.category);
+      } else {
         categories.add("Uncategorized");
       }
     });
@@ -88,18 +91,11 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
       
     const matchesCategory = selectedCategory === "all" || 
       (() => {
-        try {
-          if (image.metadata) {
-            const metadata = JSON.parse(image.metadata as string);
-            if (selectedCategory === "Uncategorized") {
-              return !metadata?.category;
-            }
-            return metadata?.category === selectedCategory;
-          }
-          return selectedCategory === "Uncategorized";
-        } catch {
-          return selectedCategory === "Uncategorized";
+        const metadata = parseMetadata(image.metadata);
+        if (selectedCategory === "Uncategorized") {
+          return !metadata?.category;
         }
+        return metadata?.category === selectedCategory;
       })();
       
     return matchesSearch && matchesCategory;
