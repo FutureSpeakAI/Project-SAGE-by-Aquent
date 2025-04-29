@@ -9,15 +9,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Input } from "@/components/ui/input";
-import { LoaderCircle, X, Download, Trash2, Search, Library, FilterX } from "lucide-react";
+import { LoaderCircle, X, Download, Trash2, Search, Library, FilterX, Copy, Edit } from "lucide-react";
 import { GeneratedImage } from "@shared/schema";
 
 interface ImageLibraryProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreateVariations?: (imageUrl: string, prompt: string) => void;
+  onEditImage?: (imageUrl: string, id: number) => void;
 }
 
-export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
+export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditImage }: ImageLibraryProps) {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const { toast } = useToast();
@@ -258,6 +260,30 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
                       >
                         <Download className="h-4 w-4" />
                       </Button>
+                      
+                      {onCreateVariations && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onCreateVariations(image.imageUrl, image.prompt || "")}
+                          className="h-8 w-8 text-purple-500 hover:text-purple-700 hover:bg-purple-50"
+                          title="Create Variations"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      {onEditImage && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEditImage(image.imageUrl, image.id)}
+                          className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                          title="Edit Image"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
                       
                       <Button
                         variant="ghost"

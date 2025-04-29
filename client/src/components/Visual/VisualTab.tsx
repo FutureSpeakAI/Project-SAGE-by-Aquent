@@ -259,8 +259,10 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
       const fileData = base64Data;
       
       // Clear existing reference images
+      // Create a new "dummy" file object to satisfy TypeScript
+      const dummyFile = new File([''], 'variation.png', { type: 'image/png' });
       setReferenceImages([{
-        file: null, // We don't have the original file object
+        file: dummyFile, // Use a dummy file object
         base64: fileData
       }]);
       
