@@ -223,31 +223,31 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
       exit="exit"
       variants={pageTransition}
     >
-      {/* Library Access Button */}
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          onClick={onOpenImageLibrary}
-          className="mb-2"
-          disabled={!onOpenImageLibrary}
-        >
-          <Library className="mr-2 h-4 w-4" />
-          View Image Library
-        </Button>
-      </div>
-      
       {/* Main content tabs */}
       <Tabs defaultValue="standard" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="standard" className="flex items-center">
-            <ImagePlus className="mr-2 h-4 w-4" />
-            Standard Mode
-          </TabsTrigger>
-          <TabsTrigger value="assistant" className="flex items-center">
-            <BrainCircuit className="mr-2 h-4 w-4" />
-            Prompt Assistant
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col sm:flex-row justify-between mb-6">
+          <TabsList className="mb-2 sm:mb-0">
+            <TabsTrigger value="standard" className="flex items-center">
+              <ImagePlus className="mr-2 h-4 w-4" />
+              Standard Mode
+            </TabsTrigger>
+            <TabsTrigger value="assistant" className="flex items-center">
+              <BrainCircuit className="mr-2 h-4 w-4" />
+              Prompt Assistant
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Library Access Button */}
+          <Button
+            variant="outline"
+            onClick={onOpenImageLibrary}
+            disabled={!onOpenImageLibrary}
+            className="self-start"
+          >
+            <Library className="mr-2 h-4 w-4" />
+            View Image Library
+          </Button>
+        </div>
         
         {/* Standard Mode Content */}
         <TabsContent value="standard">
