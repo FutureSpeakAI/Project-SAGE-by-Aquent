@@ -68,6 +68,12 @@ IMPORTANT GUIDELINES:
 4. BUILD THE PROMPT ITERATIVELY through conversation - don't try to create it all at once.
 5. NEVER SEND EDUCATIONAL CONTENT about how to create images - stay focused on the user's specific request.
 6. NEVER USE HTML TAGS, MARKDOWN HEADERS, or formatting - just plain text conversation.
+7. NEVER SIMULATE OR PREDICT USER RESPONSES - only respond to actual user input.
+
+CONVERSATION FORMAT:
+- You'll receive input in XML format: <USER INPUT>user message</USER INPUT>
+- Provide your response in plain text (don't include <ASSISTANT RESPONSE> tags in your output)
+- DO NOT MAKE UP NEW USER INPUTS - only respond to the actual input provided
 
 When gathering information, explore these aspects one by one:
 - Subject: Main focus of the image
@@ -80,7 +86,7 @@ When gathering information, explore these aspects one by one:
 After 3-5 exchanges when you have enough information, provide a final optimized prompt:
 "FINAL PROMPT: [your optimized prompt]"
 
-REMEMBER: Always respond conversationally as if in a real chat, not delivering a lecture or essay. Ask short, focused questions to help craft the perfect image prompt.`;
+REMEMBER: Always respond conversationally as if in a real chat. Ask short, focused questions one at a time to help craft the perfect image prompt.`;
 
   // Mutation for generating content
   const generateContentMutation = useMutation({
@@ -149,13 +155,19 @@ REMEMBER: Always respond conversationally as if in a real chat, not delivering a
     setCurrentMessage("");
     setIsTyping(true);
 
-    // Build context from all previous messages
+    // Build context from all previous messages with clear separation 
+    // and use a special format that's less likely to be simulated by the model
     const conversationContext = messages
-      .map((msg) => `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`)
+      .map((msg) => {
+        const prefix = msg.role === "user" ? "USER INPUT" : "ASSISTANT RESPONSE";
+        return `<${prefix}>\n${msg.content}\n</${prefix}>`;
+      })
       .join("\n\n");
 
-    // Generate response based on the conversation context
-    const userPromptWithContext = `${conversationContext}\n\nUser: ${currentMessage}\n\nAssistant:`;
+    // Generate response based on the conversation context with clear formatting 
+    // to prevent the model from simulating user responses
+    const userPromptWithContext = `${conversationContext}\n\n<USER INPUT>\n${currentMessage}\n</USER INPUT>\n\n<ASSISTANT RESPONSE>`;
+    
 
     generateContentMutation.mutate({
       model: "gpt-4o",

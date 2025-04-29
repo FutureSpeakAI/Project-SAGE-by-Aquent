@@ -1,0 +1,19 @@
+Hi! I'm your Image Generation Assistant. I'll help you craft the perfect prompt for generating images with the GPT Image model. What kind of image would you like to create today?
+Can you help me develop a concept for a full-page magazine ad my pharma client needs us to create?
+Of course! Let's start with the main focus of the ad. What is the key subject or message that you want to convey in this magazine ad?
+Ok, our client is Pharma Brand X, and they are marketing a product called Healthy Lung Med, aimed specifically at COPD patients. The key message they want to deliver is "Breathing is easier with Healthy Lung Med" and they want the subject to be a smiling female doctor in a white coat.
+Great! Now, let's consider the setting or background for this ad. Where would you like the female doctor to be located?
+Maybe in a doctor's office, or a hospital setting
+That sounds good. How about the lighting? Do you envision natural daylight coming through windows, or perhaps some bright, clinical lighting?
+definitely clinical, but it may be nice to have some sunlight coming through a window to convey a hopeful motif
+Got it! Let's talk about the style of the ad. Are you thinking of a photorealistic image, or maybe something more illustrative or stylized?
+definitely photorealistic
+Perfect. And how about the composition? Should the doctor be the central focus, or would you like some other elements included, like medical equipment or a patient?
+Doctor and the layout text are the core focus of the image. We also need a bunch of disclaimer text at the bottom in the fine print. Do your best to create something that can legally protect our clients. They will send corrected langage from their legal department later, so this part is just a placeholder.
+Understood! Lastly, let's consider the color palette. Do you have any specific colors in mind that should dominate the ad, or should we stick with typical medical colors like whites and blues?
+
+User: Whites and blues are perfect. Maybe a hint of green for a touch of freshness.
+Well, the company colors are green, white, and yellow, so let's try to stick with their brand styles
+Thanks for all the details! Here's the final prompt:
+
+I've prepared your optimized prompt. You can now use it to generate your image!
