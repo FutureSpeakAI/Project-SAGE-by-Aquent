@@ -44,22 +44,36 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
   const generateImageMutation = useMutation({
     mutationFn: async (data: GenerateImageRequest) => {
       const response = await apiRequest("POST", "/api/generate-image", data);
-      return response.json() as Promise<GenerateImageResponse>;
+      const jsonData = await response.json();
+      console.log("Image API Response:", jsonData);
+      return jsonData as GenerateImageResponse;
     },
     onSuccess: (data) => {
-      setGeneratedImageUrl(data.imageUrl);
-      
-      // Default title from prompt (first 30 chars)
-      if (!imageTitle) {
-        setImageTitle(imagePrompt.substring(0, 30) + (imagePrompt.length > 30 ? "..." : ""));
+      // Extract image URL from the response
+      console.log("Image generation successful:", data);
+      if (data.images && data.images.length > 0 && data.images[0].url) {
+        setGeneratedImageUrl(data.images[0].url);
+        
+        // Default title from prompt (first 30 chars)
+        if (!imageTitle) {
+          setImageTitle(imagePrompt.substring(0, 30) + (imagePrompt.length > 30 ? "..." : ""));
+        }
+        
+        toast({
+          title: "Image generated",
+          description: "Your image has been successfully generated.",
+        });
+      } else {
+        console.error("Unexpected API response format:", data);
+        toast({
+          title: "Image generation issue",
+          description: "Received successful response but couldn't find image URL",
+          variant: "destructive",
+        });
       }
-      
-      toast({
-        title: "Image generated",
-        description: "Your image has been successfully generated.",
-      });
     },
     onError: (error: Error) => {
+      console.error("Image generation error:", error);
       toast({
         title: "Image generation failed",
         description: error.message,
