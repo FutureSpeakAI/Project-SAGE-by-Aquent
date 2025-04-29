@@ -34,6 +34,12 @@ interface GenerateImageRequest {
   moderation?: string;
   output_format?: string;
   output_compression?: number;
+  reference_images?: Array<{
+    image_url: {
+      url: string;
+      detail?: "auto" | "high" | "low";
+    }
+  }>;
 }
 
 interface VisualTabProps {
@@ -49,6 +55,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
   const [quality, setQuality] = useState<string>("high");
   const [background, setBackground] = useState<string>("auto");
   const [imageTitle, setImageTitle] = useState<string>("");
+  const [referenceImages, setReferenceImages] = useState<{ file: File; base64: string }[]>([]);
   
   const { toast } = useToast();
   
@@ -107,7 +114,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
       if (generatedImageUrl.startsWith('data:image')) {
         try {
           // Create a smaller thumbnail version
-          const img = new Image();
+          const img = new window.Image();
           img.src = generatedImageUrl;
           
           // Wait for image to load
@@ -177,12 +184,23 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
       return;
     }
     
+    // Prepare reference images for the API request
+    const referenceImagesFormatted = referenceImages.length > 0
+      ? referenceImages.map(img => ({
+          image_url: {
+            url: img.base64,
+            detail: "auto" // You can make this configurable if needed
+          }
+        }))
+      : undefined;
+    
     generateImageMutation.mutate({
       prompt: imagePrompt,
       model: "gpt-image-1", // Use GPT Image model for all image generation
       size,
       quality,
       background,
+      reference_images: referenceImagesFormatted
     });
   };
   
@@ -270,6 +288,17 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                       className="min-h-[200px] resize-y"
                       value={imagePrompt}
                       onChange={(e) => setImagePrompt(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Image className="h-4 w-4" />
+                      Reference Images
+                    </Label>
+                    <ImageUploader
+                      onImagesChange={setReferenceImages}
+                      maxImages={4}
                     />
                   </div>
                   

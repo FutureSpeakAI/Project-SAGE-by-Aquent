@@ -18,6 +18,12 @@ export interface GenerateImageRequest {
   n?: number;
   output_format?: string;
   output_compression?: number;
+  reference_images?: Array<{
+    image_url: {
+      url: string;
+      detail?: "auto" | "high" | "low";
+    }
+  }>;
 }
 
 export const generateContent = async (req: Request, res: Response) => {
