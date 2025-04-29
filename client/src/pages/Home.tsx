@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, ReactElement } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -191,6 +191,9 @@ export default function Home() {
   const [briefingContent, setBriefingContent] = useState("");
   const [imageLibraryOpen, setImageLibraryOpen] = useState(false);
   
+  // Pending variation data for when the tab isn't loaded yet
+  const [pendingVariationData, setPendingVariationData] = useState<{imageUrl: string, prompt: string} | null>(null);
+  
   // Handle briefing-related actions
   const handleOpenBriefingLibrary = () => {
     setBriefingLibraryOpen(true);
@@ -199,6 +202,38 @@ export default function Home() {
   // Handle image-related actions
   const handleOpenImageLibrary = () => {
     setImageLibraryOpen(true);
+  };
+  
+  // Handle creating variations of a library image
+  const handleCreateVariations = (imageUrl: string, prompt: string) => {
+    // Close the library
+    setImageLibraryOpen(false);
+    
+    // Switch to the visual tab if not already there
+    setActiveTab(AppTab.VISUAL);
+    
+    // Store the data to use when the VisualTab processes it
+    setPendingVariationData({ imageUrl, prompt });
+    
+    toast({
+      title: "Ready for Variations",
+      description: "The selected image is ready for variations. Adjust the prompt if needed and click 'Generate Image'."
+    });
+  };
+  
+  // Handle editing an image
+  const handleEditImage = (imageUrl: string, id: number) => {
+    // Close the library
+    setImageLibraryOpen(false);
+    
+    // Switch to the visual tab if not already there
+    setActiveTab(AppTab.VISUAL);
+    
+    // TODO: Implement image editor functionality in Phase 2
+    toast({
+      title: "Image Editor",
+      description: "Image editor functionality will be available in the next update."
+    });
   };
   
   // Helper function to convert HTML to plain text
@@ -417,9 +452,12 @@ export default function Home() {
               ) : activeTab === AppTab.VISUAL ? (
                 <VisualTab
                   key="visual-tab"
+                  ref={visualTabRef}
                   model={model}
                   setModel={setModel}
                   onOpenImageLibrary={handleOpenImageLibrary}
+                  pendingVariationData={pendingVariationData}
+                  setPendingVariationData={setPendingVariationData}
                 />
               ) : (
                 <BriefingTab
@@ -481,6 +519,8 @@ export default function Home() {
       <ImageLibrary
         open={imageLibraryOpen}
         onOpenChange={setImageLibraryOpen}
+        onCreateVariations={handleCreateVariations}
+        onEditImage={handleEditImage}
       />
     </div>
   );

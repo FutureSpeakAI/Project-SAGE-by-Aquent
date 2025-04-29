@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -45,9 +45,11 @@ interface VisualTabProps {
   model: string;
   setModel: (model: string) => void;
   onOpenImageLibrary?: () => void;
+  pendingVariationData?: { imageUrl: string, prompt: string } | null;
+  setPendingVariationData?: (data: { imageUrl: string, prompt: string } | null) => void;
 }
 
-export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProps) {
+export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariationData, setPendingVariationData }: VisualTabProps) {
   const [imagePrompt, setImagePrompt] = useState("");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [size, setSize] = useState<string>("1024x1024");
@@ -286,6 +288,25 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
     }
   };
 
+  // Handle library variations data
+  useEffect(() => {
+    if (pendingVariationData) {
+      // Apply the variation data
+      handleCreateVariations(pendingVariationData.imageUrl);
+      
+      // Update the prompt if provided
+      if (pendingVariationData.prompt) {
+        const variationPrompt = `Create a variation of this image. Original prompt: ${pendingVariationData.prompt}`;
+        setImagePrompt(variationPrompt);
+      }
+      
+      // Clear the pending data
+      if (setPendingVariationData) {
+        setPendingVariationData(null);
+      }
+    }
+  }, [pendingVariationData]);
+  
   return (
     <motion.div
       className="space-y-6"
