@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Image } from "lucide-react";
+import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Image, Copy } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 import { ImagePromptAgent } from "./ImagePromptAgent";
@@ -235,6 +235,54 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
       description: "The AI-generated prompt has been applied. You can now generate your image.",
     });
   };
+  
+  // Handle creating variations of an image
+  const handleCreateVariations = async (imageUrl: string) => {
+    try {
+      // Convert the image URL to base64 if it's not already
+      let base64Data = imageUrl;
+      
+      // If it's not a data URL, fetch it and convert to base64
+      if (!imageUrl.startsWith('data:')) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        base64Data = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      }
+      
+      // Create a file object from the blob
+      const [header, data] = base64Data.split(',');
+      const mimeType = header.match(/:(.*?);/)?.[1] || 'image/png';
+      const fileData = base64Data;
+      
+      // Clear existing reference images
+      setReferenceImages([{
+        file: null, // We don't have the original file object
+        base64: fileData
+      }]);
+      
+      // Update the prompt to request variations
+      const variationPrompt = "Create a variation of this image" + 
+        (imagePrompt ? `. Original prompt: ${imagePrompt}` : "");
+      
+      setImagePrompt(variationPrompt);
+      
+      toast({
+        title: "Ready for Variations",
+        description: "Reference image loaded. Click 'Generate Image' to create variations.",
+      });
+    } catch (error) {
+      console.error("Error preparing variations:", error);
+      toast({
+        title: "Error preparing variations",
+        description: "There was an error processing the image for variations.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <motion.div
@@ -443,6 +491,16 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                             <Download className="mr-2 h-4 w-4" />
                             Download
                           </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-purple-500 border-purple-200 hover:bg-purple-50"
+                            onClick={() => handleCreateVariations(generatedImageUrl)}
+                          >
+                            <Copy className="mr-2 h-4 w-4" />
+                            Variations
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -579,7 +637,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                         />
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -596,6 +654,16 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                         >
                           <Download className="mr-2 h-4 w-4" />
                           Download
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleCreateVariations(generatedImageUrl)}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Variations
                         </Button>
                         
                         <Button
