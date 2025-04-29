@@ -585,6 +585,125 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
             </div>
           </div>
         </TabsContent>
+        
+        {/* Brief Interpreter Content */}
+        <TabsContent value="brief">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left column - Brief Interpreter */}
+            <div className="md:col-span-2">
+              <BriefInterpreter onPromptGenerated={handlePromptFromAgent} />
+            </div>
+            
+            {/* Right column - Preview and Controls */}
+            <div className="space-y-6">
+              <Card className="p-4 shadow-md">
+                <div className="space-y-4">
+                  <Label>Generated Prompt</Label>
+                  <Textarea
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    className="h-32 resize-none"
+                    placeholder="Your prompt will appear here after interpreting a creative brief..."
+                  />
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="size-brief">Size</Label>
+                      <Select value={size} onValueChange={setSize}>
+                        <SelectTrigger id="size-brief">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
+                          <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
+                          <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
+                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="quality-brief">Quality</Label>
+                      <Select value={quality} onValueChange={setQuality}>
+                        <SelectTrigger id="quality-brief">
+                          <SelectValue placeholder="Select quality" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low (Faster)</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High (Best Quality)</SelectItem>
+                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                    onClick={handleGenerateImage}
+                    disabled={generateImageMutation.isPending || !imagePrompt.trim()}
+                  >
+                    {generateImageMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                        Generate Image
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Card>
+              
+              {generatedImageUrl && (
+                <Card className="p-4 shadow-md">
+                  <div className="space-y-4">
+                    <Label>Generated Image</Label>
+                    <div className="border rounded-md p-2">
+                      <img 
+                        src={generatedImageUrl} 
+                        alt="Generated" 
+                        className="mx-auto max-h-[250px] object-contain rounded-md" 
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="image-title-brief">Image Title</Label>
+                      <Textarea
+                        id="image-title-brief"
+                        placeholder="Enter a title for your image..."
+                        value={imageTitle}
+                        onChange={(e) => setImageTitle(e.target.value)}
+                        className="resize-none"
+                      />
+                    </div>
+                    
+                    <Button 
+                      className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                      onClick={handleSaveImage}
+                      disabled={saveImageMutation.isPending || !imageTitle.trim()}
+                    >
+                      {saveImageMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save to Library
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
     </motion.div>
   );
