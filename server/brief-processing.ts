@@ -1,48 +1,43 @@
-import multer from 'multer';
 import { Request, Response } from 'express';
+import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import OpenAI from 'openai';
 
-// Configure OpenAI API
+// Configure OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Configure multer for file upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads');
-    
-    // Create uploads directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-// Configure upload settings
+// Configure multer for file uploads
 const upload = multer({
-  storage: storage,
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      // Create uploads directory if it doesn't exist
+      const uploadDir = path.join(__dirname, '..', 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      // Generate a unique filename
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+  }),
   limits: {
-    fileSize: 10 * 1024 * 1024, // Limit to 10MB
+    fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Accept only PDF, DOCX, TXT files
-    const filetypes = /pdf|docx|txt/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    // Accept only specific file types
+    const allowedTypes = ['.txt', '.pdf', '.docx'];
+    const ext = path.extname(file.originalname).toLowerCase();
     
-    if (extname && mimetype) {
-      return cb(null, true);
+    if (allowedTypes.includes(ext)) {
+      cb(null, true);
     } else {
-      cb(new Error("Only .pdf, .docx, or .txt files are allowed"));
+      cb(new Error('Invalid file type. Only .txt, .pdf, and .docx files are allowed.') as any);
     }
   }
 }).single('file');

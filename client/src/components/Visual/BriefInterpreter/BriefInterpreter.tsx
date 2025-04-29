@@ -1,15 +1,10 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { pageTransition } from "@/App";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Card } from "@/components/ui/card";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Loader2, FileUp, Clipboard, Copy, CheckCircle2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { BriefUploadDialog } from "./BriefUploadDialog";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, FileText, Sparkles } from "lucide-react";
 
 interface BriefInterpreterProps {
   onPromptGenerated: (prompt: string) => void;
@@ -21,182 +16,102 @@ interface GeneratePromptFromBriefRequest {
 }
 
 export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
-  const [briefContent, setBriefContent] = useState<string>("");
-  const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const { toast } = useToast();
 
-  // Mutation for generating prompt from brief
-  const generatePromptMutation = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async (data: GeneratePromptFromBriefRequest) => {
-      const response = await apiRequest("POST", "/api/interpret-brief", data);
+      const response = await fetch("/api/interpret-brief", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to process brief: ${response.statusText}`);
+      }
+
       return response.json();
     },
     onSuccess: (data) => {
-      if (data.prompt) {
-        setGeneratedPrompt(data.prompt);
+      if (data.success && data.prompt) {
+        onPromptGenerated(data.prompt);
         toast({
-          title: "Prompt generated",
-          description: "Your creative brief has been interpreted into an image prompt.",
+          title: "Brief interpreted successfully",
+          description: "Your creative brief has been converted to an image prompt.",
+          variant: "default",
         });
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to generate prompt from brief.",
-          variant: "destructive",
-        });
+        throw new Error(data.message || "Failed to generate prompt");
       }
     },
     onError: (error) => {
-      console.error("Error generating prompt:", error);
+      console.error("Brief interpretation error:", error);
       toast({
-        title: "Error",
-        description: "Failed to generate prompt. Please try again.",
+        title: "Brief interpretation failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
     },
   });
 
-  const handleBriefProcessed = (content: string) => {
-    setBriefContent(content);
+  const handleOpenUploadDialog = () => {
+    setShowUploadDialog(true);
   };
 
-  const handleGeneratePrompt = () => {
-    if (!briefContent.trim()) {
-      toast({
-        title: "Empty brief",
-        description: "Please upload a creative brief document first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    generatePromptMutation.mutate({
-      brief: briefContent,
-      model: "gpt-4o",
-    });
+  const handleCloseUploadDialog = () => {
+    setShowUploadDialog(false);
   };
 
-  const handleUsePrompt = () => {
-    if (generatedPrompt) {
-      onPromptGenerated(generatedPrompt);
-      toast({
-        title: "Prompt applied",
-        description: "The interpreted prompt has been applied to the image generator.",
-      });
-    }
-  };
-
-  const copyToClipboard = () => {
-    if (generatedPrompt) {
-      navigator.clipboard.writeText(generatedPrompt);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "Copied to clipboard",
-        description: "The prompt has been copied to your clipboard.",
-      });
-    }
+  const handleBriefProcessed = (prompt: string) => {
+    onPromptGenerated(prompt);
   };
 
   return (
-    <motion.div
-      className="space-y-6"
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      variants={pageTransition}
-    >
-      <Card className="p-4 shadow-md">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Creative Brief Interpreter</h3>
-            <Button 
-              variant="outline"
-              onClick={() => setIsUploadDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <FileUp className="h-4 w-4" />
-              Upload Brief
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="brief-content">Creative Brief Content</Label>
-              <Textarea
-                id="brief-content"
-                value={briefContent}
-                onChange={(e) => setBriefContent(e.target.value)}
-                placeholder="Your uploaded brief content will appear here..."
-                className="min-h-[150px] mt-2 resize-y font-mono text-sm"
-                readOnly
-              />
-            </div>
-
-            <Button
-              onClick={handleGeneratePrompt}
-              disabled={!briefContent.trim() || generatePromptMutation.isPending}
-              className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-            >
-              {generatePromptMutation.isPending ? (
+    <>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-2xl">Creative Brief Interpreter</CardTitle>
+          <CardDescription>
+            Convert client's creative brief documents into optimized image prompts
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-lg">
+            <FileText className="h-12 w-12 text-muted-foreground mb-3" />
+            <h3 className="text-lg font-medium mb-2">Upload your creative brief</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              We'll analyze your brief and extract the key visual elements to create an optimal image prompt.
+            </p>
+            <Button onClick={handleOpenUploadDialog} disabled={isPending} className="gap-2">
+              {isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Interpreting Brief...
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
                 </>
               ) : (
                 <>
-                  <Clipboard className="mr-2 h-4 w-4" />
-                  Generate Image Prompt
+                  <Sparkles className="h-4 w-4" />
+                  Upload Brief
                 </>
               )}
             </Button>
           </div>
-
-          {generatedPrompt && (
-            <div className="space-y-4 pt-4 border-t mt-4">
-              <div>
-                <Label htmlFor="generated-prompt">Generated Image Prompt</Label>
-                <div className="relative mt-2">
-                  <Textarea
-                    id="generated-prompt"
-                    value={generatedPrompt}
-                    className="min-h-[120px] pr-10 resize-y bg-gray-50"
-                    readOnly
-                  />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-2 right-2 h-8 w-8 rounded-full"
-                    onClick={copyToClipboard}
-                    title="Copy to clipboard"
-                  >
-                    {copied ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleUsePrompt}
-                className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-              >
-                Use This Prompt
-              </Button>
-            </div>
-          )}
-        </div>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
+          <p className="text-xs text-muted-foreground">
+            Supported file formats: PDF, DOCX, and TXT. Max file size: 5MB.
+          </p>
+        </CardFooter>
       </Card>
 
       <BriefUploadDialog
-        open={isUploadDialogOpen}
-        onOpenChange={setIsUploadDialogOpen}
-        onBriefProcessed={handleBriefProcessed}
+        open={showUploadDialog}
+        onClose={handleCloseUploadDialog}
+        onUpload={handleBriefProcessed}
       />
-    </motion.div>
+    </>
   );
 }

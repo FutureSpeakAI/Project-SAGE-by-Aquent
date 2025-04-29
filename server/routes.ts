@@ -219,8 +219,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         Don't include any commentary, explanations, or notes - just the optimized prompt.
       `;
       
+      // Create OpenAI instance
+      const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
       // Call OpenAI API
-      const completion = await openai.chat.completions.create({
+      const completion = await openAIClient.chat.completions.create({
         model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           { role: "system", content: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation." },
