@@ -187,7 +187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // OpenAI content generation endpoint
-  app.post("/api/generate", generateContent);
+  app.post("/api/generate-content", generateContent);
+  app.post("/api/generate", generateContent); // Keep old endpoint for backward compatibility
   
   // OpenAI image generation endpoint
   app.post("/api/generate-image", generateImage);
