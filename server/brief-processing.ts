@@ -47,10 +47,15 @@ const upload = multer({
   }
 }).single('file');
 
-// Promisify the upload function
-const uploadFile = util.promisify((req: Request, res: Response, callback: Function) => {
-  upload(req, res, callback);
-});
+// Create a promisified upload function
+const uploadFilePromise = (req: Request, res: Response): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    upload(req, res, (err: any) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
+};
 
 // Function to extract text from a file based on its extension
 async function extractTextFromFile(filePath: string, fileExt: string): Promise<string> {
@@ -71,7 +76,7 @@ async function extractTextFromFile(filePath: string, fileExt: string): Promise<s
 export const processBrief = async (req: Request, res: Response) => {
   try {
     // Handle file upload
-    await uploadFile(req, res);
+    await uploadFilePromise(req, res);
     
     if (!req.file) {
       return res.status(400).json({ 

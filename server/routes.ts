@@ -1,7 +1,9 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage, SavedPrompt, SavedPersona } from "./storage";
 import { generateContent, generateImage } from "./openai";
+import { processBrief } from "./brief-processing";
+import OpenAI from "openai";
 import { 
   GeneratedContent, 
   InsertGeneratedContent, 
@@ -192,6 +194,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // OpenAI image generation endpoint
   app.post("/api/generate-image", generateImage);
+  
+  // Creative brief interpretation endpoint
+  app.post("/api/process-brief", processBrief);
+  app.post("/api/interpret-brief", async (req: Request, res: Response) => {
+    try {
+      const { brief, model } = req.body;
+      
+      if (!brief) {
+        return res.status(400).json({ error: "Brief content is required" });
+      }
+      
+      // Generate image prompt using AI
+      const prompt = `
+        You are an expert at translating creative briefs into effective image generation prompts.
+        Analyze the following creative brief and create an optimized prompt for GPT Image model.
+        Focus on extracting visual elements, style, mood, composition, and key themes.
+        Your response should be a single, well-structured prompt that captures the essence of what's needed.
+        
+        Creative Brief:
+        ${brief}
+        
+        Format your response as a complete image generation prompt that's ready to use.
+        Don't include any commentary, explanations, or notes - just the optimized prompt.
+      `;
+      
+      // Call OpenAI API
+      const completion = await openai.chat.completions.create({
+        model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7
+      });
+      
+      // Extract the generated prompt from the response
+      const generatedPrompt = completion.choices[0].message.content || "";
+      
+      // Return the results
+      return res.status(200).json({
+        success: true,
+        prompt: generatedPrompt
+      });
+      
+    } catch (error: any) {
+      console.error("Error interpreting brief:", error);
+      
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to interpret brief'
+      });
+    }
+  });
 
   // Prompt Library API Routes
   app.get("/api/prompts", async (_req: Request, res: Response) => {
