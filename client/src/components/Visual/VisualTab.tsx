@@ -70,7 +70,9 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
       // Extract image URL from the response
       console.log("Image generation successful:", data);
       if (data.images && data.images.length > 0 && data.images[0].url) {
-        setGeneratedImageUrl(data.images[0].url);
+        const imageUrl = data.images[0].url;
+        console.log("Setting image URL:", imageUrl.substring(0, 50) + "...");
+        setGeneratedImageUrl(imageUrl);
         
         // Default title from prompt (first 30 chars)
         if (!imageTitle) {
@@ -85,7 +87,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
         console.error("Unexpected API response format:", data);
         toast({
           title: "Image generation issue",
-          description: "Received successful response but couldn't find image URL",
+          description: "Received successful response but couldn't find image URL. Check console for details.",
           variant: "destructive",
         });
       }
@@ -390,11 +392,28 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                       </div>
                     ) : generatedImageUrl ? (
                       <div className="w-full flex flex-col space-y-4">
-                        <img 
-                          src={generatedImageUrl} 
-                          alt="Generated" 
-                          className="mx-auto max-h-[500px] object-contain rounded-md border" 
-                        />
+                        <div className="flex items-center justify-center">
+                          <img 
+                            src={generatedImageUrl} 
+                            alt="Generated" 
+                            className="mx-auto max-h-[500px] max-w-full object-contain rounded-md border" 
+                            onError={(e) => {
+                              console.error("Error loading image:", e);
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null; // Prevent infinite loop if error image also fails
+                              target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23F15A22' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='9' cy='9' r='2'%3E%3C/circle%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'%3E%3C/path%3E%3C/svg%3E";
+                              const errorToast = document.querySelector('.toast-error');
+                              if (!errorToast) {
+                                toast({
+                                  title: "Image display error",
+                                  description: "There was an error displaying the generated image. Try again or check console for details.",
+                                  variant: "destructive",
+                                  className: "toast-error"
+                                });
+                              }
+                            }}
+                          />
+                        </div>
                         
                         <div className="flex space-x-2 justify-center mt-2">
                           <Button
@@ -550,7 +569,13 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                         <img 
                           src={generatedImageUrl} 
                           alt="Generated" 
-                          className="mx-auto max-h-[300px] object-contain rounded-md" 
+                          className="mx-auto max-h-[300px] object-contain rounded-md"
+                          onError={(e) => {
+                            console.error("Error loading image in assistant tab:", e);
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null; // Prevent infinite loop if error image also fails
+                            target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23F15A22' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='9' cy='9' r='2'%3E%3C/circle%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'%3E%3C/path%3E%3C/svg%3E";
+                          }}
                         />
                       </div>
                       

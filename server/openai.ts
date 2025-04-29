@@ -459,28 +459,27 @@ export const generateImage = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "No images were generated" });
       }
       
-      // Get base64 encoded image
-      imageBase64 = response.data[0].b64_json;
-      revisedPrompt = response.data[0].revised_prompt || prompt;
+      console.log("GPT Image API response structure:", JSON.stringify(response.data[0], null, 2).substring(0, 100) + "...");
       
-      // If base64 is available, create a data URL
-      if (imageBase64 && typeof imageBase64 === 'string') {
-        // Convert base64 to URL for frontend display
-        const imageBuffer = Buffer.from(imageBase64, 'base64');
-        
-        // If we wanted to save the image to disk (optional, not implementing for now)
-        // const timestamp = Date.now();
-        // const filename = `generated_${timestamp}.png`;
-        // fs.writeFileSync(`./generated/${filename}`, imageBuffer);
-        // imageUrl = `/generated/${filename}`;
-        
-        // Instead, just use the base64 data directly
+      // Check what data is available in the response
+      const firstImage = response.data[0];
+      revisedPrompt = firstImage.revised_prompt || prompt;
+      
+      // First try to get the URL directly if it exists
+      if (firstImage.url) {
+        console.log("Using URL directly from API response");
+        imageUrl = firstImage.url;
+      } 
+      // Then try base64 data if available
+      else if (firstImage.b64_json && typeof firstImage.b64_json === 'string') {
+        console.log("Using base64 data from API response");
+        imageBase64 = firstImage.b64_json;
         imageUrl = `data:image/png;base64,${imageBase64}`;
-      } else if (response.data[0].url) {
-        // Fallback to the URL if provided
-        imageUrl = response.data[0].url;
-      } else {
-        throw new Error("No image data returned from API");
+      } 
+      // If neither is available, throw an error
+      else {
+        console.error("Unexpected response format:", firstImage);
+        throw new Error("No image data (URL or base64) returned from API");
       }
     } catch (apiError) {
       console.error("API Error:", apiError);
