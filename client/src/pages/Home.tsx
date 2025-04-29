@@ -452,7 +452,6 @@ export default function Home() {
               ) : activeTab === AppTab.VISUAL ? (
                 <VisualTab
                   key="visual-tab"
-                  ref={visualTabRef}
                   model={model}
                   setModel={setModel}
                   onOpenImageLibrary={handleOpenImageLibrary}
