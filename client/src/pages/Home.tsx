@@ -189,10 +189,16 @@ export default function Home() {
   const [briefingLibraryOpen, setBriefingLibraryOpen] = useState(false);
   const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
   const [briefingContent, setBriefingContent] = useState("");
+  const [imageLibraryOpen, setImageLibraryOpen] = useState(false);
   
   // Handle briefing-related actions
   const handleOpenBriefingLibrary = () => {
     setBriefingLibraryOpen(true);
+  };
+  
+  // Handle image-related actions
+  const handleOpenImageLibrary = () => {
+    setImageLibraryOpen(true);
   };
   
   // Helper function to convert HTML to plain text
@@ -408,6 +414,12 @@ export default function Home() {
                   setTemperature={setTemperature}
                   personas={personas}
                 />
+              ) : activeTab === AppTab.VISUAL ? (
+                <VisualTab
+                  key="visual-tab"
+                  model={model}
+                  setModel={setModel}
+                />
               ) : (
                 <BriefingTab
                   key="briefing-tab"
@@ -463,6 +475,11 @@ export default function Home() {
       <DataMigrationDialog
         open={dataMigrationOpen}
         onOpenChange={setDataMigrationOpen}
+      />
+      
+      <ImageLibrary
+        open={imageLibraryOpen}
+        onOpenChange={setImageLibraryOpen}
       />
     </div>
   );

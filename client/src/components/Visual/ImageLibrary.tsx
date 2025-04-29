@@ -60,7 +60,9 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
     images.forEach(image => {
       try {
         if (image.metadata) {
-          const metadata = JSON.parse(image.metadata as string);
+          const metadata = typeof image.metadata === 'string' 
+            ? JSON.parse(image.metadata) 
+            : image.metadata;
           if (metadata?.category) {
             categories.add(metadata.category);
           } else {
