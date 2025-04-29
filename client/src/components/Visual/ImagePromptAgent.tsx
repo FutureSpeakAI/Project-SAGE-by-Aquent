@@ -13,6 +13,8 @@ import {
   Rewind,
   Download,
   Copy,
+  FileUp,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +30,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { BriefInterpreter } from "./BriefInterpreter/BriefInterpreter";
 
 interface Message {
   role: "user" | "assistant";
@@ -213,112 +222,131 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
       variants={pageTransition}
     >
       <div className="grid grid-cols-1 gap-6">
-        <Card className="p-4 shadow-md flex flex-col overflow-hidden">
-          <div className="mb-4 flex justify-between items-center">
-            <div className="flex items-center">
-              <Bot className="h-5 w-5 mr-2 text-[#F15A22]" />
-              <span className="font-medium">Image Prompt Assistant</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleStartOver}
-              className="text-gray-500"
-            >
-              <Rewind className="h-4 w-4 mr-1" />
-              Start Over
-            </Button>
-          </div>
-
-
-
-          {/* Chat messages */}
-          <div className="flex-grow overflow-y-auto mb-4 max-h-[400px] min-h-[300px] border rounded-md">
-            <div className="p-4 space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+        <Card className="p-4 shadow-md">
+          <Tabs defaultValue="conversation" className="w-full">
+            <TabsList className="mb-4 grid grid-cols-2">
+              <TabsTrigger value="conversation" className="flex items-center">
+                <Bot className="mr-2 h-4 w-4" />
+                Conversation
+              </TabsTrigger>
+              <TabsTrigger value="brief" className="flex items-center">
+                <FileText className="mr-2 h-4 w-4" />
+                Brief Interpreter
+              </TabsTrigger>
+            </TabsList>
+          
+            {/* Conversation Tab Content */}
+            <TabsContent value="conversation" className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <Bot className="h-5 w-5 mr-2 text-[#F15A22]" />
+                  <span className="font-medium">Conversation Assistant</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartOver}
+                  className="text-gray-500"
                 >
-                  <div
-                    className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                      message.role === "user"
-                        ? "bg-[#F15A22] text-white"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap">{message.content}</div>
-                  </div>
-                </div>
-              ))}
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] px-4 py-2 rounded-lg bg-gray-100 text-gray-800">
-                    <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Input area */}
-          <div className="relative">
-            <Input
-              placeholder="Type your message..."
-              value={currentMessage}
-              onChange={(e) => setCurrentMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="pr-16"
-              disabled={isTyping || generateContentMutation.isPending}
-            />
-            <Button
-              size="icon"
-              className="absolute right-1 top-1 bg-[#F15A22] hover:bg-[#e04d15] text-white h-8 w-8"
-              onClick={handleSendMessage}
-              disabled={!currentMessage.trim() || isTyping || generateContentMutation.isPending}
-            >
-              <SendHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Final prompt section */}
-          {finalPrompt && (
-            <div className="mt-4 border-t pt-4">
-              <div className="font-medium mb-2 flex items-center">
-                <ImageIcon className="h-4 w-4 mr-2 text-[#F15A22]" />
-                Optimized Prompt:
+                  <Rewind className="h-4 w-4 mr-1" />
+                  Start Over
+                </Button>
               </div>
+
+              {/* Chat messages */}
+              <div className="flex-grow overflow-y-auto mb-4 max-h-[400px] min-h-[300px] border rounded-md">
+                <div className="p-4 space-y-4">
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${
+                        message.role === "user" ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[80%] px-4 py-2 rounded-lg ${
+                          message.role === "user"
+                            ? "bg-[#F15A22] text-white"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        <div className="whitespace-pre-wrap">{message.content}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[80%] px-4 py-2 rounded-lg bg-gray-100 text-gray-800">
+                        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Input area */}
               <div className="relative">
-                <Textarea
-                  value={finalPrompt}
-                  readOnly
-                  className="min-h-[80px] resize-none bg-gray-50"
+                <Input
+                  placeholder="Type your message..."
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="pr-16"
+                  disabled={isTyping || generateContentMutation.isPending}
                 />
-                <div className="absolute right-2 top-2 flex gap-1">
+                <Button
+                  size="icon"
+                  className="absolute right-1 top-1 bg-[#F15A22] hover:bg-[#e04d15] text-white h-8 w-8"
+                  onClick={handleSendMessage}
+                  disabled={!currentMessage.trim() || isTyping || generateContentMutation.isPending}
+                >
+                  <SendHorizontal className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Final prompt section */}
+              {finalPrompt && (
+                <div className="mt-4 border-t pt-4">
+                  <div className="font-medium mb-2 flex items-center">
+                    <ImageIcon className="h-4 w-4 mr-2 text-[#F15A22]" />
+                    Optimized Prompt:
+                  </div>
+                  <div className="relative">
+                    <Textarea
+                      value={finalPrompt}
+                      readOnly
+                      className="min-h-[80px] resize-none bg-gray-50"
+                    />
+                    <div className="absolute right-2 top-2 flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => {
+                          navigator.clipboard.writeText(finalPrompt);
+                          toast({ title: "Copied to clipboard" });
+                        }}
+                        title="Copy to clipboard"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                   <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 rounded-full"
-                    onClick={() => {
-                      navigator.clipboard.writeText(finalPrompt);
-                      toast({ title: "Copied to clipboard" });
-                    }}
-                    title="Copy to clipboard"
+                    className="w-full mt-2 bg-[#F15A22] hover:bg-[#e04d15]"
+                    onClick={handleUsePrompt}
                   >
-                    <Copy className="h-4 w-4" />
+                    Use This Prompt
                   </Button>
                 </div>
-              </div>
-              <Button
-                className="w-full mt-2 bg-[#F15A22] hover:bg-[#e04d15]"
-                onClick={handleUsePrompt}
-              >
-                Use This Prompt
-              </Button>
-            </div>
-          )}
+              )}
+            </TabsContent>
+            
+            {/* Brief Interpreter Tab Content */}
+            <TabsContent value="brief">
+              <BriefInterpreter onPromptGenerated={onPromptReady} />
+            </TabsContent>
+          </Tabs>
         </Card>
       </div>
     </motion.div>
