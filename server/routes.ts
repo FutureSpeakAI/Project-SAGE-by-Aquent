@@ -1,12 +1,14 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, SavedPrompt, SavedPersona } from "./storage";
-import { generateContent } from "./openai";
+import { generateContent, generateImage } from "./openai";
 import { 
   GeneratedContent, 
   InsertGeneratedContent, 
   BriefConversation, 
   InsertBriefConversation,
+  GeneratedImage,
+  InsertGeneratedImage,
   ContentType
 } from "@shared/schema";
 
@@ -40,11 +42,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/export-data', async (_req: Request, res: Response) => {
     try {
       // Export all data from the database
-      const [prompts, personas, contents, conversations] = await Promise.all([
+      const [prompts, personas, contents, conversations, images] = await Promise.all([
         storage.getPrompts(),
         storage.getPersonas(),
         storage.getGeneratedContents(),
-        storage.getBriefConversations()
+        storage.getBriefConversations(),
+        storage.getGeneratedImages()
       ]);
       
       res.json({
@@ -52,6 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         personas,
         contents,
         conversations,
+        images,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
@@ -66,14 +70,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import data from a previous export
   app.post('/api/import-data', async (req: Request, res: Response) => {
     try {
-      const { prompts, personas, contents, conversations } = req.body;
+      const { prompts, personas, contents, conversations, images } = req.body;
       
       // Track import stats
       const stats = {
         promptsImported: 0,
         personasImported: 0,
         contentsImported: 0,
-        conversationsImported: 0
+        conversationsImported: 0,
+        imagesImported: 0
       };
       
       // Import prompts
@@ -146,6 +151,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Import generated images
+      if (Array.isArray(images)) {
+        for (const image of images) {
+          try {
+            await storage.saveGeneratedImage({
+              title: image.title,
+              prompt: image.prompt,
+              imageUrl: image.imageUrl,
+              style: image.style,
+              size: image.size,
+              quality: image.quality,
+              model: image.model,
+              metadata: image.metadata
+            });
+            stats.imagesImported++;
+          } catch (err) {
+            console.warn(`Failed to import image "${image.title}":`, err);
+          }
+        }
+      }
+      
       res.json({
         success: true,
         stats,
@@ -162,6 +188,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // OpenAI content generation endpoint
   app.post("/api/generate", generateContent);
+  
+  // OpenAI image generation endpoint
+  app.post("/api/generate-image", generateImage);
 
   // Prompt Library API Routes
   app.get("/api/prompts", async (_req: Request, res: Response) => {
@@ -549,6 +578,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete brief conversation" });
+    }
+  });
+
+  // Generated Images API Routes
+  app.get("/api/generated-images", async (_req: Request, res: Response) => {
+    try {
+      const images = await storage.getGeneratedImages();
+      res.json(images);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch generated images" });
+    }
+  });
+
+  app.get("/api/generated-images/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const image = await storage.getGeneratedImage(id);
+      
+      if (!image) {
+        return res.status(404).json({ error: "Generated image not found" });
+      }
+      
+      res.json(image);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch generated image" });
+    }
+  });
+
+  app.post("/api/generated-images", async (req: Request, res: Response) => {
+    try {
+      const { title, prompt, imageUrl, style, size, quality, model, metadata } = req.body;
+      
+      if (!title || !prompt || !imageUrl) {
+        return res.status(400).json({ error: "Title, prompt, and imageUrl are required" });
+      }
+      
+      const savedImage = await storage.saveGeneratedImage({
+        title,
+        prompt,
+        imageUrl,
+        style: style || null,
+        size: size || null,
+        quality: quality || null,
+        model: model || "dall-e-3",
+        metadata: metadata || null,
+      });
+      
+      res.status(201).json(savedImage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save generated image" });
+    }
+  });
+
+  app.put("/api/generated-images/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { title, prompt, imageUrl, style, size, quality, model, metadata } = req.body;
+      
+      if (!title && !prompt && !imageUrl) {
+        return res.status(400).json({ error: "At least title, prompt, or imageUrl must be provided for update" });
+      }
+      
+      const updatedImage = await storage.updateGeneratedImage(id, {
+        ...(title && { title }),
+        ...(prompt && { prompt }),
+        ...(imageUrl && { imageUrl }),
+        ...(style !== undefined && { style }),
+        ...(size !== undefined && { size }),
+        ...(quality !== undefined && { quality }),
+        ...(model !== undefined && { model }),
+        ...(metadata !== undefined && { metadata }),
+      });
+      
+      if (!updatedImage) {
+        return res.status(404).json({ error: "Generated image not found" });
+      }
+      
+      res.json(updatedImage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update generated image" });
+    }
+  });
+
+  app.delete("/api/generated-images/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const result = await storage.deleteGeneratedImage(id);
+      
+      if (!result) {
+        return res.status(404).json({ error: "Generated image not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete generated image" });
     }
   });
 
