@@ -5,7 +5,8 @@ import { z } from "zod";
 // Define an enum for content types
 export enum ContentType {
   GENERAL = 'general',
-  BRIEFING = 'briefing'
+  BRIEFING = 'briefing',
+  VISUAL = 'visual'
 }
 
 export const users = pgTable("users", {
@@ -103,3 +104,27 @@ export const insertBriefConversationSchema = createInsertSchema(briefConversatio
 
 export type InsertBriefConversation = z.infer<typeof insertBriefConversationSchema>;
 export type BriefConversation = typeof briefConversations.$inferSelect;
+
+// Table for storing generated images
+export const generatedImages = pgTable("generated_images", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  prompt: text("prompt").notNull(),
+  imageUrl: text("image_url").notNull(),
+  style: text("style"),
+  size: text("size"),
+  quality: text("quality"),
+  model: text("model").default("dall-e-3"),
+  metadata: json("metadata").$type<Record<string, any>>(), // Additional data like negative prompts, seed, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertGeneratedImageSchema = createInsertSchema(generatedImages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertGeneratedImage = z.infer<typeof insertGeneratedImageSchema>;
+export type GeneratedImage = typeof generatedImages.$inferSelect;
