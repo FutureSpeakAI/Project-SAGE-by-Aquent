@@ -6,6 +6,7 @@ import {
   savedPersonas, type SavedPersona as DbSavedPersona, type InsertSavedPersona,
   generatedContents, type GeneratedContent, type InsertGeneratedContent,
   briefConversations, type BriefConversation, type InsertBriefConversation,
+  generatedImages, type GeneratedImage, type InsertGeneratedImage,
   ContentType
 } from "@shared/schema";
 
@@ -64,6 +65,13 @@ export interface IStorage {
   saveBriefConversation(conversation: InsertBriefConversation): Promise<BriefConversation>;
   updateBriefConversation(id: number, conversation: Partial<InsertBriefConversation>): Promise<BriefConversation | undefined>;
   deleteBriefConversation(id: number): Promise<boolean>;
+  
+  // Generated Image methods
+  getGeneratedImages(): Promise<GeneratedImage[]>;
+  getGeneratedImage(id: number): Promise<GeneratedImage | undefined>;
+  saveGeneratedImage(image: InsertGeneratedImage): Promise<GeneratedImage>;
+  updateGeneratedImage(id: number, image: Partial<InsertGeneratedImage>): Promise<GeneratedImage | undefined>;
+  deleteGeneratedImage(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -372,6 +380,44 @@ export class DatabaseStorage implements IStorage {
     // Since we don't have access to count, just return true if no error was thrown
     return true;
   }
+
+  // Generated Image Implementation
+  async getGeneratedImages(): Promise<GeneratedImage[]> {
+    if (!db) return [];
+    return await db.select().from(generatedImages).orderBy(generatedImages.updatedAt);
+  }
+
+  async getGeneratedImage(id: number): Promise<GeneratedImage | undefined> {
+    if (!db) return undefined;
+    const [image] = await db.select().from(generatedImages).where(eq(generatedImages.id, id));
+    return image;
+  }
+
+  async saveGeneratedImage(image: InsertGeneratedImage): Promise<GeneratedImage> {
+    if (!db) throw new Error("Database not available");
+    const [result] = await db.insert(generatedImages).values(image).returning();
+    return result;
+  }
+
+  async updateGeneratedImage(id: number, image: Partial<InsertGeneratedImage>): Promise<GeneratedImage | undefined> {
+    if (!db) return undefined;
+    const [result] = await db.update(generatedImages)
+      .set({
+        ...image,
+        updatedAt: new Date()
+      })
+      .where(eq(generatedImages.id, id))
+      .returning();
+    
+    return result;
+  }
+
+  async deleteGeneratedImage(id: number): Promise<boolean> {
+    if (!db) return false;
+    await db.delete(generatedImages).where(eq(generatedImages.id, id));
+    // Since we don't have access to count, just return true if no error was thrown
+    return true;
+  }
 }
 
 // Memory Storage implementation for when database is not available
@@ -381,11 +427,13 @@ export class MemoryStorage implements IStorage {
   private personas: SavedPersona[] = [];
   private generatedContents: GeneratedContent[] = [];
   private briefConversations: BriefConversation[] = [];
+  private generatedImages: GeneratedImage[] = [];
   private nextUserId = 1;
   private nextPromptId = 1;
   private nextPersonaId = 1;
   private nextContentId = 1;
   private nextConversationId = 1;
+  private nextImageId = 1;
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
@@ -607,6 +655,58 @@ export class MemoryStorage implements IStorage {
     if (index === -1) return false;
     
     this.briefConversations.splice(index, 1);
+    return true;
+  }
+
+  // Generated Image methods
+
+  async getGeneratedImages(): Promise<GeneratedImage[]> {
+    return this.generatedImages;
+  }
+
+  async getGeneratedImage(id: number): Promise<GeneratedImage | undefined> {
+    return this.generatedImages.find(img => img.id === id);
+  }
+
+  async saveGeneratedImage(image: InsertGeneratedImage): Promise<GeneratedImage> {
+    const now = new Date();
+    const newImage: GeneratedImage = {
+      id: this.nextImageId++,
+      title: image.title,
+      prompt: image.prompt,
+      imageUrl: image.imageUrl,
+      style: image.style || null,
+      size: image.size || null,
+      quality: image.quality || null,
+      model: image.model || "dall-e-3",
+      metadata: image.metadata || null,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.generatedImages.push(newImage);
+    return newImage;
+  }
+
+  async updateGeneratedImage(id: number, image: Partial<InsertGeneratedImage>): Promise<GeneratedImage | undefined> {
+    const index = this.generatedImages.findIndex(img => img.id === id);
+    if (index === -1) return undefined;
+    
+    const updated: GeneratedImage = {
+      ...this.generatedImages[index],
+      ...image,
+      updatedAt: new Date()
+    };
+    
+    this.generatedImages[index] = updated;
+    return updated;
+  }
+
+  async deleteGeneratedImage(id: number): Promise<boolean> {
+    const index = this.generatedImages.findIndex(img => img.id === id);
+    if (index === -1) return false;
+    
+    this.generatedImages.splice(index, 1);
     return true;
   }
 }

@@ -8,6 +8,15 @@ export interface GenerateContentRequest {
   temperature: number;
 }
 
+export interface GenerateImageRequest {
+  prompt: string;
+  model?: string;
+  size?: string;
+  quality?: string;
+  style?: string;
+  n?: number;
+}
+
 export const generateContent = async (req: Request, res: Response) => {
   try {
     const { model, systemPrompt, userPrompt, temperature } = req.body as GenerateContentRequest;
@@ -333,5 +342,81 @@ export const generateContent = async (req: Request, res: Response) => {
     }
     
     return res.status(500).json({ message: error.message || "An error occurred while generating content" });
+  }
+};
+
+export const generateImage = async (req: Request, res: Response) => {
+  try {
+    const { prompt, model = "dall-e-3", size = "1024x1024", quality = "standard", style = "vivid", n = 1 } = req.body as GenerateImageRequest;
+    
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ message: "Server API key configuration is missing" });
+    }
+
+    if (!prompt) {
+      return res.status(400).json({ message: "Image prompt is required" });
+    }
+
+    console.log("Using OpenAI API with server-side API key for image generation");
+    
+    // Configure OpenAI client with optional parameters
+    const openaiConfig: any = { 
+      apiKey: process.env.OPENAI_API_KEY,
+    };
+    
+    // Add organization ID if available
+    if (process.env.OPENAI_ORG_ID) {
+      openaiConfig.organization = process.env.OPENAI_ORG_ID;
+    }
+    
+    // Add base URL if specified
+    if (process.env.OPENAI_API_BASE_URL) {
+      openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
+    }
+    
+    // Initialize the OpenAI client
+    const openai = new OpenAI(openaiConfig);
+    
+    // Generate image with OpenAI
+    const response = await openai.images.generate({
+      model: model,
+      prompt: prompt,
+      n: n,
+      size: size as any, // Type assertion to satisfy TypeScript
+      quality: quality as any, // Type assertion to satisfy TypeScript
+      style: style as any, // Type assertion to satisfy TypeScript
+    });
+
+    if (!response.data || response.data.length === 0) {
+      return res.status(500).json({ message: "No images were generated" });
+    }
+
+    // Return the image data
+    return res.status(200).json({ 
+      images: response.data,
+      model,
+      prompt
+    });
+  } catch (error: any) {
+    console.error("Error generating image:", error);
+    
+    // Handle common API errors
+    if (error.status === 401 || (error.response && error.response.status === 401)) {
+      console.error("API key error details:", error.error || error);
+      return res.status(401).json({ 
+        message: "Invalid API key. Please check your API key and try again.", 
+        details: "The server is using an invalid or expired API key. Please contact the administrator."
+      });
+    } 
+    
+    if (error.status === 429 || (error.response && error.response.status === 429)) {
+      return res.status(429).json({ message: "Rate limit exceeded. Please try again later or check your plan limits." });
+    }
+    
+    if (error.status === 500 || (error.response && error.response.status === 500)) {
+      return res.status(500).json({ message: "API server error. Please try again later." });
+    }
+    
+    return res.status(500).json({ message: error.message || "An error occurred while generating image" });
   }
 };
