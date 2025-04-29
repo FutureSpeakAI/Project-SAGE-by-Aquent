@@ -377,7 +377,7 @@ export const generateImage = async (req: Request, res: Response) => {
     // Initialize the OpenAI client
     const openai = new OpenAI(openaiConfig);
     
-    // Enhanced prompt with style information
+    // Enhanced prompt with style information and special instructions for text rendering
     const enhancedPrompt = `
       Create an image with the following specifications:
       - Style: ${style}
@@ -385,6 +385,15 @@ export const generateImage = async (req: Request, res: Response) => {
       - Quality: ${quality}
       
       Description: ${prompt}
+      
+      IMPORTANT INSTRUCTIONS FOR TEXT RENDERING:
+      - If text is included in the image, ensure it is rendered with perfect spelling and clarity
+      - Use clear, highly legible typography for any text elements
+      - Text should be properly centered and aligned within the composition
+      - Maintain consistent font size and style throughout text portions
+      - Avoid stylized fonts that might reduce legibility
+      - Ensure high contrast between text and background
+      - Text should appear as if it was typeset rather than drawn or painted
       
       Please generate a high-quality, professional image suitable for marketing materials.
     `.trim();

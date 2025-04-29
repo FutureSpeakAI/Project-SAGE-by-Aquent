@@ -126,7 +126,7 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden" hideDefaultCloseButton>
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center">
