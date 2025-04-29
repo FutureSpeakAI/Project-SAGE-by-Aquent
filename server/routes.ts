@@ -585,9 +585,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/generated-images", async (_req: Request, res: Response) => {
     try {
       const images = await storage.getGeneratedImages();
+      console.log("Generated images from storage:", images.length);
       res.json(images);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch generated images" });
+      console.error("Error fetching generated images:", error);
+      // Return empty array instead of error to prevent UI breaking
+      res.json([]);
     }
   });
 

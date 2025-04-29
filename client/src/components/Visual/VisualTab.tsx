@@ -187,8 +187,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                       <SelectValue placeholder="Select model" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gpt-4o">GPT-4o (DALL-E 3)</SelectItem>
-                      <SelectItem value="dall-e-3">DALL-E 3</SelectItem>
+                      <SelectItem value="gpt-4o">GPT-4o Image Generator (2025)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -200,9 +199,37 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* General Formats */}
                       <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
                       <SelectItem value="1792x1024">Landscape (1792×1024)</SelectItem>
                       <SelectItem value="1024x1792">Portrait (1024×1792)</SelectItem>
+                      
+                      {/* Social Media */}
+                      <SelectItem value="1200x630">Facebook Post (1200×630)</SelectItem>
+                      <SelectItem value="1080x1080">Instagram Post (1080×1080)</SelectItem>
+                      <SelectItem value="1080x1350">Instagram Portrait (1080×1350)</SelectItem>
+                      <SelectItem value="1080x1920">Instagram Story (1080×1920)</SelectItem>
+                      <SelectItem value="1200x628">Twitter Post (1200×628)</SelectItem>
+                      <SelectItem value="1080x1920">TikTok Video (1080×1920)</SelectItem>
+                      <SelectItem value="1500x500">LinkedIn Banner (1500×500)</SelectItem>
+                      
+                      {/* Display Ads */}
+                      <SelectItem value="728x90">Leaderboard Ad (728×90)</SelectItem>
+                      <SelectItem value="300x250">Medium Rectangle Ad (300×250)</SelectItem>
+                      <SelectItem value="300x600">Half Page Ad (300×600)</SelectItem>
+                      <SelectItem value="970x250">Billboard Ad (970×250)</SelectItem>
+                      <SelectItem value="320x50">Mobile Banner (320×50)</SelectItem>
+                      
+                      {/* Print Media */}
+                      <SelectItem value="1275x1650">Magazine Full Page (1275×1650)</SelectItem>
+                      <SelectItem value="1275x825">Magazine Half Page (1275×825)</SelectItem>
+                      <SelectItem value="1200x1500">Newspaper Ad (1200×1500)</SelectItem>
+                      
+                      {/* Marketing Materials */}
+                      <SelectItem value="1500x844">Website Hero Banner (1500×844)</SelectItem>
+                      <SelectItem value="600x900">Poster (600×900)</SelectItem>
+                      <SelectItem value="1050x600">Postcard (1050×600)</SelectItem>
+                      <SelectItem value="1200x900">Product Photo (1200×900)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -229,6 +256,17 @@ export function VisualTab({ model, setModel, onOpenImageLibrary }: VisualTabProp
                     <SelectContent>
                       <SelectItem value="natural">Natural</SelectItem>
                       <SelectItem value="vivid">Vivid</SelectItem>
+                      <SelectItem value="cinematic">Cinematic</SelectItem>
+                      <SelectItem value="minimalist">Minimalist</SelectItem>
+                      <SelectItem value="corporate">Corporate</SelectItem>
+                      <SelectItem value="vintage">Vintage</SelectItem>
+                      <SelectItem value="retro">Retro</SelectItem>
+                      <SelectItem value="flat">Flat Design</SelectItem>
+                      <SelectItem value="3d">3D Render</SelectItem>
+                      <SelectItem value="illustration">Illustration</SelectItem>
+                      <SelectItem value="watercolor">Watercolor</SelectItem>
+                      <SelectItem value="sketch">Sketch</SelectItem>
+                      <SelectItem value="photorealistic">Photorealistic</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
