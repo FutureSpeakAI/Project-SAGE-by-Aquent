@@ -60,7 +60,7 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
     images.forEach(image => {
       try {
         if (image.metadata) {
-          const metadata = JSON.parse(image.metadata);
+          const metadata = JSON.parse(image.metadata as string);
           if (metadata?.category) {
             categories.add(metadata.category);
           } else {
@@ -88,7 +88,7 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
       (() => {
         try {
           if (image.metadata) {
-            const metadata = JSON.parse(image.metadata);
+            const metadata = JSON.parse(image.metadata as string);
             if (selectedCategory === "Uncategorized") {
               return !metadata?.category;
             }
@@ -128,7 +128,7 @@ export function ImageLibrary({ open, onOpenChange }: ImageLibraryProps) {
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden" hideCloseButton>
+      <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center">

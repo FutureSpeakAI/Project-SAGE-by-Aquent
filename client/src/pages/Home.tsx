@@ -20,6 +20,8 @@ import { ContentTab } from "@/components/Content/ContentTab";
 import { BriefingTab } from "@/components/Briefing/BriefingTab";
 import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
 import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
+import { VisualTab } from "@/components/Visual/VisualTab";
+import { ImageLibrary } from "@/components/Visual/ImageLibrary";
 import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
 import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
