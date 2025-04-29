@@ -402,8 +402,8 @@ export const generateImage = async (req: Request, res: Response) => {
         n: n,
         size: size as any, // Type assertion to satisfy TypeScript
         quality: quality as any, // Type assertion to satisfy TypeScript
-        background: background as any, // Type assertion to satisfy TypeScript
-        response_format: "b64_json" // Request base64 encoded image
+        background: background as any // Type assertion to satisfy TypeScript
+        // GPT Image model doesn't support response_format
       });
       
       if (!response.data || response.data.length === 0) {

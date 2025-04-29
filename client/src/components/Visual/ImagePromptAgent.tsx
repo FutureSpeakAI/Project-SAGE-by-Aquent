@@ -55,8 +55,6 @@ export function ImagePromptAgent({ onPromptReady }: ImagePromptAgentProps) {
   const [currentMessage, setCurrentMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
-  const [imageType, setImageType] = useState<string>("photo");
-  const [complexity, setComplexity] = useState<string>("medium");
   
   const { toast } = useToast();
 
@@ -195,11 +193,6 @@ Your goal is to create prompts that are specific enough to get the desired resul
     setFinalPrompt("");
   };
 
-  const getQuickStartPrompt = () => {
-    const basePrompt = `Let's create a ${imageType} with ${complexity} level of detail.`;
-    setCurrentMessage(basePrompt);
-  };
-
   return (
     <motion.div
       className="space-y-6"
@@ -226,56 +219,7 @@ Your goal is to create prompts that are specific enough to get the desired resul
             </Button>
           </div>
 
-          {/* Quick start options */}
-          <div className="mb-4 p-3 border rounded-md bg-gray-50">
-            <div className="text-sm font-medium mb-2">Quick Start Options</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-              <div className="space-y-2">
-                <Label htmlFor="image-type">Image Type</Label>
-                <Select
-                  value={imageType}
-                  onValueChange={setImageType}
-                >
-                  <SelectTrigger id="image-type">
-                    <SelectValue placeholder="Select image type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="photo">Photograph</SelectItem>
-                    <SelectItem value="illustration">Illustration</SelectItem>
-                    <SelectItem value="3d-render">3D Render</SelectItem>
-                    <SelectItem value="painting">Painting</SelectItem>
-                    <SelectItem value="sketch">Sketch</SelectItem>
-                    <SelectItem value="pixel-art">Pixel Art</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="complexity">Detail Level</Label>
-                <Select
-                  value={complexity}
-                  onValueChange={setComplexity}
-                >
-                  <SelectTrigger id="complexity">
-                    <SelectValue placeholder="Select detail level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="simple">Simple</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="complex">Complex</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={getQuickStartPrompt}
-              className="w-full"
-            >
-              Apply Quick Start
-            </Button>
-          </div>
+
 
           {/* Chat messages */}
           <div className="flex-grow overflow-y-auto mb-4 max-h-[400px] min-h-[300px] border rounded-md">
