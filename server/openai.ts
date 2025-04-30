@@ -396,14 +396,27 @@ export const generateImage = async (req: Request, res: Response) => {
     } = req.body as GenerateImageRequest;
     
     if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ message: "Server API key configuration is missing" });
+      console.error("OpenAI API key is missing in the server environment");
+      return res.status(500).json({ 
+        message: "Server API key configuration is missing",
+        details: "The server is missing the OPENAI_API_KEY environment variable. Please contact the administrator."
+      });
     }
 
     if (!prompt) {
       return res.status(400).json({ message: "Image prompt is required" });
     }
 
+    // Log the request information (with partial prompt for privacy)
     console.log("Using OpenAI API with server-side API key for image generation");
+    console.log("Request parameters:", {
+      promptLength: prompt ? prompt.length : 0,
+      promptExcerpt: prompt ? prompt.substring(0, 30) + "..." : "none",
+      model,
+      size,
+      quality,
+      background
+    });
     
     // Configure OpenAI client with optional parameters
     const openaiConfig: any = { 
@@ -417,6 +430,7 @@ export const generateImage = async (req: Request, res: Response) => {
     
     // Add base URL if specified
     if (process.env.OPENAI_API_BASE_URL) {
+      console.log("Using custom OpenAI API base URL");
       openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
     }
     
@@ -424,6 +438,15 @@ export const generateImage = async (req: Request, res: Response) => {
     const openai = new OpenAI(openaiConfig);
     
     console.log(`Generating image with GPT Image model: ${model}, size: ${size}, quality: ${quality}, background: ${background}`);
+    
+    // Basic validation of the API key format
+    if (!process.env.OPENAI_API_KEY.startsWith("sk-")) {
+      console.error("OpenAI API key has invalid format, should start with 'sk-'");
+      return res.status(500).json({ 
+        message: "Server API key appears to be invalid", 
+        details: "API key has incorrect format. Please check your OpenAI API key configuration."
+      });
+    }
     
     // Generate image with OpenAI using GPT Image model
     let imageUrl;
@@ -490,6 +513,18 @@ export const generateImage = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error generating image:", error);
     
+    // Get detailed error information
+    const errorDetails = {
+      message: error.message || "Unknown error",
+      status: error.status || (error.response && error.response.status) || "unknown",
+      type: error.type || (error.error && error.error.type) || "unknown",
+      code: error.code || (error.error && error.error.code) || "unknown",
+      param: error.param || (error.error && error.error.param) || "none",
+      stack: error.stack ? error.stack.split('\n').slice(0, 3).join('\n') : "No stack trace"
+    };
+    
+    console.error("Detailed error information:", errorDetails);
+    
     // Handle common API errors
     if (error.status === 401 || (error.response && error.response.status === 401)) {
       console.error("API key error details:", error.error || error);
@@ -500,13 +535,47 @@ export const generateImage = async (req: Request, res: Response) => {
     } 
     
     if (error.status === 429 || (error.response && error.response.status === 429)) {
-      return res.status(429).json({ message: "Rate limit exceeded. Please try again later or check your plan limits." });
+      return res.status(429).json({ 
+        message: "Rate limit exceeded. Please try again later or check your plan limits.",
+        details: "The server has reached the rate limit for the OpenAI API. Please wait a few minutes and try again."
+      });
+    }
+    
+    if (error.status === 400 || (error.response && error.response.status === 400)) {
+      // Handle specific content policy violation errors
+      if (error.error?.code === "content_policy_violation" || 
+          (error.error?.type === "invalid_request_error" && error.error?.message?.includes("content policy"))) {
+        return res.status(400).json({ 
+          message: "Content policy violation. Your image prompt may contain prohibited content.",
+          details: error.error?.message || "Please revise your prompt to comply with content policies."
+        });
+      }
+      
+      return res.status(400).json({ 
+        message: "Bad request to the OpenAI API.",
+        details: error.error?.message || error.message || "Please check your request parameters and try again."
+      });
     }
     
     if (error.status === 500 || (error.response && error.response.status === 500)) {
-      return res.status(500).json({ message: "API server error. Please try again later." });
+      return res.status(500).json({ 
+        message: "OpenAI API server error. Please try again later.",
+        details: "The OpenAI service is experiencing technical difficulties."
+      });
     }
     
-    return res.status(500).json({ message: error.message || "An error occurred while generating image" });
+    // Network errors and timeouts
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND" || error.code === "ETIMEDOUT") {
+      return res.status(503).json({ 
+        message: "Unable to connect to the OpenAI API.", 
+        details: "The server is having trouble connecting to OpenAI. Please try again later."
+      });
+    }
+    
+    // For all other errors
+    return res.status(500).json({ 
+      message: error.message || "An error occurred while generating image",
+      details: "Please check the server logs for more information."
+    });
   }
 };

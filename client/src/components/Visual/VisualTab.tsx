@@ -61,10 +61,43 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
   // Create a mutation to handle image generation
   const generateImageMutation = useMutation({
     mutationFn: async (data: GenerateImageRequest) => {
-      const response = await apiRequest("POST", "/api/generate-image", data);
-      const jsonData = await response.json();
-      console.log("Image API Response:", jsonData);
-      return jsonData as GenerateImageResponse;
+      try {
+        console.log("Starting image generation request with data:", {
+          prompt: data.prompt ? data.prompt.substring(0, 50) + "..." : "empty", 
+          model: data.model,
+          size: data.size,
+          quality: data.quality
+        });
+        
+        const response = await apiRequest("POST", "/api/generate-image", data);
+        console.log("Image API raw response status:", response.status);
+        
+        // Additional diagnostics for deployed environment
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Image API error response:", errorText);
+          throw new Error(`API error ${response.status}: ${errorText}`);
+        }
+        
+        const jsonData = await response.json();
+        console.log("Image API Response parsed successfully:", 
+          jsonData.images ? `${jsonData.images.length} images returned` : "No images in response");
+          
+        return jsonData as GenerateImageResponse;
+      } catch (error: any) {
+        console.error("Complete image generation error:", error);
+        // Enhance error if it's a network issue
+        if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+          console.error("Network error details:", {
+            url: "/api/generate-image",
+            errorName: error.name,
+            errorMessage: error.message,
+            stack: error.stack
+          });
+          throw new Error(`Network error: Failed to connect to the server. This could be due to network connectivity issues, CORS restrictions, or the server being unavailable.`);
+        }
+        throw error;
+      }
     },
     onSuccess: (data) => {
       // Extract image URL from the response

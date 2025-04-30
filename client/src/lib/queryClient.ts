@@ -12,15 +12,28 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  try {
+    console.log(`Making ${method} request to ${url}`);
+    
+    const res = await fetch(url, {
+      method,
+      headers: data ? { 
+        "Content-Type": "application/json", 
+        "Accept": "application/json"
+      } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+      mode: "cors", // Explicitly set CORS mode
+    });
+    
+    console.log(`Received response with status: ${res.status}`);
+    
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error(`API request failed (${method} ${url}):`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
