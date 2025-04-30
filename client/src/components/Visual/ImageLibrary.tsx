@@ -9,10 +9,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LoaderCircle, X, Download, Trash2, Search, Library, FilterX, Copy, Edit, FolderPlus, Folder, FolderMinus, Plus, Loader2 } from "lucide-react";
 import { GeneratedImage, ImageProject } from "@shared/schema";
+import { cn } from "@/lib/utils";
+import * as React from "react";
+
+// Custom Label component since there seems to be an import issue
+const Label = React.forwardRef<
+  HTMLLabelElement,
+  React.LabelHTMLAttributes<HTMLLabelElement>
+>(({ className, ...props }, ref) => (
+  <label
+    ref={ref}
+    className={cn(
+      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      className
+    )}
+    {...props}
+  />
+))
+Label.displayName = "Label";
 
 interface ImageLibraryProps {
   open: boolean;
@@ -450,7 +467,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
                                 <FolderPlus className="h-4 w-4 text-blue-500" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="" disabled>Add to project</SelectItem>
+                                <SelectItem value="placeholder" disabled>Add to project</SelectItem>
                                 {projects.map(project => (
                                   <SelectItem key={project.id} value={project.id.toString()}>
                                     {project.name}
