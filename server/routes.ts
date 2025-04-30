@@ -784,6 +784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/image-projects", async (req: Request, res: Response) => {
     try {
       const { name, description } = req.body;
+      console.log("Creating project with name:", name, "description:", description);
       
       if (!name) {
         return res.status(400).json({ error: "Project name is required" });
@@ -794,8 +795,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: description || null
       });
       
+      console.log("Project saved successfully:", savedProject);
       res.status(201).json(savedProject);
     } catch (error) {
+      console.error("Error creating project:", error);
       res.status(500).json({ error: "Failed to save image project" });
     }
   });
