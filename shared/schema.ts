@@ -105,6 +105,24 @@ export const insertBriefConversationSchema = createInsertSchema(briefConversatio
 export type InsertBriefConversation = z.infer<typeof insertBriefConversationSchema>;
 export type BriefConversation = typeof briefConversations.$inferSelect;
 
+// Table for storing image projects
+export const imageProjects = pgTable("image_projects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertImageProjectSchema = createInsertSchema(imageProjects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertImageProject = z.infer<typeof insertImageProjectSchema>;
+export type ImageProject = typeof imageProjects.$inferSelect;
+
 // Table for storing generated images
 export const generatedImages = pgTable("generated_images", {
   id: serial("id").primaryKey(),
@@ -114,7 +132,9 @@ export const generatedImages = pgTable("generated_images", {
   style: text("style"),
   size: text("size"),
   quality: text("quality"),
-  model: text("model").default("dall-e-3"),
+  model: text("model").default("gpt-image-1"),
+  projectId: integer("project_id").references(() => imageProjects.id, { onDelete: 'set null' }),
+  isVariation: boolean("is_variation").default(false),
   metadata: json("metadata").$type<Record<string, any>>(), // Additional data like negative prompts, seed, etc.
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
