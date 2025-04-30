@@ -537,20 +537,20 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
       {/* Image Preview Dialog */}
       {previewImage && (
         <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="w-[95%] sm:w-[90%] max-w-2xl max-h-[90vh] overflow-auto p-4">
+            <DialogHeader className="text-left mb-2">
               <DialogTitle>{previewImage.title}</DialogTitle>
               <DialogDescription className="text-sm text-gray-500 truncate mt-1">
                 {previewImage.prompt}
               </DialogDescription>
             </DialogHeader>
             
-            <div className="my-4 flex justify-center">
-              <div className="max-h-[50vh] overflow-hidden flex items-center justify-center">
+            <div className="my-2 flex justify-center items-center">
+              <div className="max-h-[40vh] overflow-hidden flex items-center justify-center">
                 <img 
                   src={previewImage.imageUrl} 
                   alt={previewImage.title}
-                  className="max-w-full max-h-[50vh] object-contain rounded-md" 
+                  className="w-auto max-w-full max-h-[40vh] object-contain rounded-md" 
                 />
               </div>
             </div>
