@@ -436,35 +436,24 @@ export const generateImage = async (req: Request, res: Response) => {
         console.log(`Using ${reference_images.length} reference image(s) for generation`);
       }
       
-      // Create a params object with type assertion to handle different models
+      // Create a params object with only gpt-image-1 model
       let params: any = {
-        model: model || "gpt-image-1", // Use the model passed in or default to gpt-image-1
+        model: "gpt-image-1", // Always use gpt-image-1 model
         prompt: prompt,
         n: n,
         size: size as any, // Type assertion to satisfy TypeScript
         quality: quality as any, // Type assertion to satisfy TypeScript
+        background: background as any
       };
       
-      // Add background parameter only for gpt-image model
-      if (model === "gpt-image-1") {
-        params.background = background as any;
-      }
-      
-      // Add reference images only for dall-e-3 model (which supports this feature)
-      // gpt-image-1 doesn't support reference_images parameter
-      if (reference_images && reference_images.length > 0 && model === "dall-e-3") {
-        params.reference_images = reference_images;
-        console.log("Adding reference images for DALL-E 3 model");
-      } else if (reference_images && reference_images.length > 0) {
-        console.log("Reference images provided but using " + model + " which doesn't support reference_images parameter");
-        // If we're using gpt-image-1 but have reference images, switch to dall-e-3
-        if (model === "gpt-image-1") {
-          console.log("Switching to dall-e-3 model to support reference images");
-          params.model = "dall-e-3";
-          params.reference_images = reference_images;
-          // Remove gpt-image-1 specific parameters
-          delete params.background;
-        }
+      // Note: gpt-image-1 doesn't support reference_images parameter
+      if (reference_images && reference_images.length > 0) {
+        console.log("Reference images provided but gpt-image-1 doesn't support reference_images parameter");
+        console.log("Using enhanced prompt for variations instead");
+        
+        // Instead of using reference_images, we'll rely on the prompt to describe variations
+        // This is already handled in the client code by including "Create a variation of this image"
+        // in the prompt text when creating variations
       }
       
       // Make the API call with the prepared parameters

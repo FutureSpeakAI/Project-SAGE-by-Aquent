@@ -149,18 +149,15 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
         }
       }
       
-      // Determine which model was used for this image
-      // If we have reference images in state, it means we used DALL-E 3
-      const usedModel = referenceImages.length > 0 ? "dall-e-3" : model;
-      
+      // Always use gpt-image-1 model
       const response = await apiRequest("POST", "/api/generated-images", {
         title: imageTitle,
         prompt: imagePrompt,
         imageUrl: processedImageUrl, // Use the reduced size image
-        model: usedModel,
+        model: "gpt-image-1",
         size,
         quality,
-        background: usedModel === "gpt-image-1" ? background : null,
+        background: background,
         metadata: JSON.stringify({ 
           savedAt: new Date().toISOString(),
           isVariation: referenceImages.length > 0
@@ -204,24 +201,24 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
         }))
       : undefined;
     
-    // Determine which model to use:
-    // If we have reference images, use dall-e-3 which supports reference_images
-    // Otherwise use the selected model (default: gpt-image-1)
-    const effectiveModel = referenceImagesFormatted && referenceImagesFormatted.length > 0 
-      ? "dall-e-3"
-      : model;
+    // We're exclusively using gpt-image-1
+    // Since it doesn't support reference_images, we rely on the prompt
+    // The prompt already includes "Create a variation of this image..." when creating variations
     
+    // If there are reference images, log that we're creating a variation
     if (referenceImagesFormatted && referenceImagesFormatted.length > 0) {
-      console.log("Using dall-e-3 model for reference images/variations");
+      console.log("Creating a variation using descriptive prompt with gpt-image-1");
     }
     
+    // For variations, we rely on the prompt to describe the original image
+    // The reference images are only shown in the UI
     generateImageMutation.mutate({
       prompt: imagePrompt,
-      model: effectiveModel,
+      model: "gpt-image-1",
       size,
       quality,
-      background: effectiveModel === "gpt-image-1" ? background : undefined,
-      reference_images: referenceImagesFormatted
+      background: background
+      // We don't send reference_images as gpt-image-1 doesn't support this parameter
     });
   };
   
@@ -287,8 +284,17 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
       }]);
       
       // Update the prompt to request variations
-      const variationPrompt = "Create a variation of this image" + 
-        (imagePrompt ? `. Original prompt: ${imagePrompt}` : "");
+      // Since we're only using gpt-image-1 which doesn't support reference_images,
+      // we need to be more descriptive in our prompt
+      let variationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
+      
+      // If we have an original prompt, include it to help guide the variation
+      if (imagePrompt) {
+        variationPrompt += ` The original image description was: "${imagePrompt}". 
+        Keep the core elements but vary the details, positioning, colors, or perspective.`;
+      } else {
+        variationPrompt += ` Vary the details, positioning, colors, or perspective while maintaining the core concept.`;
+      }
       
       setImagePrompt(variationPrompt);
       
@@ -312,9 +318,12 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
       // Apply the variation data
       handleCreateVariations(pendingVariationData.imageUrl);
       
-      // Update the prompt if provided
+      // Update the prompt if provided, with a more detailed variation description 
+      // since we can't use reference_images with gpt-image-1
       if (pendingVariationData.prompt) {
-        const variationPrompt = `Create a variation of this image. Original prompt: ${pendingVariationData.prompt}`;
+        let variationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
+        variationPrompt += ` The original image description was: "${pendingVariationData.prompt}". 
+        Keep the core elements but vary the details, positioning, colors, or perspective.`;
         setImagePrompt(variationPrompt);
       }
       
@@ -391,13 +400,12 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="model-select">Model</Label>
-                      <Select value={model} onValueChange={setModel}>
+                      <Select value="gpt-image-1" disabled>
                         <SelectTrigger id="model-select">
                           <SelectValue placeholder="Select model" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="gpt-image-1">GPT Image (Best for text)</SelectItem>
-                          <SelectItem value="dall-e-3">DALL-E 3 (Best for variations)</SelectItem>
+                          <SelectItem value="gpt-image-1">GPT Image Generator</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
