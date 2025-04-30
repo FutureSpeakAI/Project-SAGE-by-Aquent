@@ -391,8 +391,8 @@ export const generateImage = async (req: Request, res: Response) => {
       size = "1024x1024", 
       quality = "high", 
       background = "auto",
-      n = 1,
-      reference_images
+      n = 1
+      // Note: reference_images parameter is not used as gpt-image-1 doesn't support it
     } = req.body as GenerateImageRequest;
     
     if (!process.env.OPENAI_API_KEY) {
@@ -431,14 +431,9 @@ export const generateImage = async (req: Request, res: Response) => {
     let revisedPrompt;
     
     try {
-      // Log if reference images are provided
-      if (reference_images && reference_images.length > 0) {
-        console.log(`Using ${reference_images.length} reference image(s) for generation`);
-      }
-      
       // Create a params object with only gpt-image-1 model
       let params: any = {
-        model: "gpt-image-1", // Always use gpt-image-1 model
+        model: "gpt-image-1", // Always use gpt-image-1 model 
         prompt: prompt,
         n: n,
         size: size as any, // Type assertion to satisfy TypeScript
@@ -446,15 +441,8 @@ export const generateImage = async (req: Request, res: Response) => {
         background: background as any
       };
       
-      // Note: gpt-image-1 doesn't support reference_images parameter
-      if (reference_images && reference_images.length > 0) {
-        console.log("Reference images provided but gpt-image-1 doesn't support reference_images parameter");
-        console.log("Using enhanced prompt for variations instead");
-        
-        // Instead of using reference_images, we'll rely on the prompt to describe variations
-        // This is already handled in the client code by including "Create a variation of this image"
-        // in the prompt text when creating variations
-      }
+      // Note: We don't use reference_images at all with gpt-image-1 as it's not supported
+      // For variations, we rely solely on descriptive prompts that request variations
       
       // Make the API call with the prepared parameters
       const response = await openai.images.generate(params);
