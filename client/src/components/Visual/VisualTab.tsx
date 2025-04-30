@@ -9,11 +9,10 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Image, Copy } from "lucide-react";
+import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Copy } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 import { ImagePromptAgent } from "./ImagePromptAgent";
-import { ImageUploader } from "./ImageUploader";
 
 interface GenerateImageResponse {
   images: Array<{
@@ -56,7 +55,6 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
   const [quality, setQuality] = useState<string>("high");
   const [background, setBackground] = useState<string>("auto");
   const [imageTitle, setImageTitle] = useState<string>("");
-  const [referenceImages, setReferenceImages] = useState<{ file: File; base64: string }[]>([]);
   
   const { toast } = useToast();
   
@@ -160,7 +158,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
         background: background,
         metadata: JSON.stringify({ 
           savedAt: new Date().toISOString(),
-          isVariation: referenceImages.length > 0
+          isVariation: imagePrompt.toLowerCase().includes("variation") 
         })
       });
       
@@ -191,34 +189,14 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
       return;
     }
     
-    // Prepare reference images for the API request
-    const referenceImagesFormatted = referenceImages.length > 0
-      ? referenceImages.map(img => ({
-          image_url: {
-            url: img.base64,
-            detail: "auto" as const // Using 'as const' to create a literal type
-          }
-        }))
-      : undefined;
-    
-    // We're exclusively using gpt-image-1
-    // Since it doesn't support reference_images, we rely on the prompt
-    // The prompt already includes "Create a variation of this image..." when creating variations
-    
-    // If there are reference images, log that we're creating a variation
-    if (referenceImagesFormatted && referenceImagesFormatted.length > 0) {
-      console.log("Creating a variation using descriptive prompt with gpt-image-1");
-    }
-    
-    // For variations, we rely on the prompt to describe the original image
-    // The reference images are only shown in the UI
+    // We're exclusively using gpt-image-1 which doesn't support reference_images
+    // For variations, we rely on the prompt to describe what we want
     generateImageMutation.mutate({
       prompt: imagePrompt,
       model: "gpt-image-1",
       size,
       quality,
       background: background
-      // We don't send reference_images as gpt-image-1 doesn't support this parameter
     });
   };
   
@@ -256,36 +234,8 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
   // Handle creating variations of an image
   const handleCreateVariations = async (imageUrl: string) => {
     try {
-      // Convert the image URL to base64 if it's not already
-      let base64Data = imageUrl;
-      
-      // If it's not a data URL, fetch it and convert to base64
-      if (!imageUrl.startsWith('data:')) {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        base64Data = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-      }
-      
-      // Create a file object from the blob
-      const [header, data] = base64Data.split(',');
-      const mimeType = header.match(/:(.*?);/)?.[1] || 'image/png';
-      const fileData = base64Data;
-      
-      // Clear existing reference images
-      // Create a new "dummy" file object to satisfy TypeScript
-      const dummyFile = new File([''], 'variation.png', { type: 'image/png' });
-      setReferenceImages([{
-        file: dummyFile, // Use a dummy file object
-        base64: fileData
-      }]);
-      
-      // Update the prompt to request variations
-      // Since we're only using gpt-image-1 which doesn't support reference_images,
-      // we need to be more descriptive in our prompt
+      // Since gpt-image-1 doesn't support reference images, we'll enhance the prompt instead
+      // Update the prompt to request variations with detailed instructions
       let variationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
       
       // If we have an original prompt, include it to help guide the variation
@@ -296,17 +246,18 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
         variationPrompt += ` Vary the details, positioning, colors, or perspective while maintaining the core concept.`;
       }
       
+      // Set the variation prompt
       setImagePrompt(variationPrompt);
       
       toast({
         title: "Ready for Variations",
-        description: "Reference image loaded. Click 'Generate Image' to create variations.",
+        description: "Click 'Generate Image' to create variations based on your previous image.",
       });
     } catch (error) {
       console.error("Error preparing variations:", error);
       toast({
         title: "Error preparing variations",
-        description: "There was an error processing the image for variations.",
+        description: "There was an error setting up the variation prompt.",
         variant: "destructive",
       });
     }
@@ -386,16 +337,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Image className="h-4 w-4" />
-                      Reference Images
-                    </Label>
-                    <ImageUploader
-                      onImagesChange={setReferenceImages}
-                      maxImages={4}
-                    />
-                  </div>
+                  {/* Reference image uploader removed as gpt-image-1 doesn't support this feature */}
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
