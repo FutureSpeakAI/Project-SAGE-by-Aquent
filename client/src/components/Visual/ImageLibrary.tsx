@@ -285,7 +285,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
         }
         onOpenChange(isOpen);
       }}>
-        <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden" hideDefaultCloseButton>
           <DialogHeader className="flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center">
@@ -671,7 +671,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
 
       {/* New Project Dialog */}
       <Dialog open={isNewProjectDialogOpen} onOpenChange={setIsNewProjectDialogOpen}>
-        <DialogContent>
+        <DialogContent hideDefaultCloseButton>
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
             <p className="text-sm text-gray-500 mt-1">
