@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { 
   users, type User, type InsertUser,
   savedPrompts, type SavedPrompt as DbSavedPrompt, type InsertSavedPrompt,
@@ -7,6 +7,7 @@ import {
   generatedContents, type GeneratedContent, type InsertGeneratedContent,
   briefConversations, type BriefConversation, type InsertBriefConversation,
   generatedImages, type GeneratedImage, type InsertGeneratedImage,
+  imageProjects, type ImageProject, type InsertImageProject,
   ContentType
 } from "@shared/schema";
 
@@ -72,6 +73,14 @@ export interface IStorage {
   saveGeneratedImage(image: InsertGeneratedImage): Promise<GeneratedImage>;
   updateGeneratedImage(id: number, image: Partial<InsertGeneratedImage>): Promise<GeneratedImage | undefined>;
   deleteGeneratedImage(id: number): Promise<boolean>;
+  
+  // Image Project methods
+  getImageProjects(): Promise<ImageProject[]>;
+  getImageProject(id: number): Promise<ImageProject | undefined>;
+  saveImageProject(project: InsertImageProject): Promise<ImageProject>;
+  updateImageProject(id: number, project: Partial<InsertImageProject>): Promise<ImageProject | undefined>;
+  deleteImageProject(id: number): Promise<boolean>;
+  getGeneratedImagesByProjectId(projectId: number): Promise<GeneratedImage[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -395,7 +404,14 @@ export class DatabaseStorage implements IStorage {
 
   async saveGeneratedImage(image: InsertGeneratedImage): Promise<GeneratedImage> {
     if (!db) throw new Error("Database not available");
-    const [result] = await db.insert(generatedImages).values(image).returning();
+    // Set default values for the new fields
+    const imageWithDefaults = {
+      ...image,
+      model: image.model || "gpt-image-1",
+      projectId: image.projectId || null,
+      isVariation: image.isVariation || false
+    };
+    const [result] = await db.insert(generatedImages).values(imageWithDefaults).returning();
     return result;
   }
 
@@ -418,6 +434,58 @@ export class DatabaseStorage implements IStorage {
     // Since we don't have access to count, just return true if no error was thrown
     return true;
   }
+  
+  // Image Project Implementation
+  async getImageProjects(): Promise<ImageProject[]> {
+    if (!db) return [];
+    return await db.select().from(imageProjects).orderBy(imageProjects.updatedAt);
+  }
+  
+  async getImageProject(id: number): Promise<ImageProject | undefined> {
+    if (!db) return undefined;
+    const [project] = await db.select().from(imageProjects).where(eq(imageProjects.id, id));
+    return project;
+  }
+  
+  async saveImageProject(project: InsertImageProject): Promise<ImageProject> {
+    if (!db) throw new Error("Database not available");
+    const [result] = await db.insert(imageProjects).values(project).returning();
+    return result;
+  }
+  
+  async updateImageProject(id: number, project: Partial<InsertImageProject>): Promise<ImageProject | undefined> {
+    if (!db) return undefined;
+    const [result] = await db.update(imageProjects)
+      .set({
+        ...project,
+        updatedAt: new Date()
+      })
+      .where(eq(imageProjects.id, id))
+      .returning();
+    
+    return result;
+  }
+  
+  async deleteImageProject(id: number): Promise<boolean> {
+    if (!db) return false;
+    // First, disassociate any images from this project
+    await db.update(generatedImages)
+      .set({ projectId: null })
+      .where(eq(generatedImages.projectId, id));
+      
+    // Then delete the project
+    await db.delete(imageProjects).where(eq(imageProjects.id, id));
+    // Since we don't have access to count, just return true if no error was thrown
+    return true;
+  }
+  
+  async getGeneratedImagesByProjectId(projectId: number): Promise<GeneratedImage[]> {
+    if (!db) return [];
+    return await db.select()
+      .from(generatedImages)
+      .where(eq(generatedImages.projectId, projectId))
+      .orderBy(generatedImages.createdAt);
+  }
 }
 
 // Memory Storage implementation for when database is not available
@@ -428,12 +496,14 @@ export class MemoryStorage implements IStorage {
   private generatedContents: GeneratedContent[] = [];
   private briefConversations: BriefConversation[] = [];
   private generatedImages: GeneratedImage[] = [];
+  private imageProjects: ImageProject[] = [];
   private nextUserId = 1;
   private nextPromptId = 1;
   private nextPersonaId = 1;
   private nextContentId = 1;
   private nextConversationId = 1;
   private nextImageId = 1;
+  private nextProjectId = 1;
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
@@ -678,7 +748,9 @@ export class MemoryStorage implements IStorage {
       style: image.style || null,
       size: image.size || null,
       quality: image.quality || null,
-      model: image.model || "dall-e-3",
+      model: image.model || "gpt-image-1",
+      projectId: image.projectId || null,
+      isVariation: image.isVariation || false,
       metadata: image.metadata || null,
       createdAt: now,
       updatedAt: now
@@ -708,6 +780,62 @@ export class MemoryStorage implements IStorage {
     
     this.generatedImages.splice(index, 1);
     return true;
+  }
+  
+  // Image Project methods
+  async getImageProjects(): Promise<ImageProject[]> {
+    return this.imageProjects;
+  }
+  
+  async getImageProject(id: number): Promise<ImageProject | undefined> {
+    return this.imageProjects.find(project => project.id === id);
+  }
+  
+  async saveImageProject(project: InsertImageProject): Promise<ImageProject> {
+    const now = new Date();
+    const newProject: ImageProject = {
+      id: this.nextProjectId++,
+      name: project.name,
+      description: project.description || null,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.imageProjects.push(newProject);
+    return newProject;
+  }
+  
+  async updateImageProject(id: number, project: Partial<InsertImageProject>): Promise<ImageProject | undefined> {
+    const index = this.imageProjects.findIndex(p => p.id === id);
+    if (index === -1) return undefined;
+    
+    const updated: ImageProject = {
+      ...this.imageProjects[index],
+      ...project,
+      updatedAt: new Date()
+    };
+    
+    this.imageProjects[index] = updated;
+    return updated;
+  }
+  
+  async deleteImageProject(id: number): Promise<boolean> {
+    const index = this.imageProjects.findIndex(p => p.id === id);
+    if (index === -1) return false;
+    
+    // Remove project ID from any associated images
+    this.generatedImages.forEach(img => {
+      if (img.projectId === id) {
+        img.projectId = null;
+      }
+    });
+    
+    this.imageProjects.splice(index, 1);
+    return true;
+  }
+  
+  async getGeneratedImagesByProjectId(projectId: number): Promise<GeneratedImage[]> {
+    return this.generatedImages.filter(img => img.projectId === projectId);
   }
 }
 
