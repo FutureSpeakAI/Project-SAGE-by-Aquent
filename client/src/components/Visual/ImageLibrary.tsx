@@ -534,23 +534,37 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
         </DialogContent>
       </Dialog>
       
-      {/* Image Preview Dialog */}
+      {/* Image Preview Modal - Custom implementation without using DialogContent for better control */}
       {previewImage && (
-        <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
-          <DialogContent className="w-[95%] sm:w-[90%] max-w-2xl max-h-[90vh] overflow-auto p-4">
-            <DialogHeader className="text-left mb-2">
-              <DialogTitle>{previewImage.title}</DialogTitle>
-              <DialogDescription className="text-sm text-gray-500 truncate mt-1">
-                {previewImage.prompt}
-              </DialogDescription>
-            </DialogHeader>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 w-[340px] sm:w-[400px] max-w-[90%] max-h-[90vh] rounded-lg overflow-y-auto p-4 mx-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex-1 pr-4">
+                <h3 className="text-lg font-semibold">{previewImage.title}</h3>
+                <div className="text-sm text-gray-500 mt-1 max-h-[60px] overflow-y-auto break-words">
+                  {previewImage.prompt}
+                </div>
+              </div>
+              <button 
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setPreviewImage(null)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             
-            <div className="my-2 flex justify-center items-center">
-              <div className="max-h-[40vh] overflow-hidden flex items-center justify-center">
+            <div className="my-4 flex justify-center items-center">
+              <div className="max-h-[300px] overflow-hidden flex items-center justify-center">
                 <img 
                   src={previewImage.imageUrl} 
                   alt={previewImage.title}
-                  className="w-auto max-w-full max-h-[40vh] object-contain rounded-md" 
+                  className="max-w-full max-h-[300px] object-contain rounded-md" 
                 />
               </div>
             </div>
@@ -603,8 +617,8 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
                 </Button>
               )}
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
       )}
       
       {/* New Project Dialog */}
