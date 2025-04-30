@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ const Label = React.forwardRef<
     )}
     {...props}
   />
-))
+));
 Label.displayName = "Label";
 
 interface ImageLibraryProps {
@@ -275,380 +275,17 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
     });
   };
 
-  // The main content of the dialog changes based on whether we're previewing an image
-  const renderContent = () => {
-    if (previewImage) {
-      // Preview Image Content
-      return (
-        <div className="flex flex-col flex-grow overflow-hidden">
-          <div className="mb-4 flex items-center">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setPreviewImage(null)}
-              className="mr-4"
-            >
-              <span className="mr-2">←</span> Back to Library
-            </Button>
-            <h3 className="text-lg font-semibold">{previewImage.title}</h3>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-6 flex-grow overflow-y-auto">
-            {/* Image container */}
-            <div className="flex justify-center items-start md:w-2/3">
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden p-2">
-                <img 
-                  src={previewImage.imageUrl} 
-                  alt={previewImage.title}
-                  className="max-w-full max-h-[60vh] object-contain rounded" 
-                />
-              </div>
-            </div>
-            
-            {/* Image details */}
-            <div className="flex flex-col md:w-1/3 space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-1">Prompt</h4>
-                <div className="bg-gray-50 dark:bg-gray-850 p-3 rounded text-sm text-gray-700 dark:text-gray-300 break-words">
-                  {previewImage.prompt || "No prompt available"}
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium mb-1">Details</h4>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">
-                      Model: {previewImage.model || "gpt-image-1"}
-                    </Badge>
-                    {previewImage.size && (
-                      <Badge variant="outline">
-                        Size: {previewImage.size}
-                      </Badge>
-                    )}
-                    {previewImage.quality && (
-                      <Badge variant="outline">
-                        Quality: {previewImage.quality}
-                      </Badge>
-                    )}
-                    {previewImage.projectId && (
-                      <Badge className="bg-blue-100 text-blue-800">
-                        Project: {projects.find(p => p.id === previewImage.projectId)?.name || "Unknown"}
-                      </Badge>
-                    )}
-                    {previewImage.isVariation && (
-                      <Badge className="bg-purple-100 text-purple-800">
-                        Variation
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium mb-1">Actions</h4>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDownloadImage(previewImage.imageUrl, previewImage.title)}
-                    className="w-full"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                  
-                  {onCreateVariations && (
-                    <Button 
-                      onClick={() => {
-                        onCreateVariations(previewImage.imageUrl, previewImage.prompt || "");
-                        setPreviewImage(null);
-                        onOpenChange(false);
-                      }}
-                      className="bg-purple-600 hover:bg-purple-700 text-white w-full"
-                    >
-                      <Copy className="mr-2 h-4 w-4" />
-                      Create Variations
-                    </Button>
-                  )}
-                  
-                  {onEditImage && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        onEditImage(previewImage.imageUrl, previewImage.id);
-                        setPreviewImage(null);
-                        onOpenChange(false);
-                      }}
-                      className="w-full"
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Image
-                    </Button>
-                  )}
-
-                  <Button
-                    variant="outline"
-                    className="border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 w-full"
-                    onClick={() => {
-                      handleDeleteImage(previewImage.id);
-                      setPreviewImage(null);
-                    }}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Image
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    
-    // Main Library Content
-    return (
-      <div className="flex flex-col space-y-4 overflow-hidden">
-        {/* Search and filter controls */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-grow">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search images..."
-              className="pl-8"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex gap-2 items-center">
-            {/* Project selector dropdown */}
-            <div className="flex-shrink-0 min-w-[200px]">
-              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select project" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {projects.map(project => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Add new project button */}
-            <Button 
-              variant="outline" 
-              className="h-10 flex items-center gap-1"
-              onClick={() => setIsNewProjectDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span>New Project</span>
-            </Button>
-            
-            {/* Category filter */}
-            <Tabs 
-              value={selectedCategory} 
-              onValueChange={setSelectedCategory}
-              className="flex-shrink-0"
-            >
-              <TabsList className="h-10">
-                <TabsTrigger value="all" className="text-xs px-3">
-                  All
-                </TabsTrigger>
-                
-                {categories.map(category => (
-                  <TabsTrigger 
-                    key={category} 
-                    value={category}
-                    className="text-xs px-3"
-                  >
-                    {category}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            
-            {/* Reset filters button */}
-            {(search || selectedCategory !== "all" || selectedProjectId !== "all") && (
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => {
-                  setSearch("");
-                  setSelectedCategory("all");
-                  setSelectedProjectId("all");
-                }}
-                className="h-10 w-10"
-              >
-                <FilterX className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-        
-        {/* Image grid */}
-        <div className="overflow-y-auto flex-grow">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <LoaderCircle className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center h-64 text-red-500">
-              Error loading images
-            </div>
-          ) : filteredImages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <Library className="h-12 w-12 mb-4 opacity-20" />
-              {search || selectedCategory !== "all" ? (
-                <p>No matching images found</p>
-              ) : (
-                <p>Your image library is empty</p>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-4">
-              {filteredImages.map((image) => (
-                <Card key={image.id} className="overflow-hidden">
-                  <div className="p-2 cursor-pointer" onClick={() => setPreviewImage(image)}>
-                    <AspectRatio ratio={16 / 9}>
-                      <img
-                        src={image.imageUrl}
-                        alt={image.title}
-                        className="object-cover w-full h-full rounded-md"
-                      />
-                    </AspectRatio>
-                  </div>
-                  
-                  <CardContent className="px-4 py-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-sm font-medium truncate flex-1">
-                        {image.title}
-                      </CardTitle>
-                      
-                      {/* Project badge, if assigned */}
-                      {image.projectId && (
-                        <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer">
-                          {projects.find(p => p.id === image.projectId)?.name || "Project"}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <p className="text-xs text-gray-500 truncate mt-1">
-                      {image.prompt}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      <Badge variant="outline" className="text-xs">
-                        {image.model || "gpt-image-1"}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {image.size || "1024x1024"}
-                      </Badge>
-                      {image.isVariation && (
-                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
-                          Variation
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="p-2 flex justify-between gap-2 border-t">
-                    {/* Project actions */}
-                    <div className="flex items-center">
-                      {image.projectId ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveFromProject(image.id, image.projectId!)}
-                          className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                          title="Remove from project"
-                        >
-                          <FolderMinus className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Select 
-                          onValueChange={(value) => handleAddToProject(image.id, parseInt(value))}
-                        >
-                          <SelectTrigger className="h-8 w-8 p-0 border-0">
-                            <FolderPlus className="h-4 w-4 text-blue-500" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="placeholder" disabled>Add to project</SelectItem>
-                            {projects.map(project => (
-                              <SelectItem key={project.id} value={project.id.toString()}>
-                                {project.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                    
-                    {/* Other actions */}
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDownloadImage(image.imageUrl, image.title)}
-                        className="h-8 w-8"
-                        title="Download"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      
-                      {onCreateVariations && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onCreateVariations(image.imageUrl, image.prompt || "")}
-                          className="h-8 w-8 text-purple-500 hover:text-purple-700 hover:bg-purple-50"
-                          title="Create Variations"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {onEditImage && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEditImage(image.imageUrl, image.id)}
-                          className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                          title="Edit Image"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteImage(image.id)}
-                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-  
   return (
     <>
       {/* Main Library Dialog */}
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden" hideDefaultCloseButton>
+      <Dialog open={open} onOpenChange={(isOpen) => {
+        // If closing, also reset preview image
+        if (!isOpen) {
+          setPreviewImage(null);
+        }
+        onOpenChange(isOpen);
+      }}>
+        <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader className="flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center">
@@ -672,18 +309,374 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
             </div>
           </DialogHeader>
           
-          {renderContent()}
+          {previewImage ? (
+            // Image Preview Content
+            <div className="p-4 flex flex-col flex-grow overflow-auto">
+              <div className="mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPreviewImage(null)}
+                  className="mb-4"
+                >
+                  <span className="mr-2">←</span> Back to Library
+                </Button>
+                <h3 className="text-lg font-semibold mt-2">{previewImage.title}</h3>
+                <p className="text-sm text-gray-500 break-words mt-1 mb-4 max-h-[80px] overflow-y-auto">
+                  {previewImage.prompt || "No prompt available"}
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4 flex justify-center">
+                <img 
+                  src={previewImage.imageUrl} 
+                  alt={previewImage.title}
+                  className="max-w-full max-h-[50vh] object-contain rounded-md" 
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Badge variant="outline">
+                  Model: {previewImage.model || "gpt-image-1"}
+                </Badge>
+                {previewImage.size && (
+                  <Badge variant="outline">
+                    Size: {previewImage.size}
+                  </Badge>
+                )}
+                {previewImage.quality && (
+                  <Badge variant="outline">
+                    Quality: {previewImage.quality}
+                  </Badge>
+                )}
+                {previewImage.projectId && (
+                  <Badge className="bg-blue-100 text-blue-800">
+                    Project: {projects.find(p => p.id === previewImage.projectId)?.name || "Unknown"}
+                  </Badge>
+                )}
+                {previewImage.isVariation && (
+                  <Badge className="bg-purple-100 text-purple-800">
+                    Variation
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadImage(previewImage.imageUrl, previewImage.title)}
+                  className="flex-1"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+                
+                {onCreateVariations && (
+                  <Button 
+                    onClick={() => {
+                      onCreateVariations(previewImage.imageUrl, previewImage.prompt || "");
+                      setPreviewImage(null);
+                      onOpenChange(false);
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white flex-1"
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Create Variations
+                  </Button>
+                )}
+                
+                {onEditImage && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      onEditImage(previewImage.imageUrl, previewImage.id);
+                      setPreviewImage(null);
+                      onOpenChange(false);
+                    }}
+                    className="flex-1"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Image
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  className="border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 flex-1"
+                  onClick={() => {
+                    handleDeleteImage(previewImage.id);
+                    setPreviewImage(null);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // Image Library Content
+            <div className="p-4 flex flex-col space-y-4 overflow-hidden">
+              {/* Search and filter controls */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-grow">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Search images..."
+                    className="pl-8"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex flex-wrap gap-2 items-center">
+                  {/* Project selector dropdown */}
+                  <div className="flex-shrink-0 min-w-[200px]">
+                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Select project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Projects</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {projects.map(project => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Add new project button */}
+                  <Button 
+                    variant="outline" 
+                    className="h-10 flex items-center gap-1"
+                    onClick={() => setIsNewProjectDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>New Project</span>
+                  </Button>
+                  
+                  {/* Category filter */}
+                  <Tabs 
+                    value={selectedCategory} 
+                    onValueChange={setSelectedCategory}
+                    className="flex-shrink-0"
+                  >
+                    <TabsList className="h-10">
+                      <TabsTrigger value="all" className="text-xs px-3">
+                        All
+                      </TabsTrigger>
+                      
+                      {categories.map(category => (
+                        <TabsTrigger 
+                          key={category} 
+                          value={category}
+                          className="text-xs px-3"
+                        >
+                          {category}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                  
+                  {/* Reset filters button */}
+                  {(search || selectedCategory !== "all" || selectedProjectId !== "all") && (
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        setSearch("");
+                        setSelectedCategory("all");
+                        setSelectedProjectId("all");
+                      }}
+                      className="h-10 w-10"
+                    >
+                      <FilterX className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Image grid */}
+              <div className="overflow-y-auto flex-grow">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <LoaderCircle className="h-8 w-8 animate-spin text-gray-400" />
+                  </div>
+                ) : error ? (
+                  <div className="flex items-center justify-center h-64 text-red-500">
+                    Error loading images
+                  </div>
+                ) : filteredImages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                    <Library className="h-12 w-12 mb-4 opacity-20" />
+                    {search || selectedCategory !== "all" ? (
+                      <p>No matching images found</p>
+                    ) : (
+                      <p>Your image library is empty</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-4">
+                    {filteredImages.map((image) => (
+                      <Card key={image.id} className="overflow-hidden">
+                        <div className="p-2 cursor-pointer" onClick={() => setPreviewImage(image)}>
+                          <AspectRatio ratio={16 / 9}>
+                            <img
+                              src={image.imageUrl}
+                              alt={image.title}
+                              className="object-cover w-full h-full rounded-md"
+                            />
+                          </AspectRatio>
+                        </div>
+                        
+                        <CardContent className="px-4 py-2">
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-sm font-medium truncate flex-1">
+                              {image.title}
+                            </CardTitle>
+                            
+                            {/* Project badge, if assigned */}
+                            {image.projectId && (
+                              <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer">
+                                {projects.find(p => p.id === image.projectId)?.name || "Project"}
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          <p className="text-xs text-gray-500 truncate mt-1">
+                            {image.prompt}
+                          </p>
+                          
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            <Badge variant="outline" className="text-xs">
+                              {image.model || "gpt-image-1"}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {image.size || "1024x1024"}
+                            </Badge>
+                            {image.isVariation && (
+                              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
+                                Variation
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                        
+                        <CardFooter className="p-2 flex justify-between gap-2 border-t">
+                          {/* Project actions */}
+                          <div className="flex items-center">
+                            {image.projectId ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveFromProject(image.id, image.projectId!);
+                                }}
+                                className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                title="Remove from project"
+                              >
+                                <FolderMinus className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Select 
+                                onValueChange={(value) => handleAddToProject(image.id, parseInt(value))}
+                              >
+                                <SelectTrigger className="h-8 w-8 p-0 border-0"
+                                  onClick={(e) => e.stopPropagation()}>
+                                  <FolderPlus className="h-4 w-4 text-blue-500" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="placeholder" disabled>Add to project</SelectItem>
+                                  {projects.map(project => (
+                                    <SelectItem key={project.id} value={project.id.toString()}>
+                                      {project.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+                          
+                          {/* Other actions */}
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadImage(image.imageUrl, image.title);
+                              }}
+                              className="h-8 w-8"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            
+                            {onCreateVariations && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCreateVariations(image.imageUrl, image.prompt || "");
+                                }}
+                                className="h-8 w-8 text-purple-500 hover:text-purple-700 hover:bg-purple-50"
+                                title="Create Variations"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                            
+                            {onEditImage && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditImage(image.imageUrl, image.id);
+                                }}
+                                className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                title="Edit Image"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteImage(image.id);
+                              }}
+                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
-      
+
       {/* New Project Dialog */}
       <Dialog open={isNewProjectDialogOpen} onOpenChange={setIsNewProjectDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-gray-500 mt-1">
               Create a new project to organize your images.
-            </DialogDescription>
+            </p>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
