@@ -268,13 +268,25 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
   
   // Handle creating variations of an image
   const handleCreateVariations = async (imageUrl: string) => {
+    if (!imageUrl) {
+      console.error("Cannot create variations: No image URL provided");
+      toast({
+        title: "Error preparing variations",
+        description: "No image was found to create variations from.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
+      console.log("Creating variations for image:", imageUrl.substring(0, 50) + "...");
+      
       // Since gpt-image-1 doesn't support reference images, we'll enhance the prompt instead
       // Update the prompt to request variations with detailed instructions
       let variationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
       
       // If we have an original prompt, include it to help guide the variation
-      if (imagePrompt) {
+      if (imagePrompt && imagePrompt.trim().length > 0) {
         variationPrompt += ` The original image description was: "${imagePrompt}". 
         Keep the core elements but vary the details, positioning, colors, or perspective.`;
       } else {
@@ -301,24 +313,49 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
   // Handle library variations data
   useEffect(() => {
     if (pendingVariationData) {
-      // Apply the variation data
-      handleCreateVariations(pendingVariationData.imageUrl);
-      
-      // Update the prompt if provided, with a more detailed variation description 
-      // since we can't use reference_images with gpt-image-1
-      if (pendingVariationData.prompt) {
+      try {
+        console.log("Processing pending variation data:", pendingVariationData);
+        
+        // Create a variation prompt that includes the original prompt if available
         let variationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
-        variationPrompt += ` The original image description was: "${pendingVariationData.prompt}". 
-        Keep the core elements but vary the details, positioning, colors, or perspective.`;
+        
+        if (pendingVariationData.prompt) {
+          variationPrompt += ` The original image description was: "${pendingVariationData.prompt}". 
+          Keep the core elements but vary the details, positioning, colors, or perspective.`;
+        } else {
+          variationPrompt += ` Vary the details, positioning, colors, or perspective while maintaining the core concept.`;
+        }
+        
+        // Update the image prompt first
         setImagePrompt(variationPrompt);
-      }
-      
-      // Clear the pending data
-      if (setPendingVariationData) {
-        setPendingVariationData(null);
+        
+        // Note: We're not calling handleCreateVariations since setImagePrompt is our goal
+        // The user will need to click the Generate Image button to actually create the variation
+        
+        // Then clear the pending data to prevent infinite loops
+        if (setPendingVariationData) {
+          setPendingVariationData(null);
+        }
+        
+        toast({
+          title: "Ready for Variations",
+          description: "Click 'Generate Image' to create variations based on your selected image.",
+        });
+      } catch (error) {
+        console.error("Error processing variation data:", error);
+        toast({
+          title: "Error Setting Up Variations",
+          description: "There was a problem preparing the image variation.",
+          variant: "destructive"
+        });
+        
+        // Still clear the data to prevent getting stuck
+        if (setPendingVariationData) {
+          setPendingVariationData(null);
+        }
       }
     }
-  }, [pendingVariationData]);
+  }, [pendingVariationData, setPendingVariationData, toast]);
   
   return (
     <motion.div
