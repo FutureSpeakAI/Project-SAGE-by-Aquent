@@ -538,7 +538,6 @@ export default function Home() {
       <ImageLibrary
         open={imageLibraryOpen}
         onOpenChange={setImageLibraryOpen}
-        onCreateVariations={handleCreateVariations}
         onEditImage={handleEditImage}
       />
     </div>
