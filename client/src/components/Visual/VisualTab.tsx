@@ -532,7 +532,10 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
                             variant="outline"
                             size="sm"
                             className="text-purple-500 border-purple-200 hover:bg-purple-50 w-full"
-                            onClick={() => handleCreateVariations(generatedImageUrl)}
+                            onClick={() => toast({
+                              title: "Feature temporarily disabled",
+                              description: "The variations feature is currently disabled to improve application stability.",
+                            })}
                           >
                             <Copy className="mr-2 h-4 w-4" />
                             Variations
