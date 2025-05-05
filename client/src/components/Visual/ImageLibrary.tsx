@@ -62,45 +62,82 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
     return metadata as Record<string, any>;
   };
   
-  // Fetch images
+  // Fetch images with error handling and retry settings
   const { data: images = [], isLoading, error } = useQuery<GeneratedImage[]>({
     queryKey: ["/api/generated-images"],
     enabled: open,
+    retry: false, // Disable automatic retries to prevent endless error loops
+    staleTime: 30000, // Set stale time to 30 seconds to reduce fetching frequency
+    refetchOnWindowFocus: false, // Disable refetching on window focus
+    refetchOnMount: false, // Only fetch once when component mounts
+    refetchOnReconnect: false, // Disable refetch on reconnect
+    onError: (err) => {
+      console.error("Error fetching images:", err);
+      // Silent error handling to prevent crashes - just log to console
+    }
   });
   
-  // Fetch projects
+  // Fetch projects with similar safer settings
   const { data: projects = [], isLoading: isLoadingProjects } = useQuery<ImageProject[]>({
     queryKey: ["/api/image-projects"],
     enabled: open,
+    retry: false,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    onError: (err) => {
+      console.error("Error fetching projects:", err);
+      // Silent error handling to prevent crashes
+    }
   });
   
-  // Delete image mutation
+  // Delete image mutation with improved error handling
   const deleteImageMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest("DELETE", `/api/generated-images/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to delete image");
+      try {
+        const response = await apiRequest("DELETE", `/api/generated-images/${id}`);
+        if (!response.ok) {
+          throw new Error("Failed to delete image");
+        }
+        return id;
+      } catch (err) {
+        console.error("Error deleting image:", err);
+        throw err; // Re-throw to trigger onError
       }
-      return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/generated-images"] });
-      toast({
-        title: "Success",
-        description: "Image was deleted successfully",
-      });
-      // Close the preview if the deleted image was being previewed
-      if (previewImage && previewImage.id === deleteImageMutation.variables) {
-        setPreviewImage(null);
+      try {
+        // Safely invalidate queries with error handling
+        queryClient.invalidateQueries({ queryKey: ["/api/generated-images"] });
+        toast({
+          title: "Success",
+          description: "Image was deleted successfully",
+        });
+        // Close the preview if the deleted image was being previewed
+        if (previewImage && previewImage.id === deleteImageMutation.variables) {
+          setPreviewImage(null);
+        }
+      } catch (err) {
+        console.error("Error in delete mutation success handler:", err);
+        // Don't throw - prevent cascading errors
       }
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete image",
-        variant: "destructive",
-      });
+      // Safely handle errors without crashing
+      try {
+        console.error("Delete mutation error:", error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete image",
+          variant: "destructive",
+        });
+      } catch (toastErr) {
+        console.error("Error showing error toast:", toastErr);
+      }
     },
+    // Add retry settings
+    retry: false,
   });
   
   // Create project mutation
