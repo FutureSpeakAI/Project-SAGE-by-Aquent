@@ -9,10 +9,11 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Copy } from "lucide-react";
+import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Copy, ArrowUpRight } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 import { ImagePromptAgent } from "./ImagePromptAgent";
+import { ImageProcessor } from "./ImageProcessor";
 
 interface GenerateImageResponse {
   images: Array<{
@@ -55,6 +56,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
   const [quality, setQuality] = useState<string>("high");
   const [background, setBackground] = useState<string>("auto");
   const [imageTitle, setImageTitle] = useState<string>("");
+  const [isProcessingDialogOpen, setIsProcessingDialogOpen] = useState(false);
   
   const { toast } = useToast();
   
@@ -689,6 +691,16 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                         >
                           <Copy className="mr-2 h-4 w-4" />
                           Variations
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setIsProcessingDialogOpen(true)}
+                        >
+                          <ArrowUpRight className="mr-2 h-4 w-4" />
+                          Upscale/Convert
                         </Button>
                         
                         <Button
