@@ -21,10 +21,13 @@ import { BriefingTab } from "@/components/Briefing/BriefingTab";
 import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
 import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
 import { VisualTab } from "@/components/Visual/VisualTab";
+import { StableVisualTab } from "@/components/Visual/StableVisualTab";
 import { ImageLibrary } from "@/components/Visual/ImageLibrary";
 import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
 import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
+import { ErrorBoundary } from "react-error-boundary";
+import { ErrorFallback } from "@/components/ErrorFallback";
 
 export default function Home() {
   // API key is now stored in environment variables on the server
@@ -442,14 +445,19 @@ export default function Home() {
                   personas={personas}
                 />
               ) : activeTab === AppTab.VISUAL ? (
-                <VisualTab
-                  key="visual-tab"
-                  model={model}
-                  setModel={setModel}
-                  onOpenImageLibrary={handleOpenImageLibrary}
-                  variationPrompt={variationPrompt}
-                  setVariationPrompt={setVariationPrompt}
-                />
+                <ErrorBoundary
+                  FallbackComponent={ErrorFallback}
+                  onReset={() => {
+                    console.log("Visual tab error boundary reset");
+                    window.location.reload();
+                  }}
+                >
+                  <StableVisualTab
+                    key="visual-tab"
+                    model={model}
+                    setModel={setModel}
+                  />
+                </ErrorBoundary>
               ) : (
                 <BriefingTab
                   key="briefing-tab"
