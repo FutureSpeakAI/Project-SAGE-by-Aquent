@@ -21,9 +21,9 @@ const fetchImage = async (imageUrl: string): Promise<Buffer> => {
 /**
  * Convert image to SVG using potrace
  */
-const convertToSVG = async (imageBuffer: Buffer, options: any): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    potrace.trace(imageBuffer, options, (err, svg) => {
+const convertToSVG = async (imageBuffer: Buffer, options: potrace.PotraceOptions): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    potrace.trace(imageBuffer, options, (err: Error | null, svg: string) => {
       if (err) reject(err);
       else resolve(svg);
     });

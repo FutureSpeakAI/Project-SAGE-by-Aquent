@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage, SavedPrompt, SavedPersona } from "./storage";
 import { generateContent, generateImage } from "./openai";
 import { processBrief } from "./brief-processing";
+import { processImage } from "./image-processing";
 import OpenAI from "openai";
 import { 
   GeneratedContent, 
@@ -194,6 +195,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // OpenAI image generation endpoint
   app.post("/api/generate-image", generateImage);
+  
+  // Image processing endpoint
+  app.post("/api/image-processing", processImage);
   
   // Creative brief interpretation endpoint
   app.post("/api/process-brief", processBrief);
