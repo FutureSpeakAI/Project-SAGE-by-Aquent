@@ -45,11 +45,11 @@ interface VisualTabProps {
   model: string;
   setModel: (model: string) => void;
   onOpenImageLibrary?: () => void;
-  pendingVariationData?: { imageUrl: string, prompt: string } | null;
-  setPendingVariationData?: (data: { imageUrl: string, prompt: string } | null) => void;
+  variationPrompt?: string | null;
+  setVariationPrompt?: (prompt: string | null) => void;
 }
 
-export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariationData, setPendingVariationData }: VisualTabProps) {
+export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt, setVariationPrompt }: VisualTabProps) {
   const [imagePrompt, setImagePrompt] = useState("");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [size, setSize] = useState<string>("1024x1024");
@@ -310,31 +310,18 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
     }
   };
 
-  // Handle library variations data
+  // Handle variation prompt from parent component
   useEffect(() => {
-    if (pendingVariationData) {
+    if (variationPrompt) {
       try {
-        console.log("Processing pending variation data:", pendingVariationData);
+        console.log("Applying variation prompt:", variationPrompt);
         
-        // Create a variation prompt that includes the original prompt if available
-        let variationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
-        
-        if (pendingVariationData.prompt) {
-          variationPrompt += ` The original image description was: "${pendingVariationData.prompt}". 
-          Keep the core elements but vary the details, positioning, colors, or perspective.`;
-        } else {
-          variationPrompt += ` Vary the details, positioning, colors, or perspective while maintaining the core concept.`;
-        }
-        
-        // Update the image prompt first
+        // Set the image prompt to the variation prompt
         setImagePrompt(variationPrompt);
         
-        // Note: We're not calling handleCreateVariations since setImagePrompt is our goal
-        // The user will need to click the Generate Image button to actually create the variation
-        
-        // Then clear the pending data to prevent infinite loops
-        if (setPendingVariationData) {
-          setPendingVariationData(null);
+        // Clear the variation prompt to prevent reapplying it
+        if (setVariationPrompt) {
+          setVariationPrompt(null);
         }
         
         toast({
@@ -342,20 +329,20 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
           description: "Click 'Generate Image' to create variations based on your selected image.",
         });
       } catch (error) {
-        console.error("Error processing variation data:", error);
+        console.error("Error applying variation prompt:", error);
         toast({
           title: "Error Setting Up Variations",
           description: "There was a problem preparing the image variation.",
           variant: "destructive"
         });
         
-        // Still clear the data to prevent getting stuck
-        if (setPendingVariationData) {
-          setPendingVariationData(null);
+        // Still clear the prompt to prevent getting stuck
+        if (setVariationPrompt) {
+          setVariationPrompt(null);
         }
       }
     }
-  }, [pendingVariationData, setPendingVariationData, toast]);
+  }, [variationPrompt, setVariationPrompt, toast]);
   
   return (
     <motion.div

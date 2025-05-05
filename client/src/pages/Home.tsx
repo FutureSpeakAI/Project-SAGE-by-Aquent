@@ -191,8 +191,8 @@ export default function Home() {
   const [briefingContent, setBriefingContent] = useState("");
   const [imageLibraryOpen, setImageLibraryOpen] = useState(false);
   
-  // Pending variation data for when the tab isn't loaded yet
-  const [pendingVariationData, setPendingVariationData] = useState<{imageUrl: string, prompt: string} | null>(null);
+  // Store variation prompt directly instead of the full image data
+  const [variationPrompt, setVariationPrompt] = useState<string | null>(null);
   
   // Handle briefing-related actions
   const handleOpenBriefingLibrary = () => {
@@ -206,19 +206,39 @@ export default function Home() {
   
   // Handle creating variations of a library image
   const handleCreateVariations = (imageUrl: string, prompt: string) => {
-    // Close the library
-    setImageLibraryOpen(false);
-    
-    // Switch to the visual tab if not already there
-    setActiveTab(AppTab.VISUAL);
-    
-    // Store the data to use when the VisualTab processes it
-    setPendingVariationData({ imageUrl, prompt });
-    
-    toast({
-      title: "Ready for Variations",
-      description: "The selected image is ready for variations. Adjust the prompt if needed and click 'Generate Image'."
-    });
+    try {
+      // Close the library
+      setImageLibraryOpen(false);
+      
+      // Create variation prompt
+      let newVariationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
+      
+      // Include the original prompt if available
+      if (prompt && prompt.trim().length > 0) {
+        newVariationPrompt += ` The original image description was: "${prompt}". 
+        Keep the core elements but vary the details, positioning, colors, or perspective.`;
+      } else {
+        newVariationPrompt += ` Vary the details, positioning, colors, or perspective while maintaining the core concept.`;
+      }
+      
+      // Store the variation prompt
+      setVariationPrompt(newVariationPrompt);
+      
+      // Switch to the visual tab
+      setActiveTab(AppTab.VISUAL);
+      
+      toast({
+        title: "Ready for Variations",
+        description: "The selected image is ready for variations. Click 'Generate Image' to create the variation.",
+      });
+    } catch (error) {
+      console.error("Error preparing variations:", error);
+      toast({
+        title: "Error preparing variations",
+        description: "There was an error setting up the variation. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Handle editing an image
@@ -455,8 +475,8 @@ export default function Home() {
                   model={model}
                   setModel={setModel}
                   onOpenImageLibrary={handleOpenImageLibrary}
-                  pendingVariationData={pendingVariationData}
-                  setPendingVariationData={setPendingVariationData}
+                  variationPrompt={variationPrompt}
+                  setVariationPrompt={setVariationPrompt}
                 />
               ) : (
                 <BriefingTab
