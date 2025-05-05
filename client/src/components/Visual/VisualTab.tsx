@@ -14,6 +14,8 @@ import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 import { ImagePromptAgent } from "./ImagePromptAgent";
 import { ImageProcessor } from "./ImageProcessor";
+import { ErrorBoundary } from "react-error-boundary";
+import { ErrorFallback } from "../ErrorFallback";
 
 interface GenerateImageResponse {
   images: Array<{
@@ -48,9 +50,6 @@ interface VisualTabProps {
   variationPrompt?: string | null;
   setVariationPrompt?: (prompt: string | null) => void;
 }
-
-// Import ErrorBoundary component
-import ErrorBoundary from "../ErrorBoundary";
 
 export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt, setVariationPrompt }: VisualTabProps) {
   const [imagePrompt, setImagePrompt] = useState("");
@@ -389,8 +388,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     }
   };
 
-  // Basic variation prompt handler without complex localStorage or state handling
-  // Protected with error handling
+  // Basic variation prompt handler with error handling
   useEffect(() => {
     try {
       if (variationPrompt) {
@@ -419,15 +417,14 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     }
   }, [variationPrompt, setVariationPrompt, toast]);
   
-  return (
-    <ErrorBoundary>
-      <motion.div
-        className="space-y-6"
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        variants={pageTransition}
-      >
+  const TabContent = () => (
+    <motion.div
+      className="space-y-6"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={pageTransition}
+    >
       {/* Main content tabs */}
       <Tabs defaultValue="standard" className="w-full">
         <div className="flex flex-col sm:flex-row justify-between mb-6">
@@ -662,13 +659,14 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
                           value={imageTitle}
                           onChange={(e) => setImageTitle(e.target.value)}
                           className="resize-none"
+                          rows={1}
                         />
                       </div>
                       
                       <Button 
                         className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
                         onClick={handleSaveImage}
-                        disabled={saveImageMutation.isPending || !imageTitle.trim()}
+                        disabled={saveImageMutation.isPending || !imageTitle.trim() || !generatedImageUrl}
                       >
                         {saveImageMutation.isPending ? (
                           <>
@@ -692,171 +690,8 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
         
         {/* Prompt Assistant Content */}
         <TabsContent value="assistant">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Left column - Prompt Assistant */}
-            <div className="md:col-span-2">
-              <ImagePromptAgent onPromptReady={handlePromptFromAgent} />
-            </div>
-            
-            {/* Right column - Preview and Controls */}
-            <div className="space-y-6">
-              <Card className="p-4 shadow-md">
-                <div className="space-y-4">
-                  <Label>Current Prompt</Label>
-                  <Textarea
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    className="h-32 resize-none"
-                    placeholder="Your prompt will appear here after using the assistant..."
-                    readOnly
-                  />
-                  
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <Label htmlFor="size-preview">Size</Label>
-                      <Select value={size} onValueChange={setSize}>
-                        <SelectTrigger id="size-preview">
-                          <SelectValue placeholder="Select size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
-                          <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
-                          <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
-                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="quality-preview">Quality</Label>
-                      <Select value={quality} onValueChange={setQuality}>
-                        <SelectTrigger id="quality-preview">
-                          <SelectValue placeholder="Select quality" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low (Faster)</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High (Best Quality)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-                    onClick={handleGenerateImage}
-                    disabled={generateImageMutation.isPending || !imagePrompt.trim()}
-                  >
-                    {generateImageMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <ImagePlus className="mr-2 h-4 w-4" />
-                        Generate Image
-                      </>
-                    )}
-                  </Button>
-                  
-                  {/* Display generated image if available */}
-                  {generatedImageUrl && (
-                    <div className="mt-4 space-y-4">
-                      <Label>Generated Image</Label>
-                      <div className="border rounded-md p-2">
-                        <img 
-                          src={generatedImageUrl} 
-                          alt="Generated" 
-                          className="mx-auto max-h-[300px] object-contain rounded-md"
-                          onError={(e) => {
-                            console.error("Error loading image in assistant tab:", e);
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null; // Prevent infinite loop if error image also fails
-                            target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23F15A22' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='9' cy='9' r='2'%3E%3C/circle%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'%3E%3C/path%3E%3C/svg%3E";
-                          }}
-                        />
-                      </div>
-                      
-                      {/* Mobile-friendly grid layout for buttons in assistant tab */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => {
-                            // Create an invisible anchor element
-                            const a = document.createElement("a");
-                            a.href = generatedImageUrl;
-                            a.download = `image_${new Date().getTime()}.png`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                          }}
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          Download
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => handleCreateVariations(generatedImageUrl)}
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Variations
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setIsProcessingDialogOpen(true)}
-                        >
-                          <ArrowUpRight className="mr-2 h-4 w-4" />
-                          Upscale/Convert
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setGeneratedImageUrl("")}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Discard
-                        </Button>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="image-title-assistant">Image Title</Label>
-                        <Textarea
-                          id="image-title-assistant"
-                          placeholder="Enter a title for your image..."
-                          value={imageTitle}
-                          onChange={(e) => setImageTitle(e.target.value)}
-                          className="resize-none"
-                        />
-                      </div>
-                      
-                      <Button 
-                        className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-                        onClick={handleSaveImage}
-                        disabled={saveImageMutation.isPending || !imageTitle.trim()}
-                      >
-                        <Save className="mr-2 h-4 w-4" />
-                        Save to Library
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </div>
-          </div>
+          <ImagePromptAgent onApplyPrompt={handlePromptFromAgent} />
         </TabsContent>
-        
-
       </Tabs>
       
       {/* Image Processing Dialog */}
@@ -866,6 +701,20 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
         imageUrl={generatedImageUrl || ''}
       />
     </motion.div>
+  );
+
+  return (
+    <ErrorBoundary 
+      FallbackComponent={ErrorFallback} 
+      onReset={() => {
+        console.log("Visual tab error boundary reset");
+        // Reset component state
+        setGeneratedImageUrl(null);
+        setImagePrompt("");
+        setImageTitle("");
+      }}
+    >
+      <TabContent />
     </ErrorBoundary>
   );
 }
