@@ -11,19 +11,27 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: {
+    signal?: AbortSignal;
+    headers?: Record<string, string>;
+  }
 ): Promise<Response> {
   try {
     console.log(`Making ${method} request to ${url}`);
     
     const res = await fetch(url, {
       method,
-      headers: data ? { 
-        "Content-Type": "application/json", 
-        "Accept": "application/json"
-      } : {},
+      headers: {
+        ...(data ? { 
+          "Content-Type": "application/json", 
+          "Accept": "application/json"
+        } : {}),
+        ...(options?.headers || {})
+      },
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
       mode: "cors", // Explicitly set CORS mode
+      signal: options?.signal, // Add AbortController signal support
     });
     
     console.log(`Received response with status: ${res.status}`);
@@ -31,7 +39,10 @@ export async function apiRequest(
     await throwIfResNotOk(res);
     return res;
   } catch (error) {
-    console.error(`API request failed (${method} ${url}):`, error);
+    // Don't log AbortError as those are expected
+    if (error instanceof Error && error.name !== 'AbortError') {
+      console.error(`API request failed (${method} ${url}):`, error);
+    }
     throw error;
   }
 }

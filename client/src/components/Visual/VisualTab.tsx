@@ -60,7 +60,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   
   const { toast } = useToast();
   
-  // Create a mutation to handle image generation
+  // Create a mutation to handle image generation with improved stability
   const generateImageMutation = useMutation({
     mutationFn: async (data: GenerateImageRequest) => {
       try {
@@ -71,21 +71,40 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
           quality: data.quality
         });
         
-        const response = await apiRequest("POST", "/api/generate-image", data);
-        console.log("Image API raw response status:", response.status);
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
         
-        // Additional diagnostics for deployed environment
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Image API error response:", errorText);
-          throw new Error(`API error ${response.status}: ${errorText}`);
-        }
-        
-        const jsonData = await response.json();
-        console.log("Image API Response parsed successfully:", 
-          jsonData.images ? `${jsonData.images.length} images returned` : "No images in response");
+        try {
+          const response = await apiRequest("POST", "/api/generate-image", data, {
+            signal: controller.signal
+          });
           
-        return jsonData as GenerateImageResponse;
+          clearTimeout(timeoutId); // Clear timeout if request completes
+          console.log("Image API raw response status:", response.status);
+          
+          // Additional diagnostics for deployed environment
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Image API error response:", errorText);
+            throw new Error(`API error ${response.status}: ${errorText}`);
+          }
+          
+          const jsonData = await response.json();
+          console.log("Image API Response parsed successfully:", 
+            jsonData.images ? `${jsonData.images.length} images returned` : "No images in response");
+            
+          return jsonData as GenerateImageResponse;
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId); // Clear timeout on error
+          
+          if (fetchError.name === 'AbortError') {
+            console.error("Request timed out");
+            throw new Error("Request timed out after 60 seconds. Please try again.");
+          }
+          
+          throw fetchError;
+        }
       } catch (error: any) {
         console.error("Complete image generation error:", error);
         // Enhance error if it's a network issue
@@ -102,116 +121,173 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
       }
     },
     onSuccess: (data) => {
-      // Extract image URL from the response
-      console.log("Image generation successful:", data);
-      if (data.images && data.images.length > 0 && data.images[0].url) {
-        const imageUrl = data.images[0].url;
-        console.log("Setting image URL:", imageUrl.substring(0, 50) + "...");
-        setGeneratedImageUrl(imageUrl);
-        
-        // Default title from prompt (first 30 chars)
-        if (!imageTitle) {
-          setImageTitle(imagePrompt.substring(0, 30) + (imagePrompt.length > 30 ? "..." : ""));
+      try {
+        // Extract image URL from the response
+        console.log("Image generation successful:", data);
+        if (data.images && data.images.length > 0 && data.images[0].url) {
+          const imageUrl = data.images[0].url;
+          console.log("Setting image URL:", imageUrl.substring(0, 50) + "...");
+          setGeneratedImageUrl(imageUrl);
+          
+          // Default title from prompt (first 30 chars)
+          if (!imageTitle) {
+            setImageTitle(imagePrompt.substring(0, 30) + (imagePrompt.length > 30 ? "..." : ""));
+          }
+          
+          try {
+            toast({
+              title: "Image generated",
+              description: "Your image has been successfully generated.",
+            });
+          } catch (toastErr) {
+            console.error("Error showing success toast:", toastErr);
+          }
+        } else {
+          console.error("Unexpected API response format:", data);
+          try {
+            toast({
+              title: "Image generation issue",
+              description: "Received successful response but couldn't find image URL. Check console for details.",
+              variant: "destructive",
+            });
+          } catch (toastErr) {
+            console.error("Error showing error toast:", toastErr);
+          }
         }
-        
-        toast({
-          title: "Image generated",
-          description: "Your image has been successfully generated.",
-        });
-      } else {
-        console.error("Unexpected API response format:", data);
-        toast({
-          title: "Image generation issue",
-          description: "Received successful response but couldn't find image URL. Check console for details.",
-          variant: "destructive",
-        });
+      } catch (err) {
+        // Catch and log any errors in success handler to prevent app crashes
+        console.error("Error in image generation success handler:", err);
       }
     },
     onError: (error: Error) => {
-      console.error("Image generation error:", error);
-      toast({
-        title: "Image generation failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      try {
+        console.error("Image generation error:", error);
+        toast({
+          title: "Image generation failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } catch (toastErr) {
+        console.error("Error showing error toast:", toastErr);
+      }
     },
+    // Disable automatic retries
+    retry: false,
   });
   
   const saveImageMutation = useMutation({
     mutationFn: async () => {
-      if (!generatedImageUrl || !imageTitle) {
-        throw new Error("Image URL and title are required");
-      }
-      
-      // Process image URL to reduce size if it's a data URL
-      let processedImageUrl = generatedImageUrl;
-      
-      // If it's a base64 data URL, extract the thumbnail version to reduce size
-      if (generatedImageUrl.startsWith('data:image')) {
-        try {
-          // Create a smaller thumbnail version
-          const img = new window.Image();
-          img.src = generatedImageUrl;
-          
-          // Wait for image to load
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject(new Error("Failed to load image"));
-            // Set timeout in case image loading hangs
-            setTimeout(() => reject(new Error("Image loading timed out")), 5000);
-          });
-          
-          // Create a canvas to resize the image
-          const canvas = document.createElement('canvas');
-          // Resize to 300px width while maintaining aspect ratio
-          const MAX_WIDTH = 300;
-          const scaleFactor = MAX_WIDTH / img.width;
-          canvas.width = MAX_WIDTH;
-          canvas.height = img.height * scaleFactor;
-          
-          // Draw image on canvas at reduced size
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            // Get as JPEG with reduced quality (0.6 = 60% quality)
-            processedImageUrl = canvas.toDataURL('image/jpeg', 0.6);
-          }
-        } catch (error) {
-          console.error("Error processing image:", error);
-          // Fall back to original URL if something goes wrong
+      try {
+        if (!generatedImageUrl || !imageTitle) {
+          throw new Error("Image URL and title are required");
         }
+        
+        // Process image URL to reduce size if it's a data URL
+        let processedImageUrl = generatedImageUrl;
+        
+        // If it's a base64 data URL, extract the thumbnail version to reduce size
+        if (generatedImageUrl.startsWith('data:image')) {
+          try {
+            // Create a smaller thumbnail version
+            const img = new window.Image();
+            img.src = generatedImageUrl;
+            
+            // Wait for image to load with timeout
+            await new Promise<void>((resolve, reject) => {
+              const timeoutId = setTimeout(() => {
+                console.error("Image load timed out");
+                reject(new Error("Image loading timed out"));
+              }, 5000);
+              
+              img.onload = () => {
+                clearTimeout(timeoutId);
+                resolve();
+              };
+              img.onerror = () => {
+                clearTimeout(timeoutId);
+                reject(new Error("Failed to load image"));
+              };
+            });
+            
+            // Create a canvas to resize the image
+            const canvas = document.createElement('canvas');
+            // Resize to 300px width while maintaining aspect ratio
+            const MAX_WIDTH = 300;
+            const scaleFactor = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleFactor;
+            
+            // Draw image on canvas at reduced size
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              // Get as JPEG with reduced quality (0.6 = 60% quality)
+              processedImageUrl = canvas.toDataURL('image/jpeg', 0.6);
+            }
+          } catch (error) {
+            console.error("Error processing image:", error);
+            // Fall back to original URL if something goes wrong
+          }
+        }
+        
+        // Add request timeout with AbortController
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        try {
+          // Always use gpt-image-1 model
+          const response = await apiRequest("POST", "/api/generated-images", {
+            title: imageTitle,
+            prompt: imagePrompt,
+            imageUrl: processedImageUrl, // Use the reduced size image
+            model: "gpt-image-1",
+            size,
+            quality,
+            background: background,
+            metadata: JSON.stringify({ 
+              savedAt: new Date().toISOString(),
+              isVariation: imagePrompt.toLowerCase().includes("variation") 
+            })
+          }, { signal: controller.signal });
+          
+          clearTimeout(timeoutId);
+          return response.json();
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === 'AbortError') {
+            console.error("Save image request timed out");
+            throw new Error("Request timed out after 30 seconds. Please try again.");
+          }
+          throw fetchError;
+        }
+      } catch (error) {
+        console.error("Complete error in save image mutation:", error);
+        throw error;
       }
-      
-      // Always use gpt-image-1 model
-      const response = await apiRequest("POST", "/api/generated-images", {
-        title: imageTitle,
-        prompt: imagePrompt,
-        imageUrl: processedImageUrl, // Use the reduced size image
-        model: "gpt-image-1",
-        size,
-        quality,
-        background: background,
-        metadata: JSON.stringify({ 
-          savedAt: new Date().toISOString(),
-          isVariation: imagePrompt.toLowerCase().includes("variation") 
-        })
-      });
-      
-      return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Image saved",
-        description: "Your image has been saved to the library.",
-      });
+      try {
+        toast({
+          title: "Image saved",
+          description: "Your image has been saved to the library.",
+        });
+      } catch (err) {
+        console.error("Error showing success toast:", err);
+      }
     },
     onError: (error: Error) => {
-      toast({
-        title: "Failed to save image",
-        description: error.message,
-        variant: "destructive",
-      });
+      try {
+        console.error("Failed to save image:", error);
+        toast({
+          title: "Failed to save image",
+          description: error.message,
+          variant: "destructive",
+        });
+      } catch (toastErr) {
+        console.error("Error showing error toast:", toastErr);
+      }
     },
+    retry: false,
   });
   
   const handleGenerateImage = () => {
@@ -311,20 +387,32 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   };
 
   // Basic variation prompt handler without complex localStorage or state handling
+  // Protected with error handling
   useEffect(() => {
-    if (variationPrompt) {
-      // Set the image prompt to the variation prompt and exit
-      setImagePrompt(variationPrompt);
-      
-      // Clear the variation prompt to prevent reapplying it
-      if (setVariationPrompt) {
-        setVariationPrompt(null);
+    try {
+      if (variationPrompt) {
+        console.log("Applying variation prompt:", variationPrompt.substring(0, 50) + "...");
+        
+        // Set the image prompt to the variation prompt and exit
+        setImagePrompt(variationPrompt);
+        
+        // Clear the variation prompt to prevent reapplying it
+        if (setVariationPrompt) {
+          setVariationPrompt(null);
+        }
+        
+        try {
+          toast({
+            title: "Ready for Variations",
+            description: "Click 'Generate Image' to create variations based on your selected image.",
+          });
+        } catch (toastErr) {
+          console.error("Error showing toast in useEffect:", toastErr);
+        }
       }
-      
-      toast({
-        title: "Ready for Variations",
-        description: "Click 'Generate Image' to create variations based on your selected image.",
-      });
+    } catch (err) {
+      console.error("Error in variation prompt handler useEffect:", err);
+      // Don't rethrow - silent recovery is better than crashing
     }
   }, [variationPrompt, setVariationPrompt, toast]);
   
