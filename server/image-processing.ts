@@ -35,9 +35,9 @@ async function getImageBuffer(imageSource: string | Buffer): Promise<Buffer> {
     try {
       const response = await axios.get(imageSource, { responseType: 'arraybuffer' });
       return Buffer.from(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching image from URL:', error);
-      throw new Error(`Failed to fetch image from URL: ${error.message}`);
+      throw new Error(`Failed to fetch image from URL: ${error.message || 'Unknown error'}`);
     }
   }
   
@@ -57,9 +57,9 @@ async function convertToSVG(imageBuffer: Buffer, options: potrace.Options): Prom
     // Trace the image
     const svg = await potraceTrace(preprocessedBuffer, options);
     return svg;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error converting to SVG:', error);
-    throw new Error(`SVG conversion failed: ${error.message}`);
+    throw new Error(`SVG conversion failed: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -157,8 +157,8 @@ export const processImage = async (req: Request, res: Response) => {
     // Send the processed image directly as the response
     sharpInstance.pipe(res);
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Image processing error:', error);
-    res.status(500).json({ error: `Image processing failed: ${error.message}` });
+    res.status(500).json({ error: `Image processing failed: ${error.message || 'Unknown error'}` });
   }
 };

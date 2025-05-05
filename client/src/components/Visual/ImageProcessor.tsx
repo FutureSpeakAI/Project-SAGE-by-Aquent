@@ -87,7 +87,7 @@ export function ImageProcessor({ open, onOpenChange, imageUrl }: ImageProcessorP
       }
 
       // Send to the server
-      const response = await axios.post('/api/process-image', formData, {
+      const response = await axios.post('/api/image-processing', formData, {
         responseType: 'blob',
         headers: {
           'Content-Type': 'multipart/form-data'
