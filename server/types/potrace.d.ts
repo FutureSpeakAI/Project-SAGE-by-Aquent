@@ -1,5 +1,5 @@
 declare module 'potrace' {
-  interface PotraceOptions {
+  interface Options {
     background?: string;
     color?: string;
     threshold?: number;
@@ -12,13 +12,23 @@ declare module 'potrace' {
 
   function trace(
     buffer: Buffer | string, 
-    options: PotraceOptions, 
+    options: Options, 
+    callback: (err: Error | null, svg: string) => void
+  ): void;
+
+  function trace(
+    buffer: Buffer | string,
     callback: (err: Error | null, svg: string) => void
   ): void;
 
   function traceFile(
     file: string, 
-    options: PotraceOptions, 
+    options: Options, 
+    callback: (err: Error | null, svg: string) => void
+  ): void;
+
+  function traceFile(
+    file: string,
     callback: (err: Error | null, svg: string) => void
   ): void;
 
@@ -26,6 +36,4 @@ declare module 'potrace' {
     file: string,
     callback: (err: Error | null, image: any) => void
   ): void;
-
-  export { trace, traceFile, loadImage };
 }

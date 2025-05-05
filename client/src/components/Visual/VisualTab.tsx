@@ -528,6 +528,16 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                             <Copy className="mr-2 h-4 w-4" />
                             Variations
                           </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-500 border-green-200 hover:bg-green-50"
+                            onClick={() => setIsProcessingDialogOpen(true)}
+                          >
+                            <ArrowUpRight className="mr-2 h-4 w-4" />
+                            Upscale/Convert
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -743,6 +753,13 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
         
 
       </Tabs>
+      
+      {/* Image Processing Dialog */}
+      <ImageProcessor 
+        open={isProcessingDialogOpen}
+        onOpenChange={setIsProcessingDialogOpen}
+        imageUrl={generatedImageUrl || ''}
+      />
     </motion.div>
   );
 }
