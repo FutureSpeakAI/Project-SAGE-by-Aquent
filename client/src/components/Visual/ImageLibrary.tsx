@@ -371,19 +371,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
                   Download
                 </Button>
                 
-                {onCreateVariations && (
-                  <Button 
-                    onClick={() => {
-                      onCreateVariations(previewImage.imageUrl, previewImage.prompt || "");
-                      setPreviewImage(null);
-                      onOpenChange(false);
-                    }}
-                    className="bg-purple-600 hover:bg-purple-700 text-white flex-1"
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    Create Variations
-                  </Button>
-                )}
+                {/* Variations feature temporarily disabled */}
                 
                 {onEditImage && (
                   <Button
@@ -615,20 +603,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
                               <Download className="h-4 w-4" />
                             </Button>
                             
-                            {onCreateVariations && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onCreateVariations(image.imageUrl, image.prompt || "");
-                                }}
-                                className="h-8 w-8 text-purple-500 hover:text-purple-700 hover:bg-purple-50"
-                                title="Create Variations"
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                            )}
+                            {/* Variations feature temporarily disabled */}
                             
                             {onEditImage && (
                               <Button
