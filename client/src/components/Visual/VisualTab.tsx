@@ -310,11 +310,37 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     }
   };
 
-  // Handle variation prompt from parent component
+  // Check for variation prompts from both props and localStorage
   useEffect(() => {
+    // First priority: Check localStorage for temp_variation_prompt
+    const storedPrompt = localStorage.getItem('temp_variation_prompt');
+    if (storedPrompt) {
+      try {
+        console.log("Applying variation prompt from localStorage:", storedPrompt.substring(0, 50) + "...");
+        
+        // Set the image prompt to the variation prompt
+        setImagePrompt(storedPrompt);
+        
+        // Remove from localStorage to prevent reapplying
+        localStorage.removeItem('temp_variation_prompt');
+        
+        toast({
+          title: "Ready for Variations",
+          description: "Click 'Generate Image' to create variations based on your selected image.",
+        });
+        
+        // Exit early since we've found a prompt
+        return;
+      } catch (error) {
+        console.error("Error applying variation prompt from localStorage:", error);
+        localStorage.removeItem('temp_variation_prompt');
+      }
+    }
+    
+    // Second priority: Check variationPrompt from props (legacy approach)
     if (variationPrompt) {
       try {
-        console.log("Applying variation prompt:", variationPrompt);
+        console.log("Applying variation prompt from props:", variationPrompt);
         
         // Set the image prompt to the variation prompt
         setImagePrompt(variationPrompt);
@@ -329,7 +355,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
           description: "Click 'Generate Image' to create variations based on your selected image.",
         });
       } catch (error) {
-        console.error("Error applying variation prompt:", error);
+        console.error("Error applying variation prompt from props:", error);
         toast({
           title: "Error Setting Up Variations",
           description: "There was a problem preparing the image variation.",

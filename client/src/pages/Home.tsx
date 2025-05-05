@@ -207,30 +207,37 @@ export default function Home() {
   // Handle creating variations of a library image
   const handleCreateVariations = (imageUrl: string, prompt: string) => {
     try {
-      // Close the library
-      setImageLibraryOpen(false);
+      // Create a safe, simplified variation prompt
+      let newPrompt = "Create a variation of an image with the following description:";
       
-      // Create variation prompt
-      let newVariationPrompt = "Create a variation of this image while maintaining the same style, theme, and composition.";
-      
-      // Include the original prompt if available
-      if (prompt && prompt.trim().length > 0) {
-        newVariationPrompt += ` The original image description was: "${prompt}". 
-        Keep the core elements but vary the details, positioning, colors, or perspective.`;
+      // Include the original prompt if available, but keep it simple
+      if (prompt && prompt.trim()) {
+        newPrompt += " " + prompt.trim();
       } else {
-        newVariationPrompt += ` Vary the details, positioning, colors, or perspective while maintaining the core concept.`;
+        newPrompt += " A professional looking image with interesting visual elements";
       }
       
-      // Store the variation prompt
-      setVariationPrompt(newVariationPrompt);
+      // Close the library dialog first
+      setImageLibraryOpen(false);
       
-      // Switch to the visual tab
-      setActiveTab(AppTab.VISUAL);
-      
-      toast({
-        title: "Ready for Variations",
-        description: "The selected image is ready for variations. Click 'Generate Image' to create the variation.",
-      });
+      // Set a timeout to avoid state issues
+      setTimeout(() => {
+        try {
+          // Switch to the visual tab
+          setActiveTab(AppTab.VISUAL);
+          
+          // Use local storage as a temporary buffer for the prompt
+          // This approach is less likely to cause state management issues
+          localStorage.setItem('temp_variation_prompt', newPrompt);
+          
+          toast({
+            title: "Ready for Variations",
+            description: "Now in the Visual tab, click 'Generate Image' to create a variation.",
+          });
+        } catch (innerError) {
+          console.error("Error during tab switch:", innerError);
+        }
+      }, 100);
     } catch (error) {
       console.error("Error preparing variations:", error);
       toast({
@@ -538,6 +545,7 @@ export default function Home() {
       <ImageLibrary
         open={imageLibraryOpen}
         onOpenChange={setImageLibraryOpen}
+        onCreateVariations={handleCreateVariations}
         onEditImage={handleEditImage}
       />
     </div>
