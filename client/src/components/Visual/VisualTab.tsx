@@ -49,6 +49,9 @@ interface VisualTabProps {
   setVariationPrompt?: (prompt: string | null) => void;
 }
 
+// Import ErrorBoundary component
+import ErrorBoundary from "../ErrorBoundary";
+
 export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt, setVariationPrompt }: VisualTabProps) {
   const [imagePrompt, setImagePrompt] = useState("");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -417,13 +420,14 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   }, [variationPrompt, setVariationPrompt, toast]);
   
   return (
-    <motion.div
-      className="space-y-6"
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      variants={pageTransition}
-    >
+    <ErrorBoundary>
+      <motion.div
+        className="space-y-6"
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        variants={pageTransition}
+      >
       {/* Main content tabs */}
       <Tabs defaultValue="standard" className="w-full">
         <div className="flex flex-col sm:flex-row justify-between mb-6">
@@ -862,5 +866,6 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
         imageUrl={generatedImageUrl || ''}
       />
     </motion.div>
+    </ErrorBoundary>
   );
 }

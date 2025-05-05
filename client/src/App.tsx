@@ -6,6 +6,8 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorFallback } from "./components/ErrorFallback";
 
 // Tabs for our application
 export enum AppTab {
@@ -37,7 +39,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
+      <ErrorBoundary 
+        FallbackComponent={ErrorFallback}
+        onReset={() => {
+          // Reset the state of your app here
+          console.log("Error boundary reset");
+          window.location.reload();
+        }}
+      >
+        <Router />
+      </ErrorBoundary>
       <Toaster />
     </QueryClientProvider>
   );
