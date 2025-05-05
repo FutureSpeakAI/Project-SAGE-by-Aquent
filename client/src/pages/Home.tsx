@@ -204,48 +204,13 @@ export default function Home() {
     setImageLibraryOpen(true);
   };
   
-  // Handle creating variations of a library image
+  // Handle creating variations of a library image - DISABLED TO IMPROVE STABILITY
   const handleCreateVariations = (imageUrl: string, prompt: string) => {
-    try {
-      // Create a safe, simplified variation prompt
-      let newPrompt = "Create a variation of an image with the following description:";
-      
-      // Include the original prompt if available, but keep it simple
-      if (prompt && prompt.trim()) {
-        newPrompt += " " + prompt.trim();
-      } else {
-        newPrompt += " A professional looking image with interesting visual elements";
-      }
-      
-      // Close the library dialog first
-      setImageLibraryOpen(false);
-      
-      // Set a timeout to avoid state issues
-      setTimeout(() => {
-        try {
-          // Switch to the visual tab
-          setActiveTab(AppTab.VISUAL);
-          
-          // Use local storage as a temporary buffer for the prompt
-          // This approach is less likely to cause state management issues
-          localStorage.setItem('temp_variation_prompt', newPrompt);
-          
-          toast({
-            title: "Ready for Variations",
-            description: "Now in the Visual tab, click 'Generate Image' to create a variation.",
-          });
-        } catch (innerError) {
-          console.error("Error during tab switch:", innerError);
-        }
-      }, 100);
-    } catch (error) {
-      console.error("Error preparing variations:", error);
-      toast({
-        title: "Error preparing variations",
-        description: "There was an error setting up the variation. Please try again.",
-        variant: "destructive",
-      });
-    }
+    // This function has been disabled to improve application stability
+    toast({
+      title: "Feature temporarily disabled",
+      description: "The variations feature is currently disabled to improve application stability.",
+    });
   };
   
   // Handle editing an image

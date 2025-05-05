@@ -310,63 +310,21 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     }
   };
 
-  // Check for variation prompts from both props and localStorage
+  // Basic variation prompt handler without complex localStorage or state handling
   useEffect(() => {
-    // First priority: Check localStorage for temp_variation_prompt
-    const storedPrompt = localStorage.getItem('temp_variation_prompt');
-    if (storedPrompt) {
-      try {
-        console.log("Applying variation prompt from localStorage:", storedPrompt.substring(0, 50) + "...");
-        
-        // Set the image prompt to the variation prompt
-        setImagePrompt(storedPrompt);
-        
-        // Remove from localStorage to prevent reapplying
-        localStorage.removeItem('temp_variation_prompt');
-        
-        toast({
-          title: "Ready for Variations",
-          description: "Click 'Generate Image' to create variations based on your selected image.",
-        });
-        
-        // Exit early since we've found a prompt
-        return;
-      } catch (error) {
-        console.error("Error applying variation prompt from localStorage:", error);
-        localStorage.removeItem('temp_variation_prompt');
-      }
-    }
-    
-    // Second priority: Check variationPrompt from props (legacy approach)
     if (variationPrompt) {
-      try {
-        console.log("Applying variation prompt from props:", variationPrompt);
-        
-        // Set the image prompt to the variation prompt
-        setImagePrompt(variationPrompt);
-        
-        // Clear the variation prompt to prevent reapplying it
-        if (setVariationPrompt) {
-          setVariationPrompt(null);
-        }
-        
-        toast({
-          title: "Ready for Variations",
-          description: "Click 'Generate Image' to create variations based on your selected image.",
-        });
-      } catch (error) {
-        console.error("Error applying variation prompt from props:", error);
-        toast({
-          title: "Error Setting Up Variations",
-          description: "There was a problem preparing the image variation.",
-          variant: "destructive"
-        });
-        
-        // Still clear the prompt to prevent getting stuck
-        if (setVariationPrompt) {
-          setVariationPrompt(null);
-        }
+      // Set the image prompt to the variation prompt and exit
+      setImagePrompt(variationPrompt);
+      
+      // Clear the variation prompt to prevent reapplying it
+      if (setVariationPrompt) {
+        setVariationPrompt(null);
       }
+      
+      toast({
+        title: "Ready for Variations",
+        description: "Click 'Generate Image' to create variations based on your selected image.",
+      });
     }
   }, [variationPrompt, setVariationPrompt, toast]);
   
