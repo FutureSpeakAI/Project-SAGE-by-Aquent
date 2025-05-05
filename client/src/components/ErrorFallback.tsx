@@ -1,41 +1,33 @@
-import React from 'react';
-import { AlertTriangle } from 'lucide-react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { FallbackProps } from "react-error-boundary";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
-interface ErrorFallbackProps {
-  error: Error;
-  resetErrorBoundary: () => void;
-}
-
-export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
+export const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (
-    <Card className="w-full max-w-3xl mx-auto my-12 shadow-lg">
-      <CardHeader className="bg-red-50 text-red-900 rounded-t-lg">
-        <CardTitle className="flex items-center gap-2">
-          <AlertTriangle size={24} />
-          <span>Something went wrong</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            An error occurred while trying to perform this operation. Please try again.
+    <div className="p-6">
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Application Error</AlertTitle>
+        <AlertDescription>
+          <p className="mb-2">
+            We encountered an unexpected error. This is a known issue we're working to fix.
           </p>
-          
-          <div className="bg-gray-100 p-4 rounded-md overflow-auto">
-            <p className="font-mono text-sm text-red-600">{error.message}</p>
+          <div className="text-xs overflow-auto max-h-[100px] bg-gray-50 p-2 rounded mb-2">
+            {error?.message || "Unknown error"}
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="border-t p-4">
+        </AlertDescription>
+      </Alert>
+
+      <div className="flex justify-center">
         <Button 
-          onClick={resetErrorBoundary}
+          onClick={resetErrorBoundary} 
           className="bg-[#F15A22] hover:bg-[#e04d15]"
         >
-          Try again
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Reset Application
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
-}
+};
