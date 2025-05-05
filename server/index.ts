@@ -3,11 +3,21 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from './db';
 import { sql } from 'drizzle-orm';
+import multer from 'multer';
+import path from 'path';
 
 const app = express();
 // Increase JSON payload size limit to 50MB to handle base64 encoded images
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+
+// Configure multer for memory storage (no files saved to disk)
+export const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB file size limit
+  },
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
