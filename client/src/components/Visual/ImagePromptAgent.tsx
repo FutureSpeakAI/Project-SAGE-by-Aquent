@@ -195,7 +195,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
 
   const handleUsePrompt = () => {
     if (finalPrompt) {
-      onPromptReady(finalPrompt);
+      onApplyPrompt(finalPrompt);
       toast({
         title: "Prompt applied",
         description: "The optimized prompt has been applied to the image generator.",
@@ -344,7 +344,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
             
             {/* Brief Interpreter Tab Content */}
             <TabsContent value="brief">
-              <BriefInterpreter onPromptGenerated={onPromptReady} />
+              <BriefInterpreter onPromptGenerated={onApplyPrompt} />
             </TabsContent>
           </Tabs>
         </Card>

@@ -740,77 +740,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     }
   }, [variationPrompt, setVariationPrompt, toast]);
   
-  // Use useMemo to memoize the handlers to prevent recreation
-  const handleGenerateImage = () => {
-    if (!imagePrompt.trim()) {
-      toast({
-        title: "Empty prompt",
-        description: "Please enter a prompt to generate an image.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    generateImageMutation.mutate({
-      prompt: imagePrompt,
-      model: "gpt-image-1", // Always use gpt-image-1
-      size,
-      quality,
-      background
-    });
-  };
-  
-  const handleSaveImage = () => {
-    if (!generatedImageUrl) {
-      toast({
-        title: "No image to save",
-        description: "Please generate an image first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!imageTitle.trim()) {
-      toast({
-        title: "Title required",
-        description: "Please enter a title for your image.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    saveImageMutation.mutate();
-  };
-  
-  // Handle prompt from the agent
-  const handlePromptFromAgent = (prompt: string) => {
-    setImagePrompt(prompt);
-    toast({
-      title: "Prompt Applied",
-      description: "The AI-generated prompt has been applied. You can now generate your image.",
-    });
-  };
-  
-  // Handle creating variations of an image
-  const handleCreateVariations = (imageUrl: string) => {
-    toast({
-      title: "Feature temporarily disabled",
-      description: "The variations feature is currently disabled to improve application stability.",
-    });
-  };
-
-  // Simple effect to handle variation prompt when provided from parent
-  useEffect(() => {
-    if (variationPrompt && setVariationPrompt) {
-      setImagePrompt(variationPrompt);
-      setVariationPrompt(null);
-      
-      toast({
-        title: "Ready for Variations",
-        description: "Click 'Generate Image' to create variations based on your selected image.",
-      });
-    }
-  }, [variationPrompt, setVariationPrompt, toast]);
+  // Previously declared above, no need for duplicate declarations or effects
 
   return (
     <ErrorBoundary 
