@@ -154,8 +154,15 @@ export const processImage = async (req: Request, res: Response) => {
         return res.status(400).json({ error: `Unsupported format: ${format}` });
     }
     
-    // Send the processed image directly as the response
-    sharpInstance.pipe(res);
+    // Process the image to a buffer and send with proper headers
+    const processedImageBuffer = await sharpInstance.toBuffer();
+    
+    // Set additional headers to force download
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Content-Length', processedImageBuffer.length);
+    
+    // Send the processed image buffer
+    res.send(processedImageBuffer);
     
   } catch (error: any) {
     console.error('Image processing error:', error);

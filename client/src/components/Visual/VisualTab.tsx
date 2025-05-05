@@ -490,11 +490,12 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                           />
                         </div>
                         
-                        <div className="flex space-x-2 justify-center mt-2">
+                        {/* Mobile-friendly grid layout for buttons */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-red-500 border-red-200 hover:bg-red-50"
+                            className="text-red-500 border-red-200 hover:bg-red-50 w-full"
                             onClick={() => setGeneratedImageUrl("")}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -504,7 +505,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-blue-500 border-blue-200 hover:bg-blue-50"
+                            className="text-blue-500 border-blue-200 hover:bg-blue-50 w-full"
                             onClick={() => {
                               // Create an invisible anchor element
                               const a = document.createElement("a");
@@ -522,7 +523,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-purple-500 border-purple-200 hover:bg-purple-50"
+                            className="text-purple-500 border-purple-200 hover:bg-purple-50 w-full"
                             onClick={() => handleCreateVariations(generatedImageUrl)}
                           >
                             <Copy className="mr-2 h-4 w-4" />
@@ -532,7 +533,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-green-500 border-green-200 hover:bg-green-50"
+                            className="text-green-500 border-green-200 hover:bg-green-50 w-full"
                             onClick={() => setIsProcessingDialogOpen(true)}
                           >
                             <ArrowUpRight className="mr-2 h-4 w-4" />
@@ -674,7 +675,8 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, pendingVariatio
                         />
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-2">
+                      {/* Mobile-friendly grid layout for buttons in assistant tab */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
