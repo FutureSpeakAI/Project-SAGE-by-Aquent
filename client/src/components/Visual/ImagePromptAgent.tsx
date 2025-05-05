@@ -51,10 +51,10 @@ interface GenerateContentRequest {
 }
 
 interface ImagePromptAgentProps {
-  onPromptReady: (prompt: string) => void;
+  onApplyPrompt: (prompt: string) => void;
 }
 
-export function ImagePromptAgent({ onPromptReady }: ImagePromptAgentProps) {
+export function ImagePromptAgent({ onApplyPrompt }: ImagePromptAgentProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",

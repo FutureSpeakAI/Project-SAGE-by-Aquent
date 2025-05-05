@@ -51,6 +51,329 @@ interface VisualTabProps {
   setVariationPrompt?: (prompt: string | null) => void;
 }
 
+// Define TabContent outside the main component to prevent recreation on each render
+const TabContent = ({ 
+  model, 
+  setModel, 
+  onOpenImageLibrary, 
+  imagePrompt, 
+  setImagePrompt,
+  generatedImageUrl, 
+  setGeneratedImageUrl,
+  size, 
+  setSize,
+  quality, 
+  setQuality,
+  background, 
+  setBackground,
+  imageTitle, 
+  setImageTitle,
+  isProcessingDialogOpen, 
+  setIsProcessingDialogOpen,
+  generateImageMutation,
+  saveImageMutation,
+  handleGenerateImage,
+  handleSaveImage,
+  handlePromptFromAgent,
+  handleCreateVariations
+}: {
+  model: string;
+  setModel: (model: string) => void;
+  onOpenImageLibrary?: () => void;
+  imagePrompt: string;
+  setImagePrompt: (prompt: string) => void;
+  generatedImageUrl: string | null;
+  setGeneratedImageUrl: (url: string | null) => void;
+  size: string;
+  setSize: (size: string) => void;
+  quality: string;
+  setQuality: (quality: string) => void;
+  background: string;
+  setBackground: (background: string) => void;
+  imageTitle: string;
+  setImageTitle: (title: string) => void;
+  isProcessingDialogOpen: boolean;
+  setIsProcessingDialogOpen: (open: boolean) => void;
+  generateImageMutation: any;
+  saveImageMutation: any;
+  handleGenerateImage: () => void;
+  handleSaveImage: () => void;
+  handlePromptFromAgent: (prompt: string) => void;
+  handleCreateVariations: (imageUrl: string) => void;
+}) => (
+  <motion.div
+    className="space-y-6"
+    initial="hidden"
+    animate="visible"
+    exit="exit"
+    variants={pageTransition}
+  >
+    {/* Main content tabs */}
+    <Tabs defaultValue="standard" className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between mb-6">
+        <TabsList className="mb-2 sm:mb-0">
+          <TabsTrigger value="standard" className="flex items-center">
+            <ImagePlus className="mr-2 h-4 w-4" />
+            Standard Mode
+          </TabsTrigger>
+          <TabsTrigger value="assistant" className="flex items-center">
+            <BrainCircuit className="mr-2 h-4 w-4" />
+            Prompt Assistant
+          </TabsTrigger>
+        </TabsList>
+        
+        {/* Library Access Button */}
+        <Button
+          variant="outline"
+          onClick={onOpenImageLibrary}
+          disabled={!onOpenImageLibrary}
+          className="self-start"
+        >
+          <Library className="mr-2 h-4 w-4" />
+          View Image Library
+        </Button>
+      </div>
+      
+      {/* Standard Mode Content */}
+      <TabsContent value="standard">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left column - Input controls */}
+          <div className="space-y-6">
+            <Card className="p-4 shadow-md">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="image-prompt">Image Prompt</Label>
+                  <Textarea
+                    id="image-prompt"
+                    placeholder="Describe the image you want to generate..."
+                    className="min-h-[200px] resize-y"
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                  />
+                </div>
+                
+                {/* Reference image uploader removed as gpt-image-1 doesn't support this feature */}
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="model-select">Model</Label>
+                    <Select value="gpt-image-1" disabled>
+                      <SelectTrigger id="model-select">
+                        <SelectValue placeholder="Select model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gpt-image-1">GPT Image Generator</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="size-select">Size</Label>
+                    <Select value={size} onValueChange={setSize}>
+                      <SelectTrigger id="size-select">
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {/* GPT Image Model only supports these specific sizes */}
+                        <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
+                        <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
+                        <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
+                        <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="quality-select">Quality</Label>
+                    <Select value={quality} onValueChange={setQuality}>
+                      <SelectTrigger id="quality-select">
+                        <SelectValue placeholder="Select quality" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low (Faster)</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High (Best Quality)</SelectItem>
+                        <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="background-select">Background</Label>
+                    <Select value={background} onValueChange={setBackground}>
+                      <SelectTrigger id="background-select">
+                        <SelectValue placeholder="Select background" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
+                        <SelectItem value="transparent">Transparent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                  onClick={handleGenerateImage}
+                  disabled={generateImageMutation.isPending || !imagePrompt.trim()}
+                >
+                  {generateImageMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="mr-2 h-4 w-4" />
+                      Generate Image
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </div>
+          
+          {/* Right column - Output display */}
+          <div className="space-y-6">
+            <Card className="p-4 shadow-md">
+              <div className="space-y-4">
+                <Label htmlFor="image-output">Generated Image</Label>
+                <div className="min-h-[300px] border rounded-md flex items-center justify-center">
+                  {generateImageMutation.isPending ? (
+                    <div className="text-center p-6">
+                      <Loader2 className="mx-auto h-12 w-12 animate-spin text-[#F15A22]" />
+                      <p className="mt-4 text-gray-500">Generating your image...</p>
+                      <p className="text-sm text-gray-400">This may take a moment</p>
+                    </div>
+                  ) : generatedImageUrl ? (
+                    <div className="w-full flex flex-col space-y-4">
+                      <div className="flex items-center justify-center">
+                        <img 
+                          src={generatedImageUrl} 
+                          alt="Generated" 
+                          className="mx-auto max-h-[500px] max-w-full object-contain rounded-md border" 
+                          onError={(e) => {
+                            console.error("Error loading image:", e);
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null; // Prevent infinite loop if error image also fails
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Mobile-friendly grid layout for buttons */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-500 border-red-200 hover:bg-red-50 w-full"
+                          onClick={() => setGeneratedImageUrl(null)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-500 border-blue-200 hover:bg-blue-50 w-full"
+                          onClick={() => {
+                            if (generatedImageUrl) {
+                              const a = document.createElement("a");
+                              a.href = generatedImageUrl;
+                              a.download = `image_${new Date().getTime()}.png`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                            }
+                          }}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-purple-500 border-purple-200 hover:bg-purple-50 w-full"
+                          onClick={() => handleCreateVariations(generatedImageUrl || '')}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Variations
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-green-500 border-green-200 hover:bg-green-50 w-full"
+                          onClick={() => setIsProcessingDialogOpen(true)}
+                        >
+                          <ArrowUpRight className="mr-2 h-4 w-4" />
+                          Upscale/Convert
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-6 text-gray-500">
+                      <ImagePlus className="mx-auto h-12 w-12 opacity-20" />
+                      <p className="mt-2">Your generated image will appear here</p>
+                    </div>
+                  )}
+                </div>
+                
+                {generatedImageUrl && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="image-title">Image Title</Label>
+                      <Textarea
+                        id="image-title"
+                        placeholder="Enter a title for your image..."
+                        value={imageTitle}
+                        onChange={(e) => setImageTitle(e.target.value)}
+                        className="resize-none"
+                        rows={1}
+                      />
+                    </div>
+                    
+                    <Button 
+                      className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                      onClick={handleSaveImage}
+                      disabled={saveImageMutation.isPending || !imageTitle.trim() || !generatedImageUrl}
+                    >
+                      {saveImageMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save to Library
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+        </div>
+      </TabsContent>
+      
+      {/* Prompt Assistant Content */}
+      <TabsContent value="assistant">
+        <ImagePromptAgent onApplyPrompt={handlePromptFromAgent} />
+      </TabsContent>
+    </Tabs>
+    
+    {/* Image Processing Dialog */}
+    <ImageProcessor 
+      open={isProcessingDialogOpen}
+      onOpenChange={setIsProcessingDialogOpen}
+      imageUrl={generatedImageUrl || ''}
+    />
+  </motion.div>
+);
+
 export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt, setVariationPrompt }: VisualTabProps) {
   const [imagePrompt, setImagePrompt] = useState("");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -417,304 +740,113 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     }
   }, [variationPrompt, setVariationPrompt, toast]);
   
-  const TabContent = () => (
-    <motion.div
-      className="space-y-6"
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      variants={pageTransition}
-    >
-      {/* Main content tabs */}
-      <Tabs defaultValue="standard" className="w-full">
-        <div className="flex flex-col sm:flex-row justify-between mb-6">
-          <TabsList className="mb-2 sm:mb-0">
-            <TabsTrigger value="standard" className="flex items-center">
-              <ImagePlus className="mr-2 h-4 w-4" />
-              Standard Mode
-            </TabsTrigger>
-            <TabsTrigger value="assistant" className="flex items-center">
-              <BrainCircuit className="mr-2 h-4 w-4" />
-              Prompt Assistant
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* Library Access Button */}
-          <Button
-            variant="outline"
-            onClick={onOpenImageLibrary}
-            disabled={!onOpenImageLibrary}
-            className="self-start"
-          >
-            <Library className="mr-2 h-4 w-4" />
-            View Image Library
-          </Button>
-        </div>
-        
-        {/* Standard Mode Content */}
-        <TabsContent value="standard">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left column - Input controls */}
-            <div className="space-y-6">
-              <Card className="p-4 shadow-md">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="image-prompt">Image Prompt</Label>
-                    <Textarea
-                      id="image-prompt"
-                      placeholder="Describe the image you want to generate..."
-                      className="min-h-[200px] resize-y"
-                      value={imagePrompt}
-                      onChange={(e) => setImagePrompt(e.target.value)}
-                    />
-                  </div>
-                  
-                  {/* Reference image uploader removed as gpt-image-1 doesn't support this feature */}
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="model-select">Model</Label>
-                      <Select value="gpt-image-1" disabled>
-                        <SelectTrigger id="model-select">
-                          <SelectValue placeholder="Select model" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="gpt-image-1">GPT Image Generator</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="size-select">Size</Label>
-                      <Select value={size} onValueChange={setSize}>
-                        <SelectTrigger id="size-select">
-                          <SelectValue placeholder="Select size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* GPT Image Model only supports these specific sizes */}
-                          <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
-                          <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
-                          <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
-                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="quality-select">Quality</Label>
-                      <Select value={quality} onValueChange={setQuality}>
-                        <SelectTrigger id="quality-select">
-                          <SelectValue placeholder="Select quality" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low (Faster)</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High (Best Quality)</SelectItem>
-                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="background-select">Background</Label>
-                      <Select value={background} onValueChange={setBackground}>
-                        <SelectTrigger id="background-select">
-                          <SelectValue placeholder="Select background" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="auto">Auto (AI Chooses)</SelectItem>
-                          <SelectItem value="transparent">Transparent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-                    onClick={handleGenerateImage}
-                    disabled={generateImageMutation.isPending || !imagePrompt.trim()}
-                  >
-                    {generateImageMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <ImagePlus className="mr-2 h-4 w-4" />
-                        Generate Image
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </Card>
-            </div>
-            
-            {/* Right column - Output display */}
-            <div className="space-y-6">
-              <Card className="p-4 shadow-md">
-                <div className="space-y-4">
-                  <Label htmlFor="image-output">Generated Image</Label>
-                  <div className="min-h-[300px] border rounded-md flex items-center justify-center">
-                    {generateImageMutation.isPending ? (
-                      <div className="text-center p-6">
-                        <Loader2 className="mx-auto h-12 w-12 animate-spin text-[#F15A22]" />
-                        <p className="mt-4 text-gray-500">Generating your image...</p>
-                        <p className="text-sm text-gray-400">This may take a moment</p>
-                      </div>
-                    ) : generatedImageUrl ? (
-                      <div className="w-full flex flex-col space-y-4">
-                        <div className="flex items-center justify-center">
-                          <img 
-                            src={generatedImageUrl} 
-                            alt="Generated" 
-                            className="mx-auto max-h-[500px] max-w-full object-contain rounded-md border" 
-                            onError={(e) => {
-                              console.error("Error loading image:", e);
-                              const target = e.target as HTMLImageElement;
-                              target.onerror = null; // Prevent infinite loop if error image also fails
-                              target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23F15A22' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='9' cy='9' r='2'%3E%3C/circle%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'%3E%3C/path%3E%3C/svg%3E";
-                              const errorToast = document.querySelector('.toast-error');
-                              if (!errorToast) {
-                                toast({
-                                  title: "Image display error",
-                                  description: "There was an error displaying the generated image. Try again or check console for details.",
-                                  variant: "destructive",
-                                  className: "toast-error"
-                                });
-                              }
-                            }}
-                          />
-                        </div>
-                        
-                        {/* Mobile-friendly grid layout for buttons */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-500 border-red-200 hover:bg-red-50 w-full"
-                            onClick={() => setGeneratedImageUrl("")}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-blue-500 border-blue-200 hover:bg-blue-50 w-full"
-                            onClick={() => {
-                              // Create an invisible anchor element
-                              const a = document.createElement("a");
-                              a.href = generatedImageUrl;
-                              a.download = `image_${new Date().getTime()}.png`;
-                              document.body.appendChild(a);
-                              a.click();
-                              document.body.removeChild(a);
-                            }}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            Download
-                          </Button>
+  // Use useMemo to memoize the handlers to prevent recreation
+  const handleGenerateImage = () => {
+    if (!imagePrompt.trim()) {
+      toast({
+        title: "Empty prompt",
+        description: "Please enter a prompt to generate an image.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    generateImageMutation.mutate({
+      prompt: imagePrompt,
+      model: "gpt-image-1", // Always use gpt-image-1
+      size,
+      quality,
+      background
+    });
+  };
+  
+  const handleSaveImage = () => {
+    if (!generatedImageUrl) {
+      toast({
+        title: "No image to save",
+        description: "Please generate an image first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!imageTitle.trim()) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your image.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    saveImageMutation.mutate();
+  };
+  
+  // Handle prompt from the agent
+  const handlePromptFromAgent = (prompt: string) => {
+    setImagePrompt(prompt);
+    toast({
+      title: "Prompt Applied",
+      description: "The AI-generated prompt has been applied. You can now generate your image.",
+    });
+  };
+  
+  // Handle creating variations of an image
+  const handleCreateVariations = (imageUrl: string) => {
+    toast({
+      title: "Feature temporarily disabled",
+      description: "The variations feature is currently disabled to improve application stability.",
+    });
+  };
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-purple-500 border-purple-200 hover:bg-purple-50 w-full"
-                            onClick={() => toast({
-                              title: "Feature temporarily disabled",
-                              description: "The variations feature is currently disabled to improve application stability.",
-                            })}
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Variations
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-green-500 border-green-200 hover:bg-green-50 w-full"
-                            onClick={() => setIsProcessingDialogOpen(true)}
-                          >
-                            <ArrowUpRight className="mr-2 h-4 w-4" />
-                            Upscale/Convert
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center p-6 text-gray-500">
-                        <ImagePlus className="mx-auto h-12 w-12 opacity-20" />
-                        <p className="mt-2">Your generated image will appear here</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {generatedImageUrl && (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="image-title">Image Title</Label>
-                        <Textarea
-                          id="image-title"
-                          placeholder="Enter a title for your image..."
-                          value={imageTitle}
-                          onChange={(e) => setImageTitle(e.target.value)}
-                          className="resize-none"
-                          rows={1}
-                        />
-                      </div>
-                      
-                      <Button 
-                        className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
-                        onClick={handleSaveImage}
-                        disabled={saveImageMutation.isPending || !imageTitle.trim() || !generatedImageUrl}
-                      >
-                        {saveImageMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="mr-2 h-4 w-4" />
-                            Save to Library
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* Prompt Assistant Content */}
-        <TabsContent value="assistant">
-          <ImagePromptAgent onApplyPrompt={handlePromptFromAgent} />
-        </TabsContent>
-      </Tabs>
+  // Simple effect to handle variation prompt when provided from parent
+  useEffect(() => {
+    if (variationPrompt && setVariationPrompt) {
+      setImagePrompt(variationPrompt);
+      setVariationPrompt(null);
       
-      {/* Image Processing Dialog */}
-      <ImageProcessor 
-        open={isProcessingDialogOpen}
-        onOpenChange={setIsProcessingDialogOpen}
-        imageUrl={generatedImageUrl || ''}
-      />
-    </motion.div>
-  );
+      toast({
+        title: "Ready for Variations",
+        description: "Click 'Generate Image' to create variations based on your selected image.",
+      });
+    }
+  }, [variationPrompt, setVariationPrompt, toast]);
 
   return (
     <ErrorBoundary 
       FallbackComponent={ErrorFallback} 
       onReset={() => {
         console.log("Visual tab error boundary reset");
-        // Reset component state
         setGeneratedImageUrl(null);
         setImagePrompt("");
         setImageTitle("");
       }}
     >
-      <TabContent />
+      <TabContent 
+        model={model}
+        setModel={setModel}
+        onOpenImageLibrary={onOpenImageLibrary}
+        imagePrompt={imagePrompt}
+        setImagePrompt={setImagePrompt}
+        generatedImageUrl={generatedImageUrl}
+        setGeneratedImageUrl={setGeneratedImageUrl}
+        size={size}
+        setSize={setSize}
+        quality={quality}
+        setQuality={setQuality}
+        background={background}
+        setBackground={setBackground}
+        imageTitle={imageTitle}
+        setImageTitle={setImageTitle}
+        isProcessingDialogOpen={isProcessingDialogOpen}
+        setIsProcessingDialogOpen={setIsProcessingDialogOpen}
+        generateImageMutation={generateImageMutation}
+        saveImageMutation={saveImageMutation}
+        handleGenerateImage={handleGenerateImage}
+        handleSaveImage={handleSaveImage}
+        handlePromptFromAgent={handlePromptFromAgent}
+        handleCreateVariations={handleCreateVariations}
+      />
     </ErrorBoundary>
   );
 }
