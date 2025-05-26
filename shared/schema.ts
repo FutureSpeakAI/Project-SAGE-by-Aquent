@@ -148,3 +148,50 @@ export const insertGeneratedImageSchema = createInsertSchema(generatedImages).om
 
 export type InsertGeneratedImage = z.infer<typeof insertGeneratedImageSchema>;
 export type GeneratedImage = typeof generatedImages.$inferSelect;
+
+// Table for storing project memories (brand guidelines, style docs, etc.)
+export const projectMemories = pgTable("project_memories", {
+  id: serial("id").primaryKey(),
+  projectName: text("project_name").notNull(),
+  memoryType: text("memory_type").notNull(), // 'brand_guidelines', 'style_guide', 'tone_of_voice', 'regulatory_requirements'
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertProjectMemorySchema = createInsertSchema(projectMemories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertProjectMemory = z.infer<typeof insertProjectMemorySchema>;
+export type ProjectMemory = typeof projectMemories.$inferSelect;
+
+// Table for storing free prompt conversations with context
+export const freePromptSessions = pgTable("free_prompt_sessions", {
+  id: serial("id").primaryKey(),
+  sessionName: text("session_name").notNull(),
+  messages: json("messages").$type<Array<{role: string, content: string, timestamp: string}>>().notNull(),
+  contextSettings: json("context_settings").$type<{
+    selectedPersona?: number;
+    selectedPrompts?: number[];
+    selectedMemories?: number[];
+    temperature: number;
+    model: string;
+    customInstructions?: string;
+  }>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertFreePromptSessionSchema = createInsertSchema(freePromptSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertFreePromptSession = z.infer<typeof insertFreePromptSessionSchema>;
+export type FreePromptSession = typeof freePromptSessions.$inferSelect;
