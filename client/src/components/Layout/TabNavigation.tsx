@@ -17,6 +17,13 @@ export function TabNavigation({ activeTab, onChangeTab }: TabNavigationProps) {
       >
         <TabsList className="grid grid-cols-4 w-full relative overflow-hidden">
           <TabsTrigger
+            value={AppTab.FREE_PROMPT}
+            className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span>Agent</span>
+          </TabsTrigger>
+          <TabsTrigger
             value={AppTab.BRIEFING}
             className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
           >
@@ -36,13 +43,6 @@ export function TabNavigation({ activeTab, onChangeTab }: TabNavigationProps) {
           >
             <Image className="h-4 w-4" />
             <span>Visual</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value={AppTab.FREE_PROMPT}
-            className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>Agent</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

@@ -921,6 +921,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple chat endpoint for Free Prompt agent
+  app.post("/api/chat", async (req: Request, res: Response) => {
+    try {
+      const { message, model, temperature, systemPrompt, conversationHistory } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Use OpenAI directly with a simpler approach
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      // Build conversation context
+      const messages: Array<{ role: 'system' | 'user' | 'assistant', content: string }> = [];
+      
+      if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+      }
+      
+      // Add recent conversation history for context
+      if (conversationHistory && Array.isArray(conversationHistory)) {
+        conversationHistory.forEach((msg: any) => {
+          if (msg.role && msg.content) {
+            messages.push({ role: msg.role, content: msg.content });
+          }
+        });
+      }
+      
+      // Add the current user message
+      messages.push({ role: 'user', content: message });
+
+      const completion = await openai.chat.completions.create({
+        model: model || "gpt-4o",
+        messages,
+        temperature: temperature || 0.7,
+        max_tokens: 2000,
+      });
+
+      const reply = completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
+      
+      res.json({ 
+        content: reply,
+        model: model || "gpt-4o",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Chat error:', error);
+      res.status(500).json({ 
+        error: "Failed to generate chat response",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -103,23 +103,24 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   // Chat mutation for sending messages
   const chatMutation = useMutation({
     mutationFn: async (data: { message: string; context?: any }) => {
-      // For now, use direct OpenAI call
-      // This will be replaced with N8N webhook when configured
-      const response = await fetch('/api/generate-content', {
+      // Use a simpler chat endpoint that's more reliable
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          message: data.message,
           model,
           temperature: temperature[0],
           systemPrompt: getSystemPrompt(),
-          userPrompt: data.message
+          conversationHistory: messages.slice(-5) // Include recent context
         })
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorData}`);
       }
       
       return response.json();
