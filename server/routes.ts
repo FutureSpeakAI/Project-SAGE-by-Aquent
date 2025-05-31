@@ -924,7 +924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple chat endpoint for Free Prompt agent
   app.post("/api/chat", async (req: Request, res: Response) => {
     try {
-      const { message, model, temperature } = req.body;
+      const { message, model, temperature, context } = req.body;
       
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
@@ -935,12 +935,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.OPENAI_API_KEY,
       });
 
+      // Build system prompt with research context if available
+      let systemPrompt = 'You are a helpful AI assistant for content creation and marketing. Provide detailed, practical responses in plain text. Do not create buttons, badges, or any UI elements in your responses. Just provide helpful information and advice.';
+      
+      if (context?.researchContext) {
+        systemPrompt += `\n\nResearch Focus: ${context.researchContext} Apply this research perspective to provide comprehensive, actionable insights based on the user's specific situation.`;
+      }
+
       // Simple message structure
       const messages = [
-        { 
-          role: 'system' as const, 
-          content: 'You are a helpful AI assistant for content creation and marketing. Provide detailed, practical responses in plain text. Do not create buttons, badges, or any UI elements in your responses. Just provide helpful information and advice.' 
-        },
+        { role: 'system' as const, content: systemPrompt },
         { role: 'user' as const, content: message }
       ];
 

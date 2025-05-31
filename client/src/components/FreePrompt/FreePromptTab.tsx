@@ -81,6 +81,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   const [temperature, setTemperature] = useState([0.7]);
   const [sessionName, setSessionName] = useState("New Conversation");
   const [showResearchOptions, setShowResearchOptions] = useState(false);
+  const [activeResearchContext, setActiveResearchContext] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Research options for deep context building
@@ -252,7 +253,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
       context: {
         capabilities: getActiveCapabilities(),
         persona: selectedPersona,
-        sessionHistory: messages.slice(-5) // Last 5 messages for context
+        sessionHistory: messages.slice(-5), // Last 5 messages for context
+        researchContext: activeResearchContext
       }
     });
     
@@ -260,31 +262,25 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   };
 
   const handleResearchRequest = (researchOption: ResearchOption) => {
-    const researchMessage = `${researchOption.prompt}\n\nPlease provide detailed, actionable insights that I can use to inform content creation, visual design, and strategic decisions across my projects.`;
+    // Store the research context for enhanced responses
+    setActiveResearchContext(researchOption.prompt);
     
-    const userMessage: ChatMessage = {
-      id: Date.now().toString() + '_user',
-      role: 'user',
-      content: `🔍 ${researchOption.title}: ${researchOption.description}`,
+    // Show user they've activated research mode
+    const contextMessage: ChatMessage = {
+      id: Date.now().toString() + '_system',
+      role: 'assistant',
+      content: `${researchOption.title} mode activated. Tell me about your project, industry, or specific situation and I'll provide targeted ${researchOption.description.toLowerCase()}.`,
       timestamp: new Date(),
       context: {
         researchType: researchOption.title
       }
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setIsTyping(true);
+    setMessages(prev => [...prev, contextMessage]);
     setShowResearchOptions(false);
     
-    chatMutation.mutate({ 
-      message: researchMessage,
-      context: {
-        capabilities: getActiveCapabilities(),
-        persona: selectedPersona,
-        sessionHistory: messages.slice(-5),
-        researchType: researchOption.title
-      }
-    });
+    // Clear input and focus for user's project details
+    setInputMessage("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
