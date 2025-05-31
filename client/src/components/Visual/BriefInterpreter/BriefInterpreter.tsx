@@ -16,33 +16,6 @@ interface GeneratePromptFromBriefRequest {
 }
 
 export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
-  // Simplified fallback component to improve stability
-  return (
-    <div className="p-6 text-center">
-      <div className="mb-4 text-yellow-600">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-      </div>
-      <h3 className="text-lg font-medium">Brief Interpreter Temporarily Disabled</h3>
-      <p className="mt-2 text-sm text-gray-500">
-        This feature has been temporarily disabled to improve application stability.
-        Please use the standard image generation features instead.
-      </p>
-      <button 
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        onClick={() => {
-          onPromptGenerated("A detailed product photo showcasing premium design elements with professional lighting");
-        }}
-      >
-        Apply Sample Prompt
-      </button>
-    </div>
-  );
-  
-  /* Original component code removed for stability */
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const { toast } = useToast();
 
