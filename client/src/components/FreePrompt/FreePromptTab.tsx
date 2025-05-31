@@ -105,8 +105,11 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
     mutationFn: async (data: { message: string; context?: any }) => {
       // For now, use direct OpenAI call
       // This will be replaced with N8N webhook when configured
-      const response = await apiRequest('/api/generate-content', {
+      const response = await fetch('/api/generate-content', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           model,
           temperature: temperature[0],
@@ -114,6 +117,11 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
           userPrompt: data.message
         })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       return response.json();
     },
     onSuccess: (data) => {
@@ -214,7 +222,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   }, [messages]);
 
   return (
-    <div className="flex h-full space-x-6">
+    <div className="flex flex-col lg:flex-row h-full space-y-4 lg:space-y-0 lg:space-x-6">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         <Card className="flex-1 flex flex-col">
@@ -224,14 +232,6 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 <MessageCircle className="h-5 w-5 text-[#F15A22]" />
                 Free Prompt Agent
               </CardTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  {getActiveCapabilities().length} capabilities active
-                </Badge>
-                <Badge variant="secondary" className="text-xs">
-                  {model}
-                </Badge>
-              </div>
             </div>
             <Input
               value={sessionName}
@@ -334,27 +334,48 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
       </div>
 
       {/* Context Control Panel */}
-      <div className="w-80 space-y-4">
-        <Tabs defaultValue="settings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+      <div className="w-full lg:w-80 space-y-4">
+        <Tabs defaultValue="history" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="history" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  Saved Conversations
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-sm text-gray-500 text-center py-4">
+                  No saved conversations yet. Start chatting to create your first conversation.
+                </div>
+                <Button variant="outline" className="w-full justify-start" size="sm">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  New Conversation
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  Agent Configuration
+                  Configuration
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 {/* Persona Selection */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium">Persona</Label>
                   <Select value={selectedPersona} onValueChange={setSelectedPersona}>
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-8 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -369,14 +390,14 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 </div>
 
                 {/* Model Selection */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium">Model</Label>
                   <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-8 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gpt-4o">GPT-4o (Recommended)</SelectItem>
+                      <SelectItem value="gpt-4o">GPT-4o</SelectItem>
                       <SelectItem value="gpt-4">GPT-4</SelectItem>
                       <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
                     </SelectContent>
@@ -384,7 +405,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 </div>
 
                 {/* Temperature */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium">
                     Creativity: {temperature[0]}
                   </Label>
@@ -406,28 +427,29 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Brain className="h-4 w-4" />
-                  Agent Capabilities
+                  Capabilities
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2">
                 {agentCapabilities.map((capability) => {
                   const IconComponent = capability.icon;
                   return (
-                    <div key={capability.id} className="flex items-start gap-3 p-3 rounded-lg border">
-                      <IconComponent className="h-4 w-4 mt-0.5 text-gray-500" />
-                      <div className="flex-1 space-y-1">
+                    <div key={capability.id} className="flex items-center gap-3 p-2 rounded border">
+                      <IconComponent className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium">{capability.name}</h4>
+                          <h4 className="text-sm font-medium truncate">{capability.name}</h4>
                           <Switch
                             checked={capability.enabled}
                             onCheckedChange={() => toggleCapability(capability.id)}
                             disabled={capability.id === 'rag_search' || capability.id === 'n8n_workflows'}
+                            className="flex-shrink-0"
                           />
                         </div>
-                        <p className="text-xs text-gray-500">{capability.description}</p>
+                        <p className="text-xs text-gray-500 truncate">{capability.description}</p>
                         {(capability.id === 'rag_search' || capability.id === 'n8n_workflows') && (
-                          <Badge variant="outline" className="text-xs">
-                            Requires Configuration
+                          <Badge variant="outline" className="text-xs mt-1">
+                            Requires Setup
                           </Badge>
                         )}
                       </div>
@@ -439,22 +461,20 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
 
             {/* Context Upload */}
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Upload className="h-4 w-4" />
                   Context Upload
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start" disabled>
+              <CardContent className="space-y-2">
+                <Button variant="outline" className="w-full justify-start text-sm h-8" disabled>
                   <FileText className="h-4 w-4 mr-2" />
                   Upload Documents
-                  <Badge variant="secondary" className="ml-auto">Soon</Badge>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" disabled>
+                <Button variant="outline" className="w-full justify-start text-sm h-8" disabled>
                   <Database className="h-4 w-4 mr-2" />
                   Connect Data Source
-                  <Badge variant="secondary" className="ml-auto">Soon</Badge>
                 </Button>
               </CardContent>
             </Card>
