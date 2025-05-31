@@ -13,7 +13,8 @@ import { ErrorFallback } from "./components/ErrorFallback";
 export enum AppTab {
   BRIEFING = "briefing",  // Making briefing the first tab
   CONTENT = "content",
-  VISUAL = "visual"       // Adding visual tab for image generation
+  VISUAL = "visual",      // Adding visual tab for image generation
+  FREE_PROMPT = "free-prompt"  // Adding free prompt RAG agent interface
 }
 
 // Page transition animations

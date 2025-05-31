@@ -22,7 +22,7 @@ import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
 import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
 import { VisualTab } from "@/components/Visual/VisualTab";
 import { ImageLibrary } from "@/components/Visual/ImageLibrary";
-import { FreePromptChat } from "@/components/FreePrompt/FreePromptChat";
+import { FreePromptTab } from "@/components/FreePrompt/FreePromptTab";
 import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
 import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
@@ -461,6 +461,13 @@ export default function Home() {
                     setVariationPrompt={setVariationPrompt}
                   />
                 </ErrorBoundary>
+              ) : activeTab === AppTab.FREE_PROMPT ? (
+                <FreePromptTab
+                  key="free-prompt-tab"
+                  model={model}
+                  setModel={setModel}
+                  personas={personas}
+                />
               ) : (
                 <BriefingTab
                   key="briefing-tab"
