@@ -939,7 +939,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messages = [
         { 
           role: 'system' as const, 
-          content: 'You are a helpful AI assistant for content creation and marketing. Provide detailed, practical responses.' 
+          content: 'You are a helpful AI assistant for content creation and marketing. Provide detailed, practical responses in plain text. Do not create buttons, badges, or any UI elements in your responses. Just provide helpful information and advice.' 
         },
         { role: 'user' as const, content: message }
       ];
