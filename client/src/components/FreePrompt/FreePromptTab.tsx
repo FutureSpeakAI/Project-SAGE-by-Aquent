@@ -28,7 +28,12 @@ import {
   Search,
   Lightbulb,
   Target,
-  Globe
+  Globe,
+  Compass,
+  TrendingUp,
+  Users,
+  Palette,
+  MessageSquare
 } from "lucide-react";
 import { SavedPersona } from "@/lib/types";
 
@@ -47,7 +52,16 @@ interface ChatMessage {
     ragSources?: string[];
     n8nWorkflow?: string;
     contextUsed?: string[];
+    researchType?: string;
   };
+}
+
+interface ResearchOption {
+  id: string;
+  title: string;
+  description: string;
+  icon: any;
+  prompt: string;
 }
 
 interface AgentCapability {
@@ -66,7 +80,54 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   const [selectedPersona, setSelectedPersona] = useState<string>("default");
   const [temperature, setTemperature] = useState([0.7]);
   const [sessionName, setSessionName] = useState("New Conversation");
+  const [showResearchOptions, setShowResearchOptions] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Research options for deep context building
+  const researchOptions: ResearchOption[] = [
+    {
+      id: "competitor_analysis",
+      title: "Competitor Analysis",
+      description: "Research competitors, their strategies, and positioning",
+      icon: Users,
+      prompt: "Conduct a comprehensive competitor analysis for this industry/market. Research their messaging, positioning, pricing strategies, target audiences, content approaches, and recent campaigns. Identify gaps and opportunities."
+    },
+    {
+      id: "market_research",
+      title: "Market Research",
+      description: "Analyze market trends, opportunities, and audience insights",
+      icon: TrendingUp,
+      prompt: "Perform deep market research including current trends, market size, growth opportunities, customer segments, pain points, and emerging patterns. Focus on actionable insights for strategy development."
+    },
+    {
+      id: "brand_analysis",
+      title: "Brand & Tone Research",
+      description: "Study brand language, tone of voice, and messaging patterns",
+      icon: MessageSquare,
+      prompt: "Analyze brand voice and tone patterns across successful companies in this space. Research effective messaging frameworks, communication styles, brand personality traits, and language that resonates with target audiences."
+    },
+    {
+      id: "design_trends",
+      title: "Design & Visual Trends",
+      description: "Research current design trends and visual strategies",
+      icon: Palette,
+      prompt: "Research current design trends, visual strategies, color psychology, typography trends, and aesthetic approaches that are performing well in this industry. Include emerging visual patterns and effective design frameworks."
+    },
+    {
+      id: "campaign_research",
+      title: "Campaign Analysis",
+      description: "Study successful campaigns and creative strategies",
+      icon: Target,
+      prompt: "Research successful marketing campaigns in this space. Analyze their creative strategies, messaging approaches, channel mix, engagement tactics, and measurable outcomes. Identify patterns in high-performing campaigns."
+    },
+    {
+      id: "product_research",
+      title: "Product Research",
+      description: "Deep dive into product positioning and features",
+      icon: Compass,
+      prompt: "Conduct comprehensive product research including feature analysis, positioning strategies, value propositions, user experience patterns, and product-market fit approaches. Focus on successful product launches and positioning."
+    }
+  ];
 
   // Agent capabilities that can be toggled on/off
   const [agentCapabilities, setAgentCapabilities] = useState<AgentCapability[]>([
@@ -198,6 +259,34 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
     setInputMessage("");
   };
 
+  const handleResearchRequest = (researchOption: ResearchOption) => {
+    const researchMessage = `${researchOption.prompt}\n\nPlease provide detailed, actionable insights that I can use to inform content creation, visual design, and strategic decisions across my projects.`;
+    
+    const userMessage: ChatMessage = {
+      id: Date.now().toString() + '_user',
+      role: 'user',
+      content: `🔍 ${researchOption.title}: ${researchOption.description}`,
+      timestamp: new Date(),
+      context: {
+        researchType: researchOption.title
+      }
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+    setShowResearchOptions(false);
+    
+    chatMutation.mutate({ 
+      message: researchMessage,
+      context: {
+        capabilities: getActiveCapabilities(),
+        persona: selectedPersona,
+        sessionHistory: messages.slice(-5),
+        researchType: researchOption.title
+      }
+    });
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -310,17 +399,71 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
               </div>
             </ScrollArea>
 
+            {/* Research Options */}
+            {showResearchOptions && (
+              <div className="p-6 border-t bg-gray-50">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-900">Deep Research Options</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowResearchOptions(false)}
+                  >
+                    ✕
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {researchOptions.map((option) => {
+                    const IconComponent = option.icon;
+                    return (
+                      <Button
+                        key={option.id}
+                        variant="outline"
+                        className="h-auto p-3 justify-start text-left"
+                        onClick={() => handleResearchRequest(option)}
+                        disabled={isTyping}
+                      >
+                        <div className="flex items-start gap-3 w-full">
+                          <IconComponent className="h-5 w-5 text-[#F15A22] flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm">{option.title}</div>
+                            <div className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              {option.description}
+                            </div>
+                          </div>
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Input Area */}
             <div className="p-6 border-t">
               <div className="flex gap-3">
-                <Textarea
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything... Use Shift+Enter for new lines"
-                  className="flex-1 min-h-[60px] resize-none"
-                  disabled={isTyping}
-                />
+                <div className="flex-1">
+                  <Textarea
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask me anything... Use Shift+Enter for new lines"
+                    className="min-h-[60px] resize-none"
+                    disabled={isTyping}
+                  />
+                  <div className="flex items-center gap-2 mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowResearchOptions(!showResearchOptions)}
+                      disabled={isTyping}
+                      className="text-xs"
+                    >
+                      <Search className="h-3 w-3 mr-1" />
+                      Deep Research
+                    </Button>
+                  </div>
+                </div>
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputMessage.trim() || isTyping}
