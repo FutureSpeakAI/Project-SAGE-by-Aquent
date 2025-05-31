@@ -21,7 +21,6 @@ import { BriefingTab } from "@/components/Briefing/BriefingTab";
 import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
 import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
 import { VisualTab } from "@/components/Visual/VisualTab";
-import { StableVisualTab } from "@/components/Visual/StableVisualTab";
 import { ImageLibrary } from "@/components/Visual/ImageLibrary";
 import { FreePromptChat } from "@/components/FreePrompt/FreePromptChat";
 import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
@@ -453,10 +452,13 @@ export default function Home() {
                     window.location.reload();
                   }}
                 >
-                  <StableVisualTab
+                  <VisualTab
                     key="visual-tab"
                     model={model}
                     setModel={setModel}
+                    onOpenImageLibrary={handleOpenImageLibrary}
+                    variationPrompt={variationPrompt}
+                    setVariationPrompt={setVariationPrompt}
                   />
                 </ErrorBoundary>
               ) : (
