@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -525,6 +526,48 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 SAGE
                 <span className="text-sm font-normal text-gray-500">(Strategic Adaptive Generative Engine)</span>
               </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSaveDialog(true)}
+                  disabled={messages.length === 0}
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  Save
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLoadDialog(true)}
+                >
+                  <FolderOpen className="h-4 w-4 mr-1" />
+                  Load
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportSessionToTxt}
+                  disabled={messages.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Export
+                </Button>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".txt"
+                    onChange={importSessionFromTxt}
+                    className="hidden"
+                  />
+                  <Button variant="outline" size="sm" asChild>
+                    <span>
+                      <Upload className="h-4 w-4 mr-1" />
+                      Import
+                    </span>
+                  </Button>
+                </label>
+              </div>
             </div>
             <Input
               value={sessionName}
@@ -827,6 +870,89 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Save Session Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Chat Session</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="session-name">Session Name</Label>
+              <Input
+                id="session-name"
+                value={saveSessionName}
+                onChange={(e) => setSaveSessionName(e.target.value)}
+                placeholder="Enter a name for this session..."
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={saveSession} disabled={!saveSessionName.trim()}>
+                Save Session
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Load Session Dialog */}
+      <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Load Chat Session</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {savedSessions.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No saved sessions found</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-64">
+                <div className="space-y-2">
+                  {savedSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      onClick={() => loadSession(session)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{session.name}</h4>
+                          <p className="text-xs text-gray-500">
+                            {session.messages?.length || 0} messages • {new Date(session.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteSession(session.id);
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setShowLoadDialog(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
