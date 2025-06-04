@@ -494,6 +494,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(generatedImages.projectId, projectId))
       .orderBy(generatedImages.createdAt);
   }
+  
+  // Chat Session Implementation
+  async getChatSessions(): Promise<ChatSession[]> {
+    if (!db) return [];
+    return await db.select().from(chatSessions).orderBy(chatSessions.updatedAt);
+  }
+
+  async getChatSession(id: number): Promise<ChatSession | undefined> {
+    if (!db) return undefined;
+    const [session] = await db.select().from(chatSessions).where(eq(chatSessions.id, id));
+    return session;
+  }
+
+  async saveChatSession(session: InsertChatSession): Promise<ChatSession> {
+    if (!db) throw new Error("Database not available");
+    const [result] = await db.insert(chatSessions).values(session).returning();
+    return result;
+  }
+
+  async updateChatSession(id: number, session: Partial<InsertChatSession>): Promise<ChatSession | undefined> {
+    if (!db) return undefined;
+    const [result] = await db.update(chatSessions)
+      .set({
+        ...session,
+        updatedAt: new Date()
+      })
+      .where(eq(chatSessions.id, id))
+      .returning();
+    
+    return result;
+  }
+
+  async deleteChatSession(id: number): Promise<boolean> {
+    if (!db) return false;
+    await db.delete(chatSessions).where(eq(chatSessions.id, id));
+    return true;
+  }
 }
 
 // Memory Storage implementation for when database is not available
@@ -505,6 +542,7 @@ export class MemoryStorage implements IStorage {
   private briefConversations: BriefConversation[] = [];
   private generatedImages: GeneratedImage[] = [];
   private imageProjects: ImageProject[] = [];
+  private chatSessions: ChatSession[] = [];
   private nextUserId = 1;
   private nextPromptId = 1;
   private nextPersonaId = 1;
@@ -512,6 +550,7 @@ export class MemoryStorage implements IStorage {
   private nextConversationId = 1;
   private nextImageId = 1;
   private nextProjectId = 1;
+  private nextSessionId = 1;
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
@@ -844,6 +883,49 @@ export class MemoryStorage implements IStorage {
   
   async getGeneratedImagesByProjectId(projectId: number): Promise<GeneratedImage[]> {
     return this.generatedImages.filter(img => img.projectId === projectId);
+  }
+  
+  // Chat Session methods
+  async getChatSessions(): Promise<ChatSession[]> {
+    return this.chatSessions;
+  }
+
+  async getChatSession(id: number): Promise<ChatSession | undefined> {
+    return this.chatSessions.find(s => s.id === id);
+  }
+
+  async saveChatSession(session: InsertChatSession): Promise<ChatSession> {
+    const now = new Date();
+    const newSession: ChatSession = {
+      id: this.nextSessionId++,
+      name: session.name,
+      messages: session.messages,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.chatSessions.push(newSession);
+    return newSession;
+  }
+
+  async updateChatSession(id: number, session: Partial<InsertChatSession>): Promise<ChatSession | undefined> {
+    const index = this.chatSessions.findIndex(s => s.id === id);
+    if (index === -1) return undefined;
+    
+    const updated: ChatSession = {
+      ...this.chatSessions[index],
+      ...session,
+      updatedAt: new Date()
+    };
+    this.chatSessions[index] = updated;
+    return updated;
+  }
+
+  async deleteChatSession(id: number): Promise<boolean> {
+    const index = this.chatSessions.findIndex(s => s.id === id);
+    if (index === -1) return false;
+    
+    this.chatSessions.splice(index, 1);
+    return true;
   }
 }
 
