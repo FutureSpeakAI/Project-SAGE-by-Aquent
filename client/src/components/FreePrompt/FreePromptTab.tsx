@@ -339,6 +339,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
         }))
       };
 
+      console.log('Saving session data:', sessionData);
+
       const response = await fetch('/api/chat-sessions', {
         method: 'POST',
         headers: {
@@ -348,8 +350,13 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
       });
       
       if (!response.ok) {
-        throw new Error('Failed to save session');
+        const errorText = await response.text();
+        console.error('Save session error:', errorText);
+        throw new Error(`Failed to save session: ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log('Session saved successfully:', result);
 
       toast({
         title: "Session saved",
@@ -358,11 +365,12 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
 
       setShowSaveDialog(false);
       setSaveSessionName("");
-      loadSavedSessions();
+      await loadSavedSessions();
     } catch (error) {
+      console.error('Save session error:', error);
       toast({
         title: "Error saving session",
-        description: "Failed to save the session. Please try again.",
+        description: `Failed to save the session: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -370,10 +378,14 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
 
   const loadSavedSessions = async () => {
     try {
+      console.log('Loading saved sessions...');
       const response = await fetch('/api/chat-sessions');
       if (response.ok) {
         const sessions = await response.json();
+        console.log('Loaded sessions:', sessions);
         setSavedSessions(sessions);
+      } else {
+        console.error('Failed to load sessions:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Failed to load sessions:', error);
@@ -535,7 +547,10 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowSaveDialog(true)}
+                  onClick={() => {
+                    setSaveSessionName(sessionName);
+                    setShowSaveDialog(true);
+                  }}
                   disabled={messages.length === 0}
                 >
                   <Save className="h-4 w-4 mr-1" />
