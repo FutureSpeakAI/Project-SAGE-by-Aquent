@@ -115,7 +115,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         },
         body: JSON.stringify({
           text,
-          voiceId: config.voiceId || 'EXAVITQu4vr4xnSDxMaL' // Bella - Professional British female voice
+          voiceId: config.voiceId || 'XB0fDUnXU5powFXDhCwa' // Charlotte - British female voice
         }),
       });
 

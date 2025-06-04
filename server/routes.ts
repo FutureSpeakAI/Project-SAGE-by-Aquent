@@ -1041,7 +1041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Optimized text-to-speech endpoint
   app.post("/api/text-to-speech", async (req: Request, res: Response) => {
     try {
-      const { text, voiceId = 'EXAVITQu4vr4xnSDxMaL' } = req.body; // Bella - Professional British female voice
+      const { text, voiceId = 'XB0fDUnXU5powFXDhCwa' } = req.body; // Charlotte - British female voice
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: 'Text is required' });
@@ -1049,6 +1049,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`TTS request: ${text.length} characters`);
       const startTime = Date.now();
+
+      // Apply phonetic corrections for proper pronunciation
+      const processedText = text
+        .replace(/\bAquent\b/g, 'A-kwent')
+        .replace(/\baquent\b/g, 'a-kwent')
+        .replace(/\bAQUENT\b/g, 'A-KWENT');
 
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
@@ -1058,12 +1064,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'xi-api-key': process.env.ELEVENLABS_API_KEY || ''
         }),
         body: JSON.stringify({
-          text,
+          text: processedText,
           model_id: 'eleven_turbo_v2', // Faster model for reduced latency
           voice_settings: {
-            stability: 0.4, // Moderate stability for professional British delivery
-            similarity_boost: 0.85, // High consistency while preserving accent
-            style: 0.5, // Balanced style for professional energy
+            stability: 0.5, // Moderate stability for natural British delivery
+            similarity_boost: 0.8, // Good consistency while preserving accent
+            style: 0.4, // Moderate style for professional energy
             use_speaker_boost: true
           },
           output_format: "mp3_22050_32" // Lower quality for faster processing
