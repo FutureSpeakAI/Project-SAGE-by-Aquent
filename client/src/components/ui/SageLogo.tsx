@@ -10,16 +10,47 @@ export function SageLogo({ className, size = 24 }: SageLogoProps) {
     <svg 
       width={size} 
       height={size} 
-      viewBox="0 0 40 40" 
+      viewBox="0 0 200 200" 
       className={cn("text-[#F15A22]", className)}
+      fill="none"
     >
-      <path 
-        fill="currentColor" 
-        d="M20 4c-8 0-12 6-12 14 0 6 3 10 6 12l6-6 6 6c3-2 6-6 6-12 0-8-4-14-12-14zm0 4c2 0 4 1 5 3l-5 9-5-9c1-2 3-3 5-3z"
+      {/* Sage leaf inspired by your icon - elongated oval leaf shape */}
+      <path
+        fill="currentColor"
+        d="M100 25C85 25 70 35 60 50C50 65 50 85 55 100C60 115 70 125 80 135C85 140 90 145 95 150C97 152 99 153 100 153C101 153 103 152 105 150C110 145 115 140 120 135C130 125 140 115 145 100C150 85 150 65 140 50C130 35 115 25 100 25Z"
       />
-      <path 
-        fill="currentColor" 
-        d="M20 20l-3 8c1 1 2 2 3 2s2-1 3-2l-3-8z"
+      
+      {/* Central vein */}
+      <path
+        fill="currentColor"
+        d="M100 30L100 145"
+        stroke="currentColor"
+        strokeWidth="2"
+        fillOpacity="0.3"
+      />
+      
+      {/* Left side veins */}
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.4"
+        d="M100 45L85 55M100 60L80 75M100 75L85 90M100 90L90 105M100 105L95 120"
+      />
+      
+      {/* Right side veins */}
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.4"
+        d="M100 45L115 55M100 60L120 75M100 75L115 90M100 90L110 105M100 105L105 120"
+      />
+      
+      {/* Small stem */}
+      <path
+        fill="currentColor"
+        d="M98 150L100 170L102 150Z"
       />
     </svg>
   );
