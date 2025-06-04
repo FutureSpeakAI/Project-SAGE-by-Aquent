@@ -115,7 +115,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         },
         body: JSON.stringify({
           text,
-          voiceId: config.voiceId || 'XB0fDUnXU5powFXDhCwa' // Charlotte - British female voice
+          voiceId: config.voiceId || 'cgSgspJ2msm6clMCkdW9' // Jessica - Professional British female voice
         }),
       });
 
@@ -138,6 +138,9 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       
       // Preload audio for faster playback
       audioRef.current.preload = 'auto';
+      
+      // Speed up playback by 33% for faster, more energetic delivery
+      audioRef.current.playbackRate = 1.33;
       
       audioRef.current.oncanplaythrough = () => {
         console.log('Audio ready for playback');
