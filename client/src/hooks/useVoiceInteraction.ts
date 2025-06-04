@@ -98,13 +98,16 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     setIsListening(false);
   }, []);
 
-  // Generate and play speech from text using ElevenLabs
+  // Generate and play speech from text using ElevenLabs with optimized pipeline
   const speakText = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
     setIsGeneratingAudio(true);
+    console.log('Starting TTS generation for:', text.substring(0, 50) + '...');
 
     try {
+      const startTime = performance.now();
+      
       const response = await fetch('/api/text-to-speech', {
         method: 'POST',
         headers: {
@@ -121,6 +124,9 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       }
 
       const audioBlob = await response.blob();
+      const generateTime = performance.now() - startTime;
+      console.log(`TTS generation completed in ${generateTime.toFixed(0)}ms`);
+      
       const audioUrl = URL.createObjectURL(audioBlob);
 
       if (audioRef.current) {
@@ -130,7 +136,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
 
       audioRef.current = new Audio(audioUrl);
       
-      audioRef.current.onloadstart = () => {
+      // Preload audio for faster playback
+      audioRef.current.preload = 'auto';
+      
+      audioRef.current.oncanplaythrough = () => {
+        console.log('Audio ready for playback');
         setIsGeneratingAudio(false);
         setIsSpeaking(true);
       };
@@ -138,6 +148,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       audioRef.current.onended = () => {
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
+        console.log('Audio playback completed');
       };
 
       audioRef.current.onerror = () => {
@@ -152,7 +163,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       };
 
       if (config.autoPlay !== false) {
-        await audioRef.current.play();
+        // Start playback immediately when audio is ready
+        audioRef.current.onloadeddata = () => {
+          audioRef.current?.play().catch(console.error);
+        };
+        audioRef.current.load(); // Force load
       }
 
     } catch (error) {

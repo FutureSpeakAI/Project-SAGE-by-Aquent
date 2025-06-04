@@ -7,6 +7,7 @@ import { processImage } from "./image-processing";
 import { upload } from './index';
 import OpenAI from "openai";
 import { performDeepResearch } from "./research-engine";
+import { handleOptimizedTTS } from "./voice-optimization";
 import { 
   GeneratedContent, 
   InsertGeneratedContent, 
@@ -1049,6 +1050,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: 'ElevenLabs API key not configured' });
       }
 
+      console.log(`TTS request: ${text.length} characters`);
+      const startTime = Date.now();
+
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
         headers: {
@@ -1058,11 +1062,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         body: JSON.stringify({
           text,
-          model_id: 'eleven_monolingual_v1',
+          model_id: 'eleven_turbo_v2', // Faster model for reduced latency
           voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5
-          }
+            stability: 0.6,
+            similarity_boost: 0.7,
+            style: 0.0,
+            use_speaker_boost: true
+          },
+          output_format: "mp3_22050_32" // Lower quality for faster processing
         })
       });
 
@@ -1073,9 +1080,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const audioBuffer = await response.arrayBuffer();
+      const processingTime = Date.now() - startTime;
+      console.log(`TTS completed in ${processingTime}ms for ${text.length} characters`);
       
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Length', audioBuffer.byteLength.toString());
+      res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
       res.send(Buffer.from(audioBuffer));
 
     } catch (error) {
