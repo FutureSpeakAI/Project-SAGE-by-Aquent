@@ -596,7 +596,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                           I'm your Strategic Adaptive Generative Engine, and I'm here to collaborate with you throughout your creative process.
                         </p>
                         <p>
-                          I can conduct deep research on competitors, markets, and trends using real-time data. I also maintain memory across all modules and can guide you through the app interface, so our work together builds continuously as you move between Content, Briefing, and Visual creation.
+                          I can conduct deep research on competitors, markets, and trends using real-time data. I also maintain memory across all modules and can guide you through the app interface, so our work together builds continuously as you move between Briefing, Content, and Visual asset creation.
                         </p>
                         <p className="font-medium text-gray-700">
                           How can I help you get started today?
