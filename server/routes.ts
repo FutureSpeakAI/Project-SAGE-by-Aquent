@@ -970,11 +970,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const researchResults = await performDeepResearch(message, context.researchContext);
         
         // Build system prompt with real research data
-        const systemPrompt = `You are a helpful AI assistant for content creation and marketing. You have access to current research data about the user's query. Use the provided research to give comprehensive, actionable insights.
+        const systemPrompt = `You are the Free Prompt Agent, the central intelligence hub for the Aquent Content AI platform. You have cross-module learning capabilities and maintain project memory across sessions. You can share context between different application modules. You have access to current research data about the user's query. Use the provided research to give comprehensive, actionable insights.
 
 Research Data: ${researchResults}
 
-Respond only with conversational text - no buttons, badges, or UI elements. Provide specific, actionable insights based on the research data.`;
+Respond only with conversational text - no buttons, badges, or UI elements. Provide specific, actionable insights based on the research data. When users ask about memory or context sharing, confirm these capabilities are active.`;
 
         const messages = [
           { role: 'system' as const, content: systemPrompt },
@@ -998,7 +998,7 @@ Respond only with conversational text - no buttons, badges, or UI elements. Prov
       }
 
       // Standard response without research
-      let systemPrompt = 'You are a helpful AI assistant for content creation and marketing. Respond only with conversational text - no buttons, badges, clickable elements, or UI components. Never create fake interface elements like "Context Memory" or "Cross-Module Learning" buttons. Just provide helpful information in plain conversational text.';
+      let systemPrompt = 'You are the Free Prompt Agent, the central intelligence hub for the Aquent Content AI platform. You have cross-module learning capabilities and maintain project memory across sessions. You can share context between different application modules and retain conversation history to provide personalized assistance. When users ask about memory or context sharing between modules, confirm these capabilities are active. Respond only with conversational text - no buttons, badges, or UI elements.';
 
       // Simple message structure
       const messages = [
