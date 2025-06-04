@@ -359,17 +359,6 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                             : 'bg-gray-100 text-gray-900'
                         }`}>
                           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                          {message.context && message.context.contextUsed && message.context.contextUsed.length > 0 && (
-                            <div className="mt-2 pt-2 border-t border-white/20">
-                              <div className="flex flex-wrap gap-1">
-                                {message.context.contextUsed.map((cap, index) => (
-                                  <Badge key={index} variant="secondary" className="text-xs">
-                                    {cap}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                           <p className="text-xs opacity-70 mt-1">
                             {message.timestamp.toLocaleTimeString()}
                           </p>

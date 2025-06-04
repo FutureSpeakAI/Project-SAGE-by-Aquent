@@ -936,7 +936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Build system prompt with research context if available
-      let systemPrompt = 'You are a helpful AI assistant for content creation and marketing. Provide detailed, practical responses in plain text. Do not create buttons, badges, or any UI elements in your responses. Just provide helpful information and advice.';
+      let systemPrompt = 'You are a helpful AI assistant for content creation and marketing. Respond only with conversational text - no buttons, badges, clickable elements, or UI components. Never create fake interface elements like "Context Memory" or "Cross-Module Learning" buttons. Just provide helpful information in plain conversational text.';
       
       if (context?.researchContext) {
         systemPrompt += `\n\nResearch Focus: ${context.researchContext} Apply this research perspective to provide comprehensive, actionable insights based on the user's specific situation.`;
