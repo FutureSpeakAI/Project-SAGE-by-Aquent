@@ -1052,6 +1052,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Apply phonetic corrections for proper pronunciation
       const processedText = text
+        .replace(/\bAquent Studios\b/g, 'A-kwent Studios')
+        .replace(/\baquent studios\b/g, 'a-kwent studios')
+        .replace(/\bAQUENT STUDIOS\b/g, 'A-KWENT STUDIOS')
+        .replace(/\bAquent Content AI\b/g, 'A-kwent Content AI')
+        .replace(/\baquent content ai\b/g, 'a-kwent content ai')
+        .replace(/\bAquent Gymnasium\b/g, 'A-kwent Gymnasium')
+        .replace(/\baquent gymnasium\b/g, 'a-kwent gymnasium')
+        .replace(/\bthe Aquent\b/g, 'the A-kwent')
+        .replace(/\bthe aquent\b/g, 'the a-kwent')
+        .replace(/\bAquent's\b/g, 'A-kwent\'s')
+        .replace(/\baquent's\b/g, 'a-kwent\'s')
         .replace(/\bAquent\b/g, 'A-kwent')
         .replace(/\baquent\b/g, 'a-kwent')
         .replace(/\bAQUENT\b/g, 'A-KWENT');
