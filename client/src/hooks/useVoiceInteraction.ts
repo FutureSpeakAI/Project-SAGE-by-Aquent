@@ -123,43 +123,61 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const audioBuffer = await response.arrayBuffer();
+      const audioBlob = await response.blob();
       const generateTime = performance.now() - startTime;
       console.log(`TTS generation completed in ${generateTime.toFixed(0)}ms`);
       
-      // Use Web Audio API for precise speed control
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const decodedAudio = await audioContext.decodeAudioData(audioBuffer);
-      
+      const audioUrl = URL.createObjectURL(audioBlob);
+
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
 
-      // Create audio source with speed control
-      const source = audioContext.createBufferSource();
-      source.buffer = decodedAudio;
-      source.playbackRate.value = 1.33; // 33% faster
-      source.connect(audioContext.destination);
+      audioRef.current = new Audio(audioUrl);
       
-      console.log('Audio playback rate set to:', source.playbackRate.value);
+      // Preload audio for faster playback
+      audioRef.current.preload = 'auto';
       
-      setIsGeneratingAudio(false);
-      setIsSpeaking(true);
+      audioRef.current.oncanplaythrough = () => {
+        console.log('Audio ready for playback');
+        setIsGeneratingAudio(false);
+        setIsSpeaking(true);
+      };
 
-      source.onended = () => {
+      audioRef.current.onended = () => {
         setIsSpeaking(false);
-        console.log('Audio playback completed at faster rate');
+        URL.revokeObjectURL(audioUrl);
+        console.log('Audio playback completed');
+      };
+
+      audioRef.current.onerror = () => {
+        setIsSpeaking(false);
+        setIsGeneratingAudio(false);
+        URL.revokeObjectURL(audioUrl);
+        toast({
+          title: "Audio playback error",
+          description: "Failed to play generated speech",
+          variant: "destructive"
+        });
       };
 
       if (config.autoPlay !== false) {
-        source.start(0);
-        // Store reference for stopping
-        (audioRef as any).current = { 
-          pause: () => source.stop(),
-          currentTime: 0,
-          src: ''
+        // Start playback and set rate after audio loads
+        audioRef.current.onloadedmetadata = () => {
+          if (audioRef.current) {
+            audioRef.current.playbackRate = 1.33; // 33% faster
+            console.log('Playback rate set to:', audioRef.current.playbackRate);
+          }
         };
+        
+        audioRef.current.oncanplay = () => {
+          setIsGeneratingAudio(false);
+          setIsSpeaking(true);
+          audioRef.current?.play().catch(console.error);
+        };
+        
+        audioRef.current.load();
       }
 
     } catch (error) {
