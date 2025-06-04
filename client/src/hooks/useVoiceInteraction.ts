@@ -98,7 +98,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     setIsListening(false);
   }, []);
 
-  // Generate and play speech from text using ElevenLabs with optimized pipeline
+  // Generate and play speech from text using ElevenLabs with fast playback
   const speakText = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
@@ -123,56 +123,43 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const audioBlob = await response.blob();
+      const audioBuffer = await response.arrayBuffer();
       const generateTime = performance.now() - startTime;
       console.log(`TTS generation completed in ${generateTime.toFixed(0)}ms`);
       
-      const audioUrl = URL.createObjectURL(audioBlob);
-
+      // Use Web Audio API for precise speed control
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const decodedAudio = await audioContext.decodeAudioData(audioBuffer);
+      
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
 
-      audioRef.current = new Audio(audioUrl);
+      // Create audio source with speed control
+      const source = audioContext.createBufferSource();
+      source.buffer = decodedAudio;
+      source.playbackRate.value = 1.33; // 33% faster
+      source.connect(audioContext.destination);
       
-      // Preload audio for faster playback
-      audioRef.current.preload = 'auto';
+      console.log('Audio playback rate set to:', source.playbackRate.value);
       
-      // Speed up playback by 66% for faster, more professional delivery
-      audioRef.current.playbackRate = 1.66;
-      
-      audioRef.current.oncanplaythrough = () => {
-        console.log('Audio ready for playback');
-        setIsGeneratingAudio(false);
-        setIsSpeaking(true);
-      };
+      setIsGeneratingAudio(false);
+      setIsSpeaking(true);
 
-      audioRef.current.onended = () => {
+      source.onended = () => {
         setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-        console.log('Audio playback completed');
-      };
-
-      audioRef.current.onerror = () => {
-        setIsSpeaking(false);
-        setIsGeneratingAudio(false);
-        URL.revokeObjectURL(audioUrl);
-        toast({
-          title: "Audio playback error",
-          description: "Failed to play generated speech",
-          variant: "destructive"
-        });
+        console.log('Audio playback completed at faster rate');
       };
 
       if (config.autoPlay !== false) {
-        // Start playback as soon as enough data is loaded
-        audioRef.current.oncanplay = () => {
-          setIsGeneratingAudio(false);
-          setIsSpeaking(true);
-          audioRef.current?.play().catch(console.error);
+        source.start(0);
+        // Store reference for stopping
+        (audioRef as any).current = { 
+          pause: () => source.stop(),
+          currentTime: 0,
+          src: ''
         };
-        audioRef.current.load(); // Force load
       }
 
     } catch (error) {
