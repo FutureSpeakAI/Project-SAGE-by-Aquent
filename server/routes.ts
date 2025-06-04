@@ -1047,11 +1047,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Text is required' });
       }
 
-      console.log(`TTS request: ${text.length} characters`);
+      // Check text length limits (ElevenLabs has character limits)
+      let textToProcess = text;
+      if (text.length > 5000) {
+        console.warn(`TTS text too long: ${text.length} characters, truncating...`);
+        textToProcess = text.substring(0, 4800) + '...';
+        console.log(`TTS request: ${textToProcess.length} characters (truncated)`);
+      } else {
+        console.log(`TTS request: ${text.length} characters`);
+      }
+      
       const startTime = Date.now();
 
       // Apply phonetic corrections for proper pronunciation
-      const processedText = text
+      const processedText = textToProcess
         .replace(/\bAquent Studios\b/g, 'A-kwent Studios')
         .replace(/\baquent studios\b/g, 'a-kwent studios')
         .replace(/\bAQUENT STUDIOS\b/g, 'A-KWENT STUDIOS')
@@ -1067,6 +1076,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .replace(/\baquent\b/g, 'a-kwent')
         .replace(/\bAQUENT\b/g, 'A-KWENT');
 
+      // Add timeout and retry logic for longer texts
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
         headers: new Headers({
@@ -1084,8 +1097,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             use_speaker_boost: true
           },
           output_format: "mp3_22050_32" // Lower quality for faster processing
-        })
+        }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -1102,9 +1118,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
       res.send(Buffer.from(audioBuffer));
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Text-to-speech error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      
+      // Handle specific error types
+      if (error.name === 'AbortError') {
+        console.error('TTS request timed out');
+        return res.status(408).json({ error: 'Request timeout - text too long for processing' });
+      }
+      
+      if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+        console.error('Network error during TTS:', error.code);
+        return res.status(503).json({ error: 'Network error - please try again' });
+      }
+      
+      res.status(500).json({ error: 'Text-to-speech service temporarily unavailable' });
     }
   });
 

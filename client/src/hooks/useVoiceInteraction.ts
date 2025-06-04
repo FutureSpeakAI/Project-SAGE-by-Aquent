@@ -120,7 +120,17 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('TTS API error:', response.status, errorData);
+        
+        // Handle specific error scenarios
+        if (response.status === 408) {
+          throw new Error('Message too long for speech generation');
+        } else if (response.status === 503) {
+          throw new Error('Speech service temporarily unavailable');
+        } else {
+          throw new Error(`Speech generation failed: ${errorData.error || response.status}`);
+        }
       }
 
       const audioBlob = await response.blob();
@@ -180,12 +190,23 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         audioRef.current.load();
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Text-to-speech error:', error);
       setIsGeneratingAudio(false);
+      
+      // Provide specific error messages based on error type
+      let errorMessage = "Failed to generate speech. Please try again.";
+      if (error.message?.includes('too long')) {
+        errorMessage = "Message too long for speech generation. Try a shorter response.";
+      } else if (error.message?.includes('temporarily unavailable')) {
+        errorMessage = "Speech service temporarily unavailable. Please try again in a moment.";
+      } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
-        title: "Text-to-speech error",
-        description: "Failed to generate speech. Please check your connection.",
+        title: "Speech generation failed",
+        description: errorMessage,
         variant: "destructive"
       });
     }
