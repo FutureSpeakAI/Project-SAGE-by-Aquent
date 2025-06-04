@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface VoiceControlsProps {
   onTranscript?: (text: string) => void;
@@ -29,8 +29,8 @@ export function VoiceControls({
 
   // Track the last spoken message to prevent repeats
   const lastSpokenRef = useRef<string>('');
-  // Track if user has initiated voice conversation
-  const hasUsedVoiceRef = useRef<boolean>(false);
+  // Track voice conversation state
+  const [isVoiceSessionActive, setIsVoiceSessionActive] = useState<boolean>(false);
 
   // Auto-play new assistant messages if enabled
   useEffect(() => {
@@ -52,8 +52,22 @@ export function VoiceControls({
     }
   }, [lastMessage, autoPlayResponses, isListening, isSpeaking, speakText]);
 
-  // Note: Auto-reactivation removed to prevent unwanted microphone activation
-  // Users must manually click the microphone button to start voice input
+  // Auto-reactivate microphone after SAGE finishes speaking during active voice session
+  useEffect(() => {
+    if (isVoiceSessionActive && !isSpeaking && !isGeneratingAudio && !isListening && onTranscript) {
+      // Small delay to ensure speech has fully stopped
+      const timer = setTimeout(() => {
+        if (isVoiceSessionActive && !isSpeaking && !isGeneratingAudio && !isListening && onTranscript) {
+          console.log('Auto-reactivating microphone for voice session...');
+          startListening((transcript) => {
+            onTranscript(transcript);
+          });
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isVoiceSessionActive, isSpeaking, isGeneratingAudio, isListening, onTranscript, startListening]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -61,12 +75,18 @@ export function VoiceControls({
   }, [cleanup]);
 
   const handleMicToggle = () => {
-    console.log('Mic toggle clicked, isListening:', isListening);
+    console.log('Mic toggle clicked, isListening:', isListening, 'voiceSessionActive:', isVoiceSessionActive);
     if (isListening) {
+      // User wants to stop current listening
       stopListening();
+    } else if (isVoiceSessionActive) {
+      // User wants to end the voice session
+      setIsVoiceSessionActive(false);
+      console.log('Voice session ended by user');
     } else if (onTranscript) {
-      console.log('Starting speech recognition...');
-      hasUsedVoiceRef.current = true; // Mark that user has initiated voice conversation
+      // User wants to start voice conversation
+      console.log('Starting voice session...');
+      setIsVoiceSessionActive(true);
       startListening((transcript) => {
         console.log('Transcript received:', transcript);
         onTranscript(transcript);
@@ -105,7 +125,20 @@ export function VoiceControls({
         size="sm"
         onClick={handleMicToggle}
         disabled={isSpeaking || isGeneratingAudio}
-        className={isListening ? "bg-green-500 hover:bg-green-600 text-white" : ""}
+        className={
+          isListening 
+            ? "bg-green-500 hover:bg-green-600 text-white" 
+            : isVoiceSessionActive 
+              ? "bg-blue-100 border-blue-300 text-blue-700" 
+              : ""
+        }
+        title={
+          isListening 
+            ? "Stop listening" 
+            : isVoiceSessionActive 
+              ? "End voice conversation" 
+              : "Start voice conversation"
+        }
       >
         <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse' : ''}`} />
       </Button>
