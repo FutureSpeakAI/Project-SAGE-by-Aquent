@@ -19,7 +19,9 @@ export function Header({ onOpenSavedContentLibrary, onOpenDataMigration, onOpenA
           {/* Logo and title */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <SageLogo size={40} />
+              <div className="w-10 h-10 bg-[#F15A22] rounded-lg flex items-center justify-center">
+                <span className="text-white text-2xl font-bold">A</span>
+              </div>
             </div>
             <div className="ml-3">
               <h1 className="text-2xl font-bold text-white">
