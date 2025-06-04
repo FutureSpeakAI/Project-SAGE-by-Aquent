@@ -336,10 +336,20 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
                     <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium mb-2">Welcome! I'm SAGE</p>
-                    <p className="text-sm">
-                      I'm your Strategic Adaptive Generative Engine. I'm here to collaborate with you on marketing projects, conduct deep research, and help speed up your creative work.
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-lg font-medium mb-2">Hi! I'm SAGE</p>
+                      <div className="text-sm space-y-2 max-w-lg mx-auto text-left">
+                        <p>
+                          I'm your Strategic Adaptive Generative Engine - a marketing specialist with 20 years of experience from Boston. I'm here to collaborate with you throughout your creative process.
+                        </p>
+                        <p>
+                          I can conduct deep research on competitors, markets, and trends using real-time data. I also maintain memory across all modules, so our work together builds continuously as you move between Content, Briefing, and Visual creation.
+                        </p>
+                        <p className="font-medium text-gray-700">
+                          How can I help you get started today?
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   messages.map((message) => (

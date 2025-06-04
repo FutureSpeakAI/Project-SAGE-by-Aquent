@@ -118,7 +118,7 @@ const TabContent = ({
           </TabsTrigger>
           <TabsTrigger value="assistant" className="flex items-center">
             <BrainCircuit className="mr-2 h-4 w-4" />
-            Prompt Assistant
+            SAGE
           </TabsTrigger>
         </TabsList>
         

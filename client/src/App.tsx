@@ -11,10 +11,10 @@ import { ErrorFallback } from "./components/ErrorFallback";
 
 // Tabs for our application
 export enum AppTab {
-  BRIEFING = "briefing",  // Making briefing the first tab
+  FREE_PROMPT = "free-prompt",  // SAGE tab - default starting point
+  BRIEFING = "briefing",
   CONTENT = "content",
-  VISUAL = "visual",      // Adding visual tab for image generation
-  FREE_PROMPT = "free-prompt"  // Adding free prompt RAG agent interface
+  VISUAL = "visual"
 }
 
 // Page transition animations
