@@ -29,8 +29,9 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     const recognition = new SpeechRecognition();
     
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true; // Show interim results for better UX
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1;
     
     return recognition;
   }, [toast]);
@@ -49,9 +50,18 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     };
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      onResult(transcript);
-      setIsListening(false);
+      let finalTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+      
+      if (finalTranscript) {
+        onResult(finalTranscript);
+        setIsListening(false);
+      }
     };
 
     recognition.onerror = (event: any) => {

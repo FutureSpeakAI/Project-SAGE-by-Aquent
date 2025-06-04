@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface VoiceControlsProps {
   onTranscript?: (text: string) => void;
+  onSendMessage?: () => void; // Function to automatically send the message
   lastMessage?: string;
   autoPlayResponses?: boolean;
   className?: string;
@@ -12,6 +13,7 @@ interface VoiceControlsProps {
 
 export function VoiceControls({ 
   onTranscript, 
+  onSendMessage,
   lastMessage, 
   autoPlayResponses = true,
   className = ""
@@ -60,7 +62,15 @@ export function VoiceControls({
         if (isVoiceSessionActive && !isSpeaking && !isGeneratingAudio && !isListening && onTranscript) {
           console.log('Auto-reactivating microphone for voice session...');
           startListening((transcript) => {
-            onTranscript(transcript);
+            if (onTranscript) {
+              onTranscript(transcript);
+            }
+            // Auto-send the message after speech recognition completes
+            if (onSendMessage) {
+              setTimeout(() => {
+                onSendMessage();
+              }, 100);
+            }
           });
         }
       }, 1000);
@@ -89,7 +99,15 @@ export function VoiceControls({
       setIsVoiceSessionActive(true);
       startListening((transcript) => {
         console.log('Transcript received:', transcript);
-        onTranscript(transcript);
+        if (onTranscript) {
+          onTranscript(transcript);
+        }
+        // Auto-send the message after speech recognition completes
+        if (onSendMessage) {
+          setTimeout(() => {
+            onSendMessage();
+          }, 100); // Small delay to ensure transcript is processed
+        }
       });
     }
   };
