@@ -959,8 +959,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.OPENAI_API_KEY,
       });
 
+      // Debug logging
+      console.log('Chat request context:', JSON.stringify(context, null, 2));
+      console.log('Research context value:', context?.researchContext);
+      
       // Check if this is a research-enhanced request
-      if (context?.researchContext) {
+      if (context?.researchContext && context.researchContext.trim().length > 0) {
+        console.log('Activating deep research mode...');
         // Perform actual research using external sources
         const researchResults = await performDeepResearch(message, context.researchContext);
         
