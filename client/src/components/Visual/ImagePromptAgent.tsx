@@ -60,7 +60,7 @@ export function ImagePromptAgent({ onApplyPrompt }: ImagePromptAgentProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm SAGE, your strategic marketing collaborator. I can help you craft optimized prompts for image generation that align with your project goals. If we've worked together before, I can draw from that context. What kind of visual content are you looking to create?",
+      content: "Hello! I'm SAGE, your strategic marketing collaborator with voice processing capabilities. I can help you craft optimized prompts for image generation that align with your project goals. I have access to our previous conversations and can guide you through the visual creation process. What kind of visual content are you looking to create?",
     },
   ]);
   const [currentMessage, setCurrentMessage] = useState("");
