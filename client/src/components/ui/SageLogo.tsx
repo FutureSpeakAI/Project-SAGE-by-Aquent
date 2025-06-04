@@ -10,38 +10,14 @@ export function SageLogo({ className, size = 24 }: SageLogoProps) {
     <svg 
       width={size} 
       height={size} 
-      viewBox="0 0 200 200" 
+      viewBox="0 0 24 24" 
       className={cn("text-[#F15A22]", className)}
       fill="currentColor"
     >
-      {/* Head */}
-      <ellipse
-        cx="100"
-        cy="55"
-        rx="30"
-        ry="35"
-      />
-      
-      {/* Body/Torso with curved bottom opening */}
-      <path
-        d="M65 95C65 85 80 75 100 75C120 75 135 85 135 95L135 130C135 140 130 145 120 145L115 145C115 150 110 155 100 155C90 155 85 150 85 145L80 145C70 145 65 140 65 130L65 95Z"
-      />
-      
-      {/* Cross-legged sitting position */}
-      <ellipse
-        cx="75"
-        cy="170"
-        rx="40"
-        ry="18"
-        transform="rotate(-8 75 170)"
-      />
-      <ellipse
-        cx="125"
-        cy="170"
-        rx="40"
-        ry="18"
-        transform="rotate(8 125 170)"
-      />
+      {/* Simple branch/tree icon based on your image */}
+      <path d="M12 2C10.9 2 10 2.9 10 4s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+      <path d="M12 6c-1.1 0-2 .9-2 2v4h-2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2c0-.55-.22-1.05-.59-1.41L12 10l2.59 2.59c-.37.36-.59.86-.59 1.41 0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2h-2V8c0-1.1-.9-2-2-2z"/>
+      <path d="M11 16v4c0 1.1.9 2 2 2s2-.9 2-2v-4h-3z"/>
     </svg>
   );
 }
