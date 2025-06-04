@@ -58,7 +58,7 @@ export function ImagePromptAgent({ onApplyPrompt }: ImagePromptAgentProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm your Image Generation Assistant. I'll help you craft the perfect prompt for generating images with the GPT Image model. What kind of image would you like to create today?",
+      content: "Hi! I'm SAGE, your strategic marketing collaborator. I can help you craft optimized prompts for image generation that align with your project goals. If we've worked together before, I can draw from that context. What kind of visual content are you looking to create?",
     },
   ]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -68,7 +68,7 @@ export function ImagePromptAgent({ onApplyPrompt }: ImagePromptAgentProps) {
   const { toast } = useToast();
 
   // System prompt based on the best practices guide
-  const systemPrompt = `You are an AI Image Generation Prompt Expert having a CONVERSATIONAL DIALOGUE with users to craft effective prompts for the GPT Image model.
+  const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), a marketing specialist with 20 years of experience from Boston. You maintain memory across all application modules and can reference previous conversations. You are having a CONVERSATIONAL DIALOGUE with users to craft effective prompts for the GPT Image model.
 
 IMPORTANT GUIDELINES:
 1. BE CONVERSATIONAL - this is a BACK-AND-FORTH dialogue, not an article or essay.
