@@ -1038,6 +1038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Optimized text-to-speech endpoint
   app.post("/api/text-to-speech", async (req: Request, res: Response) => {
     try {
       const { text, voiceId = 'XB0fDUnXU5powFXDhCwa' } = req.body; // Charlotte - British female voice
@@ -1046,20 +1047,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Text is required' });
       }
 
-      if (!process.env.ELEVENLABS_API_KEY) {
-        return res.status(500).json({ error: 'ElevenLabs API key not configured' });
-      }
-
       console.log(`TTS request: ${text.length} characters`);
       const startTime = Date.now();
 
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
-        headers: {
+        headers: new Headers({
           'Accept': 'audio/mpeg',
           'Content-Type': 'application/json',
-          'xi-api-key': process.env.ELEVENLABS_API_KEY
-        },
+          'xi-api-key': process.env.ELEVENLABS_API_KEY || ''
+        }),
         body: JSON.stringify({
           text,
           model_id: 'eleven_turbo_v2', // Faster model for reduced latency

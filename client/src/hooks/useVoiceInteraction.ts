@@ -163,8 +163,10 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       };
 
       if (config.autoPlay !== false) {
-        // Start playback immediately when audio is ready
-        audioRef.current.onloadeddata = () => {
+        // Start playback as soon as enough data is loaded
+        audioRef.current.oncanplay = () => {
+          setIsGeneratingAudio(false);
+          setIsSpeaking(true);
           audioRef.current?.play().catch(console.error);
         };
         audioRef.current.load(); // Force load
