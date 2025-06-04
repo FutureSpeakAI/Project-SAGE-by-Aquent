@@ -559,7 +559,10 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowLoadDialog(true)}
+                  onClick={() => {
+                    loadSavedSessions();
+                    setShowLoadDialog(true);
+                  }}
                 >
                   <FolderOpen className="h-4 w-4 mr-1" />
                   Load
