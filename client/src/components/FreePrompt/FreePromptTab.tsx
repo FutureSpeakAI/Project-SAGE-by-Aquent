@@ -593,7 +593,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                       <p className="text-lg font-medium mb-2">Hi! I'm SAGE</p>
                       <div className="text-sm space-y-2 max-w-lg mx-auto text-left">
                         <p>
-                          I'm your Strategic Adaptive Generative Engine - a marketing specialist with 20 years of experience. I'm here to collaborate with you throughout your creative process with voice processing capabilities.
+                          I'm your Strategic Adaptive Generative Engine, and I'm here to collaborate with you throughout your creative process.
                         </p>
                         <p>
                           I can conduct deep research on competitors, markets, and trends using real-time data. I also maintain memory across all modules and can guide you through the app interface, so our work together builds continuously as you move between Content, Briefing, and Visual creation.
