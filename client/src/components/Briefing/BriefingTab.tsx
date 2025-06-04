@@ -399,7 +399,7 @@ export function BriefingTab({
                         lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                           ? messages[messages.length - 1].content 
                           : undefined}
-                        isVoiceInitiated={true}
+                        isVoiceInitiated={false}
                       />
                       <Button 
                         onClick={sendMessage} 

@@ -327,7 +327,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
                     lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                       ? messages[messages.length - 1].content 
                       : undefined}
-                    isVoiceInitiated={true}
+                    isVoiceInitiated={false}
                   />
                   <Button
                     size="icon"
