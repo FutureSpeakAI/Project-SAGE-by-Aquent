@@ -34,9 +34,9 @@ export function VoiceControls({
   // Track voice conversation state
   const [isVoiceSessionActive, setIsVoiceSessionActive] = useState<boolean>(false);
 
-  // Auto-play new assistant messages if enabled
+  // Auto-play new assistant messages only during active voice sessions
   useEffect(() => {
-    if (lastMessage && autoPlayResponses && !isListening && !isSpeaking && lastMessage !== lastSpokenRef.current) {
+    if (lastMessage && autoPlayResponses && isVoiceSessionActive && !isListening && !isSpeaking && lastMessage !== lastSpokenRef.current) {
       // Clean the message text for better speech synthesis
       const cleanText = lastMessage
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
@@ -52,7 +52,7 @@ export function VoiceControls({
         speakText(cleanText);
       }
     }
-  }, [lastMessage, autoPlayResponses, isListening, isSpeaking, speakText]);
+  }, [lastMessage, autoPlayResponses, isVoiceSessionActive, isListening, isSpeaking, speakText]);
 
   // Auto-reactivate microphone only after SAGE finishes speaking (not on errors or initial load)
   const lastSpeakingRef = useRef(false);
