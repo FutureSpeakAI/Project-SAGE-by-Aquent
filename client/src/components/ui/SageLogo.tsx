@@ -12,45 +12,35 @@ export function SageLogo({ className, size = 24 }: SageLogoProps) {
       height={size} 
       viewBox="0 0 200 200" 
       className={cn("text-[#F15A22]", className)}
-      fill="none"
+      fill="currentColor"
     >
-      {/* Sage leaf inspired by your icon - elongated oval leaf shape */}
-      <path
-        fill="currentColor"
-        d="M100 25C85 25 70 35 60 50C50 65 50 85 55 100C60 115 70 125 80 135C85 140 90 145 95 150C97 152 99 153 100 153C101 153 103 152 105 150C110 145 115 140 120 135C130 125 140 115 145 100C150 85 150 65 140 50C130 35 115 25 100 25Z"
+      {/* Head */}
+      <ellipse
+        cx="100"
+        cy="55"
+        rx="30"
+        ry="35"
       />
       
-      {/* Central vein */}
+      {/* Body/Torso with curved bottom opening */}
       <path
-        fill="currentColor"
-        d="M100 30L100 145"
-        stroke="currentColor"
-        strokeWidth="2"
-        fillOpacity="0.3"
+        d="M65 95C65 85 80 75 100 75C120 75 135 85 135 95L135 130C135 140 130 145 120 145L115 145C115 150 110 155 100 155C90 155 85 150 85 145L80 145C70 145 65 140 65 130L65 95Z"
       />
       
-      {/* Left side veins */}
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1"
-        strokeOpacity="0.4"
-        d="M100 45L85 55M100 60L80 75M100 75L85 90M100 90L90 105M100 105L95 120"
+      {/* Cross-legged sitting position */}
+      <ellipse
+        cx="75"
+        cy="170"
+        rx="40"
+        ry="18"
+        transform="rotate(-8 75 170)"
       />
-      
-      {/* Right side veins */}
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1"
-        strokeOpacity="0.4"
-        d="M100 45L115 55M100 60L120 75M100 75L115 90M100 90L110 105M100 105L105 120"
-      />
-      
-      {/* Small stem */}
-      <path
-        fill="currentColor"
-        d="M98 150L100 170L102 150Z"
+      <ellipse
+        cx="125"
+        cy="170"
+        rx="40"
+        ry="18"
+        transform="rotate(8 125 170)"
       />
     </svg>
   );
