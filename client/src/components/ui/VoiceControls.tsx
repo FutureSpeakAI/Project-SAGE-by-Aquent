@@ -29,7 +29,7 @@ export function VoiceControls({
 
   // Auto-play new assistant messages if enabled
   useEffect(() => {
-    if (lastMessage && autoPlayResponses && !isListening) {
+    if (lastMessage && autoPlayResponses && !isListening && !isSpeaking) {
       // Clean the message text for better speech synthesis
       const cleanText = lastMessage
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
@@ -40,11 +40,11 @@ export function VoiceControls({
         .replace(/\n+/g, ' ') // Replace newlines with spaces
         .trim();
       
-      if (cleanText) {
+      if (cleanText && cleanText.length > 10) { // Only speak substantial messages
         speakText(cleanText);
       }
     }
-  }, [lastMessage, autoPlayResponses, isListening, speakText]);
+  }, [lastMessage, autoPlayResponses, isListening, isSpeaking, speakText]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -52,15 +52,22 @@ export function VoiceControls({
   }, [cleanup]);
 
   const handleMicToggle = () => {
+    console.log('Mic toggle clicked, isListening:', isListening);
     if (isListening) {
       stopListening();
     } else if (onTranscript) {
-      startListening(onTranscript);
+      console.log('Starting speech recognition...');
+      startListening((transcript) => {
+        console.log('Transcript received:', transcript);
+        onTranscript(transcript);
+      });
     }
   };
 
   const handleSpeakerToggle = () => {
+    console.log('Speaker toggle clicked, isSpeaking:', isSpeaking, 'lastMessage:', lastMessage);
     if (isSpeaking || isGeneratingAudio) {
+      console.log('Stopping speech...');
       stopSpeaking();
     } else if (lastMessage) {
       const cleanText = lastMessage
@@ -72,7 +79,9 @@ export function VoiceControls({
         .replace(/\n+/g, ' ')
         .trim();
       
+      console.log('Clean text for speech:', cleanText);
       if (cleanText) {
+        console.log('Starting text-to-speech...');
         speakText(cleanText);
       }
     }

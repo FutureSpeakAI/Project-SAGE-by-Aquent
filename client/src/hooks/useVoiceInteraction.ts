@@ -25,7 +25,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       return null;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     
     recognition.continuous = false;
@@ -48,13 +48,13 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       setIsListening(true);
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       onResult(transcript);
       setIsListening(false);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
       setIsListening(false);
       toast({
