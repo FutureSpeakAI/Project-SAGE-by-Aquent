@@ -350,10 +350,11 @@ export function BriefingTab({
                       />
                       <VoiceControls
                         onTranscript={(text) => {
-                          setUserInput(prev => prev + text);
+                          const newMessage = userInput + text;
+                          setUserInput(newMessage);
                           // Auto-send after a delay to ensure state updates
                           setTimeout(() => {
-                            if ((userInput + text).trim()) {
+                            if (newMessage.trim()) {
                               sendMessage();
                             }
                           }, 300);
