@@ -350,6 +350,7 @@ export function BriefingTab({
                       />
                       <VoiceControls
                         onTranscript={(text) => setUserInput(prev => prev + text)}
+                        onSendMessage={sendMessage}
                         lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                           ? messages[messages.length - 1].content 
                           : undefined}
