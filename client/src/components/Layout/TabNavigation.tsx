@@ -21,7 +21,7 @@ export function TabNavigation({ activeTab, onChangeTab }: TabNavigationProps) {
             className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
           >
             <MessageCircle className="h-4 w-4" />
-            <span>Agent</span>
+            <span>SAGE</span>
           </TabsTrigger>
           <TabsTrigger
             value={AppTab.BRIEFING}

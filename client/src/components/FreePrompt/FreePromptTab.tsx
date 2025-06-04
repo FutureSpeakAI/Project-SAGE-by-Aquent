@@ -317,7 +317,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-[#F15A22]" />
-                Free Prompt Agent
+                SAGE
+                <span className="text-sm font-normal text-gray-500">(Strategic Adaptive Generative Engine)</span>
               </CardTitle>
             </div>
             <Input
@@ -335,9 +336,9 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
                     <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium mb-2">Welcome to Free Prompt Agent</p>
+                    <p className="text-lg font-medium mb-2">Welcome! I'm SAGE</p>
                     <p className="text-sm">
-                      Start a conversation with your AI assistant. I can help with research, content creation, and cross-module learning.
+                      I'm your Strategic Adaptive Generative Engine. I'm here to collaborate with you on marketing projects, conduct deep research, and help speed up your creative work.
                     </p>
                   </div>
                 ) : (
