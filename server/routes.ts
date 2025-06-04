@@ -1067,9 +1067,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           text: processedText,
           model_id: 'eleven_turbo_v2', // Faster model for reduced latency
           voice_settings: {
-            stability: 0.5, // Moderate stability for natural British delivery
-            similarity_boost: 0.8, // Good consistency while preserving accent
-            style: 0.4, // Moderate style for professional energy
+            stability: 0.7, // Higher stability for professional, controlled delivery
+            similarity_boost: 0.85, // High consistency for professional tone
+            style: 0.2, // Lower style for more formal, professional sound
             use_speaker_boost: true
           },
           output_format: "mp3_22050_32" // Lower quality for faster processing

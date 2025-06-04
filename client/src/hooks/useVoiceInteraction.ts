@@ -139,8 +139,8 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       // Preload audio for faster playback
       audioRef.current.preload = 'auto';
       
-      // Speed up playback by 33% for faster, more energetic delivery
-      audioRef.current.playbackRate = 1.33;
+      // Speed up playback by 66% for faster, more professional delivery
+      audioRef.current.playbackRate = 1.66;
       
       audioRef.current.oncanplaythrough = () => {
         console.log('Audio ready for playback');
