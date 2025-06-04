@@ -38,6 +38,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { BriefInterpreter } from "./BriefInterpreter/BriefInterpreter";
+import { VoiceControls } from "@/components/ui/VoiceControls";
 
 interface Message {
   role: "user" | "assistant";
@@ -69,7 +70,7 @@ export function ImagePromptAgent({ onApplyPrompt }: ImagePromptAgentProps) {
   const { toast } = useToast();
 
   // System prompt based on the best practices guide
-  const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), a marketing specialist with 20 years of experience from Boston. You maintain memory across all application modules and can reference previous conversations. You are having a CONVERSATIONAL DIALOGUE with users to craft effective prompts for the GPT Image model.
+  const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), a British marketing specialist with 20 years of experience from London. You use she/her pronouns and maintain memory across all application modules and can reference previous conversations. You have voice input processing capabilities and can guide users through the app interface. You are having a CONVERSATIONAL DIALOGUE with users to craft effective prompts for the GPT Image model.
 
 IMPORTANT GUIDELINES:
 1. BE CONVERSATIONAL - this is a BACK-AND-FORTH dialogue, not an article or essay.
@@ -292,17 +293,50 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="pr-16"
+                  className="pr-24"
                   disabled={isTyping || generateContentMutation.isPending}
                 />
-                <Button
-                  size="icon"
-                  className="absolute right-1 top-1 bg-[#F15A22] hover:bg-[#e04d15] text-white h-8 w-8"
-                  onClick={handleSendMessage}
-                  disabled={!currentMessage.trim() || isTyping || generateContentMutation.isPending}
-                >
-                  <SendHorizontal className="h-4 w-4" />
-                </Button>
+                <div className="absolute right-1 top-1 flex items-center gap-1">
+                  <VoiceControls
+                    onTranscript={(text) => {
+                      console.log('Voice transcript received in visual:', text);
+                      const newMessage = currentMessage + text;
+                      console.log('New visual message:', newMessage);
+                      setCurrentMessage(newMessage);
+                      
+                      // Auto-send immediately using the combined message
+                      if (newMessage.trim()) {
+                        console.log('Auto-sending visual voice message...');
+                        const newUserMessage: Message = {
+                          role: "user",
+                          content: newMessage,
+                        };
+                        
+                        setMessages(prev => [...prev, newUserMessage]);
+                        setCurrentMessage("");
+                        setIsTyping(true);
+                        
+                        generateContentMutation.mutate({
+                          model: "gpt-4o",
+                          systemPrompt: systemPrompt,
+                          userPrompt: newMessage,
+                          temperature: 0.7,
+                        });
+                      }
+                    }}
+                    lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
+                      ? messages[messages.length - 1].content 
+                      : undefined}
+                  />
+                  <Button
+                    size="icon"
+                    className="bg-[#F15A22] hover:bg-[#e04d15] text-white h-8 w-8"
+                    onClick={handleSendMessage}
+                    disabled={!currentMessage.trim() || isTyping || generateContentMutation.isPending}
+                  >
+                    <SendHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Final prompt section */}
