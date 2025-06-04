@@ -6,6 +6,7 @@ import { processBrief } from "./brief-processing";
 import { processImage } from "./image-processing";
 import { upload } from './index';
 import OpenAI from "openai";
+import { performDeepResearch } from "./research-engine";
 import { 
   GeneratedContent, 
   InsertGeneratedContent, 
@@ -922,6 +923,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Simple chat endpoint for Free Prompt agent
+  // Test endpoint for deep research functionality
+  app.post("/api/test-research", async (req: Request, res: Response) => {
+    try {
+      const { query, researchType } = req.body;
+      
+      if (!query || !researchType) {
+        return res.status(400).json({ error: "Query and research type are required" });
+      }
+
+      const researchResult = await performDeepResearch(query, researchType);
+      
+      res.json({
+        query,
+        researchType,
+        result: researchResult,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Research test error:', error);
+      res.status(500).json({ error: "Research test failed" });
+    }
+  });
+
   app.post("/api/chat", async (req: Request, res: Response) => {
     try {
       const { message, model, temperature, context } = req.body;
@@ -935,12 +959,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.OPENAI_API_KEY,
       });
 
-      // Build system prompt with research context if available
-      let systemPrompt = 'You are a helpful AI assistant for content creation and marketing. Respond only with conversational text - no buttons, badges, clickable elements, or UI components. Never create fake interface elements like "Context Memory" or "Cross-Module Learning" buttons. Just provide helpful information in plain conversational text.';
-      
+      // Check if this is a research-enhanced request
       if (context?.researchContext) {
-        systemPrompt += `\n\nResearch Focus: ${context.researchContext} Apply this research perspective to provide comprehensive, actionable insights based on the user's specific situation.`;
+        // Perform actual research using external sources
+        const researchResults = await performDeepResearch(message, context.researchContext);
+        
+        // Build system prompt with real research data
+        const systemPrompt = `You are a helpful AI assistant for content creation and marketing. You have access to current research data about the user's query. Use the provided research to give comprehensive, actionable insights.
+
+Research Data: ${researchResults}
+
+Respond only with conversational text - no buttons, badges, or UI elements. Provide specific, actionable insights based on the research data.`;
+
+        const messages = [
+          { role: 'system' as const, content: systemPrompt },
+          { role: 'user' as const, content: message }
+        ];
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages,
+          temperature: 0.7,
+          max_tokens: 2000,
+        });
+
+        const reply = completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
+        
+        return res.json({ 
+          content: reply,
+          model: "gpt-4o",
+          timestamp: new Date().toISOString()
+        });
       }
+
+      // Standard response without research
+      let systemPrompt = 'You are a helpful AI assistant for content creation and marketing. Respond only with conversational text - no buttons, badges, clickable elements, or UI components. Never create fake interface elements like "Context Memory" or "Cross-Module Learning" buttons. Just provide helpful information in plain conversational text.';
 
       // Simple message structure
       const messages = [
