@@ -1041,7 +1041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Optimized text-to-speech endpoint
   app.post("/api/text-to-speech", async (req: Request, res: Response) => {
     try {
-      const { text, voiceId = 'cgSgspJ2msm6clMCkdW9' } = req.body; // Jessica - Professional British female voice
+      const { text, voiceId = 'EXAVITQu4vr4xnSDxMaL' } = req.body; // Bella - Professional British female voice
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: 'Text is required' });
@@ -1061,9 +1061,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           text,
           model_id: 'eleven_turbo_v2', // Faster model for reduced latency
           voice_settings: {
-            stability: 0.2, // Very low for crisp, professional delivery
-            similarity_boost: 0.95, // Very high for consistency
-            style: 0.8, // High style for energetic professional tone
+            stability: 0.4, // Moderate stability for professional British delivery
+            similarity_boost: 0.85, // High consistency while preserving accent
+            style: 0.5, // Balanced style for professional energy
             use_speaker_boost: true
           },
           output_format: "mp3_22050_32" // Lower quality for faster processing
