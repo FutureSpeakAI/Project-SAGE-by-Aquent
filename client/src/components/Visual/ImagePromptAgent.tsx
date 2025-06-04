@@ -16,6 +16,7 @@ import {
   FileUp,
   FileText,
 } from "lucide-react";
+import { SageLogo } from "@/components/ui/SageLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -226,7 +227,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
           <Tabs defaultValue="conversation" className="w-full">
             <TabsList className="mb-4 grid grid-cols-2">
               <TabsTrigger value="conversation" className="flex items-center">
-                <Bot className="mr-2 h-4 w-4" />
+                <SageLogo size={16} className="mr-2" />
                 Conversation
               </TabsTrigger>
               <TabsTrigger value="brief" className="flex items-center">
@@ -239,7 +240,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
             <TabsContent value="conversation" className="space-y-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
-                  <Bot className="h-5 w-5 mr-2 text-[#F15A22]" />
+                  <SageLogo size={20} className="mr-2" />
                   <span className="font-medium">Conversation Assistant</span>
                 </div>
                 <Button

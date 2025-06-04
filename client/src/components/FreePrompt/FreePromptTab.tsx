@@ -364,7 +364,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                             ? 'bg-[#F15A22] text-white' 
                             : 'bg-gray-100 text-gray-600'
                         }`}>
-                          {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                          {message.role === 'user' ? <User className="h-4 w-4" /> : <SageLogo size={16} />}
                         </div>
                         <div className={`p-3 rounded-lg ${
                           message.role === 'user'
@@ -383,7 +383,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 {isTyping && (
                   <div className="flex gap-3 justify-start">
                     <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
-                      <Bot className="h-4 w-4" />
+                      <SageLogo size={16} />
                     </div>
                     <div className="bg-gray-100 text-gray-900 p-3 rounded-lg">
                       <div className="flex space-x-1">
