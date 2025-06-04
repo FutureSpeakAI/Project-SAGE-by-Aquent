@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface VoiceControlsProps {
   onTranscript?: (text: string) => void;
@@ -27,9 +27,12 @@ export function VoiceControls({
     cleanup
   } = useVoiceInteraction({ autoPlay: autoPlayResponses });
 
+  // Track the last spoken message to prevent repeats
+  const lastSpokenRef = useRef<string>('');
+
   // Auto-play new assistant messages if enabled
   useEffect(() => {
-    if (lastMessage && autoPlayResponses && !isListening && !isSpeaking) {
+    if (lastMessage && autoPlayResponses && !isListening && !isSpeaking && lastMessage !== lastSpokenRef.current) {
       // Clean the message text for better speech synthesis
       const cleanText = lastMessage
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
@@ -41,6 +44,7 @@ export function VoiceControls({
         .trim();
       
       if (cleanText && cleanText.length > 10) { // Only speak substantial messages
+        lastSpokenRef.current = lastMessage; // Mark this message as spoken
         speakText(cleanText);
       }
     }
@@ -95,7 +99,7 @@ export function VoiceControls({
         size="sm"
         onClick={handleMicToggle}
         disabled={isSpeaking || isGeneratingAudio}
-        className={isListening ? "bg-red-500 hover:bg-red-600 text-white" : ""}
+        className={isListening ? "bg-green-500 hover:bg-green-600 text-white" : ""}
       >
         {isListening ? (
           <MicOff className="h-4 w-4" />

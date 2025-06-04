@@ -1039,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/text-to-speech", async (req: Request, res: Response) => {
     try {
-      const { text, voiceId = 'pNInz6obpgDQGcFmaJgB' } = req.body;
+      const { text, voiceId = 'XB0fDUnXU5powFXDhCwa' } = req.body; // Charlotte - British female voice
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: 'Text is required' });
