@@ -4,10 +4,11 @@ import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
 import { useEffect, useRef, useState } from "react";
 
 interface VoiceControlsProps {
-  onTranscript?: (text: string) => void;
+  onTranscript?: (text: string, isVoiceInitiated?: boolean) => void;
   onSendMessage?: () => void; // Function to automatically send the message
   lastMessage?: string;
   autoPlayResponses?: boolean;
+  isVoiceInitiated?: boolean;
   className?: string;
 }
 
@@ -16,6 +17,7 @@ export function VoiceControls({
   onSendMessage,
   lastMessage, 
   autoPlayResponses = true,
+  isVoiceInitiated = false,
   className = ""
 }: VoiceControlsProps) {
   const {
@@ -34,9 +36,9 @@ export function VoiceControls({
   // Track voice conversation state
   const [isVoiceSessionActive, setIsVoiceSessionActive] = useState<boolean>(false);
 
-  // Auto-play new assistant messages only during active voice sessions
+  // Auto-play new assistant messages only during active voice sessions or when voice is initiated
   useEffect(() => {
-    if (lastMessage && autoPlayResponses && isVoiceSessionActive && !isListening && !isSpeaking && lastMessage !== lastSpokenRef.current) {
+    if (lastMessage && autoPlayResponses && (isVoiceSessionActive || isVoiceInitiated) && !isListening && !isSpeaking && lastMessage !== lastSpokenRef.current) {
       // Clean the message text for better speech synthesis
       const cleanText = lastMessage
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
@@ -67,7 +69,7 @@ export function VoiceControls({
             console.log('Auto-reactivating microphone after SAGE finished speaking...');
             startListening((transcript) => {
               if (onTranscript) {
-                onTranscript(transcript);
+                onTranscript(transcript, isVoiceSessionActive);
               }
             });
           }
@@ -99,7 +101,7 @@ export function VoiceControls({
       startListening((transcript) => {
         console.log('Transcript received:', transcript);
         if (onTranscript) {
-          onTranscript(transcript);
+          onTranscript(transcript, true);
         }
       });
     }

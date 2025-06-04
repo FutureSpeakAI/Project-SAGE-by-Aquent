@@ -298,7 +298,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
                 />
                 <div className="absolute right-1 top-1 flex items-center gap-1">
                   <VoiceControls
-                    onTranscript={(text) => {
+                    onTranscript={(text, isVoiceInitiated) => {
                       console.log('Voice transcript received in visual:', text);
                       const newMessage = currentMessage + text;
                       console.log('New visual message:', newMessage);
@@ -327,6 +327,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
                     lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                       ? messages[messages.length - 1].content 
                       : undefined}
+                    isVoiceInitiated={true}
                   />
                   <Button
                     size="icon"

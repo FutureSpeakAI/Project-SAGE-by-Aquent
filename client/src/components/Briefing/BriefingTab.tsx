@@ -349,7 +349,7 @@ export function BriefingTab({
                         className="flex-grow"
                       />
                       <VoiceControls
-                        onTranscript={(text) => {
+                        onTranscript={(text, isVoiceInitiated) => {
                           console.log('Voice transcript received in briefing:', text);
                           const newMessage = userInput + text;
                           console.log('New briefing message:', newMessage);
@@ -399,6 +399,7 @@ export function BriefingTab({
                         lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                           ? messages[messages.length - 1].content 
                           : undefined}
+                        isVoiceInitiated={true}
                       />
                       <Button 
                         onClick={sendMessage} 
