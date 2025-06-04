@@ -350,14 +350,51 @@ export function BriefingTab({
                       />
                       <VoiceControls
                         onTranscript={(text) => {
+                          console.log('Voice transcript received in briefing:', text);
                           const newMessage = userInput + text;
+                          console.log('New briefing message:', newMessage);
                           setUserInput(newMessage);
-                          // Auto-send after a delay to ensure state updates
-                          setTimeout(() => {
-                            if (newMessage.trim()) {
-                              sendMessage();
-                            }
-                          }, 300);
+                          
+                          // Auto-send immediately using the combined message
+                          if (newMessage.trim()) {
+                            console.log('Auto-sending briefing voice message...');
+                            const userMessage = {
+                              role: 'user' as const,
+                              content: newMessage
+                            };
+                            
+                            setMessages(prev => [...prev, userMessage]);
+                            setIsLoading(true);
+                            setUserInput("");
+                            
+                            // Send to SAGE for briefing conversation
+                            fetch('/api/chat', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                message: newMessage,
+                                context: {
+                                  capabilities: ["Context Memory", "Cross-Module Learning"],
+                                  persona: "default",
+                                  sessionHistory: messages.slice(-5),
+                                  researchContext: null
+                                }
+                              })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                              const assistantMessage = {
+                                role: 'assistant' as const,
+                                content: data.content || data.text || 'No response received'
+                              };
+                              setMessages(prev => [...prev, assistantMessage]);
+                              setIsLoading(false);
+                            })
+                            .catch(err => {
+                              console.error('Chat error:', err);
+                              setIsLoading(false);
+                            });
+                          }
                         }}
                         lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                           ? messages[messages.length - 1].content 

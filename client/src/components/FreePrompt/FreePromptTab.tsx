@@ -717,14 +717,36 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 <div className="flex items-center gap-2">
                   <VoiceControls
                     onTranscript={(text) => {
+                      console.log('Voice transcript received:', text);
                       const newMessage = inputMessage + text;
+                      console.log('New combined message:', newMessage);
                       setInputMessage(newMessage);
-                      // Auto-send after a delay to ensure state updates
-                      setTimeout(() => {
-                        if (newMessage.trim()) {
-                          handleSendMessage();
-                        }
-                      }, 300);
+                      
+                      // Auto-send immediately using the combined message
+                      if (newMessage.trim()) {
+                        console.log('Auto-sending voice message...');
+                        const userMessage = {
+                          id: Date.now().toString() + '_user',
+                          role: 'user' as const,
+                          content: newMessage,
+                          timestamp: new Date()
+                        };
+                        
+                        setMessages(prev => [...prev, userMessage]);
+                        setIsTyping(true);
+                        
+                        chatMutation.mutate({ 
+                          message: newMessage,
+                          context: {
+                            capabilities: getActiveCapabilities(),
+                            persona: selectedPersona,
+                            sessionHistory: messages.slice(-5),
+                            researchContext: activeResearchContext
+                          }
+                        });
+                        
+                        setInputMessage("");
+                      }
                     }}
                     lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                       ? messages[messages.length - 1].content 
