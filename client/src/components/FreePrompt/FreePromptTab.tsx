@@ -166,6 +166,12 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
     }
   ]);
 
+  // Session management state
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [saveSessionName, setSaveSessionName] = useState("");
+  const [savedSessions, setSavedSessions] = useState<any[]>([]);
+
   // Chat mutation for sending messages
   const chatMutation = useMutation({
     mutationFn: async (data: { message: string; context?: any }) => {
@@ -304,6 +310,201 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
       )
     );
   };
+
+  // Session management functions
+  const saveSession = async () => {
+    if (!saveSessionName.trim() || messages.length === 0) {
+      toast({
+        title: "Cannot save session",
+        description: "Please enter a session name and have at least one message",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const sessionData = {
+        name: saveSessionName,
+        messages: messages.map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp.toISOString()
+        }))
+      };
+
+      const response = await fetch('/api/chat-sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sessionData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save session');
+      }
+
+      toast({
+        title: "Session saved",
+        description: `Session "${saveSessionName}" has been saved successfully`
+      });
+
+      setShowSaveDialog(false);
+      setSaveSessionName("");
+      loadSavedSessions();
+    } catch (error) {
+      toast({
+        title: "Error saving session",
+        description: "Failed to save the session. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadSavedSessions = async () => {
+    try {
+      const response = await fetch('/api/chat-sessions');
+      if (response.ok) {
+        const sessions = await response.json();
+        setSavedSessions(sessions);
+      }
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+    }
+  };
+
+  const loadSession = (session: any) => {
+    const loadedMessages = session.messages.map((msg: any) => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      timestamp: new Date(msg.timestamp)
+    }));
+
+    setMessages(loadedMessages);
+    setSessionName(session.name);
+    setShowLoadDialog(false);
+    
+    toast({
+      title: "Session loaded",
+      description: `Loaded session "${session.name}"`
+    });
+  };
+
+  const deleteSession = async (sessionId: number) => {
+    try {
+      const response = await fetch(`/api/chat-sessions/${sessionId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete session');
+      }
+      
+      toast({
+        title: "Session deleted",
+        description: "Session has been deleted successfully"
+      });
+      
+      loadSavedSessions();
+    } catch (error) {
+      toast({
+        title: "Error deleting session",
+        description: "Failed to delete the session. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const exportSessionToTxt = () => {
+    if (messages.length === 0) {
+      toast({
+        title: "Nothing to export",
+        description: "No messages to export",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const content = messages.map(msg => 
+      `[${msg.timestamp.toLocaleString()}] ${msg.role.toUpperCase()}: ${msg.content}`
+    ).join('\n\n');
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${sessionName || 'chat-session'}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Session exported",
+      description: "Chat session has been exported to text file"
+    });
+  };
+
+  const importSessionFromTxt = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      if (!content) return;
+
+      try {
+        // Parse the imported text content
+        const lines = content.split('\n\n');
+        const importedMessages: ChatMessage[] = [];
+
+        lines.forEach((line, index) => {
+          const match = line.match(/\[(.*?)\] (USER|ASSISTANT): (.*)/);
+          if (match) {
+            const [, timestamp, role, messageContent] = match;
+            importedMessages.push({
+              id: `imported_${Date.now()}_${index}`,
+              role: role.toLowerCase() as 'user' | 'assistant',
+              content: messageContent,
+              timestamp: new Date(timestamp)
+            });
+          }
+        });
+
+        if (importedMessages.length > 0) {
+          setMessages(importedMessages);
+          setSessionName(`Imported ${file.name.replace('.txt', '')}`);
+          toast({
+            title: "Session imported",
+            description: `Imported ${importedMessages.length} messages`
+          });
+        } else {
+          toast({
+            title: "Import failed",
+            description: "Could not parse the file format",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Import failed",
+          description: "Error reading the file",
+          variant: "destructive"
+        });
+      }
+    };
+
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  // Load saved sessions on component mount
+  useEffect(() => {
+    loadSavedSessions();
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
