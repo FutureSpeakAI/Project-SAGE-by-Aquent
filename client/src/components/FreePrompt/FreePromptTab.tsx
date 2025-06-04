@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { SageLogo } from "@/components/ui/SageLogo";
+import { VoiceControls } from "@/components/ui/VoiceControls";
 import { 
   MessageCircle, 
   Send, 
@@ -709,13 +710,21 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                     </Button>
                   </div>
                 </div>
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputMessage.trim() || isTyping}
-                  className="bg-[#F15A22] hover:bg-[#E14A1A] self-end"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <VoiceControls
+                    onTranscript={(text) => setInputMessage(prev => prev + text)}
+                    lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
+                      ? messages[messages.length - 1].content 
+                      : undefined}
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!inputMessage.trim() || isTyping}
+                    className="bg-[#F15A22] hover:bg-[#E14A1A]"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

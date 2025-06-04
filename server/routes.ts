@@ -1037,6 +1037,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/text-to-speech", async (req: Request, res: Response) => {
+    try {
+      const { text, voiceId = 'pNInz6obpgDQGcFmaJgB' } = req.body;
+
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: 'Text is required' });
+      }
+
+      if (!process.env.ELEVENLABS_API_KEY) {
+        return res.status(500).json({ error: 'ElevenLabs API key not configured' });
+      }
+
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': process.env.ELEVENLABS_API_KEY
+        },
+        body: JSON.stringify({
+          text,
+          model_id: 'eleven_monolingual_v1',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('ElevenLabs API error:', response.status, errorText);
+        return res.status(response.status).json({ error: 'Text-to-speech generation failed' });
+      }
+
+      const audioBuffer = await response.arrayBuffer();
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', audioBuffer.byteLength.toString());
+      res.send(Buffer.from(audioBuffer));
+
+    } catch (error) {
+      console.error('Text-to-speech error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   app.post("/api/chat", async (req: Request, res: Response) => {
     try {
       const { message, model, temperature, context } = req.body;

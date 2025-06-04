@@ -9,6 +9,7 @@ import { SavedPersona } from "@/lib/types";
 import { FileText, Loader2, Save, Send, Upload, FormInput, MessageSquare } from "lucide-react";
 import { BriefingForm } from "./BriefingForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VoiceControls } from "@/components/ui/VoiceControls";
 
 // Animation for chat messages
 const messageAnimation = {
@@ -346,6 +347,12 @@ export function BriefingTab({
                         onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                         disabled={isLoading}
                         className="flex-grow"
+                      />
+                      <VoiceControls
+                        onTranscript={(text) => setUserInput(prev => prev + text)}
+                        lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
+                          ? messages[messages.length - 1].content 
+                          : undefined}
                       />
                       <Button 
                         onClick={sendMessage} 
