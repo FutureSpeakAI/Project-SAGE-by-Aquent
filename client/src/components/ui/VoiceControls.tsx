@@ -29,6 +29,8 @@ export function VoiceControls({
 
   // Track the last spoken message to prevent repeats
   const lastSpokenRef = useRef<string>('');
+  // Track if user has initiated voice conversation
+  const hasUsedVoiceRef = useRef<boolean>(false);
 
   // Auto-play new assistant messages if enabled
   useEffect(() => {
@@ -50,21 +52,8 @@ export function VoiceControls({
     }
   }, [lastMessage, autoPlayResponses, isListening, isSpeaking, speakText]);
 
-  // Auto-reactivate microphone after SAGE finishes speaking for natural conversation
-  useEffect(() => {
-    if (!isSpeaking && !isGeneratingAudio && !isListening && onTranscript && autoPlayResponses) {
-      // Small delay to ensure speech has fully stopped
-      const timer = setTimeout(() => {
-        if (!isSpeaking && !isGeneratingAudio && onTranscript) {
-          startListening((transcript) => {
-            onTranscript(transcript);
-          });
-        }
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isSpeaking, isGeneratingAudio, isListening, onTranscript, autoPlayResponses, startListening]);
+  // Note: Auto-reactivation removed to prevent unwanted microphone activation
+  // Users must manually click the microphone button to start voice input
 
   // Cleanup on unmount
   useEffect(() => {
@@ -77,6 +66,7 @@ export function VoiceControls({
       stopListening();
     } else if (onTranscript) {
       console.log('Starting speech recognition...');
+      hasUsedVoiceRef.current = true; // Mark that user has initiated voice conversation
       startListening((transcript) => {
         console.log('Transcript received:', transcript);
         onTranscript(transcript);
