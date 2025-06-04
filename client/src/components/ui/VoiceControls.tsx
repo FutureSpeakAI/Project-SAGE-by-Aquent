@@ -9,6 +9,7 @@ interface VoiceControlsProps {
   lastMessage?: string;
   autoPlayResponses?: boolean;
   isVoiceInitiated?: boolean;
+  onVoiceStateChange?: (isVoiceActive: boolean) => void;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ export function VoiceControls({
   lastMessage, 
   autoPlayResponses = true,
   isVoiceInitiated = false,
+  onVoiceStateChange,
   className = ""
 }: VoiceControlsProps) {
   const {
@@ -93,11 +95,13 @@ export function VoiceControls({
     } else if (isVoiceSessionActive) {
       // User wants to end the voice session
       setIsVoiceSessionActive(false);
+      onVoiceStateChange?.(false);
       console.log('Voice session ended by user');
     } else if (onTranscript) {
       // User wants to start voice conversation
       console.log('Starting voice session...');
       setIsVoiceSessionActive(true);
+      onVoiceStateChange?.(true);
       startListening((transcript) => {
         console.log('Transcript received:', transcript);
         if (onTranscript) {

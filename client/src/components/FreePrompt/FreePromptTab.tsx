@@ -173,6 +173,9 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [saveSessionName, setSaveSessionName] = useState("");
   const [savedSessions, setSavedSessions] = useState<any[]>([]);
+  
+  // Voice conversation state
+  const [isVoiceConversationActive, setIsVoiceConversationActive] = useState(false);
 
   // Chat mutation for sending messages
   const chatMutation = useMutation({
@@ -271,7 +274,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
         capabilities: getActiveCapabilities(),
         persona: selectedPersona,
         sessionHistory: messages.slice(-5), // Last 5 messages for context
-        researchContext: activeResearchContext
+        researchContext: activeResearchContext,
+        isVoiceConversation: isVoiceConversationActive
       }
     });
     
@@ -759,7 +763,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                             capabilities: getActiveCapabilities(),
                             persona: selectedPersona,
                             sessionHistory: messages.slice(-5),
-                            researchContext: activeResearchContext
+                            researchContext: activeResearchContext,
+                            isVoiceConversation: isVoiceConversationActive
                           }
                         });
                         
@@ -769,6 +774,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                     lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                       ? messages[messages.length - 1].content 
                       : undefined}
+                    onVoiceStateChange={setIsVoiceConversationActive}
                   />
                   <Button
                     onClick={handleSendMessage}
