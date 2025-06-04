@@ -185,10 +185,13 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
 
   // Stop current speech
   const stopSpeaking = useCallback(() => {
+    console.log('Stopping speech playback...');
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.src = ''; // Clear the audio source
       setIsSpeaking(false);
+      setIsGeneratingAudio(false);
     }
   }, []);
 
