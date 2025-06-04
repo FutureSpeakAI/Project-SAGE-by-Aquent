@@ -54,31 +54,29 @@ export function VoiceControls({
     }
   }, [lastMessage, autoPlayResponses, isListening, isSpeaking, speakText]);
 
-  // Auto-reactivate microphone after SAGE finishes speaking during active voice session
+  // Auto-reactivate microphone only after SAGE finishes speaking (not on errors or initial load)
+  const lastSpeakingRef = useRef(false);
+  
   useEffect(() => {
-    if (isVoiceSessionActive && !isSpeaking && !isGeneratingAudio && !isListening && onTranscript) {
-      // Small delay to ensure speech has fully stopped
-      const timer = setTimeout(() => {
-        if (isVoiceSessionActive && !isSpeaking && !isGeneratingAudio && !isListening && onTranscript) {
-          console.log('Auto-reactivating microphone for voice session...');
-          startListening((transcript) => {
-            if (onTranscript) {
-              onTranscript(transcript);
-            }
-            // Auto-send the message after speech recognition completes
-            if (onSendMessage) {
-              setTimeout(() => {
-                console.log('Auto-sending message after voice reactivation...');
-                onSendMessage();
-              }, 200);
-            }
-          });
-        }
-      }, 1000);
-
-      return () => clearTimeout(timer);
+    // Track when SAGE just finished speaking
+    if (lastSpeakingRef.current && !isSpeaking && !isGeneratingAudio) {
+      console.log('SAGE finished speaking, will reactivate microphone soon...');
+      if (isVoiceSessionActive && !isListening && onTranscript) {
+        const timer = setTimeout(() => {
+          if (isVoiceSessionActive && !isSpeaking && !isGeneratingAudio && !isListening && onTranscript) {
+            console.log('Auto-reactivating microphone after SAGE finished speaking...');
+            startListening((transcript) => {
+              if (onTranscript) {
+                onTranscript(transcript);
+              }
+            });
+          }
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [isVoiceSessionActive, isSpeaking, isGeneratingAudio, isListening, onTranscript, startListening]);
+    lastSpeakingRef.current = isSpeaking || isGeneratingAudio;
+  }, [isSpeaking, isGeneratingAudio, isVoiceSessionActive, isListening, onTranscript, startListening]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -102,13 +100,6 @@ export function VoiceControls({
         console.log('Transcript received:', transcript);
         if (onTranscript) {
           onTranscript(transcript);
-        }
-        // Auto-send the message after speech recognition completes
-        if (onSendMessage) {
-          setTimeout(() => {
-            console.log('Auto-sending message after voice input...');
-            onSendMessage();
-          }, 200); // Increased delay to ensure transcript is processed
         }
       });
     }

@@ -716,8 +716,15 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 </div>
                 <div className="flex items-center gap-2">
                   <VoiceControls
-                    onTranscript={(text) => setInputMessage(prev => prev + text)}
-                    onSendMessage={handleSendMessage}
+                    onTranscript={(text) => {
+                      setInputMessage(prev => prev + text);
+                      // Auto-send after a delay to ensure state updates
+                      setTimeout(() => {
+                        if ((inputMessage + text).trim()) {
+                          handleSendMessage();
+                        }
+                      }, 300);
+                    }}
                     lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                       ? messages[messages.length - 1].content 
                       : undefined}

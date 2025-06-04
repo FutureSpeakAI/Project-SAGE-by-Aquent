@@ -349,8 +349,15 @@ export function BriefingTab({
                         className="flex-grow"
                       />
                       <VoiceControls
-                        onTranscript={(text) => setUserInput(prev => prev + text)}
-                        onSendMessage={sendMessage}
+                        onTranscript={(text) => {
+                          setUserInput(prev => prev + text);
+                          // Auto-send after a delay to ensure state updates
+                          setTimeout(() => {
+                            if ((userInput + text).trim()) {
+                              sendMessage();
+                            }
+                          }, 300);
+                        }}
                         lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                           ? messages[messages.length - 1].content 
                           : undefined}
