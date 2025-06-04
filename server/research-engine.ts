@@ -64,7 +64,7 @@ export async function performDeepResearch(userQuery: string, researchContext: st
       throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const researchContent = data.choices?.[0]?.message?.content || "No research data available";
     const citations = data.citations || [];
     
