@@ -50,6 +50,22 @@ export function VoiceControls({
     }
   }, [lastMessage, autoPlayResponses, isListening, isSpeaking, speakText]);
 
+  // Auto-reactivate microphone after SAGE finishes speaking for natural conversation
+  useEffect(() => {
+    if (!isSpeaking && !isGeneratingAudio && !isListening && onTranscript && autoPlayResponses) {
+      // Small delay to ensure speech has fully stopped
+      const timer = setTimeout(() => {
+        if (!isSpeaking && !isGeneratingAudio && onTranscript) {
+          startListening((transcript) => {
+            onTranscript(transcript);
+          });
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isSpeaking, isGeneratingAudio, isListening, onTranscript, autoPlayResponses, startListening]);
+
   // Cleanup on unmount
   useEffect(() => {
     return cleanup;
@@ -101,11 +117,7 @@ export function VoiceControls({
         disabled={isSpeaking || isGeneratingAudio}
         className={isListening ? "bg-green-500 hover:bg-green-600 text-white" : ""}
       >
-        {isListening ? (
-          <MicOff className="h-4 w-4" />
-        ) : (
-          <Mic className="h-4 w-4" />
-        )}
+        <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse' : ''}`} />
       </Button>
 
       {/* Speaker Button */}
