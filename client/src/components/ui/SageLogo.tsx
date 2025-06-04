@@ -13,7 +13,7 @@ export function SageLogo({ className, size = 24 }: SageLogoProps) {
       className={cn("flex items-center justify-center bg-[#F15A22] rounded", className)}
       style={{ width: finalSize, height: finalSize }}
     >
-      <span className="text-white font-bold" style={{ fontSize: Math.round(finalSize * 0.6) }}>A</span>
+      <span className="text-white font-bold" style={{ fontSize: Math.round(finalSize * 0.6) }}>⸙</span>
     </div>
   );
 }

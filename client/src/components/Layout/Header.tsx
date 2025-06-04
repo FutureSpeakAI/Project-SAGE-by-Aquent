@@ -20,7 +20,7 @@ export function Header({ onOpenSavedContentLibrary, onOpenDataMigration, onOpenA
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 bg-[#F15A22] rounded-lg flex items-center justify-center">
-                <span className="text-white text-2xl font-bold">A</span>
+                <span className="text-white text-2xl font-bold">⸙</span>
               </div>
             </div>
             <div className="ml-3">
