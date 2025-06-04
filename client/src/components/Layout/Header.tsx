@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Library, Database } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SageLogo } from "@/components/ui/SageLogo";
 
 interface HeaderProps {
   onOpenSavedContentLibrary?: () => void;
@@ -18,19 +19,13 @@ export function Header({ onOpenSavedContentLibrary, onOpenDataMigration, onOpenA
           {/* Logo and title */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg width="40" height="40" viewBox="0 0 40 40" className="text-[#F15A22]">
-                {/* Aquent's distinctive "A" logo */}
-                <path 
-                  fill="currentColor" 
-                  d="M23.5,8 L32,32 H27 L25,27 H15 L13,32 H8 L16.5,8 H23.5 Z M20,12 L16,22 H24 L20,12 Z"
-                />
-              </svg>
+              <SageLogo size={40} />
             </div>
             <div className="ml-3">
-              <h1 className="text-xl font-bold text-white">
-                <span className="text-[#F15A22]">Aquent</span> Content AI
+              <h1 className="text-2xl font-bold text-white">
+                S<span className="text-[#F15A22]">A</span>GE
               </h1>
-              <p className="text-gray-300 text-xs">Smart content creation powered by AI</p>
+              <p className="text-gray-300 text-xs">Strategic Adaptive Generative Engine</p>
             </div>
           </div>
           

@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { SageLogo } from "@/components/ui/SageLogo";
 import { 
   MessageCircle, 
   Send, 
@@ -335,7 +336,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
               <div className="space-y-4 py-4">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
-                    <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <SageLogo size={48} className="mx-auto mb-4" />
                     <div className="space-y-3">
                       <p className="text-lg font-medium mb-2">Hi! I'm SAGE</p>
                       <div className="text-sm space-y-2 max-w-lg mx-auto text-left">
