@@ -195,3 +195,26 @@ export const insertFreePromptSessionSchema = createInsertSchema(freePromptSessio
 
 export type InsertFreePromptSession = z.infer<typeof insertFreePromptSessionSchema>;
 export type FreePromptSession = typeof freePromptSessions.$inferSelect;
+
+// Table for storing chat sessions with messages
+export const chatSessions = pgTable("chat_sessions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  messages: json("messages").$type<Array<{
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: string;
+  }>>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertChatSessionSchema = createInsertSchema(chatSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertChatSession = z.infer<typeof insertChatSessionSchema>;
+export type ChatSession = typeof chatSessions.$inferSelect;

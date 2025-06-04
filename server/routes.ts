@@ -922,6 +922,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat Sessions API Routes
+  app.get("/api/chat-sessions", async (_req: Request, res: Response) => {
+    try {
+      const sessions = await storage.getChatSessions();
+      res.json(sessions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch chat sessions" });
+    }
+  });
+
+  app.get("/api/chat-sessions/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const session = await storage.getChatSession(id);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Chat session not found" });
+      }
+      
+      res.json(session);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch chat session" });
+    }
+  });
+
+  app.post("/api/chat-sessions", async (req: Request, res: Response) => {
+    try {
+      const { name, messages } = req.body;
+      
+      if (!name || !messages) {
+        return res.status(400).json({ error: "Name and messages are required" });
+      }
+      
+      const savedSession = await storage.saveChatSession({
+        name,
+        messages
+      });
+      
+      res.status(201).json(savedSession);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save chat session" });
+    }
+  });
+
+  app.put("/api/chat-sessions/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { name, messages } = req.body;
+      
+      const updatedSession = await storage.updateChatSession(id, {
+        ...(name && { name }),
+        ...(messages && { messages })
+      });
+      
+      if (!updatedSession) {
+        return res.status(404).json({ error: "Chat session not found" });
+      }
+      
+      res.json(updatedSession);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update chat session" });
+    }
+  });
+
+  app.delete("/api/chat-sessions/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const result = await storage.deleteChatSession(id);
+      
+      if (!result) {
+        return res.status(404).json({ error: "Chat session not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete chat session" });
+    }
+  });
+
   // Simple chat endpoint for Free Prompt agent
   // Test endpoint for deep research functionality
   app.post("/api/test-research", async (req: Request, res: Response) => {

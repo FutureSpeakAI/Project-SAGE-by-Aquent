@@ -8,6 +8,7 @@ import {
   briefConversations, type BriefConversation, type InsertBriefConversation,
   generatedImages, type GeneratedImage, type InsertGeneratedImage,
   imageProjects, type ImageProject, type InsertImageProject,
+  chatSessions, type ChatSession, type InsertChatSession,
   ContentType
 } from "@shared/schema";
 
@@ -81,6 +82,13 @@ export interface IStorage {
   updateImageProject(id: number, project: Partial<InsertImageProject>): Promise<ImageProject | undefined>;
   deleteImageProject(id: number): Promise<boolean>;
   getGeneratedImagesByProjectId(projectId: number): Promise<GeneratedImage[]>;
+  
+  // Chat Session methods
+  getChatSessions(): Promise<ChatSession[]>;
+  getChatSession(id: number): Promise<ChatSession | undefined>;
+  saveChatSession(session: InsertChatSession): Promise<ChatSession>;
+  updateChatSession(id: number, session: Partial<InsertChatSession>): Promise<ChatSession | undefined>;
+  deleteChatSession(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
