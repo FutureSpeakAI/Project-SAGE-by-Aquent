@@ -1209,11 +1209,20 @@ Respond only with conversational text - no buttons, badges, or UI elements. Prov
           { role: 'user' as const, content: message }
         ];
 
+        // Adjust response length and style for voice conversations
+        const maxTokens = context?.isVoiceConversation ? 800 : 2000;
+        const voiceInstructions = context?.isVoiceConversation 
+          ? "\n\nIMPORTANT: This is a voice conversation. Keep your response conversational, natural, and concise (2-3 sentences max). Speak as if you're having a friendly chat with a colleague." 
+          : "";
+
         const completion = await openai.chat.completions.create({
           model: "gpt-4o",
-          messages,
+          messages: [
+            { role: 'system' as const, content: systemPrompt + voiceInstructions },
+            { role: 'user' as const, content: message }
+          ],
           temperature: 0.7,
-          max_tokens: 2000,
+          max_tokens: maxTokens,
         });
 
         const reply = completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
@@ -1268,9 +1277,15 @@ When discussing AI capabilities or content creation, remember Aquent's position 
 
 Respond only with conversational text - no buttons, badges, or UI elements. When users ask about memory, voice capabilities, or context sharing between modules, confirm these capabilities are active. Always maintain the approachable expertise of someone who's been in the trenches of creative marketing while embodying Aquent's commitment to making work matter.`;
 
+      // Adjust response length and style for voice conversations
+      const maxTokens = context?.isVoiceConversation ? 600 : 1500;
+      const voiceInstructions = context?.isVoiceConversation 
+        ? "\n\nIMPORTANT: This is a voice conversation. Keep your response conversational, natural, and concise (2-3 sentences max). Speak as if you're having a friendly chat with a colleague." 
+        : "";
+
       // Simple message structure
       const messages = [
-        { role: 'system' as const, content: systemPrompt },
+        { role: 'system' as const, content: systemPrompt + voiceInstructions },
         { role: 'user' as const, content: message }
       ];
 
@@ -1278,7 +1293,7 @@ Respond only with conversational text - no buttons, badges, or UI elements. When
         model: "gpt-4o",
         messages,
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: maxTokens,
       });
 
       const reply = completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
