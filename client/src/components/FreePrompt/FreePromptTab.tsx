@@ -176,7 +176,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
           model,
           temperature: temperature[0],
           systemPrompt: getSystemPrompt(),
-          conversationHistory: messages.slice(-5) // Include recent context
+          conversationHistory: messages.slice(-5), // Include recent context
+          context: data.context // Pass the full context including research context
         })
       });
       
