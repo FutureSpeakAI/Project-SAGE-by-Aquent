@@ -249,7 +249,11 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   };
 
   const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+    console.log('handleSendMessage called, inputMessage:', inputMessage);
+    if (!inputMessage.trim()) {
+      console.log('No message to send - input is empty');
+      return;
+    }
 
     const userMessage: ChatMessage = {
       id: Date.now().toString() + '_user',

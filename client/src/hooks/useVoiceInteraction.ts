@@ -67,11 +67,15 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
       setIsListening(false);
-      toast({
-        title: "Speech recognition error",
-        description: "Failed to recognize speech. Please try again.",
-        variant: "destructive"
-      });
+      
+      // Don't show error for common expected errors
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        toast({
+          title: "Speech recognition error",
+          description: "Failed to recognize speech. Please try again.",
+          variant: "destructive"
+        });
+      }
     };
 
     recognition.onend = () => {

@@ -68,8 +68,9 @@ export function VoiceControls({
             // Auto-send the message after speech recognition completes
             if (onSendMessage) {
               setTimeout(() => {
+                console.log('Auto-sending message after voice reactivation...');
                 onSendMessage();
-              }, 100);
+              }, 200);
             }
           });
         }
@@ -105,8 +106,9 @@ export function VoiceControls({
         // Auto-send the message after speech recognition completes
         if (onSendMessage) {
           setTimeout(() => {
+            console.log('Auto-sending message after voice input...');
             onSendMessage();
-          }, 100); // Small delay to ensure transcript is processed
+          }, 200); // Increased delay to ensure transcript is processed
         }
       });
     }
