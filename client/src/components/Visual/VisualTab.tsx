@@ -160,7 +160,7 @@ const TabContent = ({
                     <Label htmlFor="model-select">Model</Label>
                     <ModelSelector 
                       value={model} 
-                      onChange={setModel} 
+                      onValueChange={setModel} 
                       type="image"
                       className="w-full"
                     />

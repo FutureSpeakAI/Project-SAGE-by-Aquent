@@ -850,16 +850,12 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 {/* Model Selection */}
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Model</Label>
-                  <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
-                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <ModelSelector 
+                    value={model} 
+                    onValueChange={setModel} 
+                    type="chat"
+                    className="h-8 text-sm"
+                  />
                 </div>
 
                 {/* Temperature */}
