@@ -48,11 +48,18 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
   };
 
   const handleProviderChange = (provider: string) => {
-    const typedProvider = provider as 'openai' | 'anthropic' | 'gemini';
-    updateConfig({
-      manualProvider: typedProvider,
-      manualModel: MODEL_OPTIONS[typedProvider][0].value
-    });
+    if (provider === '') {
+      updateConfig({
+        manualProvider: undefined,
+        manualModel: undefined
+      });
+    } else {
+      const typedProvider = provider as 'openai' | 'anthropic' | 'gemini';
+      updateConfig({
+        manualProvider: typedProvider,
+        manualModel: MODEL_OPTIONS[typedProvider][0].value
+      });
+    }
   };
 
   return (
@@ -86,14 +93,14 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
                 Override Provider
               </Label>
               <Select
-                value={config.manualProvider || ''}
-                onValueChange={handleProviderChange}
+                value={config.manualProvider || "auto"}
+                onValueChange={(value) => handleProviderChange(value === "auto" ? "" : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Auto (Recommended)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Auto (Recommended)</SelectItem>
+                  <SelectItem value="auto">Auto (Recommended)</SelectItem>
                   <SelectItem value="anthropic">Anthropic Claude</SelectItem>
                   <SelectItem value="openai">OpenAI GPT</SelectItem>
                   <SelectItem value="gemini">Google Gemini</SelectItem>
@@ -107,7 +114,7 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
                   Model
                 </Label>
                 <Select
-                  value={config.manualModel || ''}
+                  value={config.manualModel || MODEL_OPTIONS[config.manualProvider][0].value}
                   onValueChange={(model) => updateConfig({ manualModel: model })}
                 >
                   <SelectTrigger>

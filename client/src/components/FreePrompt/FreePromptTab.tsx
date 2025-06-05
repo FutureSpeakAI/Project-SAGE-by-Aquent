@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { SavedPersona } from "@/lib/types";
 import { ModelSelector } from "@/components/ui/ModelSelector";
-import { PromptRouterControls } from "@/components/ui/PromptRouterControls";
+import { PromptRouterControls, PromptRouterConfig } from "@/components/ui/PromptRouterControls";
 import { useSessionContext } from "@/hooks/useSessionContext";
 
 interface FreePromptTabProps {
@@ -92,8 +92,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   const [sessionName, setSessionName] = useState(context?.projectName || "New Conversation");
   const [showResearchOptions, setShowResearchOptions] = useState(false);
   const [activeResearchContext, setActiveResearchContext] = useState<string | null>(null);
-  const [routerConfig, setRouterConfig] = useState({
-    routerEnabled: true,
+  const [routerConfig, setRouterConfig] = useState<PromptRouterConfig>({
+    enabled: true,
     manualProvider: undefined,
     manualModel: undefined,
     forceReasoning: undefined
