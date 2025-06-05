@@ -890,6 +890,12 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 </div>
               </CardContent>
             </Card>
+
+            {/* Prompt Router Controls */}
+            <PromptRouterControls 
+              onConfigChange={setRouterConfig}
+              className="text-sm"
+            />
           </TabsContent>
 
           <TabsContent value="capabilities" className="space-y-4">
