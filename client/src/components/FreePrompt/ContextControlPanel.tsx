@@ -130,14 +130,14 @@ export function ContextControlPanel({ contextSettings, onContextChange }: Contex
           <CollapsibleContent>
             <CardContent>
               <Select
-                value={contextSettings.selectedPersona?.toString() || ""}
-                onValueChange={(value) => updateContext({ selectedPersona: value ? parseInt(value) : undefined })}
+                value={contextSettings.selectedPersona?.toString() || "none"}
+                onValueChange={(value) => updateContext({ selectedPersona: value === "none" ? undefined : parseInt(value) })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a persona..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Persona</SelectItem>
+                  <SelectItem value="none">No Persona</SelectItem>
                   {personas.map((persona: any) => (
                     <SelectItem key={persona.id} value={persona.id.toString()}>
                       {persona.name}
