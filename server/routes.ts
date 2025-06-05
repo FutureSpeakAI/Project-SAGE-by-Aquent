@@ -1356,12 +1356,6 @@ Respond only with conversational text - no buttons, badges, or UI elements. Prov
           routing: decision.rationale,
           timestamp: new Date().toISOString()
         });
-        
-        return res.json({ 
-          content: reply,
-          model: "gpt-4o",
-          timestamp: new Date().toISOString()
-        });
       }
 
       // Standard response without research

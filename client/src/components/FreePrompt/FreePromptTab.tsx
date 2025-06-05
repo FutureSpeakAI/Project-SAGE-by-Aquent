@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { SavedPersona } from "@/lib/types";
 import { ModelSelector } from "@/components/ui/ModelSelector";
+import { PromptRouterControls } from "@/components/ui/PromptRouterControls";
 
 interface FreePromptTabProps {
   model: string;
@@ -89,6 +90,12 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   const [sessionName, setSessionName] = useState("New Conversation");
   const [showResearchOptions, setShowResearchOptions] = useState(false);
   const [activeResearchContext, setActiveResearchContext] = useState<string | null>(null);
+  const [routerConfig, setRouterConfig] = useState({
+    routerEnabled: true,
+    manualProvider: undefined,
+    manualModel: undefined,
+    forceReasoning: undefined
+  });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Research options for deep context building
@@ -276,7 +283,11 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
         persona: selectedPersona,
         sessionHistory: messages.slice(-5), // Last 5 messages for context
         researchContext: activeResearchContext,
-        isVoiceConversation: isVoiceConversationActive
+        isVoiceConversation: isVoiceConversationActive,
+        routerEnabled: routerConfig.routerEnabled,
+        manualProvider: routerConfig.manualProvider,
+        manualModel: routerConfig.manualModel,
+        forceReasoning: routerConfig.forceReasoning
       }
     });
     
@@ -735,6 +746,11 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                       <Search className="h-3 w-3 mr-1" />
                       Deep Research
                     </Button>
+                    {activeResearchContext && (
+                      <Badge variant="secondary" className="text-xs">
+                        Research Active
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

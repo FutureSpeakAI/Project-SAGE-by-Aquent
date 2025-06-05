@@ -179,18 +179,21 @@ export class PromptRouter {
         });
 
       case 'openai':
-        // Note: OpenAI endpoint expects different format
-        const openaiResponse = await fetch('/api/generate-content', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: decision.model,
-            systemPrompt: enhancedSystemPrompt,
-            userPrompt: message,
-            temperature: 0.7
-          })
+        // Use OpenAI directly
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        
+        const completion = await openai.chat.completions.create({
+          model: decision.model,
+          messages: [
+            { role: 'system', content: enhancedSystemPrompt },
+            { role: 'user', content: message }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
         });
-        return await openaiResponse.text();
+        
+        return completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
 
       case 'gemini':
         return await GeminiAPI.generateContent({
