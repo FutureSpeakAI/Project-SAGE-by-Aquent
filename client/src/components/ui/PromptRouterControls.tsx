@@ -5,16 +5,16 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-interface PromptRouterControlsProps {
-  onConfigChange: (config: PromptRouterConfig) => void;
-  className?: string;
-}
-
-interface PromptRouterConfig {
-  routerEnabled: boolean;
+export interface PromptRouterConfig {
+  enabled: boolean;
   manualProvider?: 'openai' | 'anthropic' | 'gemini';
   manualModel?: string;
   forceReasoning?: boolean;
+}
+
+interface PromptRouterControlsProps {
+  onConfigChange: (config: PromptRouterConfig) => void;
+  className?: string;
 }
 
 const MODEL_OPTIONS = {
@@ -35,7 +35,7 @@ const MODEL_OPTIONS = {
 export function PromptRouterControls({ onConfigChange, className }: PromptRouterControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [config, setConfig] = useState<PromptRouterConfig>({
-    routerEnabled: true,
+    enabled: true,
     manualProvider: undefined,
     manualModel: undefined,
     forceReasoning: undefined
@@ -71,8 +71,8 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
           </Label>
           <Switch
             id="router-enabled"
-            checked={config.routerEnabled}
-            onCheckedChange={(checked) => updateConfig({ routerEnabled: checked })}
+            checked={config.enabled}
+            onCheckedChange={(checked) => updateConfig({ enabled: checked })}
           />
         </div>
         

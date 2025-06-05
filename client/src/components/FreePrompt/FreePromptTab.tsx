@@ -286,7 +286,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
         sessionHistory: messages.slice(-5), // Last 5 messages for context
         researchContext: activeResearchContext,
         isVoiceConversation: isVoiceConversationActive,
-        routerEnabled: routerConfig.routerEnabled,
+        routerEnabled: routerConfig.enabled,
         manualProvider: routerConfig.manualProvider,
         manualModel: routerConfig.manualModel,
         forceReasoning: routerConfig.forceReasoning,
