@@ -9,6 +9,38 @@ import { processImage } from "./image-processing";
 import { upload } from './index';
 import OpenAI from "openai";
 import { performDeepResearch } from "./research-engine";
+import { reasoningEngine } from "./reasoning-engine";
+
+// Helper function to determine if reasoning loop is needed
+function shouldUseReasoningLoop(message: string, researchContext: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  const lowerContext = researchContext.toLowerCase();
+  
+  // Use reasoning for comprehensive analysis requests
+  const comprehensiveIndicators = [
+    'comprehensive', 'detailed', 'deep research', 'everything you can find',
+    'complete analysis', 'full report', 'thorough', 'in-depth'
+  ];
+  
+  // Use reasoning for competitive/comparative requests
+  const comparativeIndicators = [
+    'compare', 'versus', 'vs', 'against', 'competitive analysis',
+    'competitor', 'benchmark', 'market comparison'
+  ];
+  
+  // Use reasoning for strategic analysis requests
+  const strategicIndicators = [
+    'strategy', 'why did', 'what made', 'success factors',
+    'driving', 'behind the', 'analysis of', 'insights into'
+  ];
+  
+  const allIndicators = [...comprehensiveIndicators, ...comparativeIndicators, ...strategicIndicators];
+  
+  return allIndicators.some(indicator => 
+    lowerMessage.includes(indicator) || lowerContext.includes(indicator)
+  );
+}
+
 import { handleOptimizedTTS } from "./voice-optimization";
 import { 
   GeneratedContent, 
@@ -1254,8 +1286,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Research query:', message);
         console.log('Research context:', context.researchContext);
         
-        // Perform actual research using external sources
-        const researchResults = await performDeepResearch(message, context.researchContext);
+        // Determine if this requires advanced reasoning or simple research
+        const requiresReasoning = shouldUseReasoningLoop(message, context.researchContext);
+        
+        let researchResults: string;
+        let reasoningMetadata = '';
+        
+        if (requiresReasoning) {
+          console.log('Activating self-reasoning loop...');
+          const reasoningResult = await reasoningEngine.performReasoningLoop(message, context.researchContext);
+          researchResults = reasoningResult.finalInsights;
+          reasoningMetadata = `\n\n[Analysis completed using ${reasoningResult.totalQueries} research queries in ${Math.round(reasoningResult.processingTime/1000)}s. Completeness: ${Math.round(reasoningResult.completenessScore*100)}%]`;
+          console.log('Reasoning loop completed:', {
+            queries: reasoningResult.totalQueries,
+            completeness: reasoningResult.completenessScore,
+            time: reasoningResult.processingTime
+          });
+        } else {
+          console.log('Using direct research...');
+          researchResults = await performDeepResearch(message, context.researchContext);
+        }
+        
         console.log('Research results length:', researchResults.length);
         console.log('Research results preview:', researchResults.substring(0, 500) + '...');
         
@@ -1301,7 +1352,7 @@ ETHICAL GUIDELINES:
 CRITICAL INSTRUCTION: The user has requested a detailed research report. You MUST provide a comprehensive, thorough response using ALL the research data below. Do NOT summarize or condense the information. Present the full details from the research data.
 
 === COMPREHENSIVE RESEARCH DATA ===
-${researchResults}
+${researchResults}${reasoningMetadata}
 === END RESEARCH DATA ===
 
 MANDATORY RESPONSE REQUIREMENTS:
