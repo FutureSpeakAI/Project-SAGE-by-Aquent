@@ -42,6 +42,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { SavedPersona } from "@/lib/types";
+import { ModelSelector } from "@/components/ui/ModelSelector";
 
 interface FreePromptTabProps {
   model: string;

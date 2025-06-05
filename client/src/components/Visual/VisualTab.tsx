@@ -16,6 +16,7 @@ import { ImagePromptAgent } from "./ImagePromptAgent";
 import { ImageProcessor } from "./ImageProcessor";
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorFallback } from "../ErrorFallback";
+import { ModelSelector } from "@/components/ui/ModelSelector";
 
 interface GenerateImageResponse {
   images: Array<{
@@ -157,14 +158,12 @@ const TabContent = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="model-select">Model</Label>
-                    <Select value="gpt-image-1" disabled>
-                      <SelectTrigger id="model-select">
-                        <SelectValue placeholder="Select model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gpt-image-1">GPT Image Generator</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <ModelSelector 
+                      value={model} 
+                      onChange={setModel} 
+                      type="image"
+                      className="w-full"
+                    />
                   </div>
                   
                   <div>

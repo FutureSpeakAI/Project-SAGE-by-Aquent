@@ -194,12 +194,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // OpenAI content generation endpoint
-  app.post("/api/generate-content", generateContent);
-  app.post("/api/generate", generateContent); // Keep old endpoint for backward compatibility
+  // Get available models from all providers
+  app.get("/api/models", async (_req: Request, res: Response) => {
+    try {
+      const models = {
+        openai: [
+          'gpt-4o',
+          'gpt-4o-mini',
+          'gpt-4-turbo',
+          'gpt-3.5-turbo'
+        ],
+        anthropic: AnthropicAPI.ANTHROPIC_MODELS,
+        gemini: GeminiAPI.GEMINI_MODELS.chat,
+        imageGeneration: {
+          openai: ['dall-e-3', 'dall-e-2'],
+          gemini: GeminiAPI.GEMINI_MODELS.image
+        }
+      };
+      
+      res.json(models);
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      res.status(500).json({ error: 'Failed to fetch available models' });
+    }
+  });
   
-  // OpenAI image generation endpoint
-  app.post("/api/generate-image", generateImage);
+  // Multi-provider content generation endpoint
+  app.post("/api/generate-content", async (req: Request, res: Response) => {
+    try {
+      const { model, systemPrompt, userPrompt, temperature } = req.body;
+      
+      if (!model || !userPrompt) {
+        return res.status(400).json({ error: 'Model and userPrompt are required' });
+      }
+
+      let result: string;
+      
+      if (model.startsWith('gpt-')) {
+        // OpenAI models - use existing function
+        return await generateContent(req, res);
+      } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(model)) {
+        // Anthropic models
+        result = await AnthropicAPI.generateContent({
+          model,
+          prompt: userPrompt,
+          systemPrompt,
+          temperature,
+          maxTokens: 4000
+        });
+      } else if (GeminiAPI.GEMINI_MODELS.chat.includes(model)) {
+        // Gemini models
+        result = await GeminiAPI.generateContent({
+          model,
+          prompt: userPrompt,
+          systemPrompt,
+          temperature,
+          maxTokens: 4000
+        });
+      } else {
+        return res.status(400).json({ error: 'Unsupported model' });
+      }
+      
+      res.json({ content: result });
+    } catch (error) {
+      console.error('Content generation error:', error);
+      res.status(500).json({ error: 'Failed to generate content' });
+    }
+  });
+  
+  app.post("/api/generate", async (req: Request, res: Response) => {
+    // Redirect to the new endpoint for backward compatibility
+    return await generateContent(req, res);
+  });
+  
+  // Multi-provider image generation endpoint
+  app.post("/api/generate-image", async (req: Request, res: Response) => {
+    try {
+      const { prompt, model, ...otherParams } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required' });
+      }
+
+      if (model && GeminiAPI.GEMINI_MODELS.image.includes(model)) {
+        // Gemini image generation
+        const result = await GeminiAPI.generateImage({
+          prompt,
+          model,
+          ...otherParams
+        });
+        return res.json(result);
+      } else {
+        // OpenAI image generation (default)
+        return await generateImage(req, res);
+      }
+    } catch (error) {
+      console.error('Image generation error:', error);
+      res.status(500).json({ error: 'Failed to generate image' });
+    }
+  });
   
   // Image processing endpoint
   app.post("/api/image-processing", upload.single('image'), processImage);
