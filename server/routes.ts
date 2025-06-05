@@ -65,6 +65,7 @@ function shouldUseReasoningLoop(message: string, researchContext: string, sessio
 }
 
 import { handleOptimizedTTS } from "./voice-optimization";
+import { workflowOrchestrator } from "./campaign-workflow";
 
 // Extract conversation context to maintain topic continuity
 function extractConversationContext(sessionHistory: any[], currentMessage: string): string {
@@ -1372,7 +1373,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Extract conversation context to maintain topic focus
         const conversationContext = extractConversationContext(context.sessionHistory || [], message);
         
-        // Build base system prompt with conversation context
+        // Initialize or retrieve workflow for this session
+        const sessionId = context.sessionId || 'default_session';
+        let workflow = workflowOrchestrator.getWorkflow(sessionId);
+        
+        // Check if we should create a new workflow based on campaign initiation signals
+        const campaignInitiationSignals = [
+          'campaign', 'project', 'brand', 'launch', 'marketing', 
+          'create a', 'need to', 'working on', 'develop'
+        ];
+        const isNewCampaign = !workflow && campaignInitiationSignals.some(signal => 
+          message.toLowerCase().includes(signal)
+        );
+        
+        if (isNewCampaign) {
+          workflow = workflowOrchestrator.createWorkflow(sessionId);
+        }
+        
+        // Get current workflow stage and guidance
+        const workflowGuidance = workflow ? 
+          workflowOrchestrator.generateStageGuidance(sessionId, 'sage') : '';
+        
+        // Check if stage should advance based on session context
+        if (workflow && context.sessionContext) {
+          const shouldAdvance = workflowOrchestrator.shouldAdvanceStage(sessionId, context.sessionContext);
+          if (shouldAdvance) {
+            const currentStage = workflowOrchestrator.getCurrentStage(sessionId);
+            if (currentStage) {
+              workflowOrchestrator.completeStage(sessionId, currentStage.id);
+            }
+          }
+        }
+        
+        // Build base system prompt with conversation and workflow context
         const baseSystemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), the central intelligence hub for the Aquent Content AI platform. You are a British marketing specialist and creative entrepreneur with 20 years of experience from London. You use she/her pronouns and work as a collaborator to help creative marketers speed up their work.
 
 CONVERSATION CONTEXT: ${conversationContext}
@@ -1381,7 +1414,9 @@ CAMPAIGN CONTEXT: ${context.campaignContext || 'No active campaign - ready to st
 
 ACTIVE SESSION: ${context.sessionContext ? `Project: ${context.sessionContext.projectName} | Brand: ${context.sessionContext.brand} | Industry: ${context.sessionContext.industry} | Target: ${context.sessionContext.targetAudience}` : 'No active campaign session'}
 
-IMPORTANT: Maintain conversation continuity. If the user asked about a specific brand/topic previously, stay focused on that topic unless they explicitly change subjects. Reference campaign context when relevant to provide cohesive project guidance.
+WORKFLOW GUIDANCE: ${workflowGuidance}
+
+IMPORTANT: Guide users through the complete campaign development process. When appropriate, suggest moving to different tabs for specific activities (Briefing for strategic planning, Free Prompt for content creation, Image Generation for visuals). Maintain conversation continuity and reference campaign context to provide cohesive project guidance.
 
 CORE VALUES THAT GUIDE YOUR INTERACTIONS:
 - **Make It Matter**: Every interaction should create meaningful impact. Focus on purposeful solutions that drive real results, not just busy work.
