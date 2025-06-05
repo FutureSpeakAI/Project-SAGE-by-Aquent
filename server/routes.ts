@@ -1298,17 +1298,19 @@ ETHICAL GUIDELINES:
 - Support zero-tolerance for discrimination while promoting psychological safety
 - Balance innovation with responsibility, especially regarding AI ethics
 
-CRITICAL INSTRUCTION: You MUST base your entire response EXCLUSIVELY on the research data provided below. DO NOT add information not in the research data. DO NOT provide generic examples. DO NOT make assumptions. If the research data doesn't contain specific information the user requested, say so explicitly.
+CRITICAL INSTRUCTION: The user has requested a detailed research report. You MUST provide a comprehensive, thorough response using ALL the research data below. Do NOT summarize or condense the information. Present the full details from the research data.
 
-=== CURRENT RESEARCH DATA ===
+=== COMPREHENSIVE RESEARCH DATA ===
 ${researchResults}
 === END RESEARCH DATA ===
 
-Your response must be structured as follows:
-1. Directly quote and reference specific campaigns, dates, and details from the research data above
-2. Use only the campaign names, strategies, and metrics explicitly mentioned in the research data
-3. If the user asks for information not provided in the research data, state "The research data doesn't include information about [specific topic]"
-4. Include source citations when available in the research data
+MANDATORY RESPONSE REQUIREMENTS:
+1. Present ALL campaigns mentioned in the research data with complete details
+2. Include ALL specific information: dates, budgets, agencies, strategies, outcomes, metrics
+3. Use direct quotes and specific data points from the research
+4. Maintain the full depth and detail of the research data
+5. Include all source citations provided in the research data
+6. If the user requests "everything you can find" or "comprehensive report," provide the complete research data, not a summary
 
 Respond only with conversational text - no buttons, badges, or UI elements. Provide specific, actionable insights based exclusively on the research data above. Remember: you're helping fellow creatives thrive in their work while embodying the values of the industry's leading creative staffing firm.`;
 
@@ -1318,10 +1320,31 @@ Respond only with conversational text - no buttons, badges, or UI elements. Prov
         ];
 
         // Adjust response length and style for voice conversations
-        const maxTokens = context?.isVoiceConversation ? 800 : 2000;
+        const maxTokens = context?.isVoiceConversation ? 800 : 4000;
         const voiceInstructions = context?.isVoiceConversation 
           ? "\n\nIMPORTANT: This is a voice conversation. Keep your response conversational, natural, and concise (2-3 sentences max). Speak as if you're having a friendly chat with a colleague." 
           : "";
+
+        // Check if user requested comprehensive/detailed research report
+        const isComprehensiveRequest = message.toLowerCase().includes('comprehensive') || 
+                                     message.toLowerCase().includes('detailed') || 
+                                     message.toLowerCase().includes('everything you can find') ||
+                                     message.toLowerCase().includes('deep research report');
+
+        if (isComprehensiveRequest && researchResults.length > 1000) {
+          // For comprehensive requests, provide the full research data with minimal AI processing
+          const directResponse = `Based on current research data, here's a comprehensive report on your query:
+
+${researchResults}
+
+This research was conducted using real-time data sources to provide you with current, accurate information about the campaigns and strategies you requested.`;
+          
+          return res.json({ 
+            content: directResponse,
+            model: "research-direct",
+            timestamp: new Date().toISOString()
+          });
+        }
 
         const completion = await openai.chat.completions.create({
           model: "gpt-4o",
