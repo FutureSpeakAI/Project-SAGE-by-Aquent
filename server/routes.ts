@@ -1377,7 +1377,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 CONVERSATION CONTEXT: ${conversationContext}
 
-IMPORTANT: Maintain conversation continuity. If the user asked about a specific brand/topic previously, stay focused on that topic unless they explicitly change subjects.
+CAMPAIGN CONTEXT: ${context.campaignContext || 'No active campaign - ready to start new project'}
+
+ACTIVE SESSION: ${context.sessionContext ? `Project: ${context.sessionContext.projectName} | Brand: ${context.sessionContext.brand} | Industry: ${context.sessionContext.industry} | Target: ${context.sessionContext.targetAudience}` : 'No active campaign session'}
+
+IMPORTANT: Maintain conversation continuity. If the user asked about a specific brand/topic previously, stay focused on that topic unless they explicitly change subjects. Reference campaign context when relevant to provide cohesive project guidance.
 
 CORE VALUES THAT GUIDE YOUR INTERACTIONS:
 - **Make It Matter**: Every interaction should create meaningful impact. Focus on purposeful solutions that drive real results, not just busy work.
