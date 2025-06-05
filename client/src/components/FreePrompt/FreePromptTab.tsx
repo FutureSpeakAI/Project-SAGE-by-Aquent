@@ -552,18 +552,18 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   }, [messages]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-full space-y-4 lg:space-y-0 lg:space-x-6">
+    <div className="flex flex-col lg:flex-row h-full space-y-4 lg:space-y-0 lg:space-x-6 p-3 lg:p-0">
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <Card className="flex-1 flex flex-col">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-[#F15A22]" />
                 SAGE
-                <span className="text-sm font-normal text-gray-500">(Strategic Adaptive Generative Engine)</span>
+                <span className="text-sm font-normal text-gray-500 hidden lg:inline">(Strategic Adaptive Generative Engine)</span>
               </CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
                 <Button
                   variant="outline"
                   size="sm"
@@ -572,9 +572,10 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                     setShowSaveDialog(true);
                   }}
                   disabled={messages.length === 0}
+                  className="flex-shrink-0"
                 >
-                  <Save className="h-4 w-4 mr-1" />
-                  Save
+                  <Save className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Save</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -583,20 +584,22 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                     loadSavedSessions();
                     setShowLoadDialog(true);
                   }}
+                  className="flex-shrink-0"
                 >
-                  <FolderOpen className="h-4 w-4 mr-1" />
-                  Load
+                  <FolderOpen className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Load</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={exportSessionToTxt}
                   disabled={messages.length === 0}
+                  className="flex-shrink-0"
                 >
-                  <Download className="h-4 w-4 mr-1" />
-                  Export
+                  <Download className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Export</span>
                 </Button>
-                <label className="cursor-pointer">
+                <label className="cursor-pointer flex-shrink-0">
                   <input
                     type="file"
                     accept=".txt"
@@ -605,8 +608,8 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                   />
                   <Button variant="outline" size="sm" asChild>
                     <span>
-                      <Upload className="h-4 w-4 mr-1" />
-                      Import
+                      <Upload className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Import</span>
                     </span>
                   </Button>
                 </label>
@@ -728,36 +731,36 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
             )}
 
             {/* Input Area */}
-            <div className="p-6 border-t">
-              <div className="flex gap-3">
-                <div className="flex-1">
+            <div className="p-3 sm:p-6 border-t">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 min-w-0">
                   <Textarea
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Ask me anything... Use Shift+Enter for new lines"
-                    className="min-h-[60px] resize-none"
+                    className="min-h-[60px] resize-none w-full"
                     disabled={isTyping}
                   />
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setShowResearchOptions(!showResearchOptions)}
                       disabled={isTyping}
-                      className="text-xs"
+                      className="text-xs flex-shrink-0"
                     >
                       <Search className="h-3 w-3 mr-1" />
                       Deep Research
                     </Button>
                     {activeResearchContext && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs flex-shrink-0">
                         Research Active
                       </Badge>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 sm:self-start sm:mt-0">
                   <VoiceControls
                     onTranscript={(text) => {
                       console.log('Voice transcript received:', text);
@@ -812,12 +815,12 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
       </div>
 
       {/* Context Control Panel */}
-      <div className="w-full lg:w-80 space-y-4">
+      <div className="w-full lg:w-80 space-y-4 lg:max-h-full overflow-hidden">
         <Tabs defaultValue="history" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="history">History</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-            <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm">
+            <TabsTrigger value="history" className="px-2">History</TabsTrigger>
+            <TabsTrigger value="settings" className="px-2">Settings</TabsTrigger>
+            <TabsTrigger value="capabilities" className="px-1 text-xs">Capabilities</TabsTrigger>
           </TabsList>
 
           <TabsContent value="history" className="space-y-4">
