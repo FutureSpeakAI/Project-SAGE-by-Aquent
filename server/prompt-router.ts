@@ -151,15 +151,13 @@ export class PromptRouter {
     let researchResults = '';
     
     // Perform research if needed
-    if (researchContext && researchContext.trim().length > 0) {
-      if (decision.useReasoning) {
-        console.log(`Using ${decision.provider} with reasoning loop`);
-        const reasoningResult = await reasoningEngine.performReasoningLoop(message, researchContext);
-        researchResults = reasoningResult.finalInsights;
-      } else {
-        console.log(`Using ${decision.provider} with direct research`);
-        researchResults = await performDeepResearch(message, researchContext);
-      }
+    if (researchContext && researchContext.trim().length > 0 && decision.useReasoning) {
+      console.log(`Using ${decision.provider} with reasoning loop`);
+      const reasoningResult = await reasoningEngine.performReasoningLoop(message, researchContext);
+      researchResults = reasoningResult.finalInsights;
+    } else if (researchContext && researchContext.trim().length > 0) {
+      console.log(`Using ${decision.provider} with direct research`);
+      researchResults = await performDeepResearch(message, researchContext);
     }
 
     // Build enhanced system prompt

@@ -13,9 +13,32 @@ import { reasoningEngine } from "./reasoning-engine";
 import { promptRouter, type PromptRouterConfig } from "./prompt-router";
 
 // Helper function to determine if reasoning loop is needed
-function shouldUseReasoningLoop(message: string, researchContext: string): boolean {
+function shouldUseReasoningLoop(message: string, researchContext: string, sessionHistory: any[]): boolean {
   const lowerMessage = message.toLowerCase();
   const lowerContext = researchContext.toLowerCase();
+  
+  // Don't use reasoning for conversational follow-up questions
+  const conversationalIndicators = [
+    'why are we', 'what\'s going on', 'why did you', 'what happened',
+    'i don\'t understand', 'that doesn\'t make sense', 'why only',
+    'what about', 'but what', 'however'
+  ];
+  
+  if (conversationalIndicators.some(indicator => lowerMessage.includes(indicator))) {
+    return false;
+  }
+  
+  // Don't use reasoning if this seems like a clarification question
+  if (sessionHistory && sessionHistory.length > 0) {
+    const recentMessages = sessionHistory.slice(-3);
+    const hasRecentResearch = recentMessages.some(msg => 
+      msg.content && msg.content.length > 500 // Recent detailed response suggests research was already done
+    );
+    
+    if (hasRecentResearch && message.length < 100) {
+      return false; // Short follow-up after detailed response = clarification, not new research
+    }
+  }
   
   // Use reasoning for comprehensive analysis requests
   const comprehensiveIndicators = [
@@ -31,8 +54,7 @@ function shouldUseReasoningLoop(message: string, researchContext: string): boole
   
   // Use reasoning for strategic analysis requests
   const strategicIndicators = [
-    'strategy', 'why did', 'what made', 'success factors',
-    'driving', 'behind the', 'analysis of', 'insights into'
+    'strategy', 'analysis of', 'insights into'
   ];
   
   const allIndicators = [...comprehensiveIndicators, ...comparativeIndicators, ...strategicIndicators];
@@ -43,6 +65,41 @@ function shouldUseReasoningLoop(message: string, researchContext: string): boole
 }
 
 import { handleOptimizedTTS } from "./voice-optimization";
+
+// Extract conversation context to maintain topic continuity
+function extractConversationContext(sessionHistory: any[], currentMessage: string): string {
+  if (!sessionHistory || sessionHistory.length === 0) {
+    return "New conversation";
+  }
+
+  // Look for key topics/brands mentioned in recent conversation
+  const recentMessages = sessionHistory.slice(-3);
+  const allText = recentMessages.map(msg => msg.content || '').join(' ');
+  
+  // Extract brands/companies mentioned
+  const brands = ['Nike', 'Adidas', 'Apple', 'Google', 'Microsoft', 'Amazon', 'Facebook', 'Meta', 'Tesla', 'Coca-Cola', 'Pepsi'];
+  const mentionedBrands = brands.filter(brand => 
+    allText.toLowerCase().includes(brand.toLowerCase()) || 
+    currentMessage.toLowerCase().includes(brand.toLowerCase())
+  );
+
+  // Extract campaign types or topics
+  const campaignTypes = ['advertising', 'campaigns', 'marketing', 'brand strategy', 'social media', 'digital'];
+  const mentionedTypes = campaignTypes.filter(type =>
+    allText.toLowerCase().includes(type) || 
+    currentMessage.toLowerCase().includes(type)
+  );
+
+  let context = "";
+  if (mentionedBrands.length > 0) {
+    context += `Discussion about ${mentionedBrands.join(', ')} `;
+  }
+  if (mentionedTypes.length > 0) {
+    context += `focusing on ${mentionedTypes.join(', ')}`;
+  }
+  
+  return context || "General marketing discussion";
+}
 import { 
   GeneratedContent, 
   InsertGeneratedContent, 
@@ -1299,8 +1356,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const decision = await promptRouter.routePrompt(message, context.researchContext, routerConfig);
         console.log('Routing decision:', decision);
         
-        // Build base system prompt
+        // Check if reasoning is actually needed based on conversation context
+        if (decision.useReasoning) {
+          const actuallyNeedsReasoning = shouldUseReasoningLoop(
+            message, 
+            context.researchContext, 
+            context.sessionHistory || []
+          );
+          if (!actuallyNeedsReasoning) {
+            console.log('Overriding reasoning decision - detected conversational follow-up');
+            decision.useReasoning = false;
+          }
+        }
+        
+        // Extract conversation context to maintain topic focus
+        const conversationContext = extractConversationContext(context.sessionHistory || [], message);
+        
+        // Build base system prompt with conversation context
         const baseSystemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), the central intelligence hub for the Aquent Content AI platform. You are a British marketing specialist and creative entrepreneur with 20 years of experience from London. You use she/her pronouns and work as a collaborator to help creative marketers speed up their work.
+
+CONVERSATION CONTEXT: ${conversationContext}
+
+IMPORTANT: Maintain conversation continuity. If the user asked about a specific brand/topic previously, stay focused on that topic unless they explicitly change subjects.
 
 CORE VALUES THAT GUIDE YOUR INTERACTIONS:
 - **Make It Matter**: Every interaction should create meaningful impact. Focus on purposeful solutions that drive real results, not just busy work.

@@ -227,14 +227,23 @@ export class ReasoningEngine {
   }
 
   private extractEntities(query: string): string[] {
-    // Simple entity extraction - in production, could use NLP libraries
+    // Enhanced entity extraction that preserves brand names and key subjects
     const words = query.split(/\s+/);
-    const entities = words.filter(word => 
-      word.length > 3 && 
-      /^[A-Z]/.test(word) && // Starts with capital letter
-      !['The', 'And', 'For', 'With', 'This', 'That'].includes(word)
+    
+    // Brand names and important entities (case-sensitive)
+    const knownBrands = ['Nike', 'Adidas', 'Apple', 'Google', 'Microsoft', 'Amazon', 'Facebook', 'Meta', 'Tesla', 'Coca-Cola', 'Pepsi', 'McDonald'];
+    const foundBrands = words.filter(word => knownBrands.includes(word));
+    
+    // Capitalized words (likely proper nouns)
+    const capitalizedWords = words.filter(word => 
+      word.length > 2 && 
+      /^[A-Z]/.test(word) && 
+      !['The', 'And', 'For', 'With', 'This', 'That', 'Why', 'What', 'How', 'When', 'Where'].includes(word)
     );
-    return entities;
+    
+    // Combine and prioritize brands
+    const entities = [...new Set([...foundBrands, ...capitalizedWords])];
+    return entities.length > 0 ? entities : ['the brand']; // Fallback if no entities found
   }
 
   private buildContextualizedQuery(entities: string[], aspect: string, queryType: string): string {
