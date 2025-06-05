@@ -22,6 +22,91 @@ export interface CampaignWorkflow {
   sessionData: any;
 }
 
+// Define all available research capabilities
+export interface ResearchCapability {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+  benefits: string[];
+  optional: boolean;
+}
+
+export const RESEARCH_CAPABILITIES: ResearchCapability[] = [
+  {
+    id: 'competitor_analysis',
+    name: 'Competitor Analysis',
+    description: 'Analyze competitor strategies, messaging, and market positioning',
+    prompt: 'Research competitors in your industry focusing on messaging strategies, positioning, pricing, and recent campaigns',
+    benefits: [
+      'Identify market gaps and opportunities',
+      'Understand competitive messaging landscape',
+      'Discover differentiation opportunities'
+    ],
+    optional: true
+  },
+  {
+    id: 'market_research',
+    name: 'Market Research',
+    description: 'Current market trends, consumer behavior, and industry insights',
+    prompt: 'Analyze current market trends, consumer preferences, and industry developments relevant to your campaign',
+    benefits: [
+      'Understand market dynamics',
+      'Identify emerging opportunities',
+      'Validate target audience assumptions'
+    ],
+    optional: true
+  },
+  {
+    id: 'persona_simulation',
+    name: 'Persona Research & Simulation',
+    description: 'Deep dive into target audience psychology and behavior patterns',
+    prompt: 'Research and simulate your target audience personas, including motivations, pain points, media consumption, and decision-making factors',
+    benefits: [
+      'Create detailed audience profiles',
+      'Understand psychological triggers',
+      'Optimize messaging for audience segments'
+    ],
+    optional: true
+  },
+  {
+    id: 'campaign_analysis',
+    name: 'Past Campaign Analysis',
+    description: 'Study successful campaigns in your industry or category',
+    prompt: 'Analyze successful past campaigns in your industry, examining strategies, execution, and performance metrics',
+    benefits: [
+      'Learn from proven strategies',
+      'Identify successful patterns',
+      'Avoid common pitfalls'
+    ],
+    optional: true
+  },
+  {
+    id: 'design_trends',
+    name: 'Design & Creative Trends',
+    description: 'Current visual and creative trends relevant to your audience',
+    prompt: 'Research current design trends, visual styles, and creative approaches that resonate with your target audience',
+    benefits: [
+      'Stay visually current',
+      'Understand aesthetic preferences',
+      'Inspire creative direction'
+    ],
+    optional: true
+  },
+  {
+    id: 'brand_analysis',
+    name: 'Brand Analysis',
+    description: 'Deep analysis of your brand positioning and equity',
+    prompt: 'Analyze your brand\'s current market position, brand equity, perception, and strategic opportunities',
+    benefits: [
+      'Understand brand strengths',
+      'Identify positioning opportunities',
+      'Align campaign with brand values'
+    ],
+    optional: true
+  }
+];
+
 // Define the complete campaign workflow stages
 export const CAMPAIGN_WORKFLOW_STAGES: WorkflowStage[] = [
   {
@@ -37,9 +122,9 @@ export const CAMPAIGN_WORKFLOW_STAGES: WorkflowStage[] = [
       'Identify budget and timeline constraints'
     ],
     suggestedActions: [
-      'Start with project overview conversation',
-      'Activate Brand Analysis research mode',
-      'Use Competitor Analysis for market positioning'
+      'Gather project fundamentals',
+      'Define success metrics',
+      'Set campaign parameters'
     ],
     completionCriteria: [
       'Project name defined',
@@ -49,28 +134,46 @@ export const CAMPAIGN_WORKFLOW_STAGES: WorkflowStage[] = [
     ]
   },
   {
-    id: 'research',
-    name: 'Deep Market Research',
-    description: 'Comprehensive research using SAGE reasoning engine',
+    id: 'research_planning',
+    name: 'Research Planning',
+    description: 'Select research areas to strengthen campaign foundation',
     tab: 'sage',
     prerequisites: ['discovery'],
     objectives: [
-      'Conduct competitor analysis',
-      'Research market trends and opportunities',
-      'Analyze brand positioning and messaging',
-      'Identify design and creative trends'
+      'Choose relevant research capabilities',
+      'Prioritize research based on campaign needs',
+      'Plan comprehensive intelligence gathering'
     ],
     suggestedActions: [
-      'Use Competitor Analysis research mode',
-      'Activate Market Research for trend analysis',
-      'Explore Design Trends for visual direction',
-      'Run Campaign Analysis for strategic insights'
+      'Review available research options',
+      'Select priority research areas',
+      'Plan research sequence'
     ],
     completionCriteria: [
-      'At least 3 research sessions completed',
-      'Competitor landscape mapped',
-      'Market opportunities identified',
-      'Creative direction insights gathered'
+      'Research plan established',
+      'Priority areas identified'
+    ]
+  },
+  {
+    id: 'research_execution',
+    name: 'Research Execution',
+    description: 'Conduct selected research using SAGE reasoning engine',
+    tab: 'sage',
+    prerequisites: ['research_planning'],
+    objectives: [
+      'Execute selected research capabilities',
+      'Gather comprehensive market intelligence',
+      'Build strategic foundation'
+    ],
+    suggestedActions: [
+      'Execute chosen research modules',
+      'Analyze findings thoroughly',
+      'Identify strategic insights'
+    ],
+    completionCriteria: [
+      'Selected research completed',
+      'Strategic insights gathered',
+      'Market intelligence compiled'
     ]
   },
   {
@@ -177,6 +280,7 @@ export const CAMPAIGN_WORKFLOW_STAGES: WorkflowStage[] = [
 
 export class CampaignWorkflowOrchestrator {
   private workflows: Map<string, CampaignWorkflow> = new Map();
+  private selectedResearch: Map<string, string[]> = new Map(); // sessionId -> selected research IDs
 
   createWorkflow(sessionId: string, workflowType: string = 'standard'): CampaignWorkflow {
     const workflow: CampaignWorkflow = {
@@ -186,11 +290,51 @@ export class CampaignWorkflowOrchestrator {
       stages: CAMPAIGN_WORKFLOW_STAGES,
       currentStage: 0,
       completedStages: [],
-      sessionData: {}
+      sessionData: {
+        selectedResearch: [],
+        completedResearch: [],
+        researchResults: {}
+      }
     };
 
     this.workflows.set(sessionId, workflow);
+    this.selectedResearch.set(sessionId, []);
     return workflow;
+  }
+
+  selectResearchCapability(sessionId: string, researchId: string): void {
+    const selected = this.selectedResearch.get(sessionId) || [];
+    if (!selected.includes(researchId)) {
+      selected.push(researchId);
+      this.selectedResearch.set(sessionId, selected);
+      
+      const workflow = this.getWorkflow(sessionId);
+      if (workflow) {
+        workflow.sessionData.selectedResearch = selected;
+      }
+    }
+  }
+
+  getSelectedResearch(sessionId: string): ResearchCapability[] {
+    const selected = this.selectedResearch.get(sessionId) || [];
+    return RESEARCH_CAPABILITIES.filter(cap => selected.includes(cap.id));
+  }
+
+  markResearchComplete(sessionId: string, researchId: string, results: string): void {
+    const workflow = this.getWorkflow(sessionId);
+    if (workflow) {
+      if (!workflow.sessionData.completedResearch) {
+        workflow.sessionData.completedResearch = [];
+      }
+      if (!workflow.sessionData.researchResults) {
+        workflow.sessionData.researchResults = {};
+      }
+      
+      if (!workflow.sessionData.completedResearch.includes(researchId)) {
+        workflow.sessionData.completedResearch.push(researchId);
+        workflow.sessionData.researchResults[researchId] = results;
+      }
+    }
   }
 
   getWorkflow(sessionId: string): CampaignWorkflow | null {
@@ -269,21 +413,99 @@ export class CampaignWorkflowOrchestrator {
     guidance += `**Current Stage: ${currentStage.name}**\n\n`;
     guidance += `${currentStage.description}\n\n`;
     
-    guidance += `**Key Objectives:**\n`;
-    currentStage.objectives.forEach(objective => {
-      guidance += `• ${objective}\n`;
-    });
-    
-    guidance += `\n**Suggested Actions:**\n`;
-    currentStage.suggestedActions.forEach(action => {
-      guidance += `• ${action}\n`;
-    });
+    // Special handling for research planning stage
+    if (currentStage.id === 'research_planning') {
+      guidance += this.generateResearchOptionsGuidance(sessionId);
+    } else if (currentStage.id === 'research_execution') {
+      guidance += this.generateResearchExecutionGuidance(sessionId);
+    } else {
+      guidance += `**Key Objectives:**\n`;
+      currentStage.objectives.forEach(objective => {
+        guidance += `• ${objective}\n`;
+      });
+      
+      guidance += `\n**Suggested Actions:**\n`;
+      currentStage.suggestedActions.forEach(action => {
+        guidance += `• ${action}\n`;
+      });
+    }
 
     if (nextStage) {
       guidance += `\n**Up Next:** ${nextStage.name} in the ${nextStage.tab.charAt(0).toUpperCase() + nextStage.tab.slice(1)} tab`;
     }
 
     return guidance;
+  }
+
+  generateResearchOptionsGuidance(sessionId: string): string {
+    let guidance = 'I can help strengthen your campaign with several research capabilities. Each is optional - choose what\'s most valuable for your project:\n\n';
+    
+    RESEARCH_CAPABILITIES.forEach(capability => {
+      guidance += `**${capability.name}** (Optional)\n`;
+      guidance += `${capability.description}\n`;
+      guidance += `Benefits: ${capability.benefits.join(', ')}\n\n`;
+    });
+    
+    guidance += 'Simply tell me which research areas interest you, or say "skip research" to move to strategic brief development. You can always add more research later.\n\n';
+    guidance += 'Example: "I\'d like competitor analysis and persona research" or "Let\'s do market research and design trends"\n';
+    
+    return guidance;
+  }
+
+  generateResearchExecutionGuidance(sessionId: string): string {
+    const selectedResearch = this.getSelectedResearch(sessionId);
+    if (selectedResearch.length === 0) {
+      return 'No research selected. Moving to strategic brief development.\n';
+    }
+
+    let guidance = `Executing your selected research capabilities:\n\n`;
+    
+    selectedResearch.forEach(capability => {
+      guidance += `**${capability.name}**\n`;
+      guidance += `${capability.description}\n`;
+      guidance += `Research focus: ${capability.prompt}\n\n`;
+    });
+    
+    guidance += 'I\'ll conduct these research sessions using our reasoning engine and deep market analysis.\n';
+    
+    return guidance;
+  }
+
+  parseResearchSelection(message: string): string[] {
+    const lowerMessage = message.toLowerCase();
+    const selectedIds: string[] = [];
+    
+    RESEARCH_CAPABILITIES.forEach(capability => {
+      const nameWords = capability.name.toLowerCase().split(' ');
+      const hasAllWords = nameWords.every(word => lowerMessage.includes(word));
+      const hasKeyTerms = capability.id.split('_').some(term => lowerMessage.includes(term));
+      
+      if (hasAllWords || hasKeyTerms) {
+        selectedIds.push(capability.id);
+      }
+    });
+    
+    // Handle specific phrase mappings
+    if (lowerMessage.includes('competitor') || lowerMessage.includes('competition')) {
+      selectedIds.push('competitor_analysis');
+    }
+    if (lowerMessage.includes('market') && lowerMessage.includes('research')) {
+      selectedIds.push('market_research');
+    }
+    if (lowerMessage.includes('persona') || lowerMessage.includes('audience')) {
+      selectedIds.push('persona_simulation');
+    }
+    if (lowerMessage.includes('past campaign') || lowerMessage.includes('campaign analysis')) {
+      selectedIds.push('campaign_analysis');
+    }
+    if (lowerMessage.includes('design') || lowerMessage.includes('creative') || lowerMessage.includes('visual')) {
+      selectedIds.push('design_trends');
+    }
+    if (lowerMessage.includes('brand') && lowerMessage.includes('analysis')) {
+      selectedIds.push('brand_analysis');
+    }
+    
+    return [...new Set(selectedIds)]; // Remove duplicates
   }
 
   shouldAdvanceStage(sessionId: string, sessionContext: any): boolean {

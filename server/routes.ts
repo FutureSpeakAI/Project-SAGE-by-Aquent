@@ -1394,13 +1394,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const workflowGuidance = workflow ? 
           workflowOrchestrator.generateStageGuidance(sessionId, 'sage') : '';
         
-        // Check if stage should advance based on session context
-        if (workflow && context.sessionContext) {
-          const shouldAdvance = workflowOrchestrator.shouldAdvanceStage(sessionId, context.sessionContext);
-          if (shouldAdvance) {
-            const currentStage = workflowOrchestrator.getCurrentStage(sessionId);
-            if (currentStage) {
-              workflowOrchestrator.completeStage(sessionId, currentStage.id);
+        // Handle research selection in research planning stage
+        if (workflow) {
+          const currentStage = workflowOrchestrator.getCurrentStage(sessionId);
+          
+          if (currentStage?.id === 'research_planning') {
+            const selectedResearch = workflowOrchestrator.parseResearchSelection(message);
+            if (selectedResearch.length > 0) {
+              selectedResearch.forEach(researchId => {
+                workflowOrchestrator.selectResearchCapability(sessionId, researchId);
+              });
+              workflowOrchestrator.completeStage(sessionId, 'research_planning');
+            } else if (message.toLowerCase().includes('skip research') || message.toLowerCase().includes('no research')) {
+              workflowOrchestrator.completeStage(sessionId, 'research_planning');
+              workflowOrchestrator.completeStage(sessionId, 'research_execution');
+            }
+          }
+          
+          // Check if stage should advance based on session context
+          if (context.sessionContext) {
+            const shouldAdvance = workflowOrchestrator.shouldAdvanceStage(sessionId, context.sessionContext);
+            if (shouldAdvance) {
+              if (currentStage) {
+                workflowOrchestrator.completeStage(sessionId, currentStage.id);
+              }
             }
           }
         }

@@ -25,26 +25,71 @@ Once we nail down these fundamentals, I'll guide you through deep market researc
 - Initializes session context with provided details
 - Sets current stage to "discovery"
 
-### Stage 2: Deep Market Research (SAGE Tab)
+### Stage 2: Research Planning (SAGE Tab)
 **User Input**: "The product is called 'Nike ZeroCarbon Runner' - made from 100% recycled materials. Main objectives are brand awareness, positioning Nike as sustainability leader, and driving pre-orders. Worried about Adidas and Allbirds competition."
 
 **Expected SAGE Response**:
-"Perfect! Nike ZeroCarbon Runner - that's a strong foundation. Now let's move to **Stage 2: Deep Market Research**.
+"Perfect! Nike ZeroCarbon Runner - excellent foundation. Now let's move to **Stage 2: Research Planning**.
 
-I'm activating our research modes to gather comprehensive intelligence:
+I can help strengthen your campaign with several research capabilities. Each is optional - choose what's most valuable for your project:
 
-🔍 **Competitor Analysis** - Analyzing Adidas and Allbirds sustainability messaging
-📊 **Market Research** - Current trends in sustainable athletic footwear  
-🎨 **Design Trends** - Visual direction for eco-conscious Gen Z
+**Competitor Analysis** (Optional)
+Analyze competitor strategies, messaging, and market positioning
+Benefits: Identify market gaps and opportunities, Understand competitive messaging landscape, Discover differentiation opportunities
 
-*[Triggers self-reasoning research loop with Perplexity]*
+**Market Research** (Optional)
+Current market trends, consumer behavior, and industry insights
+Benefits: Understand market dynamics, Identify emerging opportunities, Validate target audience assumptions
 
-Based on this research, I'll provide strategic recommendations and then guide you to create your strategic brief in the Briefing tab."
+**Persona Research & Simulation** (Optional)
+Deep dive into target audience psychology and behavior patterns
+Benefits: Create detailed audience profiles, Understand psychological triggers, Optimize messaging for audience segments
+
+**Past Campaign Analysis** (Optional)
+Study successful campaigns in your industry or category
+Benefits: Learn from proven strategies, Identify successful patterns, Avoid common pitfalls
+
+**Design & Creative Trends** (Optional)
+Current visual and creative trends relevant to your audience
+Benefits: Stay visually current, Understand aesthetic preferences, Inspire creative direction
+
+**Brand Analysis** (Optional)
+Deep analysis of your brand positioning and equity
+Benefits: Understand brand strengths, Identify positioning opportunities, Align campaign with brand values
+
+Simply tell me which research areas interest you, or say 'skip research' to move to strategic brief development. You can always add more research later.
+
+Example: 'I'd like competitor analysis and persona research' or 'Let's do market research and design trends'"
+
+### Stage 3: Research Execution (SAGE Tab)
+**User Input**: "I'd like competitor analysis, persona research, and design trends please."
+
+**Expected SAGE Response**:
+"Excellent choices! Moving to **Stage 3: Research Execution**.
+
+Executing your selected research capabilities:
+
+**Competitor Analysis**
+Analyze competitor strategies, messaging, and market positioning
+Research focus: Research competitors in your industry focusing on messaging strategies, positioning, pricing, and recent campaigns
+
+**Persona Research & Simulation**
+Deep dive into target audience psychology and behavior patterns
+Research focus: Research and simulate your target audience personas, including motivations, pain points, media consumption, and decision-making factors
+
+**Design & Creative Trends**
+Current visual and creative trends relevant to your audience
+Research focus: Research current design trends, visual styles, and creative approaches that resonate with your target audience
+
+I'll conduct these research sessions using our reasoning engine and deep market analysis.
+
+*[Triggers self-reasoning research loops for each selected capability]*"
 
 **System Actions**:
-- Triggers multiple research sessions automatically
-- Updates session context with detailed objectives
-- Tracks research completion toward stage advancement
+- Stores selected research capabilities
+- Triggers reasoning engine for each selected area
+- Updates session context with research results
+- Tracks completion toward stage advancement
 
 ### Stage 3: Strategic Brief Development (Briefing Tab)
 **SAGE Guidance Response**: "Excellent research foundation! We've analyzed 12 competitors and identified key market opportunities. 
@@ -92,7 +137,31 @@ Let's return to the SAGE tab for final review and optimization. I can:
 
 You now have research-backed strategy, compelling content, and engaging visuals - a complete campaign ready for launch!"
 
-## Test Case 2: B2B SaaS Rebrand - SAGE-Guided Process
+## Test Case 2: Skip Research Option - Fast-Track Campaign
+
+### Stage 2: Research Planning - Skip Option (SAGE Tab)
+**User Input**: "Actually, we already have comprehensive market research. Let's skip the research phase and move to strategy."
+
+**Expected SAGE Response**: "Perfect! Since you already have market intelligence, we'll move directly to strategic development.
+
+**Skipping Research Phase** ✅
+
+Moving to **Stage 4: Strategic Brief Development**. 
+
+I recommend switching to the **Briefing tab** now to compile your existing research and insights into an actionable strategic brief. This will help us:
+- Organize your current market intelligence
+- Define strategic positioning and messaging frameworks  
+- Establish clear creative territories
+- Set success metrics and KPIs
+
+Head to the Briefing tab and ask me to 'Generate strategic brief for Nike ZeroCarbon Runner campaign using existing research' - I'll create a comprehensive brief framework you can populate with your insights."
+
+**System Actions**:
+- Skips research planning and execution stages
+- Advances directly to strategic brief development
+- Maintains campaign context and objectives
+
+## Test Case 3: B2B SaaS Rebrand - Research Selection
 
 ### Stage 1: Discovery (SAGE Tab)
 **User Input**: "We're rebranding our project management SaaS from 'TaskFlow' to 'WorkSync' for enterprise teams."
@@ -109,7 +178,36 @@ For a successful rebrand strategy, I need:
 - Timeline and budget considerations
 - Current brand equity we want to preserve
 
-Next, I'll guide you through competitor research and market analysis."
+Once we establish these fundamentals, I'll present research options to strengthen your rebrand strategy."
+
+### Stage 2: Research Planning - B2B Focus (SAGE Tab)
+**User Input**: "The rebrand is due to market expansion - we're moving upmarket to enterprise. WorkSync emphasizes real-time collaboration and enterprise security. Timeline is 6 months, budget is $500K."
+
+**Expected SAGE Response**: "Excellent context! Moving upmarket requires strategic positioning. Now for **Stage 2: Research Planning**.
+
+Given your B2B enterprise focus, I recommend these research capabilities:
+
+**Competitor Analysis** (Optional) - Highly Recommended for B2B
+Analyze enterprise project management competitors like Monday.com, Asana Enterprise
+Benefits: Identify market positioning gaps, Understand enterprise messaging landscape
+
+**Market Research** (Optional) - Recommended
+Current trends in enterprise collaboration and project management
+Benefits: Validate upmarket positioning, Identify enterprise buyer preferences
+
+**Persona Research & Simulation** (Optional) - Critical for B2B
+Deep dive into enterprise decision-maker psychology and buying process
+Benefits: Understand enterprise buyer journey, Optimize for multiple stakeholders
+
+**Brand Analysis** (Optional) - Important for Rebrand
+Analyze current TaskFlow brand equity and enterprise perception
+Benefits: Preserve valuable brand elements, Identify repositioning opportunities
+
+**Past Campaign Analysis** (Optional)
+Study successful B2B rebrand campaigns
+Benefits: Learn from proven B2B strategies, Avoid rebrand pitfalls
+
+Which research areas would strengthen your rebrand strategy?"
 
 ### Workflow Progression Testing
 **Expected SAGE Behavior Throughout**:
