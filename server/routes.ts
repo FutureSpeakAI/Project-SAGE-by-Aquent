@@ -1361,6 +1361,41 @@ Respond only with conversational text - no buttons, badges, or UI elements. Prov
           });
         } catch (error) {
           console.error('Prompt router failed:', error);
+          
+          // Check if we have research data to return directly
+          if (context.researchContext && context.researchContext.trim().length > 0) {
+            console.log('All AI providers failed, but returning raw research data...');
+            
+            try {
+              // Attempt to get research data directly
+              let directResearchData = '';
+              
+              if (decision.useReasoning) {
+                const reasoningResult = await reasoningEngine.performReasoningLoop(message, context.researchContext);
+                directResearchData = reasoningResult.finalInsights;
+              } else {
+                directResearchData = await performDeepResearch(message, context.researchContext);
+              }
+              
+              if (directResearchData && directResearchData.length > 100) {
+                const formattedResponse = `Here's the comprehensive research data I gathered about your query:
+
+${directResearchData}
+
+Note: This research data was successfully gathered from current sources, but AI processing services are temporarily unavailable. The raw research provides detailed information to help with your analysis.`;
+
+                return res.json({ 
+                  content: formattedResponse,
+                  model: "perplexity-direct",
+                  routing: "Research data fallback - AI providers unavailable",
+                  timestamp: new Date().toISOString()
+                });
+              }
+            } catch (researchError) {
+              console.error('Research fallback also failed:', researchError);
+            }
+          }
+          
           // Final fallback - return error message but don't crash
           return res.json({ 
             content: "I apologize, but I'm experiencing technical difficulties with the AI services. Please try again in a moment.",
