@@ -44,6 +44,7 @@ import {
 import { SavedPersona } from "@/lib/types";
 import { ModelSelector } from "@/components/ui/ModelSelector";
 import { PromptRouterControls } from "@/components/ui/PromptRouterControls";
+import { useSessionContext } from "@/hooks/useSessionContext";
 
 interface FreePromptTabProps {
   model: string;
@@ -82,12 +83,13 @@ interface AgentCapability {
 
 export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps) {
   const { toast } = useToast();
+  const { context, getPromptContext, addResearch, addContent, createSession, updateContext } = useSessionContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<string>("default");
   const [temperature, setTemperature] = useState([0.7]);
-  const [sessionName, setSessionName] = useState("New Conversation");
+  const [sessionName, setSessionName] = useState(context?.projectName || "New Conversation");
   const [showResearchOptions, setShowResearchOptions] = useState(false);
   const [activeResearchContext, setActiveResearchContext] = useState<string | null>(null);
   const [routerConfig, setRouterConfig] = useState({
@@ -287,7 +289,9 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
         routerEnabled: routerConfig.routerEnabled,
         manualProvider: routerConfig.manualProvider,
         manualModel: routerConfig.manualModel,
-        forceReasoning: routerConfig.forceReasoning
+        forceReasoning: routerConfig.forceReasoning,
+        sessionContext: context,
+        campaignContext: getPromptContext()
       }
     });
     
