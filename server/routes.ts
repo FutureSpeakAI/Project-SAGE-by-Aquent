@@ -1340,22 +1340,35 @@ ETHICAL GUIDELINES:
 
 Respond only with conversational text - no buttons, badges, or UI elements. Provide specific, actionable insights based exclusively on the research data above. Remember: you're helping fellow creatives thrive in their work while embodying the values of the industry's leading creative staffing firm.`;
 
-        // Execute the routed prompt
-        const responseContent = await promptRouter.executeRoutedPrompt(
-          decision,
-          message,
-          context.researchContext,
-          baseSystemPrompt
-        );
-        
-        console.log('Routed response length:', responseContent.length);
-        
-        return res.json({ 
-          content: responseContent,
-          model: `${decision.provider}-${decision.model}`,
-          routing: decision.rationale,
-          timestamp: new Date().toISOString()
-        });
+        // Execute the routed prompt with fallback handling
+        try {
+          const routedResponse = await promptRouter.executeRoutedPrompt(
+            decision,
+            message,
+            context.researchContext,
+            baseSystemPrompt
+          );
+          
+          console.log('Routed response length:', routedResponse.content.length);
+          console.log('Actually used provider:', routedResponse.actualProvider);
+          
+          return res.json({ 
+            content: routedResponse.content,
+            model: `${routedResponse.actualProvider}-${routedResponse.actualModel}`,
+            routing: decision.rationale,
+            fallback: routedResponse.actualProvider !== decision.provider ? `Fell back to ${routedResponse.actualProvider}` : undefined,
+            timestamp: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error('Prompt router failed:', error);
+          // Final fallback - return error message but don't crash
+          return res.json({ 
+            content: "I apologize, but I'm experiencing technical difficulties with the AI services. Please try again in a moment.",
+            model: "fallback-error",
+            routing: "Error recovery",
+            timestamp: new Date().toISOString()
+          });
+        }
       }
 
       // Standard response without research

@@ -146,7 +146,7 @@ export class PromptRouter {
     message: string,
     researchContext: string,
     systemPrompt: string
-  ): Promise<string> {
+  ): Promise<{ content: string; actualProvider: string; actualModel: string }> {
     
     let researchResults = '';
     
@@ -167,26 +167,71 @@ export class PromptRouter {
       `${systemPrompt}\n\n=== RESEARCH DATA ===\n${researchResults}\n=== END RESEARCH DATA ===` : 
       systemPrompt;
 
-    // Route to appropriate provider
-    switch (decision.provider) {
+    // Try primary provider with fallback chain
+    const fallbackChain = this.getFallbackChain(decision.provider);
+    
+    for (const provider of fallbackChain) {
+      try {
+        console.log(`Attempting to use ${provider.name}...`);
+        const result = await this.executeWithProvider(provider, message, enhancedSystemPrompt);
+        console.log(`Successfully used ${provider.name}`);
+        return {
+          content: result,
+          actualProvider: provider.name,
+          actualModel: provider.model
+        };
+      } catch (error: any) {
+        console.warn(`Failed to use ${provider.name}:`, error.message);
+        if (provider === fallbackChain[fallbackChain.length - 1]) {
+          // Last fallback failed, throw error
+          throw new Error(`All AI providers failed. Last error: ${error.message}`);
+        }
+        // Continue to next fallback
+        continue;
+      }
+    }
+    
+    throw new Error('All AI providers failed');
+  }
+
+  private getFallbackChain(primaryProvider: string): Array<{name: string, model: string}> {
+    const providers = [
+      { name: 'openai', model: 'gpt-4o' },
+      { name: 'gemini', model: 'gemini-1.5-pro' },
+      { name: 'anthropic', model: 'claude-sonnet-4-20250514' }
+    ];
+
+    // Put primary provider first, then others
+    const primary = providers.find(p => p.name === primaryProvider);
+    const others = providers.filter(p => p.name !== primaryProvider);
+    
+    return primary ? [primary, ...others] : providers;
+  }
+
+  private async executeWithProvider(
+    provider: {name: string, model: string}, 
+    message: string, 
+    systemPrompt: string
+  ): Promise<string> {
+    
+    switch (provider.name) {
       case 'anthropic':
         return await AnthropicAPI.generateContent({
-          model: decision.model,
+          model: provider.model,
           prompt: message,
-          systemPrompt: enhancedSystemPrompt,
+          systemPrompt: systemPrompt,
           temperature: 0.7,
           maxTokens: 2000
         });
 
       case 'openai':
-        // Use OpenAI directly
         const OpenAI = require('openai');
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         
         const completion = await openai.chat.completions.create({
-          model: decision.model,
+          model: provider.model,
           messages: [
-            { role: 'system', content: enhancedSystemPrompt },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: message }
           ],
           temperature: 0.7,
@@ -197,15 +242,15 @@ export class PromptRouter {
 
       case 'gemini':
         return await GeminiAPI.generateContent({
-          model: decision.model,
+          model: provider.model,
           prompt: message,
-          systemPrompt: enhancedSystemPrompt,
+          systemPrompt: systemPrompt,
           temperature: 0.7,
           maxTokens: 2000
         });
 
       default:
-        throw new Error(`Unsupported provider: ${decision.provider}`);
+        throw new Error(`Unsupported provider: ${provider.name}`);
     }
   }
 }
