@@ -27,7 +27,7 @@ export async function performDeepResearch(userQuery: string, researchContext: st
     } else if (researchContext.includes("design trends")) {
       researchQuery = `Research current design and visual trends for: ${userQuery}. Include color palettes, typography trends, layout patterns, visual aesthetics, and emerging design approaches currently being used in this space with specific examples.`;
     } else if (researchContext.includes("campaign analysis")) {
-      researchQuery = `Analyze successful marketing campaigns related to: ${userQuery}. Include recent campaign examples, creative strategies, channel mix, engagement tactics, and measurable outcomes from effective campaigns with specific campaign names and metrics.`;
+      researchQuery = `Provide a comprehensive list of all major advertising campaigns by ${userQuery} in 2024. Include: campaign names, launch dates, featured celebrities/athletes, creative agencies, budgets (if available), key messaging, target demographics, channels used, creative strategies, and measurable outcomes. Focus on North American campaigns with specific details and metrics.`;
     } else if (researchContext.includes("product research")) {
       researchQuery = `Research product positioning and features for: ${userQuery}. Include feature analysis, value propositions, user experience patterns, pricing strategies, and successful product launch approaches with specific product examples.`;
     } else {

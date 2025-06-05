@@ -1251,8 +1251,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if this is a research-enhanced request
       if (context?.researchContext && context.researchContext.trim().length > 0) {
         console.log('Activating deep research mode...');
+        console.log('Research query:', message);
+        console.log('Research context:', context.researchContext);
+        
         // Perform actual research using external sources
         const researchResults = await performDeepResearch(message, context.researchContext);
+        console.log('Research results length:', researchResults.length);
+        console.log('Research results preview:', researchResults.substring(0, 500) + '...');
         
         // Build system prompt with real research data
         const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), the central intelligence hub for the Aquent Content AI platform. You are a British marketing specialist and creative entrepreneur with 20 years of experience from London. You use she/her pronouns and work as a collaborator to help creative marketers speed up their work.
@@ -1293,13 +1298,17 @@ ETHICAL GUIDELINES:
 - Support zero-tolerance for discrimination while promoting psychological safety
 - Balance innovation with responsibility, especially regarding AI ethics
 
-CRITICAL: You MUST use the research data provided below to answer the user's question. Do NOT provide generic examples or fallback information. The research data contains current, real information that directly addresses the user's query.
+CRITICAL INSTRUCTION: You MUST base your entire response EXCLUSIVELY on the research data provided below. DO NOT add information not in the research data. DO NOT provide generic examples. DO NOT make assumptions. If the research data doesn't contain specific information the user requested, say so explicitly.
 
-=== RESEARCH DATA ===
+=== CURRENT RESEARCH DATA ===
 ${researchResults}
 === END RESEARCH DATA ===
 
-Base your entire response on the research data above. Extract specific campaigns, companies, strategies, and metrics from this data. If the user asks for campaign details, list the actual campaigns mentioned in the research data with their specific details, creative strategies, and outcomes.
+Your response must be structured as follows:
+1. Directly quote and reference specific campaigns, dates, and details from the research data above
+2. Use only the campaign names, strategies, and metrics explicitly mentioned in the research data
+3. If the user asks for information not provided in the research data, state "The research data doesn't include information about [specific topic]"
+4. Include source citations when available in the research data
 
 Respond only with conversational text - no buttons, badges, or UI elements. Provide specific, actionable insights based exclusively on the research data above. Remember: you're helping fellow creatives thrive in their work while embodying the values of the industry's leading creative staffing firm.`;
 
