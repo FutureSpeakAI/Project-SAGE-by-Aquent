@@ -10,6 +10,7 @@ import { upload } from './index';
 import OpenAI from "openai";
 import { performDeepResearch } from "./research-engine";
 import { reasoningEngine } from "./reasoning-engine";
+import { promptRouter, type PromptRouterConfig } from "./prompt-router";
 
 // Helper function to determine if reasoning loop is needed
 function shouldUseReasoningLoop(message: string, researchContext: string): boolean {
@@ -1282,36 +1283,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if this is a research-enhanced request
       if (context?.researchContext && context.researchContext.trim().length > 0) {
-        console.log('Activating deep research mode...');
+        console.log('Activating prompt router...');
         console.log('Research query:', message);
         console.log('Research context:', context.researchContext);
         
-        // Determine if this requires advanced reasoning or simple research
-        const requiresReasoning = shouldUseReasoningLoop(message, context.researchContext);
+        // Extract router configuration from context
+        const routerConfig: PromptRouterConfig = {
+          enabled: context.routerEnabled !== false, // Default to enabled
+          manualProvider: context.manualProvider,
+          manualModel: context.manualModel,
+          forceReasoning: context.forceReasoning
+        };
         
-        let researchResults: string;
-        let reasoningMetadata = '';
+        // Route the prompt through the intelligent router
+        const decision = await promptRouter.routePrompt(message, context.researchContext, routerConfig);
+        console.log('Routing decision:', decision);
         
-        if (requiresReasoning) {
-          console.log('Activating self-reasoning loop...');
-          const reasoningResult = await reasoningEngine.performReasoningLoop(message, context.researchContext);
-          researchResults = reasoningResult.finalInsights;
-          reasoningMetadata = `\n\n[Analysis completed using ${reasoningResult.totalQueries} research queries in ${Math.round(reasoningResult.processingTime/1000)}s. Completeness: ${Math.round(reasoningResult.completenessScore*100)}%]`;
-          console.log('Reasoning loop completed:', {
-            queries: reasoningResult.totalQueries,
-            completeness: reasoningResult.completenessScore,
-            time: reasoningResult.processingTime
-          });
-        } else {
-          console.log('Using direct research...');
-          researchResults = await performDeepResearch(message, context.researchContext);
-        }
-        
-        console.log('Research results length:', researchResults.length);
-        console.log('Research results preview:', researchResults.substring(0, 500) + '...');
-        
-        // Build system prompt with real research data
-        const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), the central intelligence hub for the Aquent Content AI platform. You are a British marketing specialist and creative entrepreneur with 20 years of experience from London. You use she/her pronouns and work as a collaborator to help creative marketers speed up their work.
+        // Build base system prompt
+        const baseSystemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), the central intelligence hub for the Aquent Content AI platform. You are a British marketing specialist and creative entrepreneur with 20 years of experience from London. You use she/her pronouns and work as a collaborator to help creative marketers speed up their work.
 
 CORE VALUES THAT GUIDE YOUR INTERACTIONS:
 - **Make It Matter**: Every interaction should create meaningful impact. Focus on purposeful solutions that drive real results, not just busy work.
@@ -1349,65 +1338,24 @@ ETHICAL GUIDELINES:
 - Support zero-tolerance for discrimination while promoting psychological safety
 - Balance innovation with responsibility, especially regarding AI ethics
 
-CRITICAL INSTRUCTION: The user has requested a detailed research report. You MUST provide a comprehensive, thorough response using ALL the research data below. Do NOT summarize or condense the information. Present the full details from the research data.
-
-=== COMPREHENSIVE RESEARCH DATA ===
-${researchResults}${reasoningMetadata}
-=== END RESEARCH DATA ===
-
-MANDATORY RESPONSE REQUIREMENTS:
-1. Present ALL campaigns mentioned in the research data with complete details
-2. Include ALL specific information: dates, budgets, agencies, strategies, outcomes, metrics
-3. Use direct quotes and specific data points from the research
-4. Maintain the full depth and detail of the research data
-5. Include all source citations provided in the research data
-6. If the user requests "everything you can find" or "comprehensive report," provide the complete research data, not a summary
-
 Respond only with conversational text - no buttons, badges, or UI elements. Provide specific, actionable insights based exclusively on the research data above. Remember: you're helping fellow creatives thrive in their work while embodying the values of the industry's leading creative staffing firm.`;
 
-        const messages = [
-          { role: 'system' as const, content: systemPrompt },
-          { role: 'user' as const, content: message }
-        ];
-
-        // Adjust response length and style for voice conversations
-        const maxTokens = context?.isVoiceConversation ? 800 : 4000;
-        const voiceInstructions = context?.isVoiceConversation 
-          ? "\n\nIMPORTANT: This is a voice conversation. Keep your response conversational, natural, and concise (2-3 sentences max). Speak as if you're having a friendly chat with a colleague." 
-          : "";
-
-        // Check if user requested comprehensive/detailed research report
-        const isComprehensiveRequest = message.toLowerCase().includes('comprehensive') || 
-                                     message.toLowerCase().includes('detailed') || 
-                                     message.toLowerCase().includes('everything you can find') ||
-                                     message.toLowerCase().includes('deep research report');
-
-        if (isComprehensiveRequest && researchResults.length > 1000) {
-          // For comprehensive requests, provide the full research data with minimal AI processing
-          const directResponse = `Based on current research data, here's a comprehensive report on your query:
-
-${researchResults}
-
-This research was conducted using real-time data sources to provide you with current, accurate information about the campaigns and strategies you requested.`;
-          
-          return res.json({ 
-            content: directResponse,
-            model: "research-direct",
-            timestamp: new Date().toISOString()
-          });
-        }
-
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            { role: 'system' as const, content: systemPrompt + voiceInstructions },
-            { role: 'user' as const, content: message }
-          ],
-          temperature: 0.7,
-          max_tokens: maxTokens,
+        // Execute the routed prompt
+        const responseContent = await promptRouter.executeRoutedPrompt(
+          decision,
+          message,
+          context.researchContext,
+          baseSystemPrompt
+        );
+        
+        console.log('Routed response length:', responseContent.length);
+        
+        return res.json({ 
+          content: responseContent,
+          model: `${decision.provider}-${decision.model}`,
+          routing: decision.rationale,
+          timestamp: new Date().toISOString()
         });
-
-        const reply = completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
         
         return res.json({ 
           content: reply,
