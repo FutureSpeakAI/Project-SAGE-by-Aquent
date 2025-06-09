@@ -853,8 +853,9 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         </Card>
       </div>
 
-      {/* Context Control Panel */}
-      <div className="w-full lg:w-80 space-y-4 lg:max-h-[calc(100vh-120px)] overflow-hidden">
+      {/* Context Control Panel - Hidden in full-screen mode */}
+      {!isFullScreen && (
+        <div className="w-full lg:w-80 space-y-4 lg:max-h-[calc(100vh-120px)] overflow-hidden">
         <Tabs defaultValue="history" className="w-full">
           <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm">
             <TabsTrigger value="history" className="px-2">History</TabsTrigger>
@@ -1002,7 +1003,8 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+        </div>
+      )}
 
       {/* Save Session Dialog */}
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>

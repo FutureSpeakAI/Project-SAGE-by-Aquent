@@ -46,6 +46,9 @@ export default function Home() {
   // Data migration dialog state
   const [dataMigrationOpen, setDataMigrationOpen] = useState(false);
   
+  // Full-screen state for SAGE tab
+  const [sageChatFullScreen, setSageChatFullScreen] = useState(false);
+  
   // Fetch personas for context menu
   const { data: personas = [] } = useQuery<SavedPersona[]>({ 
     queryKey: ["/api/personas"],
@@ -491,6 +494,8 @@ export default function Home() {
                   model={model}
                   setModel={setModel}
                   personas={personas}
+                  isFullScreen={sageChatFullScreen}
+                  onToggleFullScreen={() => setSageChatFullScreen(!sageChatFullScreen)}
                 />
               ) : (
                 <BriefingTab
