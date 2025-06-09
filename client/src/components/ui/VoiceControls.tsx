@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mic, MicOff, Volume2, VolumeX, Loader2, Brain, Waves } from "lucide-react";
 import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
+import { useSimpleAudio } from "@/hooks/useSimpleAudio";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -26,20 +27,23 @@ export function VoiceControls({
 }: VoiceControlsProps) {
   const {
     isListening,
-    isSpeaking,
-    isGeneratingAudio,
     isIntelligentMode,
     voiceActivity,
     startListening,
     stopListening,
-    speakText,
     stopSpeaking,
     toggleIntelligentMode,
     startIntelligentListening,
     cleanup
   } = useVoiceInteraction({ 
-    autoPlay: autoPlayResponses,
+    autoPlay: false, // Disable built-in audio
     intelligentMode: false
+  });
+
+  // Separate simple audio system
+  const { isPlaying, isGenerating, playText, stopAudio } = useSimpleAudio({
+    voiceId: 'XB0fDUnXU5powFXDhCwa',
+    playbackRate: 1.33
   });
 
   // Track the last spoken message to prevent repeats
@@ -47,9 +51,9 @@ export function VoiceControls({
   // Track voice conversation state
   const [isVoiceSessionActive, setIsVoiceSessionActive] = useState<boolean>(false);
 
-  // Auto-play new assistant messages only during active voice sessions or when voice is initiated
+  // Auto-play new assistant messages using simple audio system
   useEffect(() => {
-    if (lastMessage && autoPlayResponses && (isVoiceSessionActive || isVoiceInitiated) && !isListening && !isSpeaking && lastMessage !== lastSpokenRef.current) {
+    if (lastMessage && autoPlayResponses && (isVoiceSessionActive || isVoiceInitiated) && !isListening && !isPlaying && lastMessage !== lastSpokenRef.current) {
       // Clean the message text for better speech synthesis
       const cleanText = lastMessage
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
@@ -62,10 +66,10 @@ export function VoiceControls({
       
       if (cleanText && cleanText.length > 10) { // Only speak substantial messages
         lastSpokenRef.current = lastMessage; // Mark this message as spoken
-        speakText(cleanText);
+        playText(cleanText);
       }
     }
-  }, [lastMessage, autoPlayResponses, isVoiceSessionActive, isListening, isSpeaking, speakText]);
+  }, [lastMessage, autoPlayResponses, isVoiceSessionActive, isListening, isPlaying, playText]);
 
   // Microphone control is now fully manual - no automatic reactivation
 
@@ -99,10 +103,10 @@ export function VoiceControls({
   };
 
   const handleSpeakerToggle = () => {
-    console.log('Speaker toggle clicked, isSpeaking:', isSpeaking, 'lastMessage:', lastMessage);
-    if (isSpeaking || isGeneratingAudio) {
+    console.log('Speaker toggle clicked, isPlaying:', isPlaying, 'lastMessage:', lastMessage);
+    if (isPlaying || isGenerating) {
       console.log('Stopping speech...');
-      stopSpeaking();
+      stopAudio();
     } else if (lastMessage) {
       const cleanText = lastMessage
         .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -116,7 +120,7 @@ export function VoiceControls({
       console.log('Clean text for speech:', cleanText);
       if (cleanText) {
         console.log('Starting text-to-speech...');
-        speakText(cleanText);
+        playText(cleanText);
       }
     }
   };
