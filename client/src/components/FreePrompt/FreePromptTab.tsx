@@ -394,7 +394,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
       console.error('Save session error:', error);
       toast({
         title: "Error saving session",
-        description: `Failed to save the session: ${error.message}`,
+        description: `Failed to save the session: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     }

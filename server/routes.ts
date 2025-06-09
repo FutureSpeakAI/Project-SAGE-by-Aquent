@@ -408,8 +408,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         } catch (anthropicError: any) {
           console.log('Anthropic API unavailable, using OpenAI fallback');
-          const fallbackReq = { ...req, body: { ...req.body, model: 'gpt-4o' } };
-          return await generateContent(fallbackReq, res);
+          // Fall through to OpenAI generation
+          model = 'gpt-4o';
         }
       } else if (GeminiAPI.GEMINI_MODELS.chat.includes(model)) {
         try {
@@ -422,8 +422,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         } catch (geminiError: any) {
           console.log('Gemini API unavailable, using OpenAI fallback');
-          const fallbackReq = { ...req, body: { ...req.body, model: 'gpt-4o' } };
-          return await generateContent(fallbackReq, res);
+          req.body.model = 'gpt-4o';
+          return await generateContent(req, res);
         }
       } else {
         return res.status(400).json({ error: 'Unsupported model' });
