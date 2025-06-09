@@ -309,6 +309,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch available models' });
     }
   });
+
+  // Validate smart AI routing configuration
+  app.post("/api/validate-routing", async (req: Request, res: Response) => {
+    try {
+      const { routingValidator } = await import('./routing-validator');
+      const results = await routingValidator.runAllTests();
+      const report = routingValidator.generateTestReport(results);
+      
+      res.json({
+        success: true,
+        results,
+        report,
+        summary: {
+          total: results.length,
+          passed: results.filter(r => r.passed).length,
+          failed: results.filter(r => !r.passed).length,
+          passRate: Math.round(results.filter(r => r.passed).length / results.length * 100)
+        }
+      });
+    } catch (error) {
+      console.error('Routing validation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to validate routing configuration',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   // Multi-provider content generation endpoint
   app.post("/api/generate-content", async (req: Request, res: Response) => {

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useModels } from '@/hooks/useModels';
 
 export interface PromptRouterConfig {
   enabled: boolean;
@@ -17,26 +18,7 @@ interface PromptRouterControlsProps {
   className?: string;
 }
 
-const MODEL_OPTIONS = {
-  anthropic: [
-    { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
-    { value: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet' },
-    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
-    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
-    { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' }
-  ],
-  openai: [
-    { value: 'gpt-4o', label: 'GPT-4o' },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
-  ],
-  gemini: [
-    { value: 'gemini-1.5-pro-002', label: 'Gemini 1.5 Pro' },
-    { value: 'gemini-1.5-flash-002', label: 'Gemini 1.5 Flash' },
-    { value: 'gemini-1.0-pro', label: 'Gemini 1.0 Pro' }
-  ]
-};
+// Dynamic model options will be populated from API
 
 export function PromptRouterControls({ onConfigChange, className }: PromptRouterControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
