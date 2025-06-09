@@ -4,11 +4,7 @@ import path from 'path';
 import os from 'os';
 import axios from 'axios';
 import sharp from 'sharp';
-import potrace from 'potrace';
-import { promisify } from 'util';
-
-// Promisify potrace functions
-const potraceTrace = promisify<Buffer | string, potrace.Options, string>(potrace.trace);
+// No longer using potrace - now embedding images directly in SVG for full color preservation
 
 /**
  * Fetch image buffer from URL or base64 string
@@ -45,17 +41,35 @@ async function getImageBuffer(imageSource: string | Buffer): Promise<Buffer> {
 }
 
 /**
- * Convert image to SVG using potrace
+ * Convert image to SVG by embedding as base64 data URI (preserves full quality and color)
  */
-async function convertToSVG(imageBuffer: Buffer, options: potrace.Options): Promise<string> {
+async function convertToSVG(imageBuffer: Buffer, width?: number, height?: number): Promise<string> {
   try {
-    // For SVG conversion, we need to ensure we have a black and white image
-    const preprocessedBuffer = await sharp(imageBuffer)
-      .grayscale()
+    // Get image metadata to determine dimensions
+    const metadata = await sharp(imageBuffer).metadata();
+    const imgWidth = width || metadata.width || 1024;
+    const imgHeight = height || metadata.height || 1024;
+    
+    // Convert to optimized PNG for embedding
+    const optimizedBuffer = await sharp(imageBuffer)
+      .png({ quality: 95, compressionLevel: 6 })
       .toBuffer();
     
-    // Trace the image
-    const svg = await potraceTrace(preprocessedBuffer, options);
+    // Create base64 data URI
+    const base64Data = optimizedBuffer.toString('base64');
+    const dataUri = `data:image/png;base64,${base64Data}`;
+    
+    // Create SVG with embedded image - preserves full quality and color
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     width="${imgWidth}" height="${imgHeight}" viewBox="0 0 ${imgWidth} ${imgHeight}">
+  <title>AI Generated Image</title>
+  <desc>High-quality AI-generated image preserved in SVG format</desc>
+  <image x="0" y="0" width="${imgWidth}" height="${imgHeight}" 
+         xlink:href="${dataUri}" 
+         style="image-rendering: auto; image-rendering: crisp-edges; image-rendering: pixelated"/>
+</svg>`;
+    
     return svg;
   } catch (error: any) {
     console.error('Error converting to SVG:', error);
@@ -96,25 +110,9 @@ export const processImage = async (req: Request, res: Response) => {
     const width = parseInt(req.body.width) || 2048;
     const height = parseInt(req.body.height) || 2048;
     
-    // Handle SVG conversion separately
+    // Handle SVG conversion separately - now preserves full color and detail
     if (format === 'svg') {
-      let svgOptions: potrace.Options = {
-        threshold: 180,
-        background: 'transparent',
-        color: '#000000'
-      };
-      
-      // Parse SVG options if provided
-      if (req.body.svgOptions) {
-        try {
-          const parsedOptions = JSON.parse(req.body.svgOptions);
-          svgOptions = { ...svgOptions, ...parsedOptions };
-        } catch (error) {
-          console.warn('Failed to parse SVG options, using defaults', error);
-        }
-      }
-      
-      const svg = await convertToSVG(imageBuffer, svgOptions);
+      const svg = await convertToSVG(imageBuffer, width, height);
       
       // Set content type and send response
       res.setHeader('Content-Type', 'image/svg+xml');

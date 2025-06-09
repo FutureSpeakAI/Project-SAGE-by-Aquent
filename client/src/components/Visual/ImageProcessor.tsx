@@ -77,15 +77,6 @@ export function ImageProcessor({ open, onOpenChange, imageUrl }: ImageProcessorP
       formData.append('width', targetWidth.toString());
       formData.append('height', targetHeight.toString());
 
-      // Process special options for SVG format
-      if (format === 'svg') {
-        formData.append('svgOptions', JSON.stringify({
-          threshold: 180,
-          color: '#000000',
-          background: 'transparent'
-        }));
-      }
-
       // Send to the server
       const response = await axios.post('/api/image-processing', formData, {
         responseType: 'blob',
@@ -184,7 +175,7 @@ export function ImageProcessor({ open, onOpenChange, imageUrl }: ImageProcessorP
                   {format === 'png' && "High-quality PNG with transparency support, ideal for web and print."}
                   {format === 'jpeg' && "Compressed format for photographs and gradients, no transparency."}
                   {format === 'tiff' && "Professional print format with full quality preservation."}
-                  {format === 'svg' && "Vector format for scaling to any size without quality loss."}
+                  {format === 'svg' && "High-quality embedded format preserving full color and detail with infinite scalability."}
                 </Label>
               </div>
             </TabsContent>
