@@ -194,7 +194,12 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
   }, [isIntelligentMode, isSpeaking]);
 
   // Start intelligent listening mode with continuous detection
-  const startIntelligentListening = useCallback(async () => {
+  const startIntelligentListening = useCallback(async (onTranscript?: (transcript: string) => void) => {
+    // Set the callback if provided
+    if (onTranscript) {
+      onTranscriptCompleteRef.current = onTranscript;
+    }
+
     if (isIntelligentMode) {
       const audioInitialized = await initializeAudioContext();
       if (audioInitialized) {
@@ -206,7 +211,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       recognitionRef.current = initializeSpeechRecognition();
       if (!recognitionRef.current) return;
 
-      recognitionRef.current.onresult = (event) => {
+      recognitionRef.current.onresult = (event: any) => {
         let interimTranscript = '';
         let finalTranscript = '';
 
@@ -222,11 +227,16 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         const fullTranscript = finalTranscript || interimTranscript;
         lastTranscriptRef.current = fullTranscript;
         
+        // For final results, trigger the callback immediately
+        if (finalTranscript && onTranscriptCompleteRef.current) {
+          onTranscriptCompleteRef.current(finalTranscript);
+        }
+        
         // Provide real-time feedback for interim results
         onTranscriptUpdateRef.current?.(fullTranscript, !event.results[event.results.length - 1].isFinal);
       };
 
-      recognitionRef.current.onerror = (event) => {
+      recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
         if (event.error === 'not-allowed') {
           toast({

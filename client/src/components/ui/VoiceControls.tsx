@@ -162,97 +162,99 @@ export function VoiceControls({
     }
   };
 
+  // Unified microphone handler for intelligent voice mode
+  const handleUnifiedMicToggle = () => {
+    console.log('Unified mic toggle clicked, current states:', { 
+      isIntelligentMode, 
+      isListening, 
+      isVoiceSessionActive 
+    });
+    
+    if (!isIntelligentMode) {
+      // First click - activate intelligent mode
+      console.log('Activating intelligent voice mode...');
+      toggleIntelligentMode();
+      setIsVoiceSessionActive(true);
+      onVoiceStateChange?.(true);
+      
+      // Start intelligent listening after a brief delay
+      setTimeout(() => {
+        if (onTranscript) {
+          console.log('Starting intelligent listening...');
+          startIntelligentListening((transcript) => {
+            console.log('Intelligent transcript received:', transcript);
+            onTranscript(transcript, true);
+          });
+        }
+      }, 500);
+    } else if (isListening) {
+      // Currently listening - stop listening but stay in intelligent mode
+      console.log('Stopping current listening...');
+      stopListening();
+    } else {
+      // In intelligent mode but not listening - restart listening
+      console.log('Restarting intelligent listening...');
+      if (onTranscript) {
+        startIntelligentListening((transcript) => {
+          console.log('Intelligent transcript received:', transcript);
+          onTranscript(transcript, true);
+        });
+      }
+    }
+  };
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      {/* Intelligent Mode Toggle */}
+      {/* Unified Microphone Button */}
       <Button
         variant={isIntelligentMode ? "default" : "outline"}
         size="sm"
-        onClick={handleIntelligentModeToggle}
+        onClick={handleUnifiedMicToggle}
+        disabled={isSpeaking || isGeneratingAudio}
         className={cn(
           "relative",
-          isIntelligentMode && "bg-blue-600 hover:bg-blue-700"
+          isListening 
+            ? "bg-green-500 hover:bg-green-600 text-white" 
+            : isIntelligentMode 
+              ? "bg-blue-500 hover:bg-blue-600 text-white" 
+              : "hover:bg-gray-50"
         )}
-        title={isIntelligentMode ? "Exit Intelligent Voice Mode" : "Enter Intelligent Voice Mode"}
+        title={
+          !isIntelligentMode 
+            ? "Click to start intelligent voice mode" 
+            : isListening 
+              ? "Click to stop listening"
+              : "Click to start listening"
+        }
       >
-        <Brain className="h-4 w-4" />
+        {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         {isIntelligentMode && (
           <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
         )}
       </Button>
 
-      {/* Voice Activity Indicator */}
+      {/* Voice Activity Indicator - only show when in intelligent mode */}
       {isIntelligentMode && (
         <div className="flex items-center gap-1">
           <Waves className={cn(
             "h-3 w-3 transition-colors",
-            voiceActivity.isUserSpeaking ? "text-green-500" : "text-gray-400"
+            voiceActivity?.isUserSpeaking ? "text-green-500" : "text-gray-400"
           )} />
           <div className="w-8 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className="h-full bg-green-500 transition-all duration-100 ease-out"
-              style={{ width: `${Math.min(voiceActivity.audioLevel * 500, 100)}%` }}
+              style={{ width: `${Math.min((voiceActivity?.audioLevel || 0) * 500, 100)}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Status Badges */}
-      {isIntelligentMode && (
-        <div className="flex gap-1">
-          {isListening && (
-            <Badge variant="secondary" className="text-xs">
-              Listening
-            </Badge>
-          )}
-          {voiceActivity.interruptDetected && (
-            <Badge variant="destructive" className="text-xs">
-              Interrupting
-            </Badge>
-          )}
-        </div>
+      {/* Status Badge - only show when actively listening */}
+      {isIntelligentMode && isListening && (
+        <Badge variant="secondary" className="text-xs">
+          Listening
+        </Badge>
       )}
-
-      {/* Microphone Button */}
-      <Button
-        variant={isListening ? "default" : "outline"}
-        size="sm"
-        onClick={handleMicToggle}
-        disabled={isSpeaking || isGeneratingAudio}
-        className={
-          isListening 
-            ? "bg-green-500 hover:bg-green-600 text-white" 
-            : isVoiceSessionActive 
-              ? "bg-blue-100 border-blue-300 text-blue-700" 
-              : ""
-        }
-        title={
-          isListening 
-            ? "Stop listening" 
-            : isVoiceSessionActive 
-              ? "End voice conversation" 
-              : "Start voice conversation"
-        }
-      >
-        <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse' : ''}`} />
-      </Button>
-
-      {/* Speaker Button */}
-      <Button
-        variant={isSpeaking || isGeneratingAudio ? "default" : "outline"}
-        size="sm"
-        onClick={handleSpeakerToggle}
-        disabled={!lastMessage || isListening}
-        className={isSpeaking || isGeneratingAudio ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
-      >
-        {isGeneratingAudio ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : isSpeaking ? (
-          <VolumeX className="h-4 w-4" />
-        ) : (
-          <Volume2 className="h-4 w-4" />
-        )}
-      </Button>
     </div>
   );
 }
