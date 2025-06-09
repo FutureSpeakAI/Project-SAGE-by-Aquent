@@ -386,8 +386,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   app.post("/api/generate", async (req: Request, res: Response) => {
-    // Redirect to the new endpoint for backward compatibility
-    return await generateContent(req, res);
+    // Use the multi-provider routing instead of always defaulting to OpenAI
+    try {
+      const { model, systemPrompt, userPrompt, temperature } = req.body;
+      
+      if (!userPrompt) {
+        return res.status(400).json({ error: 'User prompt is required' });
+      }
+
+      let result: string;
+      
+      if (model.startsWith('gpt-')) {
+        // OpenAI models - use existing function
+        return await generateContent(req, res);
+      } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(model)) {
+        // Anthropic models
+        result = await AnthropicAPI.generateContent({
+          model,
+          prompt: userPrompt,
+          systemPrompt,
+          temperature,
+          maxTokens: 4000
+        });
+      } else if (GeminiAPI.GEMINI_MODELS.chat.includes(model)) {
+        // Gemini models
+        result = await GeminiAPI.generateContent({
+          model,
+          prompt: userPrompt,
+          systemPrompt,
+          temperature,
+          maxTokens: 4000
+        });
+      } else {
+        return res.status(400).json({ error: 'Unsupported model' });
+      }
+      
+      res.json({ content: result });
+    } catch (error) {
+      console.error('Content generation error:', error);
+      res.status(500).json({ error: 'Failed to generate content' });
+    }
   });
   
   // Multi-provider image generation endpoint

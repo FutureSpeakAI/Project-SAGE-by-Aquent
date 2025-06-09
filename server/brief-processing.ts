@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import util from 'util';
 import OpenAI from 'openai';
+import mammoth from 'mammoth';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,16 +59,25 @@ const uploadFilePromise = (req: Request, res: Response): Promise<void> => {
 
 // Function to extract text from a file based on its extension
 async function extractTextFromFile(filePath: string, fileExt: string): Promise<string> {
-  if (fileExt === '.txt') {
-    // For text files, just read the contents
-    return fs.readFileSync(filePath, 'utf8');
-  } else if (fileExt === '.pdf' || fileExt === '.docx') {
-    // For simplicity, we'll just return the file path for now
-    // In a real implementation, you would use libraries like pdf-parse or mammoth
-    // to extract text from PDFs and DOCXs
-    return `Content from ${path.basename(filePath)}. For demonstration purposes, we're simulating text extraction from ${fileExt} file.`;
-  } else {
-    throw new Error(`Unsupported file extension: ${fileExt}`);
+  try {
+    if (fileExt === '.txt') {
+      // For text files, read the contents directly
+      return fs.readFileSync(filePath, 'utf8');
+    } else if (fileExt === '.pdf') {
+      // Extract text from PDF using pdf-parse
+      const dataBuffer = fs.readFileSync(filePath);
+      const data = await pdfParse(dataBuffer);
+      return data.text;
+    } else if (fileExt === '.docx') {
+      // Extract text from DOCX using mammoth
+      const result = await mammoth.extractRawText({ path: filePath });
+      return result.value;
+    } else {
+      throw new Error(`Unsupported file extension: ${fileExt}`);
+    }
+  } catch (error: any) {
+    console.error(`Error extracting text from ${fileExt} file:`, error);
+    throw new Error(`Failed to extract text from ${fileExt} file: ${error.message}`);
   }
 }
 
