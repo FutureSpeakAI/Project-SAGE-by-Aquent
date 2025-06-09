@@ -182,20 +182,21 @@ export function VoiceControls({
     if (!isIntelligentMode) {
       // First click - activate intelligent mode
       console.log('Activating intelligent voice mode...');
-      toggleIntelligentMode();
-      setIsVoiceSessionActive(true);
-      onVoiceStateChange?.(true);
-      
-      // Start intelligent listening after a brief delay
-      setTimeout(() => {
-        if (onTranscript) {
-          console.log('Starting intelligent listening...');
-          startIntelligentListening((transcript) => {
-            console.log('Intelligent transcript received:', transcript);
-            onTranscript(transcript, true);
-          });
-        }
-      }, 500);
+      toggleIntelligentMode().then(() => {
+        setIsVoiceSessionActive(true);
+        onVoiceStateChange?.(true);
+        
+        // Start intelligent listening after intelligent mode is fully activated
+        setTimeout(() => {
+          if (onTranscript) {
+            console.log('Starting intelligent listening...');
+            startIntelligentListening((transcript) => {
+              console.log('Intelligent transcript received:', transcript);
+              onTranscript(transcript, true);
+            });
+          }
+        }, 1000); // Longer delay to ensure audio context is ready
+      });
     } else if (isListening) {
       // Currently listening - stop listening but stay in intelligent mode
       console.log('Stopping current listening...');

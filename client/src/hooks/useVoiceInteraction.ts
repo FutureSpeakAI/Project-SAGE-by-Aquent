@@ -85,9 +85,23 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     }
   }, [toast]);
 
-  // Voice activity detection using audio levels
+  // Voice activity detection using audio levels - runs continuously in intelligent mode
   const startVoiceActivityDetection = useCallback(() => {
-    if (!analyserRef.current) return;
+    if (!analyserRef.current) {
+      console.warn('Analyser not available for voice activity detection');
+      return;
+    }
+
+    // Clear any existing timer
+    if (vadTimerRef.current) {
+      clearInterval(vadTimerRef.current);
+    }
+
+    console.log('Starting voice activity detection with thresholds:', { 
+      INTERRUPT_THRESHOLD, 
+      NOISE_GATE, 
+      VAD_CHECK_INTERVAL 
+    });
 
     const checkVoiceActivity = () => {
       if (!analyserRef.current) return;
@@ -106,20 +120,19 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       const currentTime = Date.now();
       const isCurrentlySpeaking = rms > NOISE_GATE;
 
+      // Log voice activity for debugging (only when significant)
+      if (rms > 0.01) {
+        console.log('Voice activity:', { rms, isCurrentlySpeaking, isSpeaking, threshold: INTERRUPT_THRESHOLD });
+      }
+
       setVoiceActivity(prev => {
         const wasUserSpeaking = prev.isUserSpeaking;
         const newSilenceStartTime = isCurrentlySpeaking ? null : (prev.silenceStartTime || currentTime);
-        
-        // Handle interruption during AI speech
-        if (isSpeaking && rms > INTERRUPT_THRESHOLD) {
-          // Will be handled outside this setter
-        }
 
-        // Handle natural pause detection
+        // Handle natural pause detection for speech recognition
         if (isListening && wasUserSpeaking && !isCurrentlySpeaking) {
           const silenceTime = newSilenceStartTime ? currentTime - newSilenceStartTime : 0;
           if (silenceTime > SILENCE_THRESHOLD && lastTranscriptRef.current.trim()) {
-            // Will be handled outside this setter
             setTimeout(() => processCompletedSpeech(), 0);
           }
         }
@@ -134,22 +147,36 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         };
       });
 
-      // Handle interruption outside of state setter - more aggressive detection
+      // CRITICAL: Handle interruption outside of state setter with immediate action
       if (isSpeaking && rms > INTERRUPT_THRESHOLD) {
-        console.log('Voice interruption detected! Stopping speech...', { rms, threshold: INTERRUPT_THRESHOLD });
-        stopSpeaking();
+        console.log('🔴 VOICE INTERRUPTION DETECTED! Stopping speech immediately...', { 
+          rms, 
+          threshold: INTERRUPT_THRESHOLD,
+          isSpeaking,
+          isIntelligentMode 
+        });
         
-        // In intelligent mode, immediately start listening for the user's input
+        // Stop speaking immediately
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          audioRef.current.src = '';
+          setIsSpeaking(false);
+          setIsGeneratingAudio(false);
+        }
+        
+        // In intelligent mode, immediately restart listening
         if (isIntelligentMode) {
           setTimeout(() => {
-            console.log('Restarting listening after interruption...');
+            console.log('🎤 Restarting listening after interruption...');
             startIntelligentListening();
-          }, 100);
+          }, 200);
         }
       }
     };
 
     vadTimerRef.current = setInterval(checkVoiceActivity, VAD_CHECK_INTERVAL);
+    console.log('Voice activity detection timer started with interval:', VAD_CHECK_INTERVAL);
   }, [isSpeaking, isListening, isIntelligentMode, NOISE_GATE, INTERRUPT_THRESHOLD, SILENCE_THRESHOLD]);
 
   // Initialize speech recognition with intelligent settings
@@ -482,13 +509,31 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     }
   }, []);
 
-  // Toggle intelligent mode
-  const toggleIntelligentMode = useCallback(() => {
-    setIsIntelligentMode(prev => !prev);
+  // Toggle intelligent mode with proper audio context initialization
+  const toggleIntelligentMode = useCallback(async () => {
+    const newMode = !isIntelligentMode;
+    setIsIntelligentMode(newMode);
+    
     if (isListening) {
       stopListening();
     }
-  }, [isListening, stopListening]);
+    
+    // When activating intelligent mode, initialize audio context for interruption detection
+    if (newMode) {
+      console.log('Activating intelligent mode - initializing audio context...');
+      const audioInitialized = await initializeAudioContext();
+      if (audioInitialized) {
+        console.log('Audio context ready - starting voice activity detection...');
+        startVoiceActivityDetection();
+      }
+    } else {
+      // When deactivating, clean up voice activity detection
+      if (vadTimerRef.current) {
+        clearInterval(vadTimerRef.current);
+        vadTimerRef.current = null;
+      }
+    }
+  }, [isIntelligentMode, isListening, stopListening, initializeAudioContext, startVoiceActivityDetection]);
 
   // Enhanced cleanup function
   const cleanup = useCallback(() => {
