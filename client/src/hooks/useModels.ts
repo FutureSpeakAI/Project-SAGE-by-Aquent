@@ -4,6 +4,7 @@ export interface AvailableModels {
   openai: string[];
   anthropic: string[];
   gemini: string[];
+  perplexity: string[];
   imageGeneration: {
     openai: string[];
     gemini: string[];
@@ -39,6 +40,9 @@ export const getModelDisplayName = (model: string): string => {
     'gemini-1.5-pro-002': 'Gemini 1.5 Pro',
     'gemini-1.5-flash-002': 'Gemini 1.5 Flash',
     'gemini-1.0-pro': 'Gemini 1.0 Pro',
+    'llama-3.1-sonar-small-128k-online': 'Llama 3.1 Sonar Small (Web)',
+    'llama-3.1-sonar-large-128k-online': 'Llama 3.1 Sonar Large (Web)', 
+    'llama-3.1-sonar-huge-128k-online': 'Llama 3.1 Sonar Huge (Web)',
     'dall-e-3': 'DALL-E 3',
     'dall-e-2': 'DALL-E 2',
     'imagen-3.0-generate-001': 'Imagen 3.0',
@@ -52,5 +56,6 @@ export const getModelProvider = (model: string): string => {
   if (model.startsWith('gpt-') || model.startsWith('dall-e')) return 'OpenAI';
   if (model.startsWith('claude-')) return 'Anthropic';
   if (model.startsWith('gemini-') || model.startsWith('imagen-')) return 'Google';
+  if (model.startsWith('llama-') && model.includes('sonar')) return 'Perplexity';
   return 'Unknown';
 };

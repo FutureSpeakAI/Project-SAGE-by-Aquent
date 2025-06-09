@@ -101,6 +101,7 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
                   <SelectItem value="anthropic">Anthropic Claude</SelectItem>
                   <SelectItem value="openai">OpenAI GPT</SelectItem>
                   <SelectItem value="gemini">Google Gemini</SelectItem>
+                  <SelectItem value="perplexity">Perplexity Research</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -142,7 +143,8 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
 
           <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded">
             <p className="font-medium mb-1">Automatic Routing:</p>
-            <p>• Research queries → Anthropic + Deep Analysis</p>
+            <p>• Real-time research → Perplexity (Web access)</p>
+            <p>• Analysis queries → Anthropic + Deep Analysis</p>
             <p>• Creative tasks → OpenAI</p>
             <p>• Technical analysis → Gemini</p>
           </div>
