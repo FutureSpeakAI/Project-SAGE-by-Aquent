@@ -257,18 +257,15 @@ export function ContextControlPanel({ contextSettings, onContextChange }: Contex
               {/* Model Selection */}
               <div>
                 <Label className="text-sm font-medium">AI Model</Label>
-                <Select
-                  value={contextSettings.model}
-                  onValueChange={(value) => updateContext({ model: value })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gpt-4o">GPT-4o (Best Quality)</SelectItem>
-                    <SelectItem value="gpt-4o-mini">GPT-4o Mini (Faster)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="mt-1">
+                  <ModelSelector
+                    value={contextSettings.model}
+                    onValueChange={(value) => updateContext({ model: value })}
+                    type="chat"
+                    placeholder="Select AI model"
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               {/* Temperature Slider */}
