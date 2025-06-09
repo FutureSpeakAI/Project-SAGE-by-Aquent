@@ -391,7 +391,7 @@ export default function Home() {
     const newBriefing = {
       title,
       content,
-      contentType: ContentType.BRIEFING, // Ensure this is 'briefing'
+      contentType: 'briefing', // Explicitly use string value instead of enum
       systemPrompt: null,
       userPrompt: null,
       model: null,
