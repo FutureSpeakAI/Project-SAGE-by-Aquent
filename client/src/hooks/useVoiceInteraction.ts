@@ -419,8 +419,13 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
 
       audioRef.current = new Audio(audioUrl);
       
-      // Preload audio for faster playback
+      // Configure audio element for reliable playback
       audioRef.current.preload = 'auto';
+      audioRef.current.crossOrigin = 'anonymous';
+      audioRef.current.autoplay = false; // Explicit control over playback
+      
+      // Test audio element creation
+      console.log('Audio element created:', !!audioRef.current, 'URL length:', audioUrl.length);
       
       audioRef.current.oncanplaythrough = () => {
         console.log('Audio ready for playback');
@@ -483,19 +488,32 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         };
         
         audioRef.current.oncanplay = () => {
+          console.log('Audio can play - triggering immediate playback');
           setIsGeneratingAudio(false);
           setIsSpeaking(true);
-          console.log('Starting SAGE audio playback');
-          audioRef.current?.play().catch((error) => {
-            console.warn('Audio play failed, retrying:', error);
-            // Retry playback once
-            setTimeout(() => {
-              audioRef.current?.play().catch(() => {
-                console.warn('Audio retry failed, skipping playback');
-                setIsSpeaking(false);
-              });
-            }, 100);
-          });
+          
+          // Immediate playback attempt
+          if (audioRef.current) {
+            console.log('Attempting audio playback...');
+            audioRef.current.play().then(() => {
+              console.log('Audio started successfully');
+            }).catch((error) => {
+              console.error('Initial playback failed:', error);
+              
+              // Try alternative approach - recreate audio element
+              setTimeout(() => {
+                if (audioRef.current && audioRef.current.src) {
+                  console.log('Retrying with fresh audio element...');
+                  const currentSrc = audioRef.current.src;
+                  audioRef.current.load();
+                  audioRef.current.play().catch((retryError) => {
+                    console.error('Retry also failed:', retryError);
+                    setIsSpeaking(false);
+                  });
+                }
+              }, 50);
+            });
+          }
         };
         
         audioRef.current.load();
@@ -603,7 +621,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     };
   }, [isIntelligentMode, startVoiceActivityDetection]);
 
-  // Enhanced cleanup function
+  // Enhanced cleanup function with safe AudioContext handling
   const cleanup = useCallback(() => {
     if (vadTimerRef.current) {
       clearInterval(vadTimerRef.current);
@@ -614,8 +632,10 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach(track => track.stop());
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(() => {
+        // Ignore errors if context is already closed
+      });
     }
     stopListening();
     stopSpeaking();
