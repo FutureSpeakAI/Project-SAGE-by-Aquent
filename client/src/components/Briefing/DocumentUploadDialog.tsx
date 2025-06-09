@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, FileText, Loader2, Upload } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ContentType } from "@shared/schema";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -19,6 +21,7 @@ export function DocumentUploadDialog({
   onDocumentProcessed
 }: DocumentUploadDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +53,35 @@ export function DocumentUploadDialog({
     }
   };
 
+  // Function to save briefing to the library
+  const saveBriefingToLibrary = async (filename: string, content: string) => {
+    const title = filename.replace(/\.[^/.]+$/, ""); // Remove file extension
+    const metadata = JSON.stringify({ category: "Uploaded Document" });
+    
+    const newBriefing = {
+      title,
+      content,
+      contentType: ContentType.BRIEFING,
+      systemPrompt: null,
+      userPrompt: null,
+      model: null,
+      temperature: null,
+      metadata
+    };
+    
+    const response = await fetch('/api/generated-contents', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newBriefing),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to save briefing to library');
+    }
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) return;
     
@@ -61,28 +93,44 @@ export function DocumentUploadDialog({
       const formData = new FormData();
       formData.append('file', selectedFile);
       
-      // Extract the file extension
-      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+      // Send to the server for processing
+      const response = await fetch('/api/process-brief', {
+        method: 'POST',
+        body: formData,
+      });
       
-      // Read file content - in a production app, this would be handled by the server
-      // Here we're doing client-side processing as a simplification
-      const fileContent = await readFileContent(selectedFile, fileExt as string);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to process document');
+      }
       
-      // For now, we'll just pass the text content directly
-      // In a real implementation, this would be an API call to process the document
-      setTimeout(() => {
-        onDocumentProcessed(fileContent);
-        setIsLoading(false);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Pass the extracted content to the parent component
+        onDocumentProcessed(data.content);
+        
+        // Save the processed briefing to the library
+        await saveBriefingToLibrary(selectedFile.name, data.content);
+        
+        // Invalidate the briefing library cache to refresh the list
+        queryClient.invalidateQueries({ queryKey: ['/api/generated-contents', ContentType.BRIEFING] });
+        
         onOpenChange(false);
+        setSelectedFile(null);
         
         toast({
-          title: "Document uploaded",
-          description: "Your document has been successfully processed.",
+          title: "Document processed",
+          description: `"${selectedFile.name}" has been processed and saved to your briefing library.`,
         });
-      }, 1500); // Simulate processing time
+      } else {
+        throw new Error(data.message || 'Failed to process document');
+      }
       
     } catch (err: any) {
       setError(err.message || "Failed to process document");
+      console.error('Document upload error:', err);
+    } finally {
       setIsLoading(false);
     }
   };
