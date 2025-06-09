@@ -108,7 +108,7 @@ const TabContent = ({
   const { toast } = useToast();
   
   return (
-  <motion.div
+    <motion.div
     className="space-y-6"
     initial="hidden"
     animate="visible"
@@ -393,7 +393,8 @@ const TabContent = ({
       imageUrl={generatedImageUrl || ''}
     />
   </motion.div>
-);
+  );
+};
 
 export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt, setVariationPrompt }: VisualTabProps) {
   // Use tab persistence for all state
