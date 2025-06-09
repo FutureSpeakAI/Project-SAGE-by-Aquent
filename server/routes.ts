@@ -435,6 +435,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/generate-social-posts", async (req: Request, res: Response) => {
     await socialPostGenerator.generateSocialPosts(req, res);
   });
+
+  // Robust content generation with emergency fallback
+  app.post("/api/robust-generate", async (req: Request, res: Response) => {
+    await robustContentGenerator.generateWithFallback(req, res);
+  });
   
   app.post("/api/generate", async (req: Request, res: Response) => {
     try {

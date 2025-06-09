@@ -88,14 +88,8 @@ export class RobustContentGenerator {
     }
 
     // All methods failed - provide a fallback response
-    console.log('All AI providers failed, providing structured fallback content');
-    const fallbackContent = ContentFormatter.generateFallbackContent(userPrompt);
-    res.json({
-      content: fallbackContent,
-      provider: 'fallback',
-      fallback: true,
-      message: 'Generated structured content due to temporary AI service unavailability'
-    });
+    console.log('All AI providers failed, using emergency fallback system');
+    return EmergencyFallback.handleEmergencyGeneration(req, res, userPrompt);
   }
 
   private async tryOpenAI(model: string, systemPrompt: string, userPrompt: string, temperature?: number) {
