@@ -65,7 +65,7 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       return fileBuffer.toString('utf8');
     } else if (fileExt === '.pdf') {
       // Extract text from PDF using pdf-parse
-      const { default: pdfParse } = await import('pdf-parse');
+      const pdfParse = require('pdf-parse');
       const data = await pdfParse(fileBuffer);
       return data.text;
     } else if (fileExt === '.docx') {
