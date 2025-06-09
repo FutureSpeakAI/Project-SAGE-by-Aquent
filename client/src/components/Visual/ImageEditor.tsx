@@ -44,7 +44,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [isDrawing, setIsDrawing] = useState(false);
   const [maskData, setMaskData] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
-  const [activeTab, setActiveTab] = useState<"inpaint" | "outpaint" | "variation">("inpaint");
+  const [activeTab, setActiveTab] = useState("inpaint");
   const [brushSize, setBrushSize] = useState(20);
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
   const [zoom, setZoom] = useState(1);
@@ -52,6 +52,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [model, setModel] = useState("dall-e-2");
   const [size, setSize] = useState("1024x1024");
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
+  const [imageLoadStatus, setImageLoadStatus] = useState<"loading" | "loaded" | "error">("loading");
+
+  // Debug image URL
+  useEffect(() => {
+    if (open && imageUrl) {
+      console.log("ImageEditor received imageUrl:", imageUrl);
+      console.log("ImageEditor received imageId:", imageId);
+      setImageLoadStatus("loading");
+    }
+  }, [open, imageUrl, imageId]);
 
   // Load and draw the original image on canvas
   useEffect(() => {
@@ -61,15 +71,20 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    console.log("Loading image:", imageUrl);
+
     const img = new Image();
-    img.crossOrigin = "anonymous";
     
+    // Try without crossOrigin first for local images
     img.onload = () => {
-      // Set canvas size to match image
-      canvas.width = Math.min(600, img.width);
-      canvas.height = Math.min(600, img.height);
+      console.log("Image loaded successfully:", img.width, "x", img.height);
+      setImageLoadStatus("loaded");
       
-      // Calculate scaling to fit image in canvas
+      // Set fixed canvas size
+      canvas.width = 600;
+      canvas.height = 600;
+      
+      // Calculate scaling to fit image in canvas while maintaining aspect ratio
       const scaleX = canvas.width / img.width;
       const scaleY = canvas.height / img.height;
       const scale = Math.min(scaleX, scaleY);
@@ -79,20 +94,70 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
       const offsetX = (canvas.width - scaledWidth) / 2;
       const offsetY = (canvas.height - scaledHeight) / 2;
       
-      // Clear canvas and draw image
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Clear canvas with white background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw image centered on canvas
       ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+      
+      console.log("Image drawn on canvas at:", offsetX, offsetY, scaledWidth, scaledHeight);
     };
     
-    img.onerror = () => {
-      console.error("Failed to load image:", imageUrl);
-      toast({
-        title: "Error loading image",
-        description: "Could not load the image for editing",
-        variant: "destructive"
-      });
+    img.onerror = (error) => {
+      console.error("Failed to load image:", imageUrl, error);
+      
+      // Try with crossOrigin for external images
+      const img2 = new Image();
+      img2.crossOrigin = "anonymous";
+      
+      img2.onload = () => {
+        console.log("Image loaded with CORS:", img2.width, "x", img2.height);
+        
+        canvas.width = 600;
+        canvas.height = 600;
+        
+        const scaleX = canvas.width / img2.width;
+        const scaleY = canvas.height / img2.height;
+        const scale = Math.min(scaleX, scaleY);
+        
+        const scaledWidth = img2.width * scale;
+        const scaledHeight = img2.height * scale;
+        const offsetX = (canvas.width - scaledWidth) / 2;
+        const offsetY = (canvas.height - scaledHeight) / 2;
+        
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img2, offsetX, offsetY, scaledWidth, scaledHeight);
+      };
+      
+      img2.onerror = () => {
+        console.error("Failed to load image even with CORS:", imageUrl);
+        setImageLoadStatus("error");
+        
+        // Show placeholder with error message
+        canvas.width = 600;
+        canvas.height = 600;
+        ctx.fillStyle = "#f3f4f6";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "#6b7280";
+        ctx.font = "16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Failed to load image", canvas.width / 2, canvas.height / 2 - 10);
+        ctx.fillText("Please try a different image", canvas.width / 2, canvas.height / 2 + 10);
+        
+        toast({
+          title: "Error loading image",
+          description: "Could not load the image for editing. Please try a different image.",
+          variant: "destructive"
+        });
+      };
+      
+      img2.src = imageUrl;
     };
     
+    // Start loading the image
     img.src = imageUrl;
   }, [open, imageUrl, toast]);
 
@@ -297,6 +362,31 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             
             <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
               <div className="relative">
+                {/* Debug: Show image URL and status */}
+                {imageLoadStatus === "loading" && (
+                  <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs z-10">
+                    Loading...
+                  </div>
+                )}
+                {imageLoadStatus === "error" && (
+                  <div className="absolute top-2 left-2 bg-red-100 text-red-800 px-2 py-1 rounded text-xs z-10">
+                    Load Error
+                  </div>
+                )}
+                
+                {/* Fallback image display if canvas fails */}
+                {imageLoadStatus === "error" && imageUrl && (
+                  <img 
+                    src={imageUrl}
+                    alt="Original image"
+                    className="max-w-[600px] max-h-[600px] object-contain border border-gray-200 rounded"
+                    style={{
+                      transform: `scale(${zoom})`,
+                      transformOrigin: 'center'
+                    }}
+                  />
+                )}
+                
                 <canvas
                   ref={canvasRef}
                   width={600}
@@ -306,7 +396,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
                     maxWidth: '100%',
-                    maxHeight: '100%'
+                    maxHeight: '100%',
+                    display: imageLoadStatus === "error" ? 'none' : 'block'
                   }}
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
@@ -315,7 +406,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 />
                 
                 {/* Brush preview */}
-                {activeTab === "inpaint" && tool === "brush" && (
+                {activeTab === "inpaint" && tool === "brush" && imageLoadStatus === "loaded" && (
                   <div
                     className="absolute pointer-events-none border-2 border-blue-500 rounded-full opacity-50"
                     style={{
