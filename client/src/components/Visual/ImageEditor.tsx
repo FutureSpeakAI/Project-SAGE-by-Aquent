@@ -92,25 +92,37 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
   // Load and draw the original image on canvas
   useEffect(() => {
-    if (!open || !imageUrl || !canvasRef.current) {
+    if (!open || !imageUrl) {
+      console.log("Skipping image load - not open or no URL");
       return;
     }
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const loadImageToCanvas = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        console.log("Canvas not ready, retrying...");
+        setTimeout(loadImageToCanvas, 50);
+        return;
+      }
 
-    console.log("Loading image:", imageUrl.substring(0, 50) + "...");
-    
-    // Set canvas size first
-    canvas.width = 600;
-    canvas.height = 600;
-    
-    // Clear canvas with light background
-    ctx.fillStyle = "#f8f9fa";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        console.error("Could not get canvas context");
+        setImageLoadStatus("error");
+        return;
+      }
 
-    const loadImage = () => {
+      console.log("Starting image load process...");
+      console.log("Loading image:", imageUrl.substring(0, 50) + "...");
+      
+      // Set canvas size first
+      canvas.width = 600;
+      canvas.height = 600;
+      
+      // Clear canvas with light background
+      ctx.fillStyle = "#f8f9fa";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       const img = new Image();
       
       img.onload = () => {
@@ -134,11 +146,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         // Draw image centered on canvas
         ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
         
-        console.log("Image drawn successfully");
+        console.log("Image drawn successfully at:", offsetX, offsetY, scaledWidth, scaledHeight);
       };
       
       img.onerror = (error) => {
         console.error("Failed to load image:", error);
+        console.error("Image URL that failed:", imageUrl.substring(0, 100));
         setImageLoadStatus("error");
         
         // Show error state on canvas
@@ -158,18 +171,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         });
       };
       
-      // For data URLs, no need for crossOrigin
-      if (imageUrl.startsWith('data:')) {
-        img.src = imageUrl;
-      } else {
-        // For external URLs, try with CORS
-        img.crossOrigin = "anonymous";
-        img.src = imageUrl;
-      }
+      // Start loading immediately
+      console.log("Setting image src...");
+      img.src = imageUrl;
     };
 
-    // Small delay to ensure canvas is ready
-    setTimeout(loadImage, 100);
+    // Start the loading process
+    loadImageToCanvas();
   }, [open, imageUrl, toast]);
 
   // Drawing functions for inpainting mask
