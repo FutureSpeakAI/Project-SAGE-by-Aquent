@@ -67,6 +67,7 @@ function shouldUseReasoningLoop(message: string, researchContext: string, sessio
 import { handleOptimizedTTS } from "./voice-optimization";
 import { workflowOrchestrator } from "./campaign-workflow";
 import { robustContentGenerator } from "./robust-content-generator";
+import { socialPostGenerator } from "./social-post-generator";
 
 // Extract conversation context to maintain topic continuity
 function extractConversationContext(sessionHistory: any[], currentMessage: string): string {
@@ -392,9 +393,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For temporary OpenAI server errors, provide a helpful response
       if (error.status === 500 || error.message.includes('server error')) {
+        const { userPrompt } = req.body;
         return res.status(200).json({ 
           content: `<h1>Content Generation Temporarily Unavailable</h1>
-<p>OpenAI's servers are experiencing temporary issues. Your request for "${userPrompt.substring(0, 50)}..." will work normally once their servers recover.</p>
+<p>OpenAI's servers are experiencing temporary issues. Your request for "${(userPrompt || 'content').substring(0, 50)}..." will work normally once their servers recover.</p>
 <p>This is a temporary server-side issue, not related to your API credits or configuration.</p>
 <h2>Alternative</h2>
 <p>Try again in a few minutes, or use SAGE's chat interface which may be more stable during API fluctuations.</p>`,
@@ -412,6 +414,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Briefing document processing endpoint
   app.post("/api/process-brief", upload.single('file'), processBrief);
+
+  // Social post generation endpoint
+  app.post("/api/generate-social-posts", async (req: Request, res: Response) => {
+    await socialPostGenerator.generateSocialPosts(req, res);
+  });
   
   app.post("/api/generate", async (req: Request, res: Response) => {
     try {
