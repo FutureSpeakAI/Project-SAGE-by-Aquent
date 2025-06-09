@@ -352,59 +352,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`[Content Generation] Model: ${model}, Type: ${typeof model}`);
-      let result: string;
       
       if (model.startsWith('gpt-')) {
-        // OpenAI models - use existing function
+        // OpenAI models - use existing function which handles its own response
         return await generateContent(req, res);
       } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(model)) {
-        // Anthropic models
-        result = await AnthropicAPI.generateContent({
-          model,
-          prompt: userPrompt,
-          systemPrompt,
-          temperature,
-          maxTokens: 4000
-        });
-      } else if (GeminiAPI.GEMINI_MODELS.chat.includes(model)) {
-        // Gemini models
-        result = await GeminiAPI.generateContent({
-          model,
-          prompt: userPrompt,
-          systemPrompt,
-          temperature,
-          maxTokens: 4000
-        });
-      } else if (model.includes('sonar') || model.includes('llama-3.1')) {
-        // Perplexity models - use fetch to call Perplexity API directly
-        const response = await fetch('https://api.perplexity.ai/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        // Anthropic models with fallback
+        try {
+          const result = await AnthropicAPI.generateContent({
             model,
-            messages: [
-              ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-              { role: 'user', content: userPrompt }
-            ],
-            temperature: temperature || 0.7,
-            max_tokens: 4000
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
+            prompt: userPrompt,
+            systemPrompt,
+            temperature,
+            maxTokens: 4000
+          });
+          return res.json({ content: result });
+        } catch (anthropicError: any) {
+          console.log('Anthropic API unavailable, using OpenAI fallback');
+          req.body.model = 'gpt-4o';
+          return await generateContent(req, res);
         }
+      } else if (GeminiAPI.GEMINI_MODELS.chat.includes(model)) {
+        // Gemini models with fallback
+        try {
+          const result = await GeminiAPI.generateContent({
+            model,
+            prompt: userPrompt,
+            systemPrompt,
+            temperature,
+            maxTokens: 4000
+          });
+          return res.json({ content: result });
+        } catch (geminiError: any) {
+          console.log('Gemini API unavailable, using OpenAI fallback');
+          req.body.model = 'gpt-4o';
+          return await generateContent(req, res);
+        }
+      } else if (model.includes('sonar') || model.includes('llama-3.1')) {
+        // Perplexity models with fallback
+        try {
+          const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+                { role: 'user', content: userPrompt }
+              ],
+              temperature: temperature || 0.7,
+              max_tokens: 4000
+            })
+          });
 
-        const data = await response.json();
-        result = data.choices[0].message.content;
+          if (!response.ok) {
+            throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          const result = data.choices[0].message.content;
+          return res.json({ content: result });
+        } catch (perplexityError: any) {
+          console.log('Perplexity API unavailable, using OpenAI fallback');
+          req.body.model = 'gpt-4o';
+          return await generateContent(req, res);
+        }
       } else {
         return res.status(400).json({ error: 'Unsupported model' });
       }
-      
-      res.json({ content: result });
     } catch (error) {
       console.error('Content generation error:', error);
       res.status(500).json({ error: 'Failed to generate content' });

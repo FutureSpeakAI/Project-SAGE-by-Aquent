@@ -363,6 +363,14 @@ export const generateContent = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error generating content:", error);
     
+    // Handle timeout errors
+    if (error.message === 'Request timeout after 45 seconds') {
+      return res.status(408).json({ 
+        message: "Request timed out. Please try again with a shorter prompt.",
+        details: "The content generation took too long to complete."
+      });
+    }
+    
     // Handle common API errors
     if (error.status === 401 || (error.response && error.response.status === 401)) {
       console.error("API key error details:", error.error || error);
@@ -377,7 +385,56 @@ export const generateContent = async (req: Request, res: Response) => {
     }
     
     if (error.status === 500 || (error.response && error.response.status === 500)) {
-      return res.status(500).json({ message: "API server error. Please try again later." });
+      console.log("OpenAI server error, attempting fallback with reduced complexity");
+      
+      // Fallback attempt with simplified prompt
+      try {
+        const fallbackOpenai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+          timeout: 20000, // Shorter timeout for fallback
+          maxRetries: 1,
+        });
+        
+        const fallbackCompletion = await fallbackOpenai.chat.completions.create({
+          model: "gpt-4o-mini", // Use faster, more reliable model
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful assistant. Provide clear, concise responses."
+            },
+            {
+              role: "user",
+              content: (userPrompt || enhancedUserPrompt).substring(0, 2000) // Truncate if too long
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000, // Reduced token limit for reliability
+        });
+        
+        const fallbackContent = fallbackCompletion.choices[0].message.content || "";
+        console.log("Fallback generation successful");
+        
+        return res.status(200).json({ 
+          content: fallbackContent,
+          fallback: true,
+          message: "Generated using fallback due to temporary API issues"
+        });
+        
+      } catch (fallbackError) {
+        console.error("Fallback generation also failed:", fallbackError);
+        return res.status(503).json({ 
+          message: "Content generation temporarily unavailable. Please try again in a few minutes.",
+          details: "Both primary and fallback generation methods are experiencing issues."
+        });
+      }
+    }
+    
+    // Network errors and timeouts
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND" || error.code === "ETIMEDOUT") {
+      return res.status(503).json({ 
+        message: "Unable to connect to the OpenAI API.", 
+        details: "The server is having trouble connecting to OpenAI. Please try again later."
+      });
     }
     
     return res.status(500).json({ message: error.message || "An error occurred while generating content" });
