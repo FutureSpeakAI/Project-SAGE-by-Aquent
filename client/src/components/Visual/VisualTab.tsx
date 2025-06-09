@@ -138,7 +138,6 @@ const TabContent = ({
           <Button
             variant="outline"
             onClick={() => {
-              const { clearVisualTab } = useVisualTabPersistence();
               clearVisualTab();
               toast({
                 title: "Visual tab cleared",
