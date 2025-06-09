@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BriefUploadDialog } from "./BriefUploadDialog";
+import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
+import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText, Sparkles } from "lucide-react";
+import { Loader2, FileText, Sparkles, Library, Upload } from "lucide-react";
+import { ContentType, GeneratedContent } from "@shared/schema";
 
 interface BriefInterpreterProps {
   onPromptGenerated: (prompt: string) => void;
@@ -17,6 +21,8 @@ interface GeneratePromptFromBriefRequest {
 
 export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showBriefingLibrary, setShowBriefingLibrary] = useState(false);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
@@ -69,40 +75,133 @@ export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
     onPromptGenerated(prompt);
   };
 
+  const handleSelectBriefing = (content: GeneratedContent) => {
+    // Convert the briefing content to an image generation prompt
+    mutate({
+      brief: content.content,
+      model: "gpt-4o"
+    });
+  };
+
+  const handleDocumentProcessed = (content: string) => {
+    // Convert the processed document to an image generation prompt
+    mutate({
+      brief: content,
+      model: "gpt-4o"
+    });
+  };
+
   return (
     <>
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-2xl">Creative Brief Interpreter</CardTitle>
           <CardDescription>
-            Convert client's creative brief documents into optimized image prompts
+            Convert creative briefs into optimized image generation prompts
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-lg">
-            <FileText className="h-12 w-12 text-muted-foreground mb-3" />
-            <h3 className="text-lg font-medium mb-2">Upload your creative brief</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              We'll analyze your brief and extract the key visual elements to create an optimal image prompt.
-            </p>
-            <Button onClick={handleOpenUploadDialog} disabled={isPending} className="gap-2">
-              {isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Upload Brief
-                </>
-              )}
-            </Button>
-          </div>
+          <Tabs defaultValue="library" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="library" className="flex items-center gap-2">
+                <Library className="h-4 w-4" />
+                Library
+              </TabsTrigger>
+              <TabsTrigger value="upload" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Upload
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Manual
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="library" className="mt-4">
+              <div className="flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-lg">
+                <Library className="h-12 w-12 text-muted-foreground mb-3" />
+                <h3 className="text-lg font-medium mb-2">Select from saved briefs</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Choose a previously saved creative brief to convert into an image prompt.
+                </p>
+                <Button 
+                  onClick={() => setShowBriefingLibrary(true)} 
+                  disabled={isPending} 
+                  className="gap-2"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Library className="h-4 w-4" />
+                      Browse Briefing Library
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="upload" className="mt-4">
+              <div className="flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-lg">
+                <Upload className="h-12 w-12 text-muted-foreground mb-3" />
+                <h3 className="text-lg font-medium mb-2">Upload brief document</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload a PDF, DOCX, or TXT file containing your creative brief.
+                </p>
+                <Button 
+                  onClick={() => setShowDocumentUpload(true)} 
+                  disabled={isPending} 
+                  className="gap-2"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Upload Document
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="manual" className="mt-4">
+              <div className="flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-lg">
+                <FileText className="h-12 w-12 text-muted-foreground mb-3" />
+                <h3 className="text-lg font-medium mb-2">Enter brief manually</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Type or paste your creative brief content directly.
+                </p>
+                <Button 
+                  onClick={handleOpenUploadDialog} 
+                  disabled={isPending} 
+                  className="gap-2"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Enter Brief
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
           <p className="text-xs text-muted-foreground">
-            Supported file formats: PDF, DOCX, and TXT. Max file size: 5MB.
+            All methods will convert your brief into an optimized image generation prompt.
           </p>
         </CardFooter>
       </Card>
@@ -111,6 +210,19 @@ export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
         open={showUploadDialog}
         onClose={handleCloseUploadDialog}
         onUpload={handleBriefProcessed}
+      />
+
+      <BriefingLibrary
+        open={showBriefingLibrary}
+        onOpenChange={setShowBriefingLibrary}
+        onSelectBriefing={handleSelectBriefing}
+        onUploadDocument={() => setShowDocumentUpload(true)}
+      />
+
+      <DocumentUploadDialog
+        open={showDocumentUpload}
+        onOpenChange={setShowDocumentUpload}
+        onDocumentProcessed={handleDocumentProcessed}
       />
     </>
   );
