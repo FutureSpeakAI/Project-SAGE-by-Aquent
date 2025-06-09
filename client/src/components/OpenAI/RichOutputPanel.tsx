@@ -11,7 +11,7 @@ import { SavedContentLibrary } from "./SavedContentLibrary";
 import { 
   Trash2, AlertCircle, Download, FileText, 
   File, Copy, RotateCcw, Code, Users, Save,
-  BookmarkIcon, Bookmark
+  BookmarkIcon, Bookmark, Maximize2, Minimize2
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -38,6 +38,8 @@ interface RichOutputPanelProps {
   temperature: number;
   onOpenPersonaLibrary?: () => void;
   personas?: SavedPersona[];
+  isFullScreen?: boolean;
+  onToggleFullScreen?: () => void;
 }
 
 export function RichOutputPanel({
@@ -49,7 +51,9 @@ export function RichOutputPanel({
   model,
   temperature,
   onOpenPersonaLibrary,
-  personas = []
+  personas = [],
+  isFullScreen = false,
+  onToggleFullScreen
 }: RichOutputPanelProps) {
   const [editableContent, setEditableContent] = useState(content);
   const [selectedText, setSelectedText] = useState("");

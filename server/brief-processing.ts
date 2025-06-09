@@ -71,8 +71,9 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       
       // First, check if this is the extreme spacing case (more than 50% of characters are spaces)
       const spaceRatio = (text.match(/\s/g) || []).length / text.length;
+
       
-      if (spaceRatio > 0.5) {
+      if (spaceRatio > 0.4) {
         // Extreme spacing case - comprehensive text reconstruction
         // Step 1: Start with clean text
         let cleanText = text.replace(/\s+/g, '');
