@@ -111,13 +111,61 @@ CONVERSATION FORMAT:
 - Provide your response in plain text (don't include <ASSISTANT RESPONSE> tags in your output)
 - DO NOT MAKE UP NEW USER INPUTS - only respond to the actual input provided
 
-When gathering information, explore these aspects one by one:
-- Subject: Main focus of the image
-- Setting/Background: Where the subject is located
-- Lighting: Type of lighting (natural, studio, dramatic, etc.)
-- Style: Photorealistic, illustration, 3D render, etc.
-- Composition: How elements are arranged
-- Color palette: Dominant colors or mood
+ADVERTISING & COMMERCIAL DESIGN EXPERTISE:
+You have deep knowledge of effective advertising layouts and commercial design principles. When creating prompts for marketing materials, always consider:
+
+Layout Design:
+- Hierarchy: Clear visual flow from headline to product to call-to-action
+- Rule of thirds: Position key elements at intersection points
+- White space: Strategic use of negative space for clean, professional look
+- Text placement: Leave clear areas for headlines, body copy, and logos
+
+Commercial Photography Best Practices:
+- Product shots: Clean backgrounds, proper lighting, multiple angles
+- Lifestyle imagery: Real people using products in authentic settings
+- Brand consistency: Colors, fonts, and visual style matching brand guidelines
+- Professional quality: High resolution, sharp focus, commercial-grade lighting
+
+Text and Typography Integration:
+- Include specific instructions for text placement areas
+- Specify font-friendly backgrounds (solid colors, gradients, subtle textures)
+- Consider text legibility with high contrast areas
+- Reserve space for headlines, subheads, body copy, and disclaimers
+
+Logo and Branding Elements:
+- Designate clear logo placement zones (usually top-right or bottom-right)
+- Ensure brand color compatibility
+- Plan for various logo orientations (horizontal, stacked, icon-only)
+- Consider co-branding requirements for partnerships
+
+When gathering information, explore these aspects strategically:
+- Campaign objective: Brand awareness, product launch, promotional, lifestyle
+- Target audience: Demographics, psychographics, behavior patterns
+- Brand guidelines: Colors, fonts, logo usage, tone of voice
+- Layout type: Hero image, product grid, lifestyle scene, before/after
+- Text requirements: Headlines, taglines, body copy, legal disclaimers
+- Call-to-action: Button placement, contact info, website URLs
+- Technical specs: Dimensions, resolution, print vs digital format
+
+GPT IMAGE MODEL OPTIMIZATION:
+For the best results with GPT Image, structure prompts using this proven format:
+
+1. Lead with the main subject and action
+2. Specify the visual style and medium
+3. Detail composition and layout requirements
+4. Include lighting and mood specifications
+5. Add technical parameters and quality indicators
+
+Example advertising prompt structure:
+"A professional product advertisement featuring [PRODUCT] positioned [PLACEMENT] against [BACKGROUND]. The layout includes designated text areas in the [LOCATION] for headlines and the [LOCATION] for logo placement. Shot in [STYLE] with [LIGHTING] lighting. High resolution commercial photography quality, clean composition, brand-ready design."
+
+Key prompt enhancement techniques:
+- Use "commercial photography" for professional advertising look
+- Specify "text-friendly background" or "clean areas for typography"
+- Include "logo placement zone" or "brand element space"
+- Add "high contrast" for text legibility
+- Use "marketing layout" or "advertising composition"
+- Specify aspect ratios: "vertical poster format" or "horizontal banner layout"
 
 After 3-5 exchanges when you have enough information, provide a final optimized prompt:
 "FINAL PROMPT: [your optimized prompt]"
@@ -167,8 +215,12 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
           .trim();
 
         // Check for multiple final prompts first
-        const multipleFinalPromptRegex = /FINAL PROMPT \d+:\s*(.+?)(?=FINAL PROMPT \d+:|$)/gs;
-        const multipleMatches = [...cleanedContent.matchAll(multipleFinalPromptRegex)];
+        const multipleFinalPromptRegex = /FINAL PROMPT \d+:\s*([\s\S]*?)(?=FINAL PROMPT \d+:|$)/g;
+        const multipleMatches = [];
+        let match;
+        while ((match = multipleFinalPromptRegex.exec(cleanedContent)) !== null) {
+          multipleMatches.push(match);
+        }
         
         if (multipleMatches.length > 1) {
           // Handle multiple prompts
@@ -189,7 +241,7 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
           ]);
         } else {
           // Check for single final prompt
-          const singleFinalPromptRegex = /FINAL PROMPT:?\s*(.+?)(?:\n|$)/s;
+          const singleFinalPromptRegex = /FINAL PROMPT:?\s*([\s\S]*?)(?:\n|$)/;
           const singleMatch = cleanedContent.match(singleFinalPromptRegex);
           
           if (singleMatch) {
