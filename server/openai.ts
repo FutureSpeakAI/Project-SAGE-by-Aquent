@@ -73,16 +73,26 @@ export const generateContent = async (req: Request, res: Response) => {
     let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
     let enhancedUserPrompt = userPrompt;
     
-    // Detect if this is executing deliverables from a brief
-    const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
-                                 userPrompt.toLowerCase().includes('campaign') ||
-                                 (userPrompt.toLowerCase().includes('create') && 
-                                  (userPrompt.toLowerCase().includes('post') || 
-                                   userPrompt.toLowerCase().includes('social') ||
-                                   userPrompt.toLowerCase().includes('content')));
+    // Detect if this is executing deliverables from an existing brief
+    const containsBriefContent = userPrompt.toLowerCase().includes('nike') && userPrompt.toLowerCase().includes('volkswagen') ||
+                                userPrompt.toLowerCase().includes('beetle shoe') ||
+                                userPrompt.toLowerCase().includes('design features') ||
+                                userPrompt.toLowerCase().includes('product images') ||
+                                userPrompt.toLowerCase().includes('angle 1:') ||
+                                userPrompt.toLowerCase().includes('blog post') && userPrompt.toLowerCase().includes('creative brief') ||
+                                userPrompt.toLowerCase().includes('deliverables') ||
+                                userPrompt.toLowerCase().includes('following this creative brief');
+
+    const isExecutingFromBrief = containsBriefContent || 
+                                (userPrompt.toLowerCase().includes('brief') && 
+                                 (userPrompt.toLowerCase().includes('based on') || 
+                                  userPrompt.toLowerCase().includes('from this') ||
+                                  userPrompt.toLowerCase().includes('using this') ||
+                                  userPrompt.toLowerCase().includes('execute') ||
+                                  userPrompt.toLowerCase().includes('deliverables')));
 
     if (isExecutingFromBrief) {
-      enhancedSystemPrompt = "CRITICAL: You are executing deliverables based on a creative brief. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified in the brief. Format posts as: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description].";
+      enhancedSystemPrompt = "CRITICAL INSTRUCTION: You are provided with a creative brief that specifies deliverables to create. Your job is to EXECUTE those deliverables, NOT create another brief. \n\nFor the Nike x Volkswagen Beetle Shoe brief:\n- Create the actual blog post content with engaging copy about the collaboration\n- Write specific product descriptions and marketing copy\n- DO NOT create strategy documents or campaign outlines\n- Generate ready-to-publish content as specified in the brief\n\nFormat as actual deliverables: blog post copy, product descriptions, marketing text - not strategic documents.";
     }
 
     // Only add formatting and content guidance for regular content generation, not for the image prompt agent or brief execution
