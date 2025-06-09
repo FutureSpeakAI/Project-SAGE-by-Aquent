@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/image-processing", upload.single('image'), processImage);
   
   // Creative brief interpretation endpoint
-  app.post("/api/process-brief", processBrief);
+  app.post("/api/process-brief", upload.single('file'), processBrief);
   app.post("/api/interpret-brief", async (req: Request, res: Response) => {
     try {
       const { brief, model } = req.body;
