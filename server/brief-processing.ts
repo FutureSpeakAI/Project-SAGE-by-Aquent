@@ -84,17 +84,6 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
 // API endpoint to process a brief document and generate an image prompt
 export const processBrief = async (req: Request, res: Response) => {
   try {
-    console.log('File upload debug:', {
-      hasFile: !!req.file,
-      hasBuffer: !!(req.file && req.file.buffer),
-      fileInfo: req.file ? {
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        bufferLength: req.file.buffer?.length
-      } : null
-    });
-    
     if (!req.file || !req.file.buffer) {
       return res.status(400).json({ 
         success: false, 
