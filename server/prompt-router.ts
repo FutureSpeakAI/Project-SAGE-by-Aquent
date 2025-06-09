@@ -65,46 +65,58 @@ export class PromptRouter {
     return this.analyzeAndRoute(message, researchContext, workflowContext, healthyProviders);
   }
 
-  private analyzeAndRoute(message: string, researchContext: string): RoutingDecision {
+  private analyzeAndRoute(
+    message: string, 
+    researchContext: string, 
+    workflowContext?: WorkflowContext,
+    healthyProviders: string[] = ['anthropic', 'openai', 'gemini']
+  ): RoutingDecision {
     const lowerMessage = message.toLowerCase();
     const lowerContext = researchContext.toLowerCase();
 
-    // Research & Analysis queries -> Anthropic + Reasoning
+    // Workflow context influences routing decisions
+    const preferredProviders = this.getWorkflowPreferredProviders(workflowContext, healthyProviders);
+
+    // Research & Analysis queries -> Anthropic + Reasoning (with health checking)
     if (this.isResearchQuery(lowerMessage, lowerContext)) {
+      const provider = preferredProviders.includes('anthropic') ? 'anthropic' : preferredProviders[0] || 'anthropic';
       return {
-        provider: 'anthropic',
-        model: 'claude-sonnet-4-20250514',
+        provider: provider as 'openai' | 'anthropic' | 'gemini',
+        model: this.getDefaultModel(provider as 'openai' | 'anthropic' | 'gemini'),
         useReasoning: true,
-        rationale: 'Research and analysis task'
+        rationale: `Research and analysis task (using ${provider})`
       };
     }
 
-    // Creative & Image generation -> OpenAI or Gemini
+    // Creative & Image generation -> OpenAI or Gemini (with health checking)
     if (this.isCreativeQuery(lowerMessage)) {
+      const provider = preferredProviders.includes('openai') ? 'openai' : preferredProviders[0] || 'openai';
       return {
-        provider: 'openai',
-        model: 'gpt-4o',
+        provider: provider as 'openai' | 'anthropic' | 'gemini',
+        model: this.getDefaultModel(provider as 'openai' | 'anthropic' | 'gemini'),
         useReasoning: false,
-        rationale: 'Creative content generation'
+        rationale: `Creative content generation (using ${provider})`
       };
     }
 
-    // Technical & Data queries -> Gemini
+    // Technical & Data queries -> Gemini (with health checking)
     if (this.isTechnicalQuery(lowerMessage)) {
+      const provider = preferredProviders.includes('gemini') ? 'gemini' : preferredProviders[0] || 'gemini';
       return {
-        provider: 'gemini',
-        model: 'gemini-1.5-pro-002',
+        provider: provider as 'openai' | 'anthropic' | 'gemini',
+        model: this.getDefaultModel(provider as 'openai' | 'anthropic' | 'gemini'),
         useReasoning: false,
-        rationale: 'Technical analysis task'
+        rationale: `Technical analysis task (using ${provider})`
       };
     }
 
-    // Default to Anthropic for marketing strategy
+    // Default to best available provider for marketing strategy
+    const defaultProvider = preferredProviders.includes('anthropic') ? 'anthropic' : preferredProviders[0] || 'anthropic';
     return {
-      provider: 'anthropic',
-      model: 'claude-sonnet-4-20250514',
+      provider: defaultProvider as 'openai' | 'anthropic' | 'gemini',
+      model: this.getDefaultModel(defaultProvider as 'openai' | 'anthropic' | 'gemini'),
       useReasoning: this.shouldUseReasoning(message, researchContext),
-      rationale: 'Marketing strategy and consultation'
+      rationale: `Marketing strategy and consultation (using ${defaultProvider})`
     };
   }
 
@@ -164,6 +176,39 @@ export class PromptRouter {
       default:
         return 'claude-sonnet-4-20250514';
     }
+  }
+
+  private getWorkflowPreferredProviders(workflowContext?: WorkflowContext, healthyProviders: string[] = []): string[] {
+    if (!workflowContext) {
+      return healthyProviders;
+    }
+
+    // Stage-specific provider preferences
+    const stagePreferences: Record<string, string[]> = {
+      'discovery': ['anthropic', 'gemini', 'openai'], // Research-heavy
+      'research': ['anthropic', 'gemini', 'openai'], // Deep analysis
+      'strategic_brief': ['anthropic', 'openai', 'gemini'], // Strategy formulation
+      'content': ['openai', 'anthropic', 'gemini'], // Creative content
+      'visuals': ['openai', 'gemini', 'anthropic'], // Visual creativity
+      'finalization': ['anthropic', 'openai', 'gemini'] // Review and refinement
+    };
+
+    // Priority-based adjustments
+    const priorityAdjustments: Record<string, string[]> = {
+      'speed': ['gemini', 'openai', 'anthropic'], // Faster models first
+      'quality': ['anthropic', 'openai', 'gemini'], // Higher quality models
+      'cost': ['gemini', 'openai', 'anthropic'] // More cost-effective options
+    };
+
+    let preferredOrder = stagePreferences[workflowContext.stage || 'discovery'] || healthyProviders;
+
+    // Apply priority adjustments
+    if (workflowContext.priority && priorityAdjustments[workflowContext.priority]) {
+      preferredOrder = priorityAdjustments[workflowContext.priority];
+    }
+
+    // Filter to only healthy providers while maintaining preference order
+    return preferredOrder.filter(provider => healthyProviders.includes(provider));
   }
 
   async executeRoutedPrompt(
