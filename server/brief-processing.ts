@@ -66,6 +66,7 @@ async function extractTextFromFile(filePath: string, fileExt: string): Promise<s
     } else if (fileExt === '.pdf') {
       // Extract text from PDF using pdf-parse
       const dataBuffer = fs.readFileSync(filePath);
+      const { default: pdfParse } = await import('pdf-parse');
       const data = await pdfParse(dataBuffer);
       return data.text;
     } else if (fileExt === '.docx') {
