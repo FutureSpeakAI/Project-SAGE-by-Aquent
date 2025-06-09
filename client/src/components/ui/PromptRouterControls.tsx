@@ -34,7 +34,7 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
     onConfigChange?.(newConfig);
   };
 
-  const getModelOptions = (provider: 'openai' | 'anthropic' | 'gemini') => {
+  const getModelOptions = (provider: 'openai' | 'anthropic' | 'gemini' | 'perplexity') => {
     if (!models) return [];
     
     return models[provider].map(model => ({
@@ -50,7 +50,7 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
         manualModel: undefined
       });
     } else {
-      const typedProvider = provider as 'openai' | 'anthropic' | 'gemini';
+      const typedProvider = provider as 'openai' | 'anthropic' | 'gemini' | 'perplexity';
       const modelOptions = getModelOptions(typedProvider);
       updateConfig({
         manualProvider: typedProvider,
