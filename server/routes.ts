@@ -362,13 +362,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxRetries: 2,
       });
 
+      // Detect if this is a deliverable execution request based on a brief
+      const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
+                                   userPrompt.toLowerCase().includes('campaign') ||
+                                   (userPrompt.toLowerCase().includes('create') && 
+                                    (userPrompt.toLowerCase().includes('post') || 
+                                     userPrompt.toLowerCase().includes('social') ||
+                                     userPrompt.toLowerCase().includes('content')));
+
+      let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
+      
+      if (isExecutingFromBrief) {
+        enhancedSystemPrompt += "\n\nIMPORTANT: You are executing deliverables based on a creative brief. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified in the brief.";
+      }
+
+      enhancedSystemPrompt += "\n\nGenerate comprehensive, well-structured content with proper HTML formatting. Use <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists. Do not include currency symbols, placeholder text, or formatting artifacts.";
+
       // Use gpt-4o-mini for better reliability during server issues
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: (systemPrompt || "You are a helpful assistant.") + "\n\nGenerate comprehensive, well-structured content with proper HTML formatting. Use <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists. Do not include currency symbols, placeholder text, or formatting artifacts."
+            content: enhancedSystemPrompt
           },
           {
             role: "user",

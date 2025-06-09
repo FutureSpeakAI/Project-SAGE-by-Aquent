@@ -99,8 +99,21 @@ export class RobustContentGenerator {
 
   private async tryOpenAI(model: string, systemPrompt: string, userPrompt: string, temperature?: number) {
     try {
-      const enhancedSystemPrompt = (systemPrompt || "You are a helpful assistant.") + 
-        "\n\nFormatting Instructions:\n- Use HTML tags: <h1>, <h2>, <h3> for headings\n- Use <strong> and <em> for emphasis\n- Format lists with <ul>, <ol>, and <li> tags\n- Provide comprehensive, detailed content\n- Do not include currency symbols, placeholder text, or formatting artifacts\n- Start immediately with the content (no introductory phrases)";
+      // Detect if this is executing deliverables from a brief
+      const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
+                                   userPrompt.toLowerCase().includes('campaign') ||
+                                   (userPrompt.toLowerCase().includes('create') && 
+                                    (userPrompt.toLowerCase().includes('post') || 
+                                     userPrompt.toLowerCase().includes('social') ||
+                                     userPrompt.toLowerCase().includes('content')));
+
+      let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
+      
+      if (isExecutingFromBrief) {
+        enhancedSystemPrompt += "\n\nCRITICAL: You are executing deliverables based on a creative brief. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified in the brief.";
+      }
+
+      enhancedSystemPrompt += "\n\nFormatting Instructions:\n- Use HTML tags: <h1>, <h2>, <h3> for headings\n- Use <strong> and <em> for emphasis\n- Format lists with <ul>, <ol>, and <li> tags\n- Provide comprehensive, detailed content\n- Do not include currency symbols, placeholder text, or formatting artifacts\n- Start immediately with the content (no introductory phrases)";
 
       const completion = await this.openai.chat.completions.create({
         model: model || "gpt-4o-mini",
@@ -132,7 +145,15 @@ export class RobustContentGenerator {
 
   private async tryAnthropic(userPrompt: string, systemPrompt?: string, temperature?: number) {
     try {
-      // Detect if this is a social media post request
+      // Detect if this is executing deliverables from a brief
+      const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
+                                   userPrompt.toLowerCase().includes('campaign') ||
+                                   (userPrompt.toLowerCase().includes('create') && 
+                                    (userPrompt.toLowerCase().includes('post') || 
+                                     userPrompt.toLowerCase().includes('social') ||
+                                     userPrompt.toLowerCase().includes('content')));
+
+      // Also detect social media post requests specifically
       const isSocialPostRequest = userPrompt.toLowerCase().includes('social post') || 
                                  userPrompt.toLowerCase().includes('social media') ||
                                  userPrompt.toLowerCase().includes('create posts') ||
@@ -141,14 +162,12 @@ export class RobustContentGenerator {
                                    userPrompt.toLowerCase().includes('instagram') || 
                                    userPrompt.toLowerCase().includes('twitter') || 
                                    userPrompt.toLowerCase().includes('linkedin') ||
-                                   userPrompt.toLowerCase().includes('tiktok'))) ||
-                                 (userPrompt.toLowerCase().includes('campaign') && 
-                                  userPrompt.toLowerCase().includes('post'));
+                                   userPrompt.toLowerCase().includes('tiktok')));
 
       let finalSystemPrompt = systemPrompt || "You are a helpful assistant.";
 
-      if (isSocialPostRequest) {
-        finalSystemPrompt = "You are a social media expert. When users request social media posts, create actual ready-to-publish social media content, NOT creative briefs or campaign strategies. Format each post clearly with actual post copy, hashtags, and visual recommendations. Example format: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description]. Focus on creating engaging, platform-appropriate content ready for immediate use.";
+      if (isExecutingFromBrief || isSocialPostRequest) {
+        finalSystemPrompt = "You are executing deliverables based on a creative brief or request. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified. Format posts as: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description].";
       }
 
       const content = await AnthropicAPI.generateContent({
