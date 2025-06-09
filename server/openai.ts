@@ -71,24 +71,14 @@ export const generateContent = async (req: Request, res: Response) => {
     
     // Only add formatting and content guidance for regular content generation, not for the image prompt agent
     if (!isImagePromptAgent) {
-      // Add more explicit instructions to prevent ANY commentary, introduction, or explanation
-      enhancedSystemPrompt += "\n\nCRITICALLY IMPORTANT INSTRUCTIONS: \n1. If the user prompt contains a creative brief or instructions, DO NOT REPEAT OR SUMMARIZE THE BRIEF ITSELF. Instead, create the ACTUAL CONTENT requested by the brief.\n2. Provide ONLY the final deliverable content WITHOUT ANY INTRODUCTION OR COMMENTARY OF ANY KIND. \n3. DO NOT start with phrases like 'Here are' or 'Below are' or 'Certainly'. \n4. DO NOT include ANY explanatory text before or after the content. \n5. DO NOT add ANY signatures, disclaimers, or notes at the end. \n6. DO NOT include any separators like '---' or '***'. \n7. BEGIN YOUR RESPONSE WITH THE ACTUAL CONTENT IMMEDIATELY. \n8. No introduction, no explanation, no commentary, no conclusion. \n9. If the user provides a creative brief labeled as such, ONLY GENERATE THE END DELIVERABLE described in the brief, not a restatement of the brief itself.\n10. Use proper HTML tags for formatting: <h1> for main titles, <h2> for section headers, <h3> for subsections. Don't use markdown or asterisks for headings.\n11. For emphasis, use <strong> or <em> tags instead of markdown syntax.\n12. Format lists using <ol> and <ul> with <li> elements for proper structure.\n13. ALWAYS PROVIDE LONG-FORM CONTENT. Generate a MINIMUM of 1800-3000 words for articles, blog posts, whitepapers, or any content where length is appropriate. Never abbreviate or summarize - deliver comprehensive, detailed content.\n14. Structure long-form content with at least 5-8 detailed sections with appropriate subheadings, thorough explanations, and deep exploration of the topic from multiple angles.\n15. Don't self-censor or artificially limit the length of the content - when in doubt, write more detailed and comprehensive content.\n16. For article-style content, include an introduction, at least 5-7 body sections, and a conclusion. Make each body section substantial with 300-500 words minimum.\n17. When creating long-form content, provide thorough explanations and examples for each point, developing ideas fully rather than briefly mentioning them.";
+      // Add concise formatting instructions
+      enhancedSystemPrompt += "\n\nFormatting Instructions:\n- Use HTML tags: <h1>, <h2>, <h3> for headings\n- Use <strong> and <em> for emphasis\n- Format lists with <ul>, <ol>, and <li> tags\n- Provide comprehensive, detailed content\n- Start immediately with the content (no introductory phrases)";
     }
     
     // Only add word count requirements for regular content, not for the image prompt agent
     if (!isImagePromptAgent) {
-      // If the prompt contains any mention of word count, we'll emphasize it
-      if (userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i)) {
-        // Extract the requested word count
-        const match = userPrompt.match(/\b(\d{3,4})\s*(word|words)\b/i);
-        const requestedWordCount = match ? parseInt(match[1]) : 1800;
-        
-        // Add a final reminder at the end of the user prompt
-        enhancedUserPrompt += `\n\nIMPORTANT: Please ensure your response is at least ${requestedWordCount} words in length, preferably longer. Be extremely detailed and comprehensive.`;
-      } else {
-        // If no specific word count was specified, add a default instruction for long-form content
-        enhancedUserPrompt += "\n\nIMPORTANT: Please provide a detailed, comprehensive response of at least 2000 words. Be thorough and expansive in your coverage of the topic.";
-      }
+      // Add a concise instruction for comprehensive content
+      enhancedUserPrompt += "\n\nProvide a detailed, comprehensive response.";
     }
     
     // Create completion with the OpenAI SDK
@@ -106,6 +96,8 @@ export const generateContent = async (req: Request, res: Response) => {
       ],
       temperature: temperature || 0.7,
       max_tokens: 8000, // Further increased token limit to allow for approximately 6000 words
+    }, {
+      timeout: 60000 // 60 second timeout
     });
     
     content = completion.choices[0].message.content || "";
