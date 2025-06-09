@@ -174,8 +174,18 @@ export function VoiceControls({
     
     // Priority 1: If SAGE is speaking, interrupt immediately
     if (isSpeaking || isGeneratingAudio) {
-      console.log('Interrupting SAGE speech...');
+      console.log('🛑 CLICK INTERRUPTION - Stopping SAGE speech immediately...');
       stopSpeaking();
+      
+      // In intelligent mode, restart listening after interruption
+      if (isIntelligentMode && onTranscript) {
+        setTimeout(() => {
+          console.log('🎤 Restarting listening after click interruption...');
+          startIntelligentListening((transcript) => {
+            onTranscript(transcript, true);
+          });
+        }, 300);
+      }
       return;
     }
     

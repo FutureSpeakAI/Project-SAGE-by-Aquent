@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface VoiceInteractionConfig {
@@ -40,11 +40,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
   const vadTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranscriptRef = useRef<string>('');
   
-  // Adaptive thresholds - lowered interrupt threshold for better responsiveness
+  // More aggressive thresholds for reliable interruption
   const SILENCE_THRESHOLD = config.silenceThreshold || 2000; // 2 seconds default
-  const INTERRUPT_THRESHOLD = config.interruptThreshold || 0.02; // Lower threshold for easier interruption
-  const NOISE_GATE = 0.008; // Lower noise gate for better detection
-  const VAD_CHECK_INTERVAL = 50; // Check voice activity every 50ms for faster response
+  const INTERRUPT_THRESHOLD = config.interruptThreshold || 0.015; // Very sensitive threshold
+  const NOISE_GATE = 0.005; // Very low noise gate
+  const VAD_CHECK_INTERVAL = 30; // Ultra-fast polling for immediate response
 
   // Initialize audio context for voice activity detection
   const initializeAudioContext = useCallback(async () => {
@@ -146,7 +146,9 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
           if (isIntelligentMode && onTranscriptCompleteRef.current) {
             setTimeout(() => {
               console.log('🎤 Restarting listening after voice interruption...');
-              startListening(onTranscriptCompleteRef.current);
+              if (onTranscriptCompleteRef.current) {
+                startListening(onTranscriptCompleteRef.current);
+              }
             }, 300);
           }
         }
@@ -524,6 +526,25 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       }
     }
   }, [isIntelligentMode, isListening, stopListening, initializeAudioContext, startVoiceActivityDetection]);
+
+  // Ensure voice activity detection runs when in intelligent mode
+  useEffect(() => {
+    if (isIntelligentMode && analyserRef.current && !vadTimerRef.current) {
+      console.log('🟢 Starting voice activity detection for intelligent mode...');
+      startVoiceActivityDetection();
+    } else if (!isIntelligentMode && vadTimerRef.current) {
+      console.log('🔴 Stopping voice activity detection...');
+      clearInterval(vadTimerRef.current);
+      vadTimerRef.current = null;
+    }
+    
+    return () => {
+      if (vadTimerRef.current) {
+        clearInterval(vadTimerRef.current);
+        vadTimerRef.current = null;
+      }
+    };
+  }, [isIntelligentMode, startVoiceActivityDetection]);
 
   // Enhanced cleanup function
   const cleanup = useCallback(() => {
