@@ -77,7 +77,8 @@ const TabContent = ({
   handleGenerateImage,
   handleSaveImage,
   handlePromptFromAgent,
-  handleCreateVariations
+  handleCreateVariations,
+  clearVisualTab
 }: {
   model: string;
   setModel: (model: string) => void;
@@ -102,7 +103,11 @@ const TabContent = ({
   handleSaveImage: () => void;
   handlePromptFromAgent: (prompt: string) => void;
   handleCreateVariations: (imageUrl: string) => void;
-}) => (
+  clearVisualTab: () => void;
+}) => {
+  const { toast } = useToast();
+  
+  return (
   <motion.div
     className="space-y-6"
     initial="hidden"
@@ -806,6 +811,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
         handleSaveImage={handleSaveImage}
         handlePromptFromAgent={handlePromptFromAgent}
         handleCreateVariations={handleCreateVariations}
+        clearVisualTab={clearVisualTab}
       />
     </ErrorBoundary>
   );
