@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useModels } from '@/hooks/useModels';
 import { getModelDisplayName } from '@/utils/modelDisplay';
 import { useGlobalRoutingConfig } from '@/hooks/useGlobalRoutingConfig';
+import { ModelSelector } from '@/components/ui/ModelSelector';
 
 export interface PromptRouterConfig {
   enabled: boolean;
