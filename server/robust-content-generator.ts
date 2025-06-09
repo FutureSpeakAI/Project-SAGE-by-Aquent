@@ -132,10 +132,29 @@ export class RobustContentGenerator {
 
   private async tryAnthropic(userPrompt: string, systemPrompt?: string, temperature?: number) {
     try {
+      // Detect if this is a social media post request
+      const isSocialPostRequest = userPrompt.toLowerCase().includes('social post') || 
+                                 userPrompt.toLowerCase().includes('social media') ||
+                                 userPrompt.toLowerCase().includes('create posts') ||
+                                 (userPrompt.toLowerCase().includes('post') && 
+                                  (userPrompt.toLowerCase().includes('facebook') || 
+                                   userPrompt.toLowerCase().includes('instagram') || 
+                                   userPrompt.toLowerCase().includes('twitter') || 
+                                   userPrompt.toLowerCase().includes('linkedin') ||
+                                   userPrompt.toLowerCase().includes('tiktok'))) ||
+                                 (userPrompt.toLowerCase().includes('campaign') && 
+                                  userPrompt.toLowerCase().includes('post'));
+
+      let finalSystemPrompt = systemPrompt || "You are a helpful assistant.";
+
+      if (isSocialPostRequest) {
+        finalSystemPrompt = "You are a social media expert. When users request social media posts, create actual ready-to-publish social media content, NOT creative briefs or campaign strategies. Format each post clearly with actual post copy, hashtags, and visual recommendations. Example format: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description]. Focus on creating engaging, platform-appropriate content ready for immediate use.";
+      }
+
       const content = await AnthropicAPI.generateContent({
         model: "claude-sonnet-4-20250514",
         prompt: userPrompt,
-        systemPrompt: systemPrompt || "You are a helpful assistant.",
+        systemPrompt: finalSystemPrompt,
         temperature: temperature || 0.7,
         maxTokens: 4000
       });
@@ -164,12 +183,31 @@ export class RobustContentGenerator {
 
   private async trySimplifiedOpenAI(userPrompt: string) {
     try {
+      // Detect if this is a social media post request
+      const isSocialPostRequest = userPrompt.toLowerCase().includes('social post') || 
+                                 userPrompt.toLowerCase().includes('social media') ||
+                                 userPrompt.toLowerCase().includes('create posts') ||
+                                 (userPrompt.toLowerCase().includes('post') && 
+                                  (userPrompt.toLowerCase().includes('facebook') || 
+                                   userPrompt.toLowerCase().includes('instagram') || 
+                                   userPrompt.toLowerCase().includes('twitter') || 
+                                   userPrompt.toLowerCase().includes('linkedin') ||
+                                   userPrompt.toLowerCase().includes('tiktok'))) ||
+                                 (userPrompt.toLowerCase().includes('campaign') && 
+                                  userPrompt.toLowerCase().includes('post'));
+
+      let systemPrompt = "You are a professional content creator. Generate well-formatted, comprehensive content with proper structure. Use HTML tags for formatting: <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists. Do not include placeholder symbols, currency signs, or formatting artifacts.";
+
+      if (isSocialPostRequest) {
+        systemPrompt = "You are a social media expert. When users request social media posts, create actual ready-to-publish social media content, NOT creative briefs or campaign strategies. Format each post clearly with actual post copy, hashtags, and visual recommendations. Example format: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description]. Focus on creating engaging, platform-appropriate content ready for immediate use.";
+      }
+
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: "You are a professional content creator. Generate well-formatted, comprehensive content with proper structure. Use HTML tags for formatting: <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists. Do not include placeholder symbols, currency signs, or formatting artifacts."
+            content: systemPrompt
           },
           {
             role: "user",
