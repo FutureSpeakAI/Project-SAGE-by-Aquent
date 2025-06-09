@@ -351,6 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Model and userPrompt are required' });
       }
 
+      console.log(`[Content Generation] Model: ${model}, Type: ${typeof model}`);
       let result: string;
       
       if (model.startsWith('gpt-')) {
