@@ -67,30 +67,66 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       let text = fileBuffer.toString('utf8');
       
       // Clean up excessive character spacing that may exist in source text
-      text = text
-        // Fix character-level spacing while preserving word boundaries
-        .replace(/([a-zA-Z])\s+([a-zA-Z])\s+([a-zA-Z])(\s+[a-zA-Z])*/g, (match) => {
-          return match.replace(/\s+/g, '');
-        })
-        // Restore proper word spacing by adding spaces before punctuation and common word patterns
-        .replace(/([a-zA-Z])([A-Z][a-z])/g, '$1 $2')  // Add space before capitalized words
-        .replace(/([a-z])([A-Z])/g, '$1 $2')          // Add space between camelCase
-        .replace(/([a-zA-Z])(\()/g, '$1 $2')          // Add space before opening parenthesis
-        .replace(/(\))([a-zA-Z])/g, '$1 $2')          // Add space after closing parenthesis
-        .replace(/([a-zA-Z])(:)/g, '$1$2')            // Keep colons attached to words
-        .replace(/(:)([A-Z])/g, '$1 $2')              // Add space after colons before capitals
-        .replace(/([a-zA-Z])(●)/g, '$1 $2')           // Add space before bullet points
-        .replace(/([a-zA-Z])(\d)/g, '$1 $2')          // Add space before numbers
-        .replace(/(\d)([a-zA-Z])/g, '$1 $2')          // Add space after numbers
-        .replace(/([a-zA-Z])(,)/g, '$1$2')            // Keep commas attached
-        .replace(/(,)([a-zA-Z])/g, '$1 $2')           // Add space after commas
-        .replace(/([a-zA-Z])(\.)/g, '$1$2')           // Keep periods attached
-        .replace(/(\.)([A-Z])/g, '$1 $2')             // Add space after periods before capitals
-        // Clean up multiple spaces
-        .replace(/\s{2,}/g, ' ')
-        .replace(/\n\s+/g, '\n')
-        .replace(/\s+\n/g, '\n')
-        .trim();
+      // This handles extreme cases where EVERY character is separated by spaces
+      
+      // First, check if this is the extreme spacing case (more than 50% of characters are spaces)
+      const spaceRatio = (text.match(/\s/g) || []).length / text.length;
+      
+      if (spaceRatio > 0.5) {
+        // Extreme spacing case - reconstruct the text character by character
+        text = text
+          // Remove all spaces first, then intelligently add them back
+          .replace(/\s+/g, '')
+          // Add spaces before capital letters (primary word boundaries)
+          .replace(/([a-z])([A-Z])/g, '$1 $2')
+          // Add spaces before numbers
+          .replace(/([a-zA-Z])(\d)/g, '$1 $2')
+          .replace(/(\d)([a-zA-Z])/g, '$1 $2')
+          // Add spaces around punctuation
+          .replace(/([a-zA-Z])([:\(\)\[\].,;!?])/g, '$1 $2')
+          .replace(/([:\(\)\[\].,;!?])([a-zA-Z])/g, '$1 $2')
+          // Add spaces around bullet points and special characters
+          .replace(/([a-zA-Z])(●|•|\*)/g, '$1 $2')
+          .replace(/(●|•|\*)([a-zA-Z])/g, '$1 $2')
+          // Add spaces around em dashes and hyphens
+          .replace(/([a-zA-Z])(–|—|-{2,})/g, '$1 $2')
+          .replace(/(–|—|-{2,})([a-zA-Z])/g, '$1 $2')
+          // Comprehensive word boundary restoration using common English patterns
+          .replace(/(patients|treatment|care|health|clinical|medical|provider|providers|email|campaign|content|message|data|guide|insights|deliverables|objectives|audience|metrics)([a-z]+)/gi, '$1 $2')
+          .replace(/([a-z]+)(patients|treatment|care|health|clinical|medical|provider|providers|email|campaign|content|message|data|guide|insights|deliverables|objectives|audience|metrics)/gi, '$1 $2')
+          .replace(/(live|breathe|experience|educate|reduce|improve|build|drive|engage|request|review|download|delivered|helping|designed|proven|targeting|capturing)([a-z]+)/gi, '$1 $2')
+          .replace(/([a-z]+)(live|breathe|experience|educate|reduce|improve|build|drive|engage|request|review|download|delivered|helping|designed|proven|targeting|capturing)/gi, '$1 $2')
+          .replace(/(longer|easier|fewer|novel|measurable|clinical|educational|conversational|friendly|clear|compelling|respectful|empathetic)([a-z]+)/gi, '$1 $2')
+          .replace(/([a-z]+)(longer|easier|fewer|novel|measurable|clinical|educational|conversational|friendly|clear|compelling|respectful|empathetic)/gi, '$1 $2')
+          // Handle common function words that get attached
+          .replace(/(and|or|of|in|on|at|to|for|with|by|from|the|a|an|is|are|was|were|be|been|have|has|had|do|does|did|will|would|could|should|may|might|can|must)([a-z]+)/gi, '$1 $2')
+          .replace(/([a-z]+)(and|or|of|in|on|at|to|for|with|by|from|the|a|an|is|are|was|were|be|been|have|has|had|do|does|did|will|would|could|should|may|might|can|must)/gi, '$1 $2')
+          // Handle medical/business acronyms
+          .replace(/COPD([a-z])/gi, 'COPD $1')
+          .replace(/HCP([a-z])/gi, 'HCP $1')
+          .replace(/([a-z])COPD/gi, '$1 COPD')
+          .replace(/([a-z])HCP/gi, '$1 HCP')
+          // Handle special cases like "C O P D" -> "COPD"
+          .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3$4')
+          .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3')
+          .replace(/\b([A-Z])\s+([A-Z])\b/g, '$1$2')
+          // Clean up
+          .replace(/\s{2,}/g, ' ')
+          .replace(/\s+([:\(\)\[\].,;!?])/g, '$1')
+          .replace(/([:\(\)\[\].,;!?])\s{2,}/g, '$1 ')
+          .trim();
+      } else {
+        // Regular spacing cleanup for less severe cases
+        text = text
+          .replace(/([a-zA-Z])\s+([a-zA-Z])\s+([a-zA-Z])(\s+[a-zA-Z])*/g, (match) => {
+            return match.replace(/\s+/g, '');
+          })
+          .replace(/([a-z])([A-Z])/g, '$1 $2')
+          .replace(/\s{2,}/g, ' ')
+          .replace(/\n\s+/g, '\n')
+          .replace(/\s+\n/g, '\n')
+          .trim();
+      }
       
       return text;
     } else if (fileExt === '.pdf') {
