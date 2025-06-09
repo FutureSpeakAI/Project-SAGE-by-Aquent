@@ -96,8 +96,6 @@ export const generateContent = async (req: Request, res: Response) => {
       ],
       temperature: temperature || 0.7,
       max_tokens: 8000, // Further increased token limit to allow for approximately 6000 words
-    }, {
-      timeout: 60000 // 60 second timeout
     });
     
     content = completion.choices[0].message.content || "";
