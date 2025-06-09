@@ -389,6 +389,7 @@ export const generateContent = async (req: Request, res: Response) => {
       
       // Fallback attempt with simplified prompt
       try {
+        const { userPrompt: originalUserPrompt } = req.body;
         const fallbackOpenai = new OpenAI({
           apiKey: process.env.OPENAI_API_KEY,
           timeout: 20000, // Shorter timeout for fallback
@@ -404,7 +405,7 @@ export const generateContent = async (req: Request, res: Response) => {
             },
             {
               role: "user",
-              content: (userPrompt || enhancedUserPrompt).substring(0, 2000) // Truncate if too long
+              content: (originalUserPrompt || "Generate helpful content").substring(0, 2000) // Truncate if too long
             }
           ],
           temperature: 0.7,
