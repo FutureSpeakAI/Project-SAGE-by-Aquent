@@ -114,14 +114,6 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
       console.log("Starting image load process...");
       console.log("Loading image:", imageUrl.substring(0, 50) + "...");
-      
-      // Set canvas size first
-      canvas.width = 600;
-      canvas.height = 600;
-      
-      // Clear canvas with light background
-      ctx.fillStyle = "#f8f9fa";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const img = new Image();
       
@@ -129,24 +121,34 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         console.log("Image loaded successfully:", img.width, "x", img.height);
         setImageLoadStatus("loaded");
         
-        // Calculate scaling to fit image in canvas while maintaining aspect ratio
-        const scaleX = canvas.width / img.width;
-        const scaleY = canvas.height / img.height;
-        const scale = Math.min(scaleX, scaleY);
+        // Use the original image dimensions for better quality, up to a maximum
+        const maxSize = 800;
+        let canvasWidth = Math.min(img.width, maxSize);
+        let canvasHeight = Math.min(img.height, maxSize);
         
-        const scaledWidth = img.width * scale;
-        const scaledHeight = img.height * scale;
-        const offsetX = (canvas.width - scaledWidth) / 2;
-        const offsetY = (canvas.height - scaledHeight) / 2;
+        // Maintain aspect ratio
+        if (img.width > img.height) {
+          canvasHeight = (canvasWidth * img.height) / img.width;
+        } else {
+          canvasWidth = (canvasHeight * img.width) / img.height;
+        }
+        
+        // Set canvas size to maintain quality
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        
+        // Enable high-quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         
         // Clear canvas with white background
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Draw image centered on canvas
-        ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+        // Draw image at full canvas size for crisp quality
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         
-        console.log("Image drawn successfully at:", offsetX, offsetY, scaledWidth, scaledHeight);
+        console.log("Image drawn successfully at full quality:", canvas.width, "x", canvas.height);
       };
       
       img.onerror = (error) => {

@@ -607,23 +607,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Convert base64 to Buffer for OpenAI API
+      const imageBuffer = Buffer.from(imageBase64, 'base64');
+      const maskBuffer = maskBase64 ? Buffer.from(maskBase64, 'base64') : undefined;
+
       // Handle different edit modes
       if (editMode === 'inpaint' && mask) {
         // Inpainting with mask
-        editRequest.image = imageBase64;
-        editRequest.mask = maskBase64;
+        editRequest.image = imageBuffer;
+        editRequest.mask = maskBuffer;
         console.log('Performing inpainting with mask');
       } else if (editMode === 'outpaint') {
         // Outpainting (extend image)
-        editRequest.image = imageBase64;
+        editRequest.image = imageBuffer;
         console.log('Performing outpainting');
       } else {
-        // Variation mode - treat as image-to-image
-        editRequest.image = imageBase64;
-        console.log('Performing image variation');
+        // Variation mode - use generate API instead of edit for variations
+        console.log('Performing image variation using generate API');
+        
+        // For variations, use the generate endpoint with the image as reference
+        const generateResponse = await openai.images.generate({
+          model: model === 'gpt-image-1' ? 'dall-e-3' : model,
+          prompt: prompt,
+          size: size || '1024x1024',
+          quality: quality || 'standard',
+          n: 1
+        });
+
+        if (!generateResponse.data || generateResponse.data.length === 0) {
+          throw new Error('No variation image returned from API');
+        }
+
+        const variationImages = generateResponse.data.map((img: any) => ({
+          url: img.url || `data:image/png;base64,${img.b64_json}`,
+          revised_prompt: img.revised_prompt
+        }));
+
+        return res.json({
+          images: variationImages,
+          editMode: 'variation',
+          originalPrompt: prompt
+        });
       }
 
-      // Make the API call to OpenAI
+      // Make the API call to OpenAI for edit operations (inpaint/outpaint)
       const response = await openai.images.edit(editRequest);
 
       if (!response.data || response.data.length === 0) {
