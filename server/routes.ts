@@ -1704,15 +1704,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message is required" });
       }
 
-      // Use OpenAI directly with minimal configuration
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
+      console.log(`[Chat] Processing message with model preference: ${model || 'auto'}`);
 
-      // Debug logging
-      console.log('Chat request context:', JSON.stringify(context, null, 2));
-      console.log('Research context value:', context?.researchContext);
-      
+      // Extract router configuration from context or use defaults
+      const routerConfig: PromptRouterConfig = {
+        enabled: true,
+        manualProvider: context?.manualProvider,
+        manualModel: model,
+        forceReasoning: context?.forceReasoning
+      };
+
+      // Use prompt router for all chat requests
+      const { promptRouter } = await import('./prompt-router');
+      const decision = await promptRouter.routePrompt(
+        message, 
+        context?.researchContext || '', 
+        routerConfig,
+        { stage: 'discovery', projectType: 'content', complexity: 'moderate', priority: 'speed' }
+      );
+
+      console.log(`[Chat] Routed to ${decision.provider} with model ${decision.model}`);
+
       // Check if this is a research-enhanced request
       if (context?.researchContext && context.researchContext.trim().length > 0) {
         console.log('Activating prompt router...');
@@ -1913,7 +1925,7 @@ Note: This research data was successfully gathered from current sources, but AI 
         }
       }
 
-      // Standard response without research
+      // Standard response without research - use routed provider
       let systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), the central intelligence hub for the Aquent Content AI platform. You are a British marketing specialist and creative entrepreneur with 20 years of experience from London. You use she/her pronouns and work as a collaborator to help creative marketers speed up their work.
 
 CORE VALUES THAT GUIDE YOUR INTERACTIONS:
@@ -1969,24 +1981,49 @@ Respond only with conversational text - no buttons, badges, or UI elements. When
         ? "\n\nIMPORTANT: This is a voice conversation. Keep your response conversational, natural, and concise (2-3 sentences max). Speak as if you're having a friendly chat with a colleague." 
         : "";
 
-      // Simple message structure
-      const messages = [
-        { role: 'system' as const, content: systemPrompt + voiceInstructions },
-        { role: 'user' as const, content: message }
-      ];
+      const enhancedSystemPrompt = systemPrompt + voiceInstructions;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages,
-        temperature: 0.7,
-        max_tokens: maxTokens,
-      });
+      // Route standard chat through the intelligent router
+      let chatReply = '';
+      if (decision.provider === 'anthropic') {
+        chatReply = await AnthropicAPI.generateContent({
+          model: decision.model,
+          prompt: message,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens
+        });
+      } else if (decision.provider === 'gemini') {
+        chatReply = await GeminiAPI.generateContent({
+          model: decision.model,
+          prompt: message,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens
+        });
+      } else {
+        // OpenAI provider
+        const openaiClient = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+        });
 
-      const reply = completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
+        const completion = await openaiClient.chat.completions.create({
+          model: decision.model,
+          messages: [
+            { role: 'system', content: enhancedSystemPrompt },
+            { role: 'user', content: message }
+          ],
+          temperature: temperature || 0.7,
+          max_tokens: maxTokens,
+        });
+
+        chatReply = completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
+      }
       
       res.json({ 
         content: reply,
-        model: "gpt-4o",
+        model: `${decision.provider}-${decision.model}`,
+        provider: decision.provider,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
