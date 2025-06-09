@@ -15,6 +15,7 @@ import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 import { ImagePromptAgent } from "./ImagePromptAgent";
 import { ImageProcessor } from "./ImageProcessor";
+import { ImageEditor } from "./ImageEditor";
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorFallback } from "../ErrorFallback";
 import { ModelSelector } from "@/components/ui/ModelSelector";
@@ -409,6 +410,11 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   const setQuality = (quality: string) => updateVisualState({ quality });
   const setBackground = (background: string) => updateVisualState({ background });
   const setIsProcessingDialogOpen = (open: boolean) => updateVisualState({ isProcessingDialogOpen: open });
+  
+  // Image editor state
+  const [isImageEditorOpen, setIsImageEditorOpen] = useState(false);
+  const [editingImageUrl, setEditingImageUrl] = useState<string>('');
+  const [editingImageId, setEditingImageId] = useState<number | undefined>();
 
   // Extract values from persisted state
   const {
@@ -703,6 +709,22 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     });
   };
   
+  // Handle image editing
+  const handleEditImage = (imageUrl: string, imageId?: number) => {
+    setEditingImageUrl(imageUrl);
+    setEditingImageId(imageId);
+    setIsImageEditorOpen(true);
+  };
+
+  // Handle when image editing is complete
+  const handleImageEdited = (newImageUrl: string) => {
+    setGeneratedImageUrl(newImageUrl);
+    toast({
+      title: "Image edited successfully",
+      description: "Your edited image is now ready to save or download.",
+    });
+  };
+
   // Handle creating variations of an image
   const handleCreateVariations = async (imageUrl: string) => {
     if (!imageUrl) {

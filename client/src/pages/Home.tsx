@@ -240,10 +240,12 @@ export default function Home() {
     // Switch to the visual tab if not already there
     setActiveTab(AppTab.VISUAL);
     
-    // TODO: Implement image editor functionality in Phase 2
+    // Set variation prompt to trigger image editor
+    setVariationPrompt(`EDIT_IMAGE:${imageUrl}:${id}`);
+    
     toast({
-      title: "Image Editor",
-      description: "Image editor functionality will be available in the next update."
+      title: "Opening Image Editor",
+      description: "The AI image editor is now loading in the Visual tab.",
     });
   };
   
