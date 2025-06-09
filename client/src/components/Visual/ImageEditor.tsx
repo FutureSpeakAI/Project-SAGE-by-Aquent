@@ -1,16 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { useMutation } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Edit, Eraser, Plus, Download, Save, Undo, Redo } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { 
+  Edit, 
+  Paintbrush, 
+  Eraser, 
+  ZoomIn, 
+  ZoomOut, 
+  Wand2, 
+  Loader2,
+  Download
+} from "lucide-react";
 
 interface ImageEditorProps {
   open: boolean;
@@ -31,171 +39,151 @@ interface EditRequest {
 }
 
 export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdited }: ImageEditorProps) {
-  const [editPrompt, setEditPrompt] = useState('');
-  const [brushSize, setBrushSize] = useState([20]);
-  const [editMode, setEditMode] = useState<'inpaint' | 'outpaint' | 'variation'>('inpaint');
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
-  const [maskDataUrl, setMaskDataUrl] = useState<string | null>(null);
-  
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null);
-  
   const { toast } = useToast();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [maskData, setMaskData] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState("");
+  const [activeTab, setActiveTab] = useState<"inpaint" | "outpaint" | "variation">("inpaint");
+  const [brushSize, setBrushSize] = useState(20);
+  const [tool, setTool] = useState<"brush" | "eraser">("brush");
+  const [zoom, setZoom] = useState(1);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [model, setModel] = useState("dall-e-2");
+  const [size, setSize] = useState("1024x1024");
+  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
 
-  // Initialize canvases when image loads
+  // Load and draw the original image on canvas
   useEffect(() => {
-    if (open && imageUrl) {
-      loadImageToCanvas();
-    }
-  }, [open, imageUrl]);
+    if (!open || !imageUrl || !canvasRef.current) return;
 
-  const loadImageToCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = "anonymous";
+    
     img.onload = () => {
-      const canvas = canvasRef.current;
-      const maskCanvas = maskCanvasRef.current;
-      if (!canvas || !maskCanvas) return;
-
-      // Set canvas dimensions to match image
-      canvas.width = img.width;
-      canvas.height = img.height;
-      maskCanvas.width = img.width;
-      maskCanvas.height = img.height;
-
-      // Draw original image
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0);
-      }
-
-      // Initialize mask canvas with white background
-      const maskCtx = maskCanvas.getContext('2d');
-      if (maskCtx) {
-        maskCtx.fillStyle = 'white';
-        maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-      }
-
-      setOriginalImage(img);
+      // Set canvas size to match image
+      canvas.width = Math.min(600, img.width);
+      canvas.height = Math.min(600, img.height);
+      
+      // Calculate scaling to fit image in canvas
+      const scaleX = canvas.width / img.width;
+      const scaleY = canvas.height / img.height;
+      const scale = Math.min(scaleX, scaleY);
+      
+      const scaledWidth = img.width * scale;
+      const scaledHeight = img.height * scale;
+      const offsetX = (canvas.width - scaledWidth) / 2;
+      const offsetY = (canvas.height - scaledHeight) / 2;
+      
+      // Clear canvas and draw image
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
     };
+    
+    img.onerror = () => {
+      console.error("Failed to load image:", imageUrl);
+      toast({
+        title: "Error loading image",
+        description: "Could not load the image for editing",
+        variant: "destructive"
+      });
+    };
+    
     img.src = imageUrl;
-  };
+  }, [open, imageUrl, toast]);
 
+  // Drawing functions for inpainting mask
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (editMode !== 'inpaint') return;
+    if (activeTab !== "inpaint" || tool !== "brush") return;
+    
     setIsDrawing(true);
-    draw(e);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || editMode !== 'inpaint') return;
+    if (!isDrawing || activeTab !== "inpaint") return;
     
     const canvas = canvasRef.current;
-    const maskCanvas = maskCanvasRef.current;
-    if (!canvas || !maskCanvas) return;
-
+    if (!canvas) return;
+    
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
     
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-
-    // Draw on both canvases
-    const ctx = canvas.getContext('2d');
-    const maskCtx = maskCanvas.getContext('2d');
+    setMousePos({ x, y });
     
-    if (ctx && maskCtx) {
-      // Draw semi-transparent overlay on main canvas
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-      ctx.beginPath();
-      ctx.arc(x, y, brushSize[0], 0, 2 * Math.PI);
-      ctx.fill();
-
-      // Draw black on mask canvas (area to edit)
-      maskCtx.globalCompositeOperation = 'source-over';
-      maskCtx.fillStyle = 'black';
-      maskCtx.beginPath();
-      maskCtx.arc(x, y, brushSize[0], 0, 2 * Math.PI);
-      maskCtx.fill();
-    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
   };
 
   const stopDrawing = () => {
+    if (!isDrawing) return;
     setIsDrawing(false);
+    
+    // Capture mask data
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    setMaskData(canvas.toDataURL());
   };
 
   const clearMask = () => {
     const canvas = canvasRef.current;
-    const maskCanvas = maskCanvasRef.current;
-    if (!canvas || !maskCanvas || !originalImage) return;
-
-    // Reset main canvas to original image
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
+    if (!canvas) return;
+    
+    // Redraw original image
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const scaleX = canvas.width / img.width;
+      const scaleY = canvas.height / img.height;
+      const scale = Math.min(scaleX, scaleY);
+      
+      const scaledWidth = img.width * scale;
+      const scaledHeight = img.height * scale;
+      const offsetX = (canvas.width - scaledWidth) / 2;
+      const offsetY = (canvas.height - scaledHeight) / 2;
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(originalImage, 0, 0);
-    }
-
-    // Reset mask canvas to white
-    const maskCtx = maskCanvas.getContext('2d');
-    if (maskCtx) {
-      maskCtx.fillStyle = 'white';
-      maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-    }
-
-    setMaskDataUrl(null);
+      ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+    };
+    img.src = imageUrl;
+    
+    setMaskData(null);
   };
 
-  // Image editing mutation
-  const editImageMutation = useMutation({
-    mutationFn: async () => {
-      if (!editPrompt.trim()) {
-        throw new Error('Please enter a prompt describing your desired changes');
-      }
-
-      const canvas = canvasRef.current;
-      const maskCanvas = maskCanvasRef.current;
-      if (!canvas || !maskCanvas) {
-        throw new Error('Canvas not initialized');
-      }
-
-      let requestData: EditRequest = {
-        image: imageUrl,
-        prompt: editPrompt,
-        model: 'gpt-image-1',
-        size: 'auto',
-        quality: 'high',
-        n: 1
-      };
-
-      // For inpainting, include the mask
-      if (editMode === 'inpaint') {
-        const maskDataURL = maskCanvas.toDataURL('image/png');
-        requestData.mask = maskDataURL;
-        setMaskDataUrl(maskDataURL);
-      }
-
-      const response = await fetch('/api/edit-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...requestData,
-          editMode
-        }),
-      });
-
+  const mutation = useMutation({
+    mutationFn: async (data: EditRequest) => {
+      const response = await apiRequest("POST", "/api/edit-image", data);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to edit image');
+        throw new Error("Failed to edit image");
       }
-
-      return response.json();
+      return await response.json();
     },
     onSuccess: (data) => {
       if (data.images && data.images.length > 0) {
@@ -219,6 +207,40 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     },
   });
 
+  const handleEdit = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: "Missing prompt",
+        description: "Please describe the changes you want to make",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (activeTab === "inpaint" && !maskData) {
+      toast({
+        title: "Missing mask",
+        description: "Please paint over the areas you want to modify",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    let requestData: EditRequest = {
+      image: imageUrl,
+      prompt: prompt.trim(),
+      model,
+      size,
+      n: 1
+    };
+
+    if (activeTab === "inpaint" && maskData) {
+      requestData.mask = maskData;
+    }
+
+    mutation.mutate(requestData);
+  };
+
   const downloadEditedImage = () => {
     if (!editedImageUrl) return;
     
@@ -232,172 +254,277 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>AI Image Editor</DialogTitle>
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle className="flex items-center">
+            <Edit className="mr-2 h-5 w-5" />
+            AI Image Editor
+          </DialogTitle>
           <DialogDescription>
             Edit your AI-generated image using advanced AI-powered tools
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <Tabs value={editMode} onValueChange={(value) => setEditMode(value as any)}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="inpaint">Inpaint</TabsTrigger>
-              <TabsTrigger value="outpaint">Outpaint</TabsTrigger>
-              <TabsTrigger value="variation">Variation</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="inpaint" className="space-y-4">
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <div className="text-sm text-muted-foreground">
-                    Paint over areas you want to modify, then describe the changes you want.
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Brush Size: {brushSize[0]}px</Label>
-                    <Slider
-                      value={brushSize}
-                      onValueChange={setBrushSize}
-                      min={5}
-                      max={50}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={clearMask}>
-                      <Eraser className="mr-2 h-4 w-4" />
-                      Clear Mask
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="outpaint" className="space-y-4">
-              <Card className="p-4">
-                <div className="text-sm text-muted-foreground">
-                  Extend your image beyond its current boundaries. Describe what should appear in the extended areas.
-                </div>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="variation" className="space-y-4">
-              <Card className="p-4">
-                <div className="text-sm text-muted-foreground">
-                  Create a variation of your image with specific changes. Describe the modifications you want.
-                </div>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Canvas Area */}
-            <Card className="p-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Original Image</Label>
-                  <Badge variant="outline">{editMode}</Badge>
-                </div>
+        <div className="flex h-[calc(95vh-120px)]">
+          {/* Left Panel - Image Canvas (60%) */}
+          <div className="w-[60%] bg-gray-50 dark:bg-gray-900 p-6 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <Label className="text-lg font-medium">Original Image</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setZoom(Math.min(zoom * 1.2, 3))}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setZoom(Math.max(zoom / 1.2, 0.5))}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setZoom(1)}
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
+              <div className="relative">
+                <canvas
+                  ref={canvasRef}
+                  width={600}
+                  height={600}
+                  className="border border-gray-200 dark:border-gray-700 rounded cursor-crosshair shadow-lg"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transformOrigin: 'center',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                  }}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                />
                 
-                <div className="relative border rounded-lg overflow-hidden bg-gray-50">
-                  <canvas
-                    ref={canvasRef}
-                    className="max-w-full h-auto cursor-crosshair"
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    style={{ display: 'block' }}
+                {/* Brush preview */}
+                {activeTab === "inpaint" && tool === "brush" && (
+                  <div
+                    className="absolute pointer-events-none border-2 border-blue-500 rounded-full opacity-50"
+                    style={{
+                      width: `${brushSize * zoom}px`,
+                      height: `${brushSize * zoom}px`,
+                      left: `${mousePos.x * zoom - (brushSize * zoom) / 2}px`,
+                      top: `${mousePos.y * zoom - (brushSize * zoom) / 2}px`,
+                    }}
                   />
-                  <canvas
-                    ref={maskCanvasRef}
-                    className="absolute inset-0 max-w-full h-auto pointer-events-none"
-                    style={{ display: 'none' }}
+                )}
+              </div>
+            </div>
+            
+            {/* Canvas Tools */}
+            {activeTab === "inpaint" && (
+              <div className="mt-4 flex flex-wrap gap-2 items-center">
+                <Button
+                  variant={tool === "brush" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTool("brush")}
+                >
+                  <Paintbrush className="mr-2 h-4 w-4" />
+                  Brush
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearMask}
+                >
+                  <Eraser className="mr-2 h-4 w-4" />
+                  Clear Mask
+                </Button>
+                <div className="flex items-center gap-2 ml-4">
+                  <Label htmlFor="brush-size" className="text-sm">Size:</Label>
+                  <Slider
+                    id="brush-size"
+                    min={5}
+                    max={100}
+                    step={1}
+                    value={[brushSize]}
+                    onValueChange={(value) => setBrushSize(value[0])}
+                    className="w-24"
                   />
+                  <span className="text-sm text-gray-600 min-w-[40px]">{brushSize}px</span>
                 </div>
               </div>
-            </Card>
+            )}
 
-            {/* Controls and Result */}
-            <div className="space-y-4">
-              <Card className="p-4">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="edit-prompt">Edit Prompt</Label>
-                    <Textarea
-                      id="edit-prompt"
-                      placeholder="Describe the changes you want to make..."
-                      value={editPrompt}
-                      onChange={(e) => setEditPrompt(e.target.value)}
-                      className="min-h-[100px] resize-y"
-                    />
-                  </div>
-
+            {/* Edited Image Preview */}
+            {editedImageUrl && (
+              <div className="mt-4 p-4 border rounded-lg bg-white dark:bg-gray-800">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-base font-medium">Edited Result</Label>
                   <Button
-                    onClick={() => editImageMutation.mutate()}
-                    disabled={editImageMutation.isPending || !editPrompt.trim()}
-                    className="w-full bg-[#F15A22] hover:bg-[#e04d15]"
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadEditedImage}
                   >
-                    {editImageMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Editing Image...
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Apply Changes
-                      </>
-                    )}
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
                   </Button>
                 </div>
-              </Card>
+                <img 
+                  src={editedImageUrl} 
+                  alt="Edited result"
+                  className="max-w-full max-h-48 object-contain rounded border"
+                />
+              </div>
+            )}
+          </div>
 
-              {editedImageUrl && (
-                <Card className="p-4">
+          {/* Right Panel - Controls (40%) */}
+          <div className="w-[40%] border-l bg-white dark:bg-gray-950 flex flex-col">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+              <TabsList className="grid w-full grid-cols-3 m-4 mb-2">
+                <TabsTrigger value="inpaint">Inpaint</TabsTrigger>
+                <TabsTrigger value="outpaint">Outpaint</TabsTrigger>
+                <TabsTrigger value="variation">Variation</TabsTrigger>
+              </TabsList>
+
+              <div className="flex-1 p-4 space-y-6">
+                <TabsContent value="inpaint" className="space-y-6 mt-0">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-medium">Inpainting</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Paint over areas you want to modify, then describe the changes you want.
+                    </p>
+                  </div>
+                  
                   <div className="space-y-4">
-                    <Label>Edited Result</Label>
-                    <div className="border rounded-lg overflow-hidden">
-                      <img
-                        src={editedImageUrl}
-                        alt="Edited result"
-                        className="w-full h-auto"
+                    <div>
+                      <Label htmlFor="edit-prompt" className="text-base font-medium">Edit Instructions</Label>
+                      <Textarea
+                        id="edit-prompt"
+                        placeholder="Describe the changes you want to make in the painted areas..."
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        className="min-h-[120px] mt-2"
                       />
                     </div>
                     
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={downloadEditedImage}
-                        className="flex-1"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          // TODO: Save to library functionality
-                          toast({
-                            title: "Feature coming soon",
-                            description: "Saving edited images to library will be available soon.",
-                          });
-                        }}
-                      >
-                        <Save className="mr-2 h-4 w-4" />
-                        Save to Library
-                      </Button>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Advanced Options</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label htmlFor="model-select" className="text-xs">Model</Label>
+                          <Select value={model} onValueChange={setModel}>
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="dall-e-2">DALL-E 2</SelectItem>
+                              <SelectItem value="dall-e-3">DALL-E 3</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="size-select" className="text-xs">Size</Label>
+                          <Select value={size} onValueChange={setSize}>
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="256x256">256×256</SelectItem>
+                              <SelectItem value="512x512">512×512</SelectItem>
+                              <SelectItem value="1024x1024">1024×1024</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </Card>
-              )}
-            </div>
+                </TabsContent>
+
+                <TabsContent value="outpaint" className="space-y-6 mt-0">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-medium">Outpainting</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Extend your image beyond its current boundaries by describing what should be added.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="outpaint-prompt" className="text-base font-medium">Extension Instructions</Label>
+                      <Textarea
+                        id="outpaint-prompt"
+                        placeholder="Describe what should be added around the image..."
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        className="min-h-[120px] mt-2"
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="variation" className="space-y-6 mt-0">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-medium">Image Variation</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Create a variation of your image based on a text description.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="variation-prompt" className="text-base font-medium">Variation Instructions</Label>
+                      <Textarea
+                        id="variation-prompt"
+                        placeholder="Describe how you want to change the overall image..."
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        className="min-h-[120px] mt-2"
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="border-t p-4 space-y-2">
+                <Button
+                  onClick={handleEdit}
+                  disabled={mutation.isPending || !prompt.trim() || (activeTab === "inpaint" && !maskData)}
+                  className="w-full h-12 text-base"
+                >
+                  {mutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="mr-2 h-5 w-5" />
+                      {activeTab === "inpaint" ? "Apply Changes" : 
+                       activeTab === "outpaint" ? "Extend Image" : "Create Variation"}
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="w-full"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </Tabs>
           </div>
         </div>
       </DialogContent>
