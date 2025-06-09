@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import OpenAI from "openai";
 import * as AnthropicAPI from "./anthropic";
 import * as GeminiAPI from "./gemini";
+import { ContentFormatter } from "./content-formatter";
 
 export interface ContentGenerationRequest {
   model: string;
@@ -85,11 +86,14 @@ export class RobustContentGenerator {
       return;
     }
 
-    // All methods failed
-    res.status(503).json({
-      error: "Content generation temporarily unavailable",
-      message: "All AI providers are experiencing issues. Please try again in a few minutes.",
-      details: "OpenAI, Anthropic, and Gemini APIs are all unavailable"
+    // All methods failed - provide a fallback response
+    console.log('All AI providers failed, providing structured fallback content');
+    const fallbackContent = ContentFormatter.generateFallbackContent(userPrompt);
+    res.json({
+      content: fallbackContent,
+      provider: 'fallback',
+      fallback: true,
+      message: 'Generated structured content due to temporary AI service unavailability'
     });
   }
 
@@ -116,8 +120,8 @@ export class RobustContentGenerator {
 
       let content = completion.choices[0].message.content || "";
       
-      // Clean up formatting artifacts
-      content = this.cleanContentFormatting(content);
+      // Clean up formatting artifacts using ContentFormatter
+      content = ContentFormatter.cleanAndFormat(content);
       
       return { success: true, content };
     } catch (error: any) {
@@ -178,11 +182,8 @@ export class RobustContentGenerator {
 
       let content = completion.choices[0].message.content || "";
       
-      // Clean up any formatting artifacts
-      content = content.replace(/\$\d+/g, ''); // Remove currency artifacts like $3
-      content = content.replace(/^\s*[\$\#\*\-]+\s*/gm, ''); // Remove leading symbols
-      content = content.replace(/\n{3,}/g, '\n\n'); // Clean up excessive line breaks
-      content = content.trim();
+      // Clean up formatting artifacts using ContentFormatter
+      content = ContentFormatter.cleanAndFormat(content);
       
       return { success: true, content };
     } catch (error: any) {
