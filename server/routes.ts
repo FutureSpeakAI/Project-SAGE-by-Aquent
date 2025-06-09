@@ -438,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Robust content generation with emergency fallback
   app.post("/api/robust-generate", async (req: Request, res: Response) => {
-    await robustContentGenerator.generateWithFallback(req, res);
+    await robustContentGenerator.generateContent(req, res);
   });
   
   app.post("/api/generate", async (req: Request, res: Response) => {
@@ -450,62 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (requestModel.startsWith('gpt-')) {
-        // Use Anthropic as primary provider due to OpenAI timeout issues
-        try {
-          const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
-                                       userPrompt.toLowerCase().includes('campaign') ||
-                                       (userPrompt.toLowerCase().includes('create') && 
-                                        (userPrompt.toLowerCase().includes('post') || 
-                                         userPrompt.toLowerCase().includes('social') ||
-                                         userPrompt.toLowerCase().includes('content')));
-
-          let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
-          
-          if (isExecutingFromBrief) {
-            enhancedSystemPrompt = "CRITICAL: You are executing deliverables based on a creative brief. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified in the brief. Format posts as: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description].";
-          }
-
-          const result = await AnthropicAPI.generateContent({
-            model: "claude-sonnet-4-20250514",
-            prompt: userPrompt,
-            systemPrompt: enhancedSystemPrompt,
-            temperature,
-            maxTokens: 4000
-          });
-          res.json({ content: result });
-          return;
-        } catch (anthropicError: any) {
-          console.log('Anthropic API failed, providing emergency social media posts');
-          // Direct social media post generation for L'Oréal campaign
-          const content = `
-<h1>Facebook Posts for L'Oréal Revitalift</h1>
-
-<h2>Post 1</h2>
-<p><strong>✨ Transform your skin with L'Oréal Revitalift Triple Power Anti-Aging Serum! ✨</strong></p>
-<p>Experience the perfect blend of science and luxury. Clinical results show 47% reduction in fine lines in just 4 weeks!</p>
-<p>🌟 Pro-Retinol + Vitamin C + Hyaluronic Acid = Your secret to youthful skin!</p>
-<p><strong>Hashtags:</strong> #AntiAging #LuxurySkincare #SkincareRoutine #BeautyEssentials #YouthfulSkin</p>
-
-<h2>Post 2</h2>
-<p><strong>🌼 Ready to turn back time? 🌼</strong></p>
-<p>Discover L'Oréal Revitalift's breakthrough formula that combines clinical results with luxury skincare. Proven to reduce fine lines by 47% in 4 weeks.</p>
-<p>Your skin deserves the best - experience the difference today!</p>
-<p><strong>Hashtags:</strong> #SkincareGoals #AntiAgingSerum #BeautyCommunity #GlowingSkin #LuxuryBeauty</p>
-
-<h2>Post 3</h2>
-<p><strong>💎 Elevate your skincare routine with science-backed luxury! 💎</strong></p>
-<p>L'Oréal Revitalift Triple Power Serum delivers visible anti-aging results. Pro-Retinol smooths, Vitamin C brightens, Hyaluronic Acid hydrates.</p>
-<p>Join the skincare revolution - because you deserve to look as young as you feel!</p>
-<p><strong>Hashtags:</strong> #SkincareScience #AntiAging #BeautyInnovation #LuxurySkincare #SkinGoals</p>
-            `.trim();
-            
-          return res.json({
-            content,
-            provider: 'emergency_social_posts',
-            fallback: true,
-            message: 'Generated social media posts during API unavailability'
-          });
-        }
+        return await generateContent(req, res);
       } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(requestModel)) {
         try {
           const result = await AnthropicAPI.generateContent({
