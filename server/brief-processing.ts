@@ -57,21 +57,20 @@ const uploadFilePromise = (req: Request, res: Response): Promise<void> => {
   });
 };
 
-// Function to extract text from a file based on its extension
-async function extractTextFromFile(filePath: string, fileExt: string): Promise<string> {
+// Function to extract text from a file buffer based on its extension
+async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise<string> {
   try {
     if (fileExt === '.txt') {
-      // For text files, read the contents directly
-      return fs.readFileSync(filePath, 'utf8');
+      // For text files, convert buffer to string
+      return fileBuffer.toString('utf8');
     } else if (fileExt === '.pdf') {
       // Extract text from PDF using pdf-parse
-      const dataBuffer = fs.readFileSync(filePath);
       const { default: pdfParse } = await import('pdf-parse');
-      const data = await pdfParse(dataBuffer);
+      const data = await pdfParse(fileBuffer);
       return data.text;
     } else if (fileExt === '.docx') {
       // Extract text from DOCX using mammoth
-      const result = await mammoth.extractRawText({ path: filePath });
+      const result = await mammoth.extractRawText({ buffer: fileBuffer });
       return result.value;
     } else {
       throw new Error(`Unsupported file extension: ${fileExt}`);
@@ -88,19 +87,19 @@ export const processBrief = async (req: Request, res: Response) => {
     // Handle file upload
     await uploadFilePromise(req, res);
     
-    if (!req.file) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({ 
         success: false, 
-        message: 'No file uploaded' 
+        message: 'No file uploaded or file buffer is empty' 
       });
     }
     
-    // Get file path and extension
-    const filePath = req.file.path;
+    // Get file buffer and extension
+    const fileBuffer = req.file.buffer;
     const fileExt = path.extname(req.file.originalname).toLowerCase();
     
-    // Extract text from the file
-    const extractedText = await extractTextFromFile(filePath, fileExt);
+    // Extract text from the file buffer
+    const extractedText = await extractTextFromFile(fileBuffer, fileExt);
     
     // Generate image prompt using AI
     const prompt = `
@@ -129,9 +128,6 @@ export const processBrief = async (req: Request, res: Response) => {
     // Extract the generated prompt from the response
     const generatedPrompt = completion.choices[0].message.content || "";
     
-    // Clean up - remove the uploaded file after processing
-    fs.unlinkSync(filePath);
-    
     // Return the results
     return res.status(200).json({
       success: true,
@@ -141,11 +137,6 @@ export const processBrief = async (req: Request, res: Response) => {
     
   } catch (error: any) {
     console.error("Error processing brief:", error);
-    
-    // Clean up any uploaded file if there was an error
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     
     return res.status(500).json({
       success: false,
