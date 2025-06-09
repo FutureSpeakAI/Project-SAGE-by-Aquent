@@ -552,10 +552,10 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   }, [messages]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-full space-y-4 lg:space-y-0 lg:space-x-6 p-3 lg:p-0">
+    <div className="flex flex-col lg:flex-row h-full max-h-[calc(100vh-120px)] space-y-4 lg:space-y-0 lg:space-x-6 p-3 lg:p-0">
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <Card className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Card className="flex-1 flex flex-col h-full max-h-full overflow-hidden">
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle className="flex items-center gap-2">
@@ -623,9 +623,9 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
             />
           </CardHeader>
           
-          <CardContent className="flex-1 flex flex-col p-0">
+          <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
             {/* Messages Area */}
-            <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
+            <ScrollArea className="flex-1 px-6 max-h-full" ref={scrollAreaRef}>
               <div className="space-y-4 py-4">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
@@ -815,7 +815,7 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
       </div>
 
       {/* Context Control Panel */}
-      <div className="w-full lg:w-80 space-y-4 lg:max-h-full overflow-hidden">
+      <div className="w-full lg:w-80 space-y-4 lg:max-h-[calc(100vh-120px)] overflow-hidden">
         <Tabs defaultValue="history" className="w-full">
           <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm">
             <TabsTrigger value="history" className="px-2">History</TabsTrigger>
