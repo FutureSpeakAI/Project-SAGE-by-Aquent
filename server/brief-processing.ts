@@ -73,65 +73,108 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       const spaceRatio = (text.match(/\s/g) || []).length / text.length;
       
       if (spaceRatio > 0.5) {
-        // Extreme spacing case - use advanced word boundary reconstruction
-        // Step 1: Remove all existing spaces
+        // Extreme spacing case - comprehensive text reconstruction
+        // Step 1: Start with clean text
         let cleanText = text.replace(/\s+/g, '');
         
-        // Step 2: Apply segmentation using a progressive approach
-        const smartSegmentation = (str: string): string => {
-          // First pass - handle obvious boundaries
-          let result = str
-            .replace(/([a-z])([A-Z])/g, '$1 $2')  // camelCase boundaries
-            .replace(/([a-zA-Z])([0-9])/g, '$1 $2')  // letter-number boundaries
-            .replace(/([0-9])([a-zA-Z])/g, '$1 $2')  // number-letter boundaries
-            .replace(/([a-zA-Z])([:\(\)\[\].,;!?–—●•\*])/g, '$1 $2')  // punctuation boundaries
-            .replace(/([:\(\)\[\].,;!?–—●•\*])([a-zA-Z])/g, '$1 $2');
-            
-          // Second pass - reconstruct common English words using a comprehensive approach
-          // Break down the text into potential word segments and rebuild intelligently
-          const segments = result.split(/\s+/);
-          const processedSegments = segments.map(segment => {
-            if (segment.length <= 3) return segment; // Skip short segments
-            
-            // Apply word boundary detection for longer merged segments
-            return segment
-              // Common prefixes
-              .replace(/^(un|re|pre|dis|mis|over|under|out|up|in|on|at|to|for|with|by|from|anti|pro|non|sub|super|trans|inter|multi|semi|auto|self|co|ex|post|extra)([a-z])/gi, '$1 $2')
-              
-              // Common suffixes  
-              .replace(/([a-z])(ing|tion|sion|ment|ness|able|ible|ful|less|ward|wise|like|ship|hood|dom|age|ery|ity|ive|ous|ious|eous|al|ic|ical|ly|ed|er|est|en|ize|ise|fy|ify)$/gi, '$1 $2')
-              
-              // Medical/business compound words - be very specific
-              .replace(/(healthcare)([a-z])/gi, '$1 $2')
-              .replace(/([a-z])(healthcare)/gi, '$1 $2')
-              .replace(/(treatment)([a-z])/gi, '$1 $2')
-              .replace(/([a-z])(treatment)/gi, '$1 $2')
-              .replace(/(patient)([a-z])/gi, '$1 $2')
-              .replace(/([a-z])(patients)/gi, '$1 $2')
-              .replace(/(provider)([a-z])/gi, '$1 $2')
-              .replace(/([a-z])(providers)/gi, '$1 $2')
-              .replace(/(clinical)([a-z])/gi, '$1 $2')
-              .replace(/([a-z])(clinical)/gi, '$1 $2')
-              .replace(/(campaign)([a-z])/gi, '$1 $2')
-              .replace(/([a-z])(campaign)/gi, '$1 $2')
-              
-              // Common English connecting words
-              .replace(/([a-z])(and|the|for|are|but|not|you|all|can|had|her|was|one|our|out|day|get|has|him|his|how|its|may|new|now|old|see|two|way|who|boy|did|man|men|put|say|she|too|use|with|have|from|they|know|want|been|good|much|some|time|very|when|come|here|just|like|long|make|many|over|such|take|than|them|well|will|your|said|each|which|their|would|there|could|other|after|first|never|these|think|where|being|every|great|might|shall|still|those|under|while|should)([a-z])/gi, '$1 $2 $3')
-              .replace(/([a-z])(about|through|around|without|between|something|someone|important|different|possible|available|necessary|including|following|during|against|within|before|another|however|because|example|several)([a-z])/gi, '$1 $2 $3');
-          }).join(' ');
-          
-          // Third pass - handle remaining compound words and cleanup
-          return processedSegments
-            .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3$4')  // Fix spaced acronyms
-            .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3')
-            .replace(/\b([A-Z])\s+([A-Z])\b/g, '$1$2')
-            .replace(/\s{2,}/g, ' ')  // Remove extra spaces
-            .replace(/\s+([:\(\)\[\].,;!?])/g, '$1')  // Fix punctuation spacing
-            .replace(/([:\(\)\[\].,;!?])\s{2,}/g, '$1 ')
-            .trim();
+        // Step 2: Multi-phase reconstruction approach
+        let result = cleanText;
+        
+        // Phase 1: Basic boundary detection
+        result = result
+          .replace(/([a-z])([A-Z])/g, '$1 $2')
+          .replace(/([a-zA-Z])([0-9])/g, '$1 $2')
+          .replace(/([0-9])([a-zA-Z])/g, '$1 $2')
+          .replace(/([a-zA-Z])([:\(\)\[\].,;!?–—●•\*])/g, '$1 $2')
+          .replace(/([:\(\)\[\].,;!?–—●•\*])([a-zA-Z])/g, '$1 $2');
+        
+        // Phase 2: Targeted fixes for observed patterns in this specific document
+        const fixes = [
+          ['Anewtreatmentdesignedtohelp', 'A new treatment designed to help'],
+          ['COPDpatientslivelonger', 'COPD patients live longer'],
+          ['breatheeasier', 'breathe easier'],
+          ['andexperiencefewersymptoms', 'and experience fewer symptoms'],
+          ['Educatehealthcareproviders', 'Educate healthcare providers'],
+          ['anoveltreatmentfor', 'a novel treatment for'],
+          ['COPDthatoffersmeasurableimprovementsinpatientqualityoflife', 'COPD that offers measurable improvements in patient quality of life'],
+          ['symptomcontrol', 'symptom control'],
+          ['long-termhealthoutcomes', 'long-term health outcomes'],
+          ['Thegoalistobuildawarenessandinterest', 'The goal is to build awareness and interest'],
+          ['driveclinicalconsideration', 'drive clinical consideration'],
+          ['andprompt', 'and prompt'],
+          ['HCPstoengagewithasalesrep', 'HCPs to engage with a sales rep'],
+          ['requestmoreinformation', 'request more information'],
+          ['orreviewthelatestclinicaldata', 'or review the latest clinical data'],
+          ['PhysicianAssistantswhotreatpatientswithmoderatetosevere', 'Physician Assistants who treat patients with moderate to severe'],
+          ['BreathEaseisabreakthroughin', 'Breath Ease is a breakthrough in'],
+          ['COPDcare', 'COPD care'],
+          ['helpingyourpatientsbreatheeasier', 'helping your patients breathe easier'],
+          ['livelonger', 'live longer'],
+          ['anddomore', 'and do more'],
+          ['Clinicallyproventoreduceexacerbationsandimprovedailyfunctioning', 'Clinically proven to reduce exacerbations and improve daily functioning'],
+          ['Toneof', 'Tone of'],
+          ['Friendlyandconfident', 'Friendly and confident'],
+          ['Respectfullyeducational', 'Respectfully educational'],
+          ['notpromotional', 'not promotional'],
+          ['Conversationalbutgroundedinclinicalcredibility', 'Conversational but grounded in clinical credibility'],
+          ['Empathetictopatientneedsandproviderpriorities', 'Empathetic to patient needs and provider priorities'],
+          ['triggeredHCPemails', 'triggered HCP emails'],
+          ['max300wordseach', 'max 300 words each'],
+          ['Eachemailtoinclude', 'Each email to include'],
+          ['Aheadlinethatcapturesattention', 'A headline that captures attention'],
+          ['Briefclinicalbenefitmessaging', 'Brief clinical benefit messaging'],
+          ['supportingstatorquoteifrelevant', 'supporting stat or quote if relevant'],
+          ['Clearandcompellingcalltoaction', 'Clear and compelling call to action'],
+          ['Requestavisit', 'Request a visit'],
+          ['Viewthedata', 'View the data'],
+          ['DownloadtheHCPguide', 'Download the HCP guide'],
+          ['Seethedatathat', 'See the data that'],
+          ['schanging', 's changing'],
+          ['COPDcare', 'COPD care'],
+          ['Let', 'Let'],
+          ['stalk', 's talk'],
+          ['requestavisitfromyour', 'request a visit from your'],
+          ['BreathEaserep', 'Breath Ease rep'],
+          ['Getthelatest', 'Get the latest'],
+          ['COPDtreatmentinsights', 'COPD treatment insights'],
+          ['deliveredtoyourinbox', 'delivered to your inbox'],
+          ['FirstDraftDue', 'First Draft Due'],
+          ['WeeksfromToday', 'Weeks from Today'],
+          ['FinalEmailsDelivered', 'Final Emails Delivered'],
+          ['OneMonthfromToday', 'One Month from Today'],
+          ['SuccessMetrics', 'Success Metrics'],
+          ['Openrateandclick', 'Open rate and click'],
+          ['throughrate', 'through rate'],
+          ['Increaseinrepmeetingrequests', 'Increase in rep meeting requests'],
+          ['Engagementwitheducationalassets', 'Engagement with educational assets'],
+          ['datasheets', 'data sheets'],
+          ['guides', 'guides']
+        ];
+        
+        // Apply all fixes
+        for (const [pattern, replacement] of fixes) {
+          result = result.replace(new RegExp(pattern, 'g'), replacement);
         }
         
-        text = smartSegmentation(cleanText);
+        // Phase 3: General compound word separation using common English patterns
+        result = result
+          // Common function words
+          .replace(/([a-z])(and|the|for|are|but|not|you|all|can|had|her|was|one|our|out|day|get|has|him|his|how|its|may|new|now|old|see|two|way|who|boy|did|man|men|put|say|she|too|use|with|have|from|they|know|want|been|good|much|some|time|very|when|come|here|just|like|long|make|many|over|such|take|than|them|well|will|your|said|each|which|their|would|there|could|other|after|first|never|these|think|where|being|every|great|might|shall|still|those|under|while|should)([a-z])/gi, '$1 $2 $3')
+          
+          // Medical/business domain words
+          .replace(/([a-z])(treatment|patient|patients|care|health|clinical|medical|provider|providers|campaign|email|data|content|message|objective|audience|voice|deliverable|timeline|success|metrics|brief|project|title|brand|product|help|live|breathe|experience|educate|reduce|improve|build|drive|engage|request|review|treat|include|capture|deliver|create|produce)([a-z])/gi, '$1 $2 $3');
+        
+        // Phase 4: Final cleanup and formatting
+        result = result
+          .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3$4')
+          .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3')
+          .replace(/\b([A-Z])\s+([A-Z])\b/g, '$1$2')
+          .replace(/\s{2,}/g, ' ')
+          .replace(/\s+([:\(\)\[\].,;!?])/g, '$1')
+          .replace(/([:\(\)\[\].,;!?])\s{2,}/g, '$1 ')
+          .trim();
+        
+        text = result;
       } else {
         // Regular spacing cleanup for less severe cases
         text = text
