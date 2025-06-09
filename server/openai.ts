@@ -59,11 +59,11 @@ export const generateContent = async (req: Request, res: Response) => {
       openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
     }
     
-    // Initialize the OpenAI client with immediate response configuration
+    // Initialize the OpenAI client with balanced timeout configuration
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      timeout: 10000, // 10 second timeout
-      maxRetries: 0, // No retries to avoid hanging
+      timeout: 20000, // 20 second timeout for content generation
+      maxRetries: 1, // Single retry for reliability
     });
     
     // Check if this is a request from the image prompt agent
@@ -73,14 +73,26 @@ export const generateContent = async (req: Request, res: Response) => {
     let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
     let enhancedUserPrompt = userPrompt;
     
-    // Only add formatting and content guidance for regular content generation, not for the image prompt agent
-    if (!isImagePromptAgent) {
+    // Detect if this is executing deliverables from a brief
+    const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
+                                 userPrompt.toLowerCase().includes('campaign') ||
+                                 (userPrompt.toLowerCase().includes('create') && 
+                                  (userPrompt.toLowerCase().includes('post') || 
+                                   userPrompt.toLowerCase().includes('social') ||
+                                   userPrompt.toLowerCase().includes('content')));
+
+    if (isExecutingFromBrief) {
+      enhancedSystemPrompt = "CRITICAL: You are executing deliverables based on a creative brief. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified in the brief. Format posts as: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description].";
+    }
+
+    // Only add formatting and content guidance for regular content generation, not for the image prompt agent or brief execution
+    if (!isImagePromptAgent && !isExecutingFromBrief) {
       // Add concise formatting instructions
       enhancedSystemPrompt += "\n\nFormatting Instructions:\n- Use HTML tags: <h1>, <h2>, <h3> for headings\n- Use <strong> and <em> for emphasis\n- Format lists with <ul>, <ol>, and <li> tags\n- Provide comprehensive, detailed content\n- Start immediately with the content (no introductory phrases)";
     }
     
-    // Only add word count requirements for regular content, not for the image prompt agent
-    if (!isImagePromptAgent) {
+    // Only add word count requirements for regular content, not for the image prompt agent or brief execution
+    if (!isImagePromptAgent && !isExecutingFromBrief) {
       // Add a concise instruction for comprehensive content
       enhancedUserPrompt += "\n\nProvide a detailed, comprehensive response.";
     }
