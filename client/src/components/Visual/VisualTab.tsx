@@ -124,16 +124,33 @@ const TabContent = ({
           </TabsTrigger>
         </TabsList>
         
-        {/* Library Access Button */}
-        <Button
-          variant="outline"
-          onClick={onOpenImageLibrary}
-          disabled={!onOpenImageLibrary}
-          className="self-start"
-        >
-          <Library className="mr-2 h-4 w-4" />
-          View Image Library
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex gap-2 self-start">
+          <Button
+            variant="outline"
+            onClick={onOpenImageLibrary}
+            disabled={!onOpenImageLibrary}
+          >
+            <Library className="mr-2 h-4 w-4" />
+            View Image Library
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => {
+              const { clearVisualTab } = useVisualTabPersistence();
+              clearVisualTab();
+              toast({
+                title: "Visual tab cleared",
+                description: "All content has been cleared from the visual tab.",
+              });
+            }}
+            className="text-red-500 border-red-200 hover:bg-red-50"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Clear Tab
+          </Button>
+        </div>
       </div>
       
       {/* Standard Mode Content */}
@@ -375,15 +392,29 @@ const TabContent = ({
 );
 
 export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt, setVariationPrompt }: VisualTabProps) {
-  const [imagePrompt, setImagePrompt] = useState("");
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [size, setSize] = useState<string>("1024x1024");
-  const [quality, setQuality] = useState<string>("high");
-  const [background, setBackground] = useState<string>("auto");
-  const [imageTitle, setImageTitle] = useState<string>("");
-  const [isProcessingDialogOpen, setIsProcessingDialogOpen] = useState(false);
-  
+  // Use tab persistence for all state
+  const { visualState, updateVisualState, clearVisualTab } = useVisualTabPersistence();
   const { toast } = useToast();
+
+  // Create local setters that update the persisted state
+  const setImagePrompt = (prompt: string) => updateVisualState({ imagePrompt: prompt });
+  const setGeneratedImageUrl = (url: string | null) => updateVisualState({ generatedImageUrl: url });
+  const setImageTitle = (title: string) => updateVisualState({ imageTitle: title });
+  const setSize = (size: string) => updateVisualState({ size });
+  const setQuality = (quality: string) => updateVisualState({ quality });
+  const setBackground = (background: string) => updateVisualState({ background });
+  const setIsProcessingDialogOpen = (open: boolean) => updateVisualState({ isProcessingDialogOpen: open });
+
+  // Extract values from persisted state
+  const {
+    imagePrompt,
+    generatedImageUrl,
+    imageTitle,
+    size,
+    quality,
+    background,
+    isProcessingDialogOpen
+  } = visualState;
   
   // Create a mutation to handle image generation with improved stability
   const generateImageMutation = useMutation({
