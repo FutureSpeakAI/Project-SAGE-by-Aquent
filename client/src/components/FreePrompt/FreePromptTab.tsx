@@ -39,7 +39,9 @@ import {
   TrendingUp,
   Users,
   Palette,
-  MessageSquare
+  MessageSquare,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { SavedPersona } from "@/lib/types";
 import { ModelSelector } from "@/components/ui/ModelSelector";
@@ -50,6 +52,8 @@ interface FreePromptTabProps {
   model: string;
   setModel: (model: string) => void;
   personas: SavedPersona[];
+  isFullScreen?: boolean;
+  onToggleFullScreen?: () => void;
 }
 
 interface ChatMessage {
@@ -81,7 +85,7 @@ interface AgentCapability {
   enabled: boolean;
 }
 
-export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps) {
+export function FreePromptTab({ model, setModel, personas, isFullScreen = false, onToggleFullScreen }: FreePromptTabProps) {
   const { toast } = useToast();
   const { context, getPromptContext, addResearch, addContent, createSession, updateContext } = useSessionContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -539,6 +543,25 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
     event.target.value = '';
   };
 
+  // Manage body scroll state for full-screen mode
+  useEffect(() => {
+    if (isFullScreen) {
+      // Prevent body scrolling when in full-screen mode
+      document.body.classList.add('no-scroll');
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      // Restore body scrolling when exiting full-screen mode
+      document.body.classList.remove('no-scroll');
+      document.documentElement.style.overflow = '';
+    }
+
+    // Cleanup function to restore scrolling when component unmounts
+    return () => {
+      document.body.classList.remove('no-scroll');
+      document.documentElement.style.overflow = '';
+    };
+  }, [isFullScreen]);
+
   // Load saved sessions on component mount
   useEffect(() => {
     loadSavedSessions();
@@ -552,11 +575,17 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
   }, [messages]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-full max-h-[calc(100vh-120px)] space-y-4 lg:space-y-0 lg:space-x-6 p-3 lg:p-0">
+    <div className={`flex flex-col lg:flex-row h-full space-y-4 lg:space-y-0 lg:space-x-6 ${
+      isFullScreen 
+        ? 'fixed inset-0 z-50 p-0 max-h-screen' 
+        : 'max-h-[calc(100vh-120px)] p-3 lg:p-0'
+    }`}>
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Card className="flex-1 flex flex-col h-full max-h-full overflow-hidden">
-          <CardHeader className="pb-3">
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isFullScreen ? 'h-full' : ''}`}>
+        <Card className={`flex-1 flex flex-col h-full max-h-full overflow-hidden ${
+          isFullScreen ? 'rounded-none border-none shadow-none' : ''
+        }`}>
+          <CardHeader className={`pb-3 ${isFullScreen ? 'bg-gradient-to-r from-black to-gray-800 text-white' : ''}`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-[#F15A22]" />
@@ -564,6 +593,16 @@ export function FreePromptTab({ model, setModel, personas }: FreePromptTabProps)
                 <span className="text-sm font-normal text-gray-500 hidden lg:inline">(Strategic Adaptive Generative Engine)</span>
               </CardTitle>
               <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
+                {onToggleFullScreen && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onToggleFullScreen}
+                    className="text-white hover:bg-black/20 flex-shrink-0"
+                  >
+                    {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
