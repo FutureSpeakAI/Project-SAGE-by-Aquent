@@ -344,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Content generation endpoint using reliable chat path
+  // Content generation endpoint using prompt router
   app.post("/api/generate-content", async (req: Request, res: Response) => {
     try {
       const { model, systemPrompt, userPrompt, temperature } = req.body;
@@ -353,16 +353,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "User prompt is required" });
       }
 
-      console.log(`[Content Generation] Using model: ${model || 'gpt-4o'}`);
+      console.log(`[Content Generation] Routing request for model: ${model || 'auto'}`);
 
-      // Use OpenAI SDK directly with same configuration as working chat system
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-        timeout: 30000,
-        maxRetries: 2,
-      });
-
-      // Detect if this is a deliverable execution request based on a brief
+      // Detect content type and complexity for intelligent routing
       const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
                                    userPrompt.toLowerCase().includes('campaign') ||
                                    (userPrompt.toLowerCase().includes('create') && 
@@ -378,32 +371,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       enhancedSystemPrompt += "\n\nGenerate comprehensive, well-structured content with proper HTML formatting. Use <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists. Do not include currency symbols, placeholder text, or formatting artifacts.";
 
-      // Use gpt-4o-mini for better reliability during server issues
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: enhancedSystemPrompt
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
-        temperature: temperature || 0.7,
-        max_tokens: 4000,
-      });
+      // Use prompt router for intelligent API routing
+      const { promptRouter } = await import('./prompt-router');
+      const routingDecision = await promptRouter.routePrompt(
+        userPrompt,
+        '',
+        { enabled: true, manualModel: model },
+        { 
+          stage: 'content', 
+          projectType: isExecutingFromBrief ? 'campaign' : 'content', 
+          complexity: 'moderate', 
+          priority: 'quality' 
+        }
+      );
 
-      let content = completion.choices[0].message.content || "";
+      console.log(`[Content Generation] Routed to ${routingDecision.provider} with model ${routingDecision.model}`);
+
+      let generatedContent = '';
+
+      // Route to appropriate provider based on decision
+      if (routingDecision.provider === 'anthropic') {
+        generatedContent = await AnthropicAPI.generateContent({
+          model: routingDecision.model,
+          prompt: userPrompt,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens: 4000
+        });
+      } else if (routingDecision.provider === 'gemini') {
+        generatedContent = await GeminiAPI.generateContent({
+          model: routingDecision.model,
+          prompt: userPrompt,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens: 4000
+        });
+      } else {
+        // OpenAI provider
+        const openaiClient = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+          timeout: 30000,
+          maxRetries: 2,
+        });
+
+        const completion = await openaiClient.chat.completions.create({
+          model: routingDecision.model,
+          messages: [
+            { role: "system", content: enhancedSystemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: temperature || 0.7,
+          max_tokens: 4000
+        });
+
+        generatedContent = completion.choices[0].message.content || "";
+      }
       
       // Clean up any formatting artifacts
-      content = content.replace(/\$\d+/g, '');
-      content = content.replace(/^\s*[\$\#\*\-]+\s*/gm, '');
-      content = content.replace(/\n{3,}/g, '\n\n');
-      content = content.trim();
+      generatedContent = generatedContent.replace(/\$\d+/g, '');
+      generatedContent = generatedContent.replace(/^\s*[\$\#\*\-]+\s*/gm, '');
+      generatedContent = generatedContent.replace(/\n{3,}/g, '\n\n');
+      generatedContent = generatedContent.trim();
 
-      res.json({ content });
+      res.json({ 
+        content: generatedContent,
+        provider: routingDecision.provider,
+        model: routingDecision.model
+      });
     } catch (error: any) {
       console.error('Content generation error:', error.message);
       
@@ -544,21 +578,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         Don't include any commentary, explanations, or notes - just the optimized prompt.
       `;
       
-      // Create OpenAI instance
-      const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      // Use prompt router for intelligent API routing
+      const { promptRouter } = await import('./prompt-router');
+      const routingDecision = await promptRouter.routePrompt(
+        prompt,
+        '',
+        { enabled: true },
+        { stage: 'visuals', projectType: 'content', complexity: 'moderate', priority: 'quality' }
+      );
       
-      // Call OpenAI API
-      const completion = await openAIClient.chat.completions.create({
-        model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          { role: "system", content: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7
-      });
+      console.log(`[Brief Interpretation] Using ${routingDecision.provider} with model ${routingDecision.model}`);
       
-      // Extract the generated prompt from the response
-      const generatedPrompt = completion.choices[0].message.content || "";
+      let generatedPrompt = '';
+      
+      // Route to appropriate provider based on decision
+      if (routingDecision.provider === 'anthropic') {
+        const result = await AnthropicAPI.generateContent({
+          model: routingDecision.model,
+          prompt,
+          systemPrompt: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation.",
+          temperature: 0.7,
+          maxTokens: 4000
+        });
+        generatedPrompt = result;
+      } else if (routingDecision.provider === 'gemini') {
+        const result = await GeminiAPI.generateContent({
+          model: routingDecision.model,
+          prompt,
+          systemPrompt: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation.",
+          temperature: 0.7,
+          maxTokens: 4000
+        });
+        generatedPrompt = result;
+      } else {
+        // Fallback to OpenAI if others are unavailable
+        const openAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const completion = await openAIClient.chat.completions.create({
+          model: routingDecision.model,
+          messages: [
+            { role: "system", content: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.7
+        });
+        generatedPrompt = completion.choices[0].message.content || "";
+      }
       
       // Return the results
       return res.status(200).json({
@@ -568,7 +632,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error: any) {
       console.error("Error interpreting brief:", error);
-      
       return res.status(500).json({
         success: false,
         message: error.message || 'Failed to interpret brief'
