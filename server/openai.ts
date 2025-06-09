@@ -79,9 +79,19 @@ export const generateContent = async (req: Request, res: Response) => {
                                 userPrompt.toLowerCase().includes('design features') ||
                                 userPrompt.toLowerCase().includes('product images') ||
                                 userPrompt.toLowerCase().includes('angle 1:') ||
+                                userPrompt.toLowerCase().includes('angle 2:') ||
+                                userPrompt.toLowerCase().includes('angle 3:') ||
                                 userPrompt.toLowerCase().includes('blog post') && userPrompt.toLowerCase().includes('creative brief') ||
                                 userPrompt.toLowerCase().includes('deliverables') ||
                                 userPrompt.toLowerCase().includes('following this creative brief');
+
+    const hasVisualRequirements = userPrompt.toLowerCase().includes('angle 1') ||
+                                 userPrompt.toLowerCase().includes('angle 2') ||
+                                 userPrompt.toLowerCase().includes('angle 3') ||
+                                 userPrompt.toLowerCase().includes('product images') ||
+                                 userPrompt.toLowerCase().includes('close-up shot') ||
+                                 userPrompt.toLowerCase().includes('lifestyle image') ||
+                                 userPrompt.toLowerCase().includes('overhead view');
 
     const isExecutingFromBrief = containsBriefContent || 
                                 (userPrompt.toLowerCase().includes('brief') && 
@@ -91,8 +101,12 @@ export const generateContent = async (req: Request, res: Response) => {
                                   userPrompt.toLowerCase().includes('execute') ||
                                   userPrompt.toLowerCase().includes('deliverables')));
 
-    if (isExecutingFromBrief) {
-      enhancedSystemPrompt = "CRITICAL INSTRUCTION: You are provided with a creative brief that specifies deliverables to create. Your job is to EXECUTE those deliverables, NOT create another brief. \n\nFor the Nike x Volkswagen Beetle Shoe brief:\n- Create the actual blog post content with engaging copy about the collaboration\n- Write specific product descriptions and marketing copy\n- DO NOT create strategy documents or campaign outlines\n- Generate ready-to-publish content as specified in the brief\n\nFormat as actual deliverables: blog post copy, product descriptions, marketing text - not strategic documents.";
+    if (isExecutingFromBrief && hasVisualRequirements) {
+      enhancedSystemPrompt = "EXECUTE VISUAL DELIVERABLES: You must create DALL-E image generation prompts, not descriptions.\n\nEXAMPLE OUTPUT REQUIRED:\n**DALL-E Prompt - Angle 1:** Professional product photography of Nike x Volkswagen Beetle Shoe, extreme close-up macro shot, retro pastel blue and racing green color scheme, detailed texture of materials, studio lighting setup, white seamless background, commercial product photography style, ultra high resolution 8K, crisp focus\n\n**DALL-E Prompt - Angle 2:** Lifestyle photography of person wearing Nike x Volkswagen Beetle Shoe, urban city street setting, natural lighting, candid walking pose, modern streetwear outfit, depth of field background blur, contemporary fashion photography style, high resolution\n\n**DALL-E Prompt - Angle 3:** Overhead flat lay photography, Nike x Volkswagen Beetle Shoe positioned next to miniature classic Volkswagen Beetle toy car, creative product styling, studio lighting, minimal white background, commercial brand collaboration photography, ultra detailed, 4K resolution\n\nYour output MUST follow this exact format with actual DALL-E prompts, not descriptions.";
+      
+      enhancedUserPrompt = userPrompt + "\n\nCRITICAL: Replace each visual requirement with a complete DALL-E prompt using the exact format shown in the system instructions.";
+    } else if (isExecutingFromBrief) {
+      enhancedSystemPrompt = "CRITICAL INSTRUCTION: You are provided with a creative brief that specifies deliverables to create. Your job is to EXECUTE those deliverables, NOT create another brief. Create the actual blog post content with engaging copy about the collaboration. DO NOT create strategy documents - execute the actual deliverables specified in the brief.";
     }
 
     // Only add formatting and content guidance for regular content generation, not for the image prompt agent or brief execution
