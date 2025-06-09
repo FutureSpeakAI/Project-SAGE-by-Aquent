@@ -1,5 +1,6 @@
 import { performDeepResearch } from './research-engine';
 import { reasoningEngine } from './reasoning-engine';
+import { providerHealthMonitor } from './provider-health';
 import * as OpenAI from './openai';
 import * as GeminiAPI from './gemini';
 import * as AnthropicAPI from './anthropic';
@@ -16,6 +17,13 @@ export interface PromptRouterConfig {
   manualProvider?: 'openai' | 'anthropic' | 'gemini';
   manualModel?: string;
   forceReasoning?: boolean;
+}
+
+export interface WorkflowContext {
+  stage?: 'discovery' | 'research' | 'strategic_brief' | 'content' | 'visuals' | 'finalization';
+  projectType?: 'campaign' | 'content' | 'analysis' | 'strategy';
+  complexity?: 'simple' | 'moderate' | 'complex';
+  priority?: 'speed' | 'quality' | 'cost';
 }
 
 export class PromptRouter {
