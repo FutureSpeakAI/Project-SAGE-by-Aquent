@@ -728,24 +728,32 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   // Handle edit image trigger from variation prompt
   useEffect(() => {
     if (variationPrompt && variationPrompt.startsWith('EDIT_IMAGE:')) {
-      // Use indexOf to find the first and second colons to properly parse data URLs
-      const firstColonIndex = variationPrompt.indexOf(':');
-      const secondColonIndex = variationPrompt.indexOf(':', firstColonIndex + 1);
-      const thirdColonIndex = variationPrompt.lastIndexOf(':');
+      console.log("Full variation prompt:", variationPrompt.substring(0, 100) + "...");
       
-      if (firstColonIndex !== -1 && thirdColonIndex !== -1 && thirdColonIndex !== secondColonIndex) {
-        // Extract the full image URL (including data: prefix) and the ID
-        const imageUrl = variationPrompt.substring(firstColonIndex + 1, thirdColonIndex);
-        const imageIdStr = variationPrompt.substring(thirdColonIndex + 1);
+      // Find the last colon to separate the ID from the URL
+      const lastColonIndex = variationPrompt.lastIndexOf(':');
+      
+      if (lastColonIndex > 10) { // Make sure it's not the colon from "EDIT_IMAGE:"
+        // Extract everything between "EDIT_IMAGE:" and the last colon as the image URL
+        const imageUrl = variationPrompt.substring(11, lastColonIndex); // 11 = "EDIT_IMAGE:".length
+        const imageIdStr = variationPrompt.substring(lastColonIndex + 1);
         const imageId = parseInt(imageIdStr);
         
-        console.log("Parsed edit image data:", { imageUrl: imageUrl.substring(0, 50) + "...", imageId });
+        console.log("Parsed edit image data:", { 
+          imageUrlPreview: imageUrl.substring(0, 50) + "...", 
+          imageUrlLength: imageUrl.length,
+          imageId,
+          isDataUrl: imageUrl.startsWith('data:')
+        });
+        
         handleEditImage(imageUrl, imageId);
         
         // Clear the variation prompt
         if (setVariationPrompt) {
           setVariationPrompt(null);
         }
+      } else {
+        console.error("Could not parse variation prompt:", variationPrompt);
       }
     }
   }, [variationPrompt, setVariationPrompt]);

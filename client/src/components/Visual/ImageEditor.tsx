@@ -79,8 +79,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   // Debug image URL and reset states when dialog opens
   useEffect(() => {
     if (open && imageUrl) {
-      console.log("ImageEditor received imageUrl:", imageUrl.substring(0, 100) + "...");
+      console.log("ImageEditor received imageUrl length:", imageUrl.length);
+      console.log("ImageEditor received imageUrl preview:", imageUrl.substring(0, 100) + "...");
       console.log("ImageEditor received imageId:", imageId);
+      console.log("ImageEditor imageUrl starts with data:", imageUrl.startsWith('data:'));
       setImageLoadStatus("loading");
       setEditedImageUrl(null);
       setMaskData(null);
@@ -377,12 +379,22 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     <div className="flex flex-col items-center gap-2">
                       <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
                       <span className="text-sm text-gray-600">Loading image...</span>
+                      {/* Debug info */}
+                      <div className="text-xs text-gray-500 max-w-md text-center">
+                        URL Length: {imageUrl?.length || 0}<br/>
+                        Starts with data: {imageUrl?.startsWith('data:') ? 'Yes' : 'No'}
+                      </div>
                     </div>
                   </div>
                 )}
                 {imageLoadStatus === "loaded" && (
                   <div className="absolute top-2 left-2 bg-green-100 text-green-800 px-2 py-1 rounded text-xs z-10">
                     Ready
+                  </div>
+                )}
+                {imageLoadStatus === "error" && (
+                  <div className="absolute top-2 left-2 bg-red-100 text-red-800 px-2 py-1 rounded text-xs z-10">
+                    Error Loading
                   </div>
                 )}
                 
