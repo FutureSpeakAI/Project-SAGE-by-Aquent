@@ -450,35 +450,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (requestModel.startsWith('gpt-')) {
-        // For GPT models, try Anthropic first due to OpenAI server instability
-        try {
-          const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
-                                       userPrompt.toLowerCase().includes('campaign') ||
-                                       (userPrompt.toLowerCase().includes('create') && 
-                                        (userPrompt.toLowerCase().includes('post') || 
-                                         userPrompt.toLowerCase().includes('social') ||
-                                         userPrompt.toLowerCase().includes('content')));
-
-          let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
-          
-          if (isExecutingFromBrief) {
-            enhancedSystemPrompt = "CRITICAL: You are executing deliverables based on a creative brief. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified in the brief. Format posts as: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description].";
-          }
-
-          const result = await AnthropicAPI.generateContent({
-            model: "claude-sonnet-4-20250514",
-            prompt: userPrompt,
-            systemPrompt: enhancedSystemPrompt,
-            temperature,
-            maxTokens: 4000
-          });
-          res.json({ content: result });
-          return;
-        } catch (anthropicError: any) {
-          console.log('Anthropic unavailable, trying OpenAI with timeout protection');
-          // Fall back to OpenAI with proper timeout handling
-          return await generateContent(req, res);
-        }
+        // Use the fixed OpenAI implementation directly
+        return await generateContent(req, res);
       } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(requestModel)) {
         try {
           const result = await AnthropicAPI.generateContent({

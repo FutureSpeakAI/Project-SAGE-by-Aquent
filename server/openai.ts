@@ -59,11 +59,11 @@ export const generateContent = async (req: Request, res: Response) => {
       openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
     }
     
-    // Initialize the OpenAI client with optimized timeout configuration
+    // Initialize the OpenAI client with immediate response configuration
     const openai = new OpenAI({
-      ...openaiConfig,
-      timeout: 15000, // 15 second timeout
-      maxRetries: 1, // Single retry to avoid long waits
+      apiKey: process.env.OPENAI_API_KEY,
+      timeout: 10000, // 10 second timeout
+      maxRetries: 0, // No retries to avoid hanging
     });
     
     // Check if this is a request from the image prompt agent
@@ -85,9 +85,9 @@ export const generateContent = async (req: Request, res: Response) => {
       enhancedUserPrompt += "\n\nProvide a detailed, comprehensive response.";
     }
     
-    // Create completion with timeout protection
-    const completionPromise = openai.chat.completions.create({
-      model: model || "gpt-4o",
+    // Create completion without timeout wrapper to let client timeout handle it
+    const completion = await openai.chat.completions.create({
+      model: model || "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -99,15 +99,8 @@ export const generateContent = async (req: Request, res: Response) => {
         }
       ],
       temperature: temperature || 0.7,
-      max_tokens: 8000, // Further increased token limit to allow for approximately 6000 words
+      max_tokens: 4000, // Reduced for faster responses
     });
-
-    // Add additional timeout protection
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timeout after 45 seconds')), 45000);
-    });
-
-    const completion = await Promise.race([completionPromise, timeoutPromise]) as any;
     
     content = completion.choices[0].message.content || "";
     
