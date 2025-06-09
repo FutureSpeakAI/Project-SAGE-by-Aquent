@@ -7,6 +7,7 @@ import util from 'util';
 import OpenAI from 'openai';
 import mammoth from 'mammoth';
 import { createRequire } from 'module';
+import { PDFData, PDFErrorData } from './brief-types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,8 +16,8 @@ const require = createRequire(import.meta.url);
 // Configure OpenAI client with timeout and retry settings
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 30000, // 30 second timeout
-  maxRetries: 2,
+  timeout: 20000, // 20 second timeout
+  maxRetries: 1,
 });
 
 // Configure multer for file uploads
@@ -203,16 +204,16 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       return new Promise((resolve, reject) => {
         const pdfParser = new PDFParser();
         
-        pdfParser.on('pdfParser_dataError', (errData) => {
+        pdfParser.on('pdfParser_dataError', (errData: PDFErrorData) => {
           reject(new Error(errData.parserError));
         });
         
-        pdfParser.on('pdfParser_dataReady', (pdfData) => {
+        pdfParser.on('pdfParser_dataReady', (pdfData: PDFData) => {
           try {
             // Extract text from parsed PDF data
             let text = '';
             if (pdfData.Pages) {
-              pdfData.Pages.forEach(page => {
+              pdfData.Pages.forEach((page) => {
                 if (page.Texts) {
                   // Sort texts by position to maintain reading order
                   const sortedTexts = page.Texts.sort((a, b) => {
@@ -229,7 +230,7 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
                     const textItem = sortedTexts[i];
                     if (textItem.R) {
                       let itemText = '';
-                      textItem.R.forEach(run => {
+                      textItem.R.forEach((run: any) => {
                         if (run.T) {
                           itemText += decodeURIComponent(run.T);
                         }
