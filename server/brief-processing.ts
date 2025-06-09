@@ -63,8 +63,19 @@ const uploadFilePromise = (req: Request, res: Response): Promise<void> => {
 async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise<string> {
   try {
     if (fileExt === '.txt') {
-      // For text files, convert buffer to string
-      return fileBuffer.toString('utf8');
+      // For text files, convert buffer to string and clean up spacing
+      let text = fileBuffer.toString('utf8');
+      
+      // Clean up excessive character spacing that may exist in source text
+      text = text
+        .replace(/([a-zA-Z])\s([a-zA-Z])\s([a-zA-Z])/g, '$1$2$3')  // Remove single spaces between individual letters (3+ pattern)
+        .replace(/([a-zA-Z])\s{2,}([a-zA-Z])/g, '$1 $2')          // Multiple spaces between letters to single space
+        .replace(/\s{3,}/g, ' ')                                   // 3+ consecutive spaces to single space
+        .replace(/\n\s+/g, '\n')                                   // Remove leading spaces after newlines
+        .replace(/\s+\n/g, '\n')                                   // Remove trailing spaces before newlines
+        .trim();
+      
+      return text;
     } else if (fileExt === '.pdf') {
       // Extract text from PDF using pdf2json
       const PDFParser = require('pdf2json');
@@ -91,7 +102,11 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
                     return a.y - b.y; // Different lines, sort by y position
                   });
                   
-                  sortedTexts.forEach(textItem => {
+                  let currentLineY = null;
+                  let lineText = '';
+                  
+                  for (let i = 0; i < sortedTexts.length; i++) {
+                    const textItem = sortedTexts[i];
                     if (textItem.R) {
                       let itemText = '';
                       textItem.R.forEach(run => {
@@ -100,15 +115,41 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
                         }
                       });
                       
-                      // Only add space if there's actual content and we're not at start of line
                       if (itemText.trim()) {
-                        if (text.length > 0 && !text.endsWith('\n') && !text.endsWith(' ')) {
-                          text += ' ';
+                        // Check if we're on a new line
+                        if (currentLineY === null || Math.abs(textItem.y - currentLineY) > 0.1) {
+                          // New line - add previous line to text if it exists
+                          if (lineText.trim()) {
+                            if (text.length > 0 && !text.endsWith('\n')) {
+                              text += ' ';
+                            }
+                            text += lineText.trim();
+                          }
+                          lineText = itemText.trim();
+                          currentLineY = textItem.y;
+                        } else {
+                          // Same line - check if items are adjacent
+                          const nextItem = sortedTexts[i + 1];
+                          const isAdjacent = !nextItem || 
+                            Math.abs(nextItem.x - (textItem.x + (textItem.w || 0))) < 0.5;
+                          
+                          if (isAdjacent) {
+                            lineText += itemText.trim();
+                          } else {
+                            lineText += ' ' + itemText.trim();
+                          }
                         }
-                        text += itemText.trim();
                       }
                     }
-                  });
+                  }
+                  
+                  // Add the last line
+                  if (lineText.trim()) {
+                    if (text.length > 0 && !text.endsWith('\n')) {
+                      text += ' ';
+                    }
+                    text += lineText.trim();
+                  }
                   text += '\n';
                 }
               });
