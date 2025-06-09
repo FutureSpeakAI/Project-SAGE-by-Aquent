@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Mic, MicOff, Volume2, VolumeX, Loader2, Brain, Waves } from "lucide-react";
 import { useVoiceInteraction } from "@/hooks/useVoiceInteraction";
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface VoiceControlsProps {
   onTranscript?: (text: string, isVoiceInitiated?: boolean) => void;
@@ -26,12 +28,19 @@ export function VoiceControls({
     isListening,
     isSpeaking,
     isGeneratingAudio,
+    isIntelligentMode,
+    voiceActivity,
     startListening,
     stopListening,
     speakText,
     stopSpeaking,
+    toggleIntelligentMode,
+    startIntelligentListening,
     cleanup
-  } = useVoiceInteraction({ autoPlay: autoPlayResponses });
+  } = useVoiceInteraction({ 
+    autoPlay: autoPlayResponses,
+    intelligentMode: false
+  });
 
   // Track the last spoken message to prevent repeats
   const lastSpokenRef = useRef<string>('');
@@ -134,8 +143,76 @@ export function VoiceControls({
     }
   };
 
+  // Handle intelligent mode activation
+  const handleIntelligentModeToggle = () => {
+    if (isIntelligentMode) {
+      toggleIntelligentMode();
+      setIsVoiceSessionActive(false);
+      onVoiceStateChange?.(false);
+    } else {
+      toggleIntelligentMode();
+      setIsVoiceSessionActive(true);
+      onVoiceStateChange?.(true);
+      // Start intelligent listening after a brief delay
+      setTimeout(() => {
+        if (onTranscript) {
+          startIntelligentListening();
+        }
+      }, 500);
+    }
+  };
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
+      {/* Intelligent Mode Toggle */}
+      <Button
+        variant={isIntelligentMode ? "default" : "outline"}
+        size="sm"
+        onClick={handleIntelligentModeToggle}
+        className={cn(
+          "relative",
+          isIntelligentMode && "bg-blue-600 hover:bg-blue-700"
+        )}
+        title={isIntelligentMode ? "Exit Intelligent Voice Mode" : "Enter Intelligent Voice Mode"}
+      >
+        <Brain className="h-4 w-4" />
+        {isIntelligentMode && (
+          <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+        )}
+      </Button>
+
+      {/* Voice Activity Indicator */}
+      {isIntelligentMode && (
+        <div className="flex items-center gap-1">
+          <Waves className={cn(
+            "h-3 w-3 transition-colors",
+            voiceActivity.isUserSpeaking ? "text-green-500" : "text-gray-400"
+          )} />
+          <div className="w-8 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-green-500 transition-all duration-100 ease-out"
+              style={{ width: `${Math.min(voiceActivity.audioLevel * 500, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Status Badges */}
+      {isIntelligentMode && (
+        <div className="flex gap-1">
+          {isListening && (
+            <Badge variant="secondary" className="text-xs">
+              Listening
+            </Badge>
+          )}
+          {voiceActivity.interruptDetected && (
+            <Badge variant="destructive" className="text-xs">
+              Interrupting
+            </Badge>
+          )}
+        </div>
+      )}
+
       {/* Microphone Button */}
       <Button
         variant={isListening ? "default" : "outline"}

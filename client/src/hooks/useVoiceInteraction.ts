@@ -469,9 +469,9 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     if (isListening) {
       stopListening();
     }
-  }, [isListening]);
+  }, [isListening, stopListening]);
 
-  // Cleanup function
+  // Enhanced cleanup function
   const cleanup = useCallback(() => {
     if (vadTimerRef.current) {
       clearInterval(vadTimerRef.current);
@@ -487,7 +487,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     }
     stopListening();
     stopSpeaking();
-  }, []);
+  }, [stopListening, stopSpeaking]);
 
   return {
     isListening,
