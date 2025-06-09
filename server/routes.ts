@@ -427,10 +427,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generatedContent = completion.choices[0].message.content || "";
       }
       
-      // Clean up any formatting artifacts
-      generatedContent = generatedContent.replace(/\$\d+/g, '');
-      generatedContent = generatedContent.replace(/^\s*[\$\#\*\-]+\s*/gm, '');
-      generatedContent = generatedContent.replace(/\n{3,}/g, '\n\n');
+      // Enhanced content cleaning to remove all formatting artifacts
+      generatedContent = generatedContent.replace(/\$\d+/g, ''); // Remove $3, $5, etc.
+      generatedContent = generatedContent.replace(/\$[^\s\w]/g, ''); // Remove other $ symbols  
+      generatedContent = generatedContent.replace(/^\s*\$\s*$/gm, ''); // Remove standalone $ lines
+      generatedContent = generatedContent.replace(/^\s*[\$\#\*\-]+\s*/gm, ''); // Remove formatting markers
+      generatedContent = generatedContent.replace(/\n{3,}/g, '\n\n'); // Reduce multiple line breaks
+      generatedContent = generatedContent.replace(/---\s*\n\s*---/g, '---'); // Clean duplicate separators
+      generatedContent = generatedContent.replace(/^\s*[\$€£¥₹]+\s*$/gm, ''); // Remove currency symbols on their own lines
       generatedContent = generatedContent.trim();
 
       res.json({ 

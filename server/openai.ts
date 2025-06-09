@@ -381,6 +381,17 @@ export const generateContent = async (req: Request, res: Response) => {
       }
     }
     
+    // Final comprehensive content cleaning to remove all artifacts
+    content = content.replace(/\$\d+/g, ''); // Remove $3, $5, etc.
+    content = content.replace(/\$[^\s\w]/g, ''); // Remove other $ symbols  
+    content = content.replace(/^\s*\$\s*$/gm, ''); // Remove standalone $ lines
+    content = content.replace(/^\s*[\$€£¥₹\#\*\-]+\s*$/gm, ''); // Remove currency/formatting symbols on their own lines
+    content = content.replace(/---\s*\n\s*---/g, '---'); // Clean duplicate separators
+    content = content.replace(/\n{3,}/g, '\n\n'); // Reduce multiple line breaks
+    content = content.replace(/^\s*[\$€£¥₹]+[^\w\s]*\s*$/gm, ''); // Remove currency symbols with punctuation
+    content = content.replace(/(\n|^)\s*\$[^\w\s]*\s*(\n|$)/g, '$1$2'); // Remove $ symbols between paragraphs
+    content = content.trim();
+
     // Log the word count after all processing
     const finalWordCount = content.split(/\s+/).length;
     console.log(`Final content after cleaning - approximate word count: ${finalWordCount}`);
