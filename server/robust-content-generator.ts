@@ -202,7 +202,14 @@ export class RobustContentGenerator {
 
   private async trySimplifiedOpenAI(userPrompt: string) {
     try {
-      // Detect if this is a social media post request
+      // Detect if this is executing deliverables from a brief or social media request
+      const isExecutingFromBrief = userPrompt.toLowerCase().includes('brief') || 
+                                   userPrompt.toLowerCase().includes('campaign') ||
+                                   (userPrompt.toLowerCase().includes('create') && 
+                                    (userPrompt.toLowerCase().includes('post') || 
+                                     userPrompt.toLowerCase().includes('social') ||
+                                     userPrompt.toLowerCase().includes('content')));
+
       const isSocialPostRequest = userPrompt.toLowerCase().includes('social post') || 
                                  userPrompt.toLowerCase().includes('social media') ||
                                  userPrompt.toLowerCase().includes('create posts') ||
@@ -211,14 +218,12 @@ export class RobustContentGenerator {
                                    userPrompt.toLowerCase().includes('instagram') || 
                                    userPrompt.toLowerCase().includes('twitter') || 
                                    userPrompt.toLowerCase().includes('linkedin') ||
-                                   userPrompt.toLowerCase().includes('tiktok'))) ||
-                                 (userPrompt.toLowerCase().includes('campaign') && 
-                                  userPrompt.toLowerCase().includes('post'));
+                                   userPrompt.toLowerCase().includes('tiktok')));
 
       let systemPrompt = "You are a professional content creator. Generate well-formatted, comprehensive content with proper structure. Use HTML tags for formatting: <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists. Do not include placeholder symbols, currency signs, or formatting artifacts.";
 
-      if (isSocialPostRequest) {
-        systemPrompt = "You are a social media expert. When users request social media posts, create actual ready-to-publish social media content, NOT creative briefs or campaign strategies. Format each post clearly with actual post copy, hashtags, and visual recommendations. Example format: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description]. Focus on creating engaging, platform-appropriate content ready for immediate use.";
+      if (isExecutingFromBrief || isSocialPostRequest) {
+        systemPrompt = "CRITICAL: You are executing deliverables based on a creative brief. When given a brief, analyze what deliverables are needed and create them directly. For social media requests, create actual post copy with hashtags. For content requests, create the actual content. DO NOT create another brief or strategy document - execute the work specified in the brief. Format posts as: **Post 1:** [actual post text] #hashtag1 #hashtag2 **Visual:** [description].";
       }
 
       const completion = await this.openai.chat.completions.create({

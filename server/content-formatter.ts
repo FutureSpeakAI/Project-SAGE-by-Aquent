@@ -42,7 +42,40 @@ export class ContentFormatter {
   }
 
   static generateFallbackContent(prompt: string): string {
-    // Generate a basic structured response when all APIs fail
+    // Detect if this is executing deliverables from a brief
+    const isExecutingFromBrief = prompt.toLowerCase().includes('brief') || 
+                                 prompt.toLowerCase().includes('campaign') ||
+                                 (prompt.toLowerCase().includes('create') && 
+                                  (prompt.toLowerCase().includes('post') || 
+                                   prompt.toLowerCase().includes('social') ||
+                                   prompt.toLowerCase().includes('content')));
+
+    const isSocialPostRequest = prompt.toLowerCase().includes('social') || 
+                               prompt.toLowerCase().includes('post') || 
+                               prompt.toLowerCase().includes('facebook') ||
+                               prompt.toLowerCase().includes('instagram');
+
+    if (isExecutingFromBrief || isSocialPostRequest) {
+      // Generate actual deliverables instead of briefs
+      const brand = prompt.toLowerCase().includes('oreal') ? "L'Oréal" : "Brand";
+      return `
+<h1>Social Media Posts</h1>
+
+<h2>Post 1</h2>
+<p><strong>Transform your skin with ${brand}!</strong> Experience visible results in just 4 weeks. Our advanced formula delivers clinical-grade anti-aging benefits. #AntiAging #Skincare #BeautyEssentials</p>
+<p><strong>Visual:</strong> Product hero shot with elegant lighting</p>
+
+<h2>Post 2</h2>
+<p><strong>Luxury meets science.</strong> Discover the power of professional-grade skincare at home. Reduce fine lines and reveal your youthful glow. #LuxurySkincare #SkincareThatWorks #BeautyGoals</p>
+<p><strong>Visual:</strong> Before/after transformation imagery</p>
+
+<h2>Post 3</h2>
+<p><strong>Your skin deserves the best.</strong> Join thousands who have experienced the difference. Premium ingredients, proven results. #SkincareRoutine #BeautyTips #GlowUp</p>
+<p><strong>Visual:</strong> Lifestyle shot showing confident, radiant skin</p>
+
+<p><em>Note: This is basic content generated during API unavailability. For customized, high-quality posts, please try again when services are stable.</em></p>`;
+    }
+
     const topic = prompt.toLowerCase().includes('oreal') ? "L'Oréal" : 
                  prompt.toLowerCase().includes('campaign') ? "Campaign" : "Content";
     
