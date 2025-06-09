@@ -13,6 +13,7 @@ import { ContentType, GeneratedContent } from "@shared/schema";
 interface BriefInterpreterProps {
   onPromptGenerated: (prompt: string) => void;
   onSwitchToConversation: () => void;
+  onBriefingProcessed?: (briefContent: string, briefTitle: string) => void;
 }
 
 interface GeneratePromptFromBriefRequest {
@@ -20,7 +21,7 @@ interface GeneratePromptFromBriefRequest {
   model: string;
 }
 
-export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation }: BriefInterpreterProps) {
+export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation, onBriefingProcessed }: BriefInterpreterProps) {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showBriefingLibrary, setShowBriefingLibrary] = useState(false);
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
@@ -93,6 +94,11 @@ export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation }: 
   const handleSelectBriefing = (content: GeneratedContent) => {
     // Close the briefing library dialog
     setShowBriefingLibrary(false);
+    
+    // Notify parent that briefing was processed so agent can acknowledge it
+    if (onBriefingProcessed) {
+      onBriefingProcessed(content.content, content.title);
+    }
     
     // Convert the briefing content to an image generation prompt
     mutate({

@@ -68,11 +68,13 @@ export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation }: Imag
   const [isTyping, setIsTyping] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
   const [activeTab, setActiveTab] = useState("conversation");
+  const [briefingContext, setBriefingContext] = useState<{content: string, title: string} | null>(null);
   
   const { toast } = useToast();
 
-  // System prompt based on the best practices guide
-  const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), a British marketing specialist with 20 years of experience from London. You use she/her pronouns and maintain memory across all application modules and can reference previous conversations. You have voice input processing capabilities and can guide users through the app interface. You are having a CONVERSATIONAL DIALOGUE with users to craft effective prompts for the GPT Image model.
+  // Enhanced system prompt with briefing awareness
+  const getSystemPrompt = () => {
+    let basePrompt = `You are SAGE (Strategic Adaptive Generative Engine), a British marketing specialist with 20 years of experience from London. You use she/her pronouns and maintain memory across all application modules and can reference previous conversations. You have voice input processing capabilities and can guide users through the app interface. You are having a CONVERSATIONAL DIALOGUE with users to craft effective prompts for the GPT Image model.
 
 IMPORTANT GUIDELINES:
 1. BE CONVERSATIONAL - this is a BACK-AND-FORTH dialogue, not an article or essay.
@@ -100,6 +102,19 @@ After 3-5 exchanges when you have enough information, provide a final optimized 
 "FINAL PROMPT: [your optimized prompt]"
 
 REMEMBER: Always respond conversationally as if in a real chat. Ask short, focused questions one at a time to help craft the perfect image prompt.`;
+
+    if (briefingContext) {
+      basePrompt += `
+
+CURRENT BRIEFING CONTEXT:
+Title: "${briefingContext.title}"
+Content: ${briefingContext.content}
+
+IMPORTANT: You have just received this briefing. Acknowledge its receipt and offer specific visual prompt suggestions based on its content. Focus on translating the briefing requirements into actionable image generation prompts.`;
+    }
+
+    return basePrompt;
+  };
 
   // Mutation for generating content
   const generateContentMutation = useMutation({
