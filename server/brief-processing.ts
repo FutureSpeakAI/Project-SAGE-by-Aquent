@@ -156,13 +156,15 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
           result = result.replace(new RegExp(pattern, 'g'), replacement);
         }
         
-        // Phase 3: General compound word separation using common English patterns
+        // Phase 3: Minimal additional processing to avoid breaking valid words
+        // Only apply very specific fixes that we know are safe
         result = result
-          // Common function words
-          .replace(/([a-z])(and|the|for|are|but|not|you|all|can|had|her|was|one|our|out|day|get|has|him|his|how|its|may|new|now|old|see|two|way|who|boy|did|man|men|put|say|she|too|use|with|have|from|they|know|want|been|good|much|some|time|very|when|come|here|just|like|long|make|many|over|such|take|than|them|well|will|your|said|each|which|their|would|there|could|other|after|first|never|these|think|where|being|every|great|might|shall|still|those|under|while|should)([a-z])/gi, '$1 $2 $3')
-          
-          // Medical/business domain words
-          .replace(/([a-z])(treatment|patient|patients|care|health|clinical|medical|provider|providers|campaign|email|data|content|message|objective|audience|voice|deliverable|timeline|success|metrics|brief|project|title|brand|product|help|live|breathe|experience|educate|reduce|improve|build|drive|engage|request|review|treat|include|capture|deliver|create|produce)([a-z])/gi, '$1 $2 $3');
+          // Only separate obvious compound issues, not embedded words
+          .replace(/([a-z])and([A-Z])/g, '$1 and $2')
+          .replace(/([a-z])the([A-Z])/g, '$1 the $2')
+          .replace(/([a-z])for([A-Z])/g, '$1 for $2')
+          .replace(/([a-z])with([A-Z])/g, '$1 with $2')
+          .replace(/([a-z])from([A-Z])/g, '$1 from $2');
         
         // Phase 4: Final cleanup and formatting
         result = result
