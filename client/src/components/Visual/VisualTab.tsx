@@ -728,10 +728,18 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   // Handle edit image trigger from variation prompt
   useEffect(() => {
     if (variationPrompt && variationPrompt.startsWith('EDIT_IMAGE:')) {
-      const parts = variationPrompt.split(':');
-      if (parts.length >= 3) {
-        const imageUrl = parts[1];
-        const imageId = parseInt(parts[2]);
+      // Use indexOf to find the first and second colons to properly parse data URLs
+      const firstColonIndex = variationPrompt.indexOf(':');
+      const secondColonIndex = variationPrompt.indexOf(':', firstColonIndex + 1);
+      const thirdColonIndex = variationPrompt.lastIndexOf(':');
+      
+      if (firstColonIndex !== -1 && thirdColonIndex !== -1 && thirdColonIndex !== secondColonIndex) {
+        // Extract the full image URL (including data: prefix) and the ID
+        const imageUrl = variationPrompt.substring(firstColonIndex + 1, thirdColonIndex);
+        const imageIdStr = variationPrompt.substring(thirdColonIndex + 1);
+        const imageId = parseInt(imageIdStr);
+        
+        console.log("Parsed edit image data:", { imageUrl: imageUrl.substring(0, 50) + "...", imageId });
         handleEditImage(imageUrl, imageId);
         
         // Clear the variation prompt

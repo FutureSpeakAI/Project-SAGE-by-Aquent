@@ -362,15 +362,18 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             
             <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
               <div className="relative">
-                {/* Debug: Show image URL and status */}
+                {/* Loading state overlay */}
                 {imageLoadStatus === "loading" && (
-                  <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs z-10">
-                    Loading...
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
+                      <span className="text-sm text-gray-600">Loading image...</span>
+                    </div>
                   </div>
                 )}
-                {imageLoadStatus === "error" && (
-                  <div className="absolute top-2 left-2 bg-red-100 text-red-800 px-2 py-1 rounded text-xs z-10">
-                    Load Error
+                {imageLoadStatus === "loaded" && (
+                  <div className="absolute top-2 left-2 bg-green-100 text-green-800 px-2 py-1 rounded text-xs z-10">
+                    Ready
                   </div>
                 )}
                 
