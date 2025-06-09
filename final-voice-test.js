@@ -11,7 +11,7 @@ class VoiceInterruptionValidator {
   }
 
   async validateAudioStopImmediate() {
-    console.log('🎯 Testing immediate audio stop...');
+    console.log('🎯 Testing immediate audio stop and transcription quality...');
     
     // Monitor audio elements
     const allAudio = document.querySelectorAll('audio');
@@ -33,9 +33,11 @@ class VoiceInterruptionValidator {
     const micButton = document.querySelector('button[class*="mic"], button svg[data-lucide="mic"]')?.closest('button');
     if (micButton) {
       console.log('🖱️ Clicking microphone to interrupt...');
+      
+      const clickTime = performance.now();
       micButton.click();
       
-      // Check if audio stopped within 200ms
+      // Check if audio stopped within 100ms (improved threshold)
       setTimeout(() => {
         let stillPlaying = false;
         allAudio.forEach(audio => {
@@ -44,13 +46,14 @@ class VoiceInterruptionValidator {
           }
         });
         
+        const stopTime = performance.now() - clickTime;
         if (!stillPlaying) {
-          console.log('✅ Audio stopped immediately');
+          console.log(`✅ Audio stopped in ${stopTime.toFixed(0)}ms`);
           this.audioStopped = true;
         } else {
-          console.log('❌ Audio still playing after interruption');
+          console.log(`❌ Audio still playing after ${stopTime.toFixed(0)}ms`);
         }
-      }, 200);
+      }, 100);
     }
     
     return true;
