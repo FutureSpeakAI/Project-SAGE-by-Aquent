@@ -31,17 +31,25 @@ export class RobustContentGenerator {
 
     console.log(`[Robust Generation] Attempting with model: ${model}`);
 
-    // Try OpenAI first
+    // Skip problematic OpenAI calls and go straight to working fallbacks
     if (model.startsWith('gpt-')) {
-      const openaiResult = await this.tryOpenAI(model, systemPrompt, userPrompt, temperature);
-      if (openaiResult.success) {
-        res.json({ content: openaiResult.content, provider: 'openai' });
-        return;
+      // Try a quick OpenAI attempt with timeout
+      try {
+        const quickResult = await Promise.race([
+          this.tryOpenAI(model, systemPrompt, userPrompt, temperature),
+          new Promise(resolve => setTimeout(() => resolve({ success: false }), 8000))
+        ]) as any;
+        
+        if (quickResult.success) {
+          res.json({ content: quickResult.content, provider: 'openai' });
+          return;
+        }
+      } catch (error) {
+        console.log('OpenAI quick attempt failed, using fallbacks');
       }
-      console.log('OpenAI failed, trying Anthropic fallback');
     }
 
-    // Try Anthropic as fallback
+    // Try Anthropic as primary fallback
     const anthropicResult = await this.tryAnthropic(userPrompt, systemPrompt, temperature);
     if (anthropicResult.success) {
       res.json({ 
@@ -52,22 +60,8 @@ export class RobustContentGenerator {
       });
       return;
     }
-    console.log('Anthropic failed, trying Gemini fallback');
 
-    // Try Gemini as second fallback
-    const geminiResult = await this.tryGemini(userPrompt, systemPrompt, temperature);
-    if (geminiResult.success) {
-      res.json({ 
-        content: geminiResult.content, 
-        provider: 'gemini',
-        fallback: true,
-        message: 'Generated using Gemini due to API issues'
-      });
-      return;
-    }
-    console.log('All providers failed, trying simplified OpenAI');
-
-    // Final fallback: simplified OpenAI request
+    // Try simplified OpenAI as reliable fallback
     const simplifiedResult = await this.trySimplifiedOpenAI(userPrompt);
     if (simplifiedResult.success) {
       res.json({ 
@@ -75,6 +69,18 @@ export class RobustContentGenerator {
         provider: 'openai-simplified',
         fallback: true,
         message: 'Generated using simplified prompt due to API complexity issues'
+      });
+      return;
+    }
+
+    // Final fallback: Gemini
+    const geminiResult = await this.tryGemini(userPrompt, systemPrompt, temperature);
+    if (geminiResult.success) {
+      res.json({ 
+        content: geminiResult.content, 
+        provider: 'gemini',
+        fallback: true,
+        message: 'Generated using Gemini due to API issues'
       });
       return;
     }
@@ -89,12 +95,15 @@ export class RobustContentGenerator {
 
   private async tryOpenAI(model: string, systemPrompt: string, userPrompt: string, temperature?: number) {
     try {
+      const enhancedSystemPrompt = (systemPrompt || "You are a helpful assistant.") + 
+        "\n\nFormatting Instructions:\n- Use HTML tags: <h1>, <h2>, <h3> for headings\n- Use <strong> and <em> for emphasis\n- Format lists with <ul>, <ol>, and <li> tags\n- Provide comprehensive, detailed content\n- Do not include currency symbols, placeholder text, or formatting artifacts\n- Start immediately with the content (no introductory phrases)";
+
       const completion = await this.openai.chat.completions.create({
         model: model || "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: systemPrompt || "You are a helpful assistant."
+            content: enhancedSystemPrompt
           },
           {
             role: "user",
@@ -105,7 +114,11 @@ export class RobustContentGenerator {
         max_tokens: 4000,
       });
 
-      const content = completion.choices[0].message.content || "";
+      let content = completion.choices[0].message.content || "";
+      
+      // Clean up formatting artifacts
+      content = this.cleanContentFormatting(content);
+      
       return { success: true, content };
     } catch (error: any) {
       console.error('OpenAI error:', error.message);
@@ -151,20 +164,50 @@ export class RobustContentGenerator {
         model: "gpt-4o-mini",
         messages: [
           {
+            role: "system",
+            content: "You are a professional content creator. Generate well-formatted, comprehensive content with proper structure. Use HTML tags for formatting: <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists. Do not include placeholder symbols, currency signs, or formatting artifacts."
+          },
+          {
             role: "user",
-            content: userPrompt.substring(0, 1000) // Simplified shorter prompt
+            content: userPrompt
           }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 4000,
       });
 
-      const content = completion.choices[0].message.content || "";
+      let content = completion.choices[0].message.content || "";
+      
+      // Clean up any formatting artifacts
+      content = content.replace(/\$\d+/g, ''); // Remove currency artifacts like $3
+      content = content.replace(/^\s*[\$\#\*\-]+\s*/gm, ''); // Remove leading symbols
+      content = content.replace(/\n{3,}/g, '\n\n'); // Clean up excessive line breaks
+      content = content.trim();
+      
       return { success: true, content };
     } catch (error: any) {
       console.error('Simplified OpenAI error:', error.message);
       return { success: false, error: error.message };
     }
+  }
+
+  private cleanContentFormatting(content: string): string {
+    // Remove currency artifacts and placeholder symbols
+    content = content.replace(/\$\d+/g, ''); // Remove $3, $1, etc.
+    content = content.replace(/^\s*[\$\#\*\-]+\s*/gm, ''); // Remove leading symbols
+    content = content.replace(/\n{3,}/g, '\n\n'); // Clean up excessive line breaks
+    content = content.replace(/^(Platform|Campaign Duration|Objective):\s*\$\d+\s*/gm, '$1: '); // Fix specific formatting issues
+    
+    // Convert markdown headers to HTML if not already formatted
+    content = content.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+    content = content.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+    content = content.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+    
+    // Convert markdown bold to HTML
+    content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    
+    return content.trim();
   }
 }
 
