@@ -230,7 +230,7 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
                     const textItem = sortedTexts[i];
                     if (textItem.R) {
                       let itemText = '';
-                      textItem.R.forEach((run: any) => {
+                      textItem.R.forEach((run) => {
                         if (run.T) {
                           itemText += decodeURIComponent(run.T);
                         }

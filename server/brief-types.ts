@@ -8,6 +8,8 @@ export interface PDFTextItem {
   R?: PDFTextRun[];
   x: number;
   y: number;
+  w?: number;
+  [key: string]: any;
 }
 
 export interface PDFPage {
