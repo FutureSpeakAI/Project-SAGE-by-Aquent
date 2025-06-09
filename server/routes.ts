@@ -347,6 +347,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/generate-content", async (req: Request, res: Response) => {
     await robustContentGenerator.generateContent(req, res);
   });
+
+  // Briefing document processing endpoint
+  app.post("/api/process-brief", upload.single('file'), processBrief);
   
   app.post("/api/generate", async (req: Request, res: Response) => {
     try {
