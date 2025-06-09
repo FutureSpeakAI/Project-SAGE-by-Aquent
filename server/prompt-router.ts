@@ -68,7 +68,7 @@ export class PromptRouter {
     if (this.isTechnicalQuery(lowerMessage)) {
       return {
         provider: 'gemini',
-        model: 'gemini-1.5-pro',
+        model: 'gemini-1.5-pro-002',
         useReasoning: false,
         rationale: 'Technical analysis task'
       };
@@ -135,7 +135,7 @@ export class PromptRouter {
       case 'anthropic':
         return 'claude-sonnet-4-20250514';
       case 'gemini':
-        return 'gemini-1.5-pro';
+        return 'gemini-1.5-pro-002';
       default:
         return 'claude-sonnet-4-20250514';
     }
