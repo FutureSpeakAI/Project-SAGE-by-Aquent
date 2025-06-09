@@ -131,7 +131,17 @@ CURRENT BRIEFING CONTEXT:
 Title: "${briefingContext.title}"
 Content: ${briefingContext.content}
 
-IMPORTANT: You have just received this briefing. Acknowledge its receipt and offer specific visual prompt suggestions based on its content. Focus on translating the briefing requirements into actionable image generation prompts.`;
+SPECIAL INSTRUCTIONS FOR BRIEFINGS:
+- When a briefing mentions multiple images/visuals (e.g., "three product shots", "hero image and lifestyle shots"), analyze how many distinct images are needed
+- If multiple images are required, immediately provide individual FINAL PROMPT entries for each one
+- Format multiple prompts like this:
+  "FINAL PROMPT 1: [first prompt]"
+  "FINAL PROMPT 2: [second prompt]" 
+  "FINAL PROMPT 3: [third prompt]"
+- Do NOT use HTML tags, lists, or formatting - only plain text
+- Be direct and provide all prompts without asking follow-up questions when the user specifically requests "all visual assets"
+
+IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts based on the content requirements.`;
     }
 
     return basePrompt;
@@ -146,39 +156,61 @@ IMPORTANT: You have just received this briefing. Acknowledge its receipt and off
     onSuccess: (data) => {
       // Extract the response
       if (data.content) {
-        // Check if the response contains a final prompt using indexOf and substring
-        const finalPromptPrefix = "FINAL PROMPT:";
-        const finalPromptIndex = data.content.indexOf(finalPromptPrefix);
+        // Strip HTML tags from the response
+        let cleanedContent = data.content
+          .replace(/<[^>]*>/g, '') // Remove all HTML tags
+          .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+          .replace(/&amp;/g, '&') // Replace HTML entities
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim();
+
+        // Check for multiple final prompts first
+        const multipleFinalPromptRegex = /FINAL PROMPT \d+:\s*(.+?)(?=FINAL PROMPT \d+:|$)/gs;
+        const multipleMatches = [...cleanedContent.matchAll(multipleFinalPromptRegex)];
         
-        if (finalPromptIndex !== -1) {
-          // Find the end of the final prompt (newline or end of string)
-          let endIndex = data.content.indexOf("\n", finalPromptIndex);
-          if (endIndex === -1) {
-            endIndex = data.content.length;
-          }
+        if (multipleMatches.length > 1) {
+          // Handle multiple prompts
+          const prompts = multipleMatches.map(match => match[1].trim());
+          setFinalPrompt(prompts[0]); // Set first prompt as active
           
-          // Extract the prompt text
-          const startIndex = finalPromptIndex + finalPromptPrefix.length;
-          const extractedPrompt = data.content.substring(startIndex, endIndex).trim();
-          setFinalPrompt(extractedPrompt);
+          // Create display content showing all prompts
+          const promptsList = prompts.map((prompt, index) => 
+            `Image ${index + 1}: ${prompt}`
+          ).join('\n\n');
           
-          // Create cleaned content by replacing the final prompt text
-          const beforePrompt = data.content.substring(0, finalPromptIndex);
-          const afterPrompt = data.content.substring(endIndex);
-          const cleanedContent = beforePrompt + 
-            "I've prepared your optimized prompt. You can now use it to generate your image!" + 
-            afterPrompt;
+          const responseContent = cleanedContent.replace(multipleFinalPromptRegex, '').trim() || 
+            "I've created multiple optimized prompts for your briefing:";
           
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: cleanedContent },
+            { role: "assistant", content: `${responseContent}\n\n${promptsList}\n\nClick "Use Prompt" to apply the first one, or copy any specific prompt you'd like to use.` },
           ]);
         } else {
-          // Regular response without final prompt
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: data.content },
-          ]);
+          // Check for single final prompt
+          const singleFinalPromptRegex = /FINAL PROMPT:?\s*(.+?)(?:\n|$)/s;
+          const singleMatch = cleanedContent.match(singleFinalPromptRegex);
+          
+          if (singleMatch) {
+            const extractedPrompt = singleMatch[1].trim();
+            setFinalPrompt(extractedPrompt);
+            
+            // Remove the final prompt from display content
+            const displayContent = cleanedContent.replace(singleFinalPromptRegex, '').trim() || 
+              "I've prepared your optimized prompt. You can now use it to generate your image!";
+            
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: displayContent },
+            ]);
+          } else {
+            // Regular response without final prompt
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: cleanedContent },
+            ]);
+          }
         }
         
         setIsTyping(false);
