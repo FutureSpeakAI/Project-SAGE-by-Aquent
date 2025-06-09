@@ -67,17 +67,27 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       let text = fileBuffer.toString('utf8');
       
       // Clean up excessive character spacing that may exist in source text
-      // This handles the specific "S a m p l e" pattern where each character is separated by spaces
       text = text
-        // Pattern: letter + space + letter + space + letter (and so on)
-        // This will match sequences like "S a m p l e" and replace with "Sample"
+        // Fix character-level spacing while preserving word boundaries
         .replace(/([a-zA-Z])\s+([a-zA-Z])\s+([a-zA-Z])(\s+[a-zA-Z])*/g, (match) => {
-          // Remove all spaces within the matched pattern
           return match.replace(/\s+/g, '');
         })
-        // Clean up any remaining multiple spaces
+        // Restore proper word spacing by adding spaces before punctuation and common word patterns
+        .replace(/([a-zA-Z])([A-Z][a-z])/g, '$1 $2')  // Add space before capitalized words
+        .replace(/([a-z])([A-Z])/g, '$1 $2')          // Add space between camelCase
+        .replace(/([a-zA-Z])(\()/g, '$1 $2')          // Add space before opening parenthesis
+        .replace(/(\))([a-zA-Z])/g, '$1 $2')          // Add space after closing parenthesis
+        .replace(/([a-zA-Z])(:)/g, '$1$2')            // Keep colons attached to words
+        .replace(/(:)([A-Z])/g, '$1 $2')              // Add space after colons before capitals
+        .replace(/([a-zA-Z])(●)/g, '$1 $2')           // Add space before bullet points
+        .replace(/([a-zA-Z])(\d)/g, '$1 $2')          // Add space before numbers
+        .replace(/(\d)([a-zA-Z])/g, '$1 $2')          // Add space after numbers
+        .replace(/([a-zA-Z])(,)/g, '$1$2')            // Keep commas attached
+        .replace(/(,)([a-zA-Z])/g, '$1 $2')           // Add space after commas
+        .replace(/([a-zA-Z])(\.)/g, '$1$2')           // Keep periods attached
+        .replace(/(\.)([A-Z])/g, '$1 $2')             // Add space after periods before capitals
+        // Clean up multiple spaces
         .replace(/\s{2,}/g, ' ')
-        // Remove leading/trailing spaces around newlines
         .replace(/\n\s+/g, '\n')
         .replace(/\s+\n/g, '\n')
         .trim();
