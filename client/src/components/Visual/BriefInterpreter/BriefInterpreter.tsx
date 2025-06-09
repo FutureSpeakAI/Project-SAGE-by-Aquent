@@ -12,6 +12,7 @@ import { ContentType, GeneratedContent } from "@shared/schema";
 
 interface BriefInterpreterProps {
   onPromptGenerated: (prompt: string) => void;
+  onSwitchToConversation: () => void;
 }
 
 interface GeneratePromptFromBriefRequest {
@@ -19,7 +20,7 @@ interface GeneratePromptFromBriefRequest {
   model: string;
 }
 
-export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
+export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation }: BriefInterpreterProps) {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showBriefingLibrary, setShowBriefingLibrary] = useState(false);
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
@@ -43,12 +44,26 @@ export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
     },
     onSuccess: (data) => {
       if (data.success && data.prompt) {
-        onPromptGenerated(data.prompt);
-        toast({
-          title: "Brief interpreted successfully",
-          description: "Your creative brief has been converted to an image prompt.",
-          variant: "default",
-        });
+        // Check if the prompt contains multiple image requests
+        const hasMultipleImages = data.prompt.toLowerCase().includes('image') && 
+          (data.prompt.includes('two') || data.prompt.includes('three') || data.prompt.includes('multiple') || 
+           data.prompt.includes('several') || /\d+.*image/i.test(data.prompt));
+        
+        if (hasMultipleImages) {
+          // Switch to conversation tab for multiple image handling
+          onSwitchToConversation();
+          toast({
+            title: "Multiple prompts generated",
+            description: "Your brief requires multiple images. Switched to Conversation tab to select individual prompts.",
+          });
+        } else {
+          // Single image - use standard mode
+          onPromptGenerated(data.prompt);
+          toast({
+            title: "Brief interpreted successfully",
+            description: "Your creative brief has been converted to an image prompt.",
+          });
+        }
       } else {
         throw new Error(data.message || "Failed to generate prompt");
       }
@@ -76,6 +91,9 @@ export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
   };
 
   const handleSelectBriefing = (content: GeneratedContent) => {
+    // Close the briefing library dialog
+    setShowBriefingLibrary(false);
+    
     // Convert the briefing content to an image generation prompt
     mutate({
       brief: content.content,
@@ -102,7 +120,7 @@ export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="library" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="library" className="flex items-center gap-2">
                 <Library className="h-4 w-4" />
                 Library
@@ -110,10 +128,6 @@ export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
               <TabsTrigger value="upload" className="flex items-center gap-2">
                 <Upload className="h-4 w-4" />
                 Upload
-              </TabsTrigger>
-              <TabsTrigger value="manual" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Manual
               </TabsTrigger>
             </TabsList>
 
@@ -165,33 +179,6 @@ export function BriefInterpreter({ onPromptGenerated }: BriefInterpreterProps) {
                     <>
                       <Upload className="h-4 w-4" />
                       Upload Document
-                    </>
-                  )}
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="manual" className="mt-4">
-              <div className="flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-lg">
-                <FileText className="h-12 w-12 text-muted-foreground mb-3" />
-                <h3 className="text-lg font-medium mb-2">Enter brief manually</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Type or paste your creative brief content directly.
-                </p>
-                <Button 
-                  onClick={handleOpenUploadDialog} 
-                  disabled={isPending} 
-                  className="gap-2"
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" />
-                      Enter Brief
                     </>
                   )}
                 </Button>

@@ -54,9 +54,10 @@ interface GenerateContentRequest {
 
 interface ImagePromptAgentProps {
   onApplyPrompt: (prompt: string) => void;
+  onSwitchToConversation?: () => void;
 }
 
-export function ImagePromptAgent({ onApplyPrompt }: ImagePromptAgentProps) {
+export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation }: ImagePromptAgentProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -380,7 +381,10 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
             
             {/* Brief Interpreter Tab Content */}
             <TabsContent value="brief">
-              <BriefInterpreter onPromptGenerated={onApplyPrompt} />
+              <BriefInterpreter 
+                onPromptGenerated={onApplyPrompt} 
+                onSwitchToConversation={onSwitchToConversation || (() => {})}
+              />
             </TabsContent>
           </Tabs>
         </Card>
