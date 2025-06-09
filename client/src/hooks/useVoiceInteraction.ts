@@ -87,24 +87,25 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
 
   // Voice activity detection using audio levels - runs continuously in intelligent mode
   const startVoiceActivityDetection = useCallback(() => {
-    if (!analyserRef.current) {
-      console.warn('Analyser not available for voice activity detection');
+    // Clear any existing timer first
+    if (vadTimerRef.current) {
+      clearInterval(vadTimerRef.current);
+      vadTimerRef.current = null;
+    }
+
+    if (!analyserRef.current || !audioContextRef.current) {
+      console.warn('Audio context or analyser not available for voice activity detection');
       return;
     }
 
-    // Clear any existing timer
-    if (vadTimerRef.current) {
-      clearInterval(vadTimerRef.current);
-    }
+    console.log('🟢 STARTING continuous voice activity detection for interruption...');
 
-    console.log('Starting voice activity detection with thresholds:', { 
-      INTERRUPT_THRESHOLD, 
-      NOISE_GATE, 
-      VAD_CHECK_INTERVAL 
-    });
-
+    let frameCount = 0;
     const checkVoiceActivity = () => {
-      if (!analyserRef.current) return;
+      if (!analyserRef.current || !audioContextRef.current) {
+        console.warn('Audio context lost, stopping voice activity detection');
+        return;
+      }
 
       const bufferLength = analyserRef.current.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
@@ -117,67 +118,51 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       }
       const rms = Math.sqrt(sum / bufferLength);
 
-      const currentTime = Date.now();
-      const isCurrentlySpeaking = rms > NOISE_GATE;
+      // Update voice activity state
+      setVoiceActivity(prev => ({
+        ...prev,
+        audioLevel: rms,
+        isUserSpeaking: rms > NOISE_GATE,
+        lastSpeechTime: rms > NOISE_GATE ? Date.now() : prev.lastSpeechTime
+      }));
 
-      // Log voice activity for debugging (only when significant)
-      if (rms > 0.01) {
-        console.log('Voice activity:', { rms, isCurrentlySpeaking, isSpeaking, threshold: INTERRUPT_THRESHOLD });
-      }
-
-      setVoiceActivity(prev => {
-        const wasUserSpeaking = prev.isUserSpeaking;
-        const newSilenceStartTime = isCurrentlySpeaking ? null : (prev.silenceStartTime || currentTime);
-
-        // Handle natural pause detection for speech recognition
-        if (isListening && wasUserSpeaking && !isCurrentlySpeaking) {
-          const silenceTime = newSilenceStartTime ? currentTime - newSilenceStartTime : 0;
-          if (silenceTime > SILENCE_THRESHOLD && lastTranscriptRef.current.trim()) {
-            setTimeout(() => processCompletedSpeech(), 0);
-          }
-        }
-
-        return {
-          ...prev,
-          audioLevel: rms,
-          isUserSpeaking: isCurrentlySpeaking,
-          lastSpeechTime: isCurrentlySpeaking ? currentTime : prev.lastSpeechTime,
-          silenceStartTime: newSilenceStartTime,
-          interruptDetected: isSpeaking && rms > INTERRUPT_THRESHOLD
-        };
-      });
-
-      // CRITICAL: Handle interruption outside of state setter with immediate action
+      // CRITICAL INTERRUPTION LOGIC - Check every frame
       if (isSpeaking && rms > INTERRUPT_THRESHOLD) {
-        console.log('🔴 VOICE INTERRUPTION DETECTED! Stopping speech immediately...', { 
-          rms, 
+        console.log('🔴 VOICE INTERRUPTION DETECTED!', { 
+          rms: rms.toFixed(4), 
           threshold: INTERRUPT_THRESHOLD,
-          isSpeaking,
-          isIntelligentMode 
+          frameCount 
         });
         
-        // Stop speaking immediately
-        if (audioRef.current) {
+        // Immediate audio stop
+        if (audioRef.current && !audioRef.current.paused) {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
-          audioRef.current.src = '';
           setIsSpeaking(false);
           setIsGeneratingAudio(false);
+          console.log('🛑 Audio stopped immediately');
+          
+          // Restart listening in intelligent mode
+          if (isIntelligentMode && onTranscriptCompleteRef.current) {
+            setTimeout(() => {
+              console.log('🎤 Restarting listening after voice interruption...');
+              startListening(onTranscriptCompleteRef.current);
+            }, 300);
+          }
         }
-        
-        // In intelligent mode, immediately restart listening
-        if (isIntelligentMode) {
-          setTimeout(() => {
-            console.log('🎤 Restarting listening after interruption...');
-            startIntelligentListening();
-          }, 200);
-        }
+      }
+
+      // Log activity periodically for debugging
+      frameCount++;
+      if (frameCount % 20 === 0 && rms > 0.01) {
+        console.log(`Voice monitor: RMS=${rms.toFixed(4)}, Speaking=${isSpeaking}, Threshold=${INTERRUPT_THRESHOLD}`);
       }
     };
 
+    // Start monitoring at high frequency for responsive interruption
     vadTimerRef.current = setInterval(checkVoiceActivity, VAD_CHECK_INTERVAL);
-    console.log('Voice activity detection timer started with interval:', VAD_CHECK_INTERVAL);
-  }, [isSpeaking, isListening, isIntelligentMode, NOISE_GATE, INTERRUPT_THRESHOLD, SILENCE_THRESHOLD]);
+    console.log(`🟢 Voice activity monitor started (${VAD_CHECK_INTERVAL}ms intervals)`);
+  }, [isSpeaking, isIntelligentMode, NOISE_GATE, INTERRUPT_THRESHOLD, VAD_CHECK_INTERVAL]);
 
   // Initialize speech recognition with intelligent settings
   const initializeSpeechRecognition = useCallback(() => {
@@ -520,14 +505,19 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     
     // When activating intelligent mode, initialize audio context for interruption detection
     if (newMode) {
-      console.log('Activating intelligent mode - initializing audio context...');
+      console.log('🟢 Activating intelligent mode - initializing audio context...');
       const audioInitialized = await initializeAudioContext();
       if (audioInitialized) {
-        console.log('Audio context ready - starting voice activity detection...');
+        console.log('🟢 Audio context ready - starting continuous voice activity detection...');
+        // Start voice activity detection immediately and keep it running
         startVoiceActivityDetection();
+      } else {
+        console.error('❌ Failed to initialize audio context');
+        setIsIntelligentMode(false);
       }
     } else {
       // When deactivating, clean up voice activity detection
+      console.log('🔴 Deactivating intelligent mode - stopping voice activity detection...');
       if (vadTimerRef.current) {
         clearInterval(vadTimerRef.current);
         vadTimerRef.current = null;
