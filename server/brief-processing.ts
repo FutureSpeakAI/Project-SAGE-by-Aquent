@@ -64,10 +64,44 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       // For text files, convert buffer to string
       return fileBuffer.toString('utf8');
     } else if (fileExt === '.pdf') {
-      // Extract text from PDF using dynamic import to handle ES module compatibility
-      const { default: pdfParse } = await import('pdf-parse');
-      const data = await pdfParse(fileBuffer);
-      return data.text;
+      // Extract text from PDF using pdf2json
+      const PDFParser = require('pdf2json');
+      
+      return new Promise((resolve, reject) => {
+        const pdfParser = new PDFParser();
+        
+        pdfParser.on('pdfParser_dataError', (errData) => {
+          reject(new Error(errData.parserError));
+        });
+        
+        pdfParser.on('pdfParser_dataReady', (pdfData) => {
+          try {
+            // Extract text from parsed PDF data
+            let text = '';
+            if (pdfData.Pages) {
+              pdfData.Pages.forEach(page => {
+                if (page.Texts) {
+                  page.Texts.forEach(textItem => {
+                    if (textItem.R) {
+                      textItem.R.forEach(run => {
+                        if (run.T) {
+                          text += decodeURIComponent(run.T) + ' ';
+                        }
+                      });
+                    }
+                  });
+                  text += '\n';
+                }
+              });
+            }
+            resolve(text.trim());
+          } catch (error) {
+            reject(error);
+          }
+        });
+        
+        pdfParser.parseBuffer(fileBuffer);
+      });
     } else if (fileExt === '.docx') {
       // Extract text from DOCX using mammoth
       const result = await mammoth.extractRawText({ buffer: fileBuffer });
