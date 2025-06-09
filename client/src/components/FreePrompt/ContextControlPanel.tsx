@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ModelSelector } from "@/components/ui/ModelSelector";
 
 interface ContextSettings {
   selectedPersona?: number;

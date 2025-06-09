@@ -1227,6 +1227,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comprehensive routing validation endpoints
+  app.post('/api/validate-routing', async (req: Request, res: Response) => {
+    try {
+      const { routingValidator } = await import('./routing-validation');
+      const results = await routingValidator.runValidationSuite();
+      
+      const summary = {
+        totalTests: results.length,
+        passed: results.filter(r => r.passed).length,
+        failed: results.filter(r => !r.passed).length,
+        successRate: (results.filter(r => r.passed).length / results.length) * 100,
+        avgResponseTime: results.reduce((sum, r) => sum + r.responseTime, 0) / results.length
+      };
+      
+      res.json({ summary, results });
+    } catch (error) {
+      console.error('Routing validation error:', error);
+      res.status(500).json({ error: 'Validation suite failed' });
+    }
+  });
+
+  app.get('/api/provider-health', async (req: Request, res: Response) => {
+    try {
+      const { providerHealthMonitor } = await import('./provider-health');
+      const healthStatus = providerHealthMonitor.getAllHealthStatus();
+      const healthyProviders = providerHealthMonitor.getHealthyProviders();
+      
+      res.json({ healthStatus, healthyProviders });
+    } catch (error) {
+      console.error('Provider health check error:', error);
+      res.status(500).json({ error: 'Health check failed' });
+    }
+  });
+
+  app.post('/api/test-routing-decision', async (req: Request, res: Response) => {
+    try {
+      const { query, context, config, workflowContext } = req.body;
+      
+      const startTime = Date.now();
+      const decision = await promptRouter.routePrompt(query, context || '', config, workflowContext);
+      const responseTime = Date.now() - startTime;
+      
+      res.json({ decision, responseTime });
+    } catch (error) {
+      console.error('Routing decision test error:', error);
+      res.status(500).json({ error: 'Routing test failed' });
+    }
+  });
+
+  // Comprehensive testing endpoint for diverse scenarios
+  app.post('/api/run-comprehensive-tests', async (req: Request, res: Response) => {
+    try {
+      const testResults = [];
+      
+      // Test scenarios with diverse complexity and data sources
+      const scenarios = [
+        {
+          name: 'Complex Research Analysis',
+          query: 'Conduct comprehensive competitive analysis of Tesla vs traditional automakers examining market trends, technological advantages, and strategic positioning',
+          context: 'automotive industry competitive analysis market research',
+          expected: 'anthropic + reasoning'
+        },
+        {
+          name: 'Creative Brand Development',
+          query: 'Create compelling brand story for sustainable fashion startup targeting Gen Z consumers with emotional hooks and social media concepts',
+          context: 'brand storytelling creative content marketing',
+          expected: 'openai for creativity'
+        },
+        {
+          name: 'Technical Data Analysis',
+          query: 'Analyze website performance metrics, calculate conversion optimization opportunities, provide technical implementation recommendations',
+          context: 'technical analysis performance metrics data optimization',
+          expected: 'gemini for technical work'
+        },
+        {
+          name: 'Multi-Step Strategic Planning',
+          query: 'Develop complete go-to-market strategy including market research, competitive positioning, pricing strategy, 12-month roadmap',
+          context: 'comprehensive strategy development multi-step planning',
+          expected: 'anthropic + reasoning'
+        },
+        {
+          name: 'Quick Creative Task',
+          query: 'Generate catchy headlines for social media posts about product launch',
+          context: 'social media creative content headlines',
+          expected: 'openai for quick creativity'
+        }
+      ];
+
+      // Execute routing decisions for each scenario
+      for (const scenario of scenarios) {
+        const startTime = Date.now();
+        const decision = await promptRouter.routePrompt(scenario.query, scenario.context);
+        const responseTime = Date.now() - startTime;
+        
+        testResults.push({
+          scenario: scenario.name,
+          query: scenario.query.substring(0, 100) + '...',
+          provider: decision.provider,
+          model: decision.model,
+          useReasoning: decision.useReasoning,
+          rationale: decision.rationale,
+          responseTime,
+          expected: scenario.expected
+        });
+      }
+
+      // Test manual overrides
+      const overrideTests = [
+        { provider: 'openai', query: 'Research market trends', expected: 'openai despite research context' },
+        { provider: 'gemini', query: 'Create marketing copy', expected: 'gemini despite creative context' },
+        { provider: 'anthropic', query: 'Calculate metrics', expected: 'anthropic despite technical context' }
+      ];
+
+      for (const test of overrideTests) {
+        try {
+          const decision = await promptRouter.routePrompt(
+            test.query, 
+            'test context', 
+            { enabled: false, manualProvider: test.provider as any }
+          );
+          
+          testResults.push({
+            scenario: `Manual Override: ${test.provider}`,
+            query: test.query,
+            provider: decision.provider,
+            model: decision.model,
+            useReasoning: decision.useReasoning,
+            rationale: decision.rationale,
+            responseTime: 0,
+            expected: test.expected
+          });
+        } catch (error) {
+          testResults.push({
+            scenario: `Manual Override: ${test.provider}`,
+            query: test.query,
+            provider: 'error',
+            model: 'error',
+            useReasoning: false,
+            rationale: `Error: ${error}`,
+            responseTime: 0,
+            expected: test.expected
+          });
+        }
+      }
+
+      // Analyze consistency with same query multiple times
+      const consistencyQuery = 'Analyze market opportunities for technology product';
+      const consistencyResults = [];
+      
+      for (let i = 0; i < 5; i++) {
+        const decision = await promptRouter.routePrompt(consistencyQuery, 'market analysis');
+        consistencyResults.push(decision.provider);
+      }
+      
+      const uniqueProviders = [...new Set(consistencyResults)];
+      
+      // Generate validation summary
+      const summary = {
+        totalTests: testResults.length,
+        routingDistribution: testResults.reduce((acc, result) => {
+          acc[result.provider] = (acc[result.provider] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+        avgResponseTime: testResults.filter(r => r.responseTime > 0)
+          .reduce((sum, r) => sum + r.responseTime, 0) / testResults.filter(r => r.responseTime > 0).length,
+        consistencyCheck: {
+          sameQueryProviders: uniqueProviders,
+          isConsistent: uniqueProviders.length === 1
+        },
+        reasoningUsage: testResults.filter(r => r.useReasoning).length
+      };
+
+      res.json({ testResults, summary });
+    } catch (error) {
+      console.error('Comprehensive test error:', error);
+      res.status(500).json({ error: 'Test execution failed' });
+    }
+  });
+
   // Simple chat endpoint for Free Prompt agent
   // Test endpoint for deep research functionality
   app.post("/api/test-research", async (req: Request, res: Response) => {
