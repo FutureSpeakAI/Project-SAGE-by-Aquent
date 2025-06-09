@@ -40,11 +40,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
   const vadTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranscriptRef = useRef<string>('');
   
-  // More aggressive thresholds for reliable interruption
-  const SILENCE_THRESHOLD = config.silenceThreshold || 2000; // 2 seconds default
-  const INTERRUPT_THRESHOLD = config.interruptThreshold || 0.015; // Very sensitive threshold
-  const NOISE_GATE = 0.005; // Very low noise gate
-  const VAD_CHECK_INTERVAL = 30; // Ultra-fast polling for immediate response
+  // Balanced thresholds for complete transcriptions and reliable interruption
+  const SILENCE_THRESHOLD = config.silenceThreshold || 3500; // Longer silence for complete thoughts
+  const INTERRUPT_THRESHOLD = config.interruptThreshold || 0.015; // Sensitive enough for interruption
+  const NOISE_GATE = 0.008; // Higher noise gate to avoid false triggers
+  const VAD_CHECK_INTERVAL = 50; // Balanced polling for stability
 
   // Initialize audio context for voice activity detection
   const initializeAudioContext = useCallback(async () => {
@@ -180,20 +180,19 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     
-    if (isIntelligentMode) {
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 3;
-    } else {
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
-    }
-    
+    // Optimized settings for complete transcriptions
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
     recognition.lang = 'en-US';
     
+    // Allow longer silence periods to capture complete thoughts
+    if (recognition.serviceURI) {
+      recognition.serviceURI = recognition.serviceURI + '?pfilter=0&xjerr=1&client=chromium&lang=en-US&maxresults=1';
+    }
+    
     return recognition;
-  }, [toast, isIntelligentMode]);
+  }, [toast]);
 
   // Process completed speech with natural language understanding
   const processCompletedSpeech = useCallback(() => {
@@ -435,15 +434,18 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         console.log('Audio playback completed');
       };
 
-      audioRef.current.onerror = () => {
+      audioRef.current.onerror = (error) => {
+        console.warn('Audio playback error, attempting recovery:', error);
         setIsSpeaking(false);
         setIsGeneratingAudio(false);
         URL.revokeObjectURL(audioUrl);
-        toast({
-          title: "Audio playback error",
-          description: "Failed to play generated speech",
-          variant: "destructive"
-        });
+        
+        // Attempt recovery by recreating audio element
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current = null;
+          }
+        }, 100);
       };
 
       if (config.autoPlay !== false) {
@@ -458,7 +460,16 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         audioRef.current.oncanplay = () => {
           setIsGeneratingAudio(false);
           setIsSpeaking(true);
-          audioRef.current?.play().catch(console.error);
+          audioRef.current?.play().catch((error) => {
+            console.warn('Audio play failed, retrying:', error);
+            // Retry playback once
+            setTimeout(() => {
+              audioRef.current?.play().catch(() => {
+                console.warn('Audio retry failed, skipping playback');
+                setIsSpeaking(false);
+              });
+            }, 100);
+          });
         };
         
         audioRef.current.load();
@@ -486,30 +497,25 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     }
   }, [config.voiceId, config.autoPlay, toast]);
 
-  // Enhanced speech stopping with multiple methods
+  // Controlled speech stopping without breaking audio context
   const stopSpeaking = useCallback(() => {
-    console.log('Force stopping speech with aggressive methods...');
+    console.log('Stopping speech cleanly...');
     if (audioRef.current) {
-      // Multiple methods to ensure complete audio stop
+      // Clean stop without destroying audio context
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      audioRef.current.src = '';
-      audioRef.current.load(); // Force buffer clear
-      audioRef.current.volume = 0; // Mute as backup
       
-      // Find and stop any other audio elements on the page
-      const allAudio = document.querySelectorAll('audio');
-      allAudio.forEach(audio => {
-        if (!audio.paused) {
-          audio.pause();
-          audio.currentTime = 0;
-          audio.src = '';
-        }
-      });
+      // Only clear source if audio is actually playing to avoid errors
+      if (audioRef.current.src) {
+        audioRef.current.src = '';
+      }
+      
+      // Reset volume without destroying context
+      audioRef.current.volume = 1;
       
       setIsSpeaking(false);
       setIsGeneratingAudio(false);
-      console.log('All audio forcefully stopped');
+      console.log('Audio stopped cleanly');
     }
   }, []);
 
