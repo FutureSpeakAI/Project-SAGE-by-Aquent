@@ -17,13 +17,26 @@ async function getImageBuffer(imageSource: string | Buffer): Promise<Buffer> {
   
   // Handle data URLs (base64 encoded)
   if (typeof imageSource === 'string' && imageSource.startsWith('data:image')) {
-    const matches = imageSource.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-    
-    if (!matches || matches.length !== 3) {
-      throw new Error('Invalid data URL format');
+    try {
+      // More flexible parsing for complex data URLs
+      const base64Start = imageSource.indexOf('base64,');
+      if (base64Start === -1) {
+        throw new Error('No base64 data found in data URL');
+      }
+      
+      const base64Data = imageSource.substring(base64Start + 7); // Skip 'base64,'
+      
+      // Validate base64 data exists
+      if (!base64Data || base64Data.length === 0) {
+        throw new Error('Empty base64 data in data URL');
+      }
+      
+      console.log('Processing data URL, base64 length:', base64Data.length);
+      return Buffer.from(base64Data, 'base64');
+    } catch (error: any) {
+      console.error('Error parsing data URL:', error.message);
+      throw new Error(`Invalid data URL format: ${error.message}`);
     }
-    
-    return Buffer.from(matches[2], 'base64');
   }
   
   // Handle URLs
@@ -45,19 +58,28 @@ async function getImageBuffer(imageSource: string | Buffer): Promise<Buffer> {
  */
 async function convertToSVG(imageBuffer: Buffer, width?: number, height?: number): Promise<string> {
   try {
+    console.log('convertToSVG called with buffer size:', imageBuffer.length, 'bytes');
+    
     // Get image metadata to determine dimensions
     const metadata = await sharp(imageBuffer).metadata();
     const imgWidth = width || metadata.width || 1024;
     const imgHeight = height || metadata.height || 1024;
+    
+    console.log('Image metadata - original:', metadata.width, 'x', metadata.height, 'final:', imgWidth, 'x', imgHeight);
+    console.log('Image format:', metadata.format, 'channels:', metadata.channels);
     
     // Convert to optimized PNG for embedding
     const optimizedBuffer = await sharp(imageBuffer)
       .png({ quality: 95, compressionLevel: 6 })
       .toBuffer();
     
+    console.log('Optimized buffer size:', optimizedBuffer.length, 'bytes');
+    
     // Create base64 data URI
     const base64Data = optimizedBuffer.toString('base64');
     const dataUri = `data:image/png;base64,${base64Data}`;
+    
+    console.log('Base64 data URI length:', dataUri.length, 'characters, starts with:', dataUri.substring(0, 50));
     
     // Create SVG with embedded image - preserves full quality and color
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -70,6 +92,7 @@ async function convertToSVG(imageBuffer: Buffer, width?: number, height?: number
          style="image-rendering: auto; image-rendering: crisp-edges; image-rendering: pixelated"/>
 </svg>`;
     
+    console.log('Final SVG length:', svg.length, 'characters');
     return svg;
   } catch (error: any) {
     console.error('Error converting to SVG:', error);
@@ -112,7 +135,9 @@ export const processImage = async (req: Request, res: Response) => {
     
     // Handle SVG conversion separately - now preserves full color and detail
     if (format === 'svg') {
+      console.log('Processing SVG with new embedded approach, dimensions:', width, 'x', height);
       const svg = await convertToSVG(imageBuffer, width, height);
+      console.log('SVG generated successfully, length:', svg.length, 'characters');
       
       // Set content type and send response
       res.setHeader('Content-Type', 'image/svg+xml');
