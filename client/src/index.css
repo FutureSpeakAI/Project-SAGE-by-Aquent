@@ -37,6 +37,31 @@
   margin-bottom: 1em;
 }
 
+/* Full-screen editor styles for proper internal scrolling */
+.quill.full-screen {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.quill.full-screen .ql-container {
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+.quill.full-screen .ql-editor {
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: none !important;
+}
+
+/* Ensure body doesn't scroll when in full-screen mode */
+body.no-scroll {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
 @layer base {
   * {
     @apply border-border;

@@ -63,6 +63,26 @@ export function RichOutputPanel({
   const editorRef = useRef<ReactQuill>(null);
   const { toast } = useToast();
 
+  // Manage body scroll state for full-screen mode
+  useEffect(() => {
+    if (isFullScreen) {
+      // Prevent body scrolling when in full-screen mode
+      document.body.classList.add('no-scroll');
+      // Prevent scrolling on the html element as well
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      // Restore body scrolling when exiting full-screen mode
+      document.body.classList.remove('no-scroll');
+      document.documentElement.style.overflow = '';
+    }
+
+    // Cleanup function to restore scrolling when component unmounts
+    return () => {
+      document.body.classList.remove('no-scroll');
+      document.documentElement.style.overflow = '';
+    };
+  }, [isFullScreen]);
+
   // Update editable content when content prop changes
   useEffect(() => {
     // Process the content to preserve formatting
@@ -632,7 +652,11 @@ export function RichOutputPanel({
 
   return (
     <>
-      <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[470px]">
+      <Card className={`w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col ${
+        isFullScreen 
+          ? 'fixed inset-0 z-50 rounded-none h-screen max-h-screen' 
+          : 'min-h-[470px] max-h-[calc(100vh-200px)]'
+      }`}>
         <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200 flex flex-row items-center justify-between">
           <CardTitle className="font-semibold text-white">Generated Content</CardTitle>
           
@@ -754,7 +778,9 @@ export function RichOutputPanel({
           )}
         </CardHeader>
         
-        <CardContent className="p-0 flex-1 overflow-auto relative border-b border-gray-200">
+        <CardContent className={`p-0 flex-1 relative border-b border-gray-200 ${
+          isFullScreen ? 'overflow-hidden' : 'overflow-auto'
+        }`}>
           {/* Loading state */}
           {isLoading && (
             <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10 animate-fade-in">
@@ -839,7 +865,7 @@ export function RichOutputPanel({
               personas={personas}
             >
               <div 
-                className="p-4" 
+                className={`p-4 ${isFullScreen ? 'h-full overflow-hidden' : ''}`} 
                 onMouseUp={handleTextSelection} 
                 onKeyUp={handleTextSelection}
               >
@@ -849,7 +875,7 @@ export function RichOutputPanel({
                   onChange={setEditableContent}
                   modules={modules}
                   placeholder="Generated content will appear here and can be edited..."
-                  className="min-h-[400px]"
+                  className={`${isFullScreen ? 'full-screen h-full' : 'min-h-[400px]'}`}
                 />
                 
                 {/* Save Button - Added for easier saving */}
