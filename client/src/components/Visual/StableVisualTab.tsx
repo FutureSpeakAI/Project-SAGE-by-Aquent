@@ -43,7 +43,7 @@ export function StableVisualTab({ model, setModel }: StableVisualTabProps) {
       
       // Create an AbortController for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120-second timeout for complex image generation
       
       const response = await fetch("/api/generate-image", {
         method: "POST",

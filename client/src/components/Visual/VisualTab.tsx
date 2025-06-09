@@ -432,9 +432,9 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
           quality: data.quality
         });
         
-        // Add timeout to prevent hanging requests
+        // Add timeout to prevent hanging requests - increased for gpt-image-1 processing time
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout for complex image generation
         
         try {
           const response = await apiRequest("POST", "/api/generate-image", data, {
@@ -461,7 +461,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
           
           if (fetchError.name === 'AbortError') {
             console.error("Request timed out");
-            throw new Error("Request timed out after 60 seconds. Please try again.");
+            throw new Error("Request timed out after 2 minutes. Complex images may take longer - please try a simpler prompt or try again.");
           }
           
           throw fetchError;
