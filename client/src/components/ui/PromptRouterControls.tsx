@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useModels } from '@/hooks/useModels';
 import { getModelDisplayName } from '@/utils/modelDisplay';
+import { useGlobalRoutingConfig } from '@/hooks/useGlobalRoutingConfig';
 
 export interface PromptRouterConfig {
   enabled: boolean;
@@ -15,7 +16,7 @@ export interface PromptRouterConfig {
 }
 
 interface PromptRouterControlsProps {
-  onConfigChange: (config: PromptRouterConfig) => void;
+  onConfigChange?: (config: PromptRouterConfig) => void;
   className?: string;
 }
 

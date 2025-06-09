@@ -1,9 +1,15 @@
-import { useState, useEffect, createContext, useContext } from 'react';
-import { PromptRouterConfig } from '@/components/ui/PromptRouterControls';
+import { createContext, useContext, useState, useCallback } from 'react';
+
+export interface PromptRouterConfig {
+  enabled: boolean;
+  manualProvider?: 'openai' | 'anthropic' | 'gemini';
+  manualModel?: string;
+  forceReasoning?: boolean;
+}
 
 interface GlobalRoutingState {
   config: PromptRouterConfig;
-  updateConfig: (updates: Partial<PromptRouterConfig>) => void;
+  updateConfig: (newConfig: Partial<PromptRouterConfig>) => void;
   resetConfig: () => void;
 }
 
@@ -11,62 +17,55 @@ const defaultConfig: PromptRouterConfig = {
   enabled: true,
   manualProvider: undefined,
   manualModel: undefined,
-  forceReasoning: undefined
+  forceReasoning: false
 };
-
-const ROUTING_CONFIG_KEY = 'sage_routing_config';
 
 export const GlobalRoutingContext = createContext<GlobalRoutingState | null>(null);
 
-export const useGlobalRoutingConfig = (): GlobalRoutingState => {
+export const useGlobalRoutingConfig = () => {
   const context = useContext(GlobalRoutingContext);
   if (!context) {
-    throw new Error('useGlobalRoutingConfig must be used within GlobalRoutingProvider');
+    throw new Error('useGlobalRoutingConfig must be used within a GlobalRoutingProvider');
   }
   return context;
 };
 
-export const useRoutingConfigState = () => {
+export const useRoutingConfigState = (): GlobalRoutingState => {
   const [config, setConfig] = useState<PromptRouterConfig>(() => {
-    // Load from localStorage on initialization
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(ROUTING_CONFIG_KEY);
-        if (saved) {
-          return { ...defaultConfig, ...JSON.parse(saved) };
-        }
-      } catch (error) {
-        console.warn('Failed to load routing config from localStorage:', error);
-      }
+    // Try to load from localStorage on initialization
+    try {
+      const saved = localStorage.getItem('sage-routing-config');
+      return saved ? JSON.parse(saved) : defaultConfig;
+    } catch {
+      return defaultConfig;
     }
-    return defaultConfig;
   });
 
-  // Save to localStorage whenever config changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+  const updateConfig = useCallback((newConfig: Partial<PromptRouterConfig>) => {
+    setConfig(prevConfig => {
+      const updatedConfig = { ...prevConfig, ...newConfig };
+      // Persist to localStorage
       try {
-        localStorage.setItem(ROUTING_CONFIG_KEY, JSON.stringify(config));
+        localStorage.setItem('sage-routing-config', JSON.stringify(updatedConfig));
       } catch (error) {
         console.warn('Failed to save routing config to localStorage:', error);
       }
-    }
-  }, [config]);
+      return updatedConfig;
+    });
+  }, []);
 
-  const updateConfig = (updates: Partial<PromptRouterConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
-  };
-
-  const resetConfig = () => {
+  const resetConfig = useCallback(() => {
     setConfig(defaultConfig);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem(ROUTING_CONFIG_KEY);
-      } catch (error) {
-        console.warn('Failed to clear routing config from localStorage:', error);
-      }
+    try {
+      localStorage.removeItem('sage-routing-config');
+    } catch (error) {
+      console.warn('Failed to remove routing config from localStorage:', error);
     }
-  };
+  }, []);
 
-  return { config, updateConfig, resetConfig };
+  return {
+    config,
+    updateConfig,
+    resetConfig
+  };
 };

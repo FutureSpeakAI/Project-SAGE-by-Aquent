@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from "./components/ErrorFallback";
+import { GlobalRoutingProvider } from "@/providers/GlobalRoutingProvider";
 
 // Tabs for our application
 export enum AppTab {
@@ -40,16 +41,18 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary 
-        FallbackComponent={ErrorFallback}
-        onReset={() => {
-          // Reset the state of your app here
-          console.log("Error boundary reset");
-          window.location.reload();
-        }}
-      >
-        <Router />
-      </ErrorBoundary>
+      <GlobalRoutingProvider>
+        <ErrorBoundary 
+          FallbackComponent={ErrorFallback}
+          onReset={() => {
+            // Reset the state of your app here
+            console.log("Error boundary reset");
+            window.location.reload();
+          }}
+        >
+          <Router />
+        </ErrorBoundary>
+      </GlobalRoutingProvider>
       <Toaster />
     </QueryClientProvider>
   );
