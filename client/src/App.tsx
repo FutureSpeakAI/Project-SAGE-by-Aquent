@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from "./components/ErrorFallback";
 import { GlobalRoutingProvider } from "@/providers/GlobalRoutingProvider";
+import { TabPersistenceProvider } from "@/contexts/TabPersistenceContext";
 
 // Tabs for our application
 export enum AppTab {
@@ -41,19 +42,21 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <GlobalRoutingProvider>
-        <ErrorBoundary 
-          FallbackComponent={ErrorFallback}
-          onReset={() => {
-            // Reset the state of your app here
-            console.log("Error boundary reset");
-            window.location.reload();
+      <TabPersistenceProvider>
+        <GlobalRoutingProvider>
+          <ErrorBoundary 
+            FallbackComponent={ErrorFallback}
+            onReset={() => {
+              // Reset the state of your app here
+              console.log("Error boundary reset");
+              window.location.reload();
           }}
         >
           <Router />
         </ErrorBoundary>
+        <Toaster />
       </GlobalRoutingProvider>
-      <Toaster />
+      </TabPersistenceProvider>
     </QueryClientProvider>
   );
 }
