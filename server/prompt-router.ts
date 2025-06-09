@@ -31,21 +31,38 @@ export class PromptRouter {
   async routePrompt(
     message: string, 
     researchContext: string,
-    config: PromptRouterConfig = { enabled: true }
+    config: PromptRouterConfig = { enabled: true },
+    workflowContext?: WorkflowContext
   ): Promise<RoutingDecision> {
     
-    // Manual override mode
+    // Get healthy providers for routing decisions
+    const healthyProviders = providerHealthMonitor.getHealthyProviders();
+    
+    // Manual override mode with health checking
     if (!config.enabled || config.manualProvider) {
+      const requestedProvider = config.manualProvider || 'anthropic';
+      
+      // If requested provider is unhealthy, find best alternative
+      if (!healthyProviders.includes(requestedProvider)) {
+        const healthResult = providerHealthMonitor.getBestProvider([requestedProvider]);
+        return {
+          provider: healthResult.preferredProvider as 'openai' | 'anthropic' | 'gemini',
+          model: config.manualModel || this.getDefaultModel(healthResult.preferredProvider as 'openai' | 'anthropic' | 'gemini'),
+          useReasoning: config.forceReasoning || this.shouldUseReasoning(message, researchContext),
+          rationale: `Manual selection (${requestedProvider} unavailable, using ${healthResult.preferredProvider})`
+        };
+      }
+      
       return {
-        provider: config.manualProvider || 'anthropic',
-        model: config.manualModel || this.getDefaultModel(config.manualProvider || 'anthropic'),
+        provider: requestedProvider,
+        model: config.manualModel || this.getDefaultModel(requestedProvider),
         useReasoning: config.forceReasoning || this.shouldUseReasoning(message, researchContext),
         rationale: 'Manual selection'
       };
     }
 
-    // Automatic routing based on query characteristics
-    return this.analyzeAndRoute(message, researchContext);
+    // Automatic routing with workflow context consideration
+    return this.analyzeAndRoute(message, researchContext, workflowContext, healthyProviders);
   }
 
   private analyzeAndRoute(message: string, researchContext: string): RoutingDecision {

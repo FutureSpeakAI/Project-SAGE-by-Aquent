@@ -4,7 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useModels, getModelDisplayName } from '@/hooks/useModels';
+import { useModels } from '@/hooks/useModels';
+import { getModelDisplayName } from '@/utils/modelDisplay';
 
 export interface PromptRouterConfig {
   enabled: boolean;
