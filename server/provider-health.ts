@@ -1,5 +1,5 @@
 interface ProviderHealth {
-  provider: 'openai' | 'anthropic' | 'gemini';
+  provider: 'openai' | 'anthropic' | 'gemini' | 'perplexity';
   isHealthy: boolean;
   lastChecked: Date;
   responseTime: number;
@@ -26,7 +26,7 @@ export class ProviderHealthMonitor {
   }
 
   private initializeHealthStatus() {
-    const providers: Array<'openai' | 'anthropic' | 'gemini'> = ['openai', 'anthropic', 'gemini'];
+    const providers: Array<'openai' | 'anthropic' | 'gemini' | 'perplexity'> = ['openai', 'anthropic', 'gemini', 'perplexity'];
     
     providers.forEach(provider => {
       this.healthStatus.set(provider, {

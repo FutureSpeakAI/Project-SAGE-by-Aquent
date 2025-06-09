@@ -6,7 +6,7 @@ import * as GeminiAPI from './gemini';
 import * as AnthropicAPI from './anthropic';
 
 export interface RoutingDecision {
-  provider: 'openai' | 'anthropic' | 'gemini';
+  provider: 'openai' | 'anthropic' | 'gemini' | 'perplexity';
   model: string;
   useReasoning: boolean;
   rationale: string;
@@ -14,7 +14,7 @@ export interface RoutingDecision {
 
 export interface PromptRouterConfig {
   enabled: boolean;
-  manualProvider?: 'openai' | 'anthropic' | 'gemini';
+  manualProvider?: 'openai' | 'anthropic' | 'gemini' | 'perplexity';
   manualModel?: string;
   forceReasoning?: boolean;
 }
@@ -77,12 +77,27 @@ export class PromptRouter {
     // Workflow context influences routing decisions
     const preferredProviders = this.getWorkflowPreferredProviders(workflowContext, healthyProviders);
 
-    // Research & Analysis queries -> Anthropic + Reasoning (with health checking)
+    // Research & Analysis queries -> Perplexity for real-time data, Anthropic for analysis (with health checking)
     if (this.isResearchQuery(lowerMessage, lowerContext)) {
+      // Check if query needs real-time/current data
+      const needsCurrentData = lowerMessage.includes('current') || lowerMessage.includes('latest') || 
+                              lowerMessage.includes('recent') || lowerMessage.includes('2024') || 
+                              lowerMessage.includes('2025') || lowerMessage.includes('today') ||
+                              lowerContext.includes('competitive analysis') || lowerContext.includes('market research');
+      
+      if (needsCurrentData && healthyProviders.includes('perplexity')) {
+        return {
+          provider: 'perplexity',
+          model: this.getDefaultModel('perplexity'),
+          useReasoning: false, // Perplexity has built-in web search
+          rationale: 'Real-time research with web access (using perplexity)'
+        };
+      }
+      
       const provider = preferredProviders.includes('anthropic') ? 'anthropic' : preferredProviders[0] || 'anthropic';
       return {
-        provider: provider as 'openai' | 'anthropic' | 'gemini',
-        model: this.getDefaultModel(provider as 'openai' | 'anthropic' | 'gemini'),
+        provider: provider as 'openai' | 'anthropic' | 'gemini' | 'perplexity',
+        model: this.getDefaultModel(provider as 'openai' | 'anthropic' | 'gemini' | 'perplexity'),
         useReasoning: true,
         rationale: `Research and analysis task (using ${provider})`
       };
@@ -165,7 +180,7 @@ export class PromptRouter {
     );
   }
 
-  private getDefaultModel(provider: 'openai' | 'anthropic' | 'gemini'): string {
+  private getDefaultModel(provider: 'openai' | 'anthropic' | 'gemini' | 'perplexity'): string {
     switch (provider) {
       case 'openai':
         return 'gpt-4o';
@@ -173,6 +188,8 @@ export class PromptRouter {
         return 'claude-sonnet-4-20250514';
       case 'gemini':
         return 'gemini-1.5-pro-002';
+      case 'perplexity':
+        return 'llama-3.1-sonar-small-128k-online';
       default:
         return 'claude-sonnet-4-20250514';
     }

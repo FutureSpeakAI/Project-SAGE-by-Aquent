@@ -297,6 +297,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
         anthropic: AnthropicAPI.ANTHROPIC_MODELS,
         gemini: GeminiAPI.GEMINI_MODELS.chat,
+        perplexity: [
+          'llama-3.1-sonar-small-128k-online',
+          'llama-3.1-sonar-large-128k-online',
+          'llama-3.1-sonar-huge-128k-online'
+        ],
         imageGeneration: {
           openai: ['dall-e-3', 'dall-e-2'],
           gemini: GeminiAPI.GEMINI_MODELS.image
