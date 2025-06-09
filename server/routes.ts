@@ -387,39 +387,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/generate", async (req: Request, res: Response) => {
     try {
-      const { model, systemPrompt, userPrompt, temperature } = req.body;
+      const { model: requestModel, systemPrompt, userPrompt, temperature } = req.body;
       
       if (!userPrompt) {
         return res.status(400).json({ error: 'User prompt is required' });
       }
 
-      let result: string;
-      
-      if (model.startsWith('gpt-')) {
+      if (requestModel.startsWith('gpt-')) {
         return await generateContent(req, res);
-      } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(model)) {
+      } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(requestModel)) {
         try {
-          result = await AnthropicAPI.generateContent({
-            model,
+          const result = await AnthropicAPI.generateContent({
+            model: requestModel,
             prompt: userPrompt,
             systemPrompt,
             temperature,
             maxTokens: 4000
           });
+          res.json({ content: result });
         } catch (anthropicError: any) {
           console.log('Anthropic API unavailable, using OpenAI fallback');
-          // Fall through to OpenAI generation
-          model = 'gpt-4o';
+          req.body.model = 'gpt-4o';
+          return await generateContent(req, res);
         }
-      } else if (GeminiAPI.GEMINI_MODELS.chat.includes(model)) {
+      } else if (GeminiAPI.GEMINI_MODELS.chat.includes(requestModel)) {
         try {
-          result = await GeminiAPI.generateContent({
-            model,
+          const result = await GeminiAPI.generateContent({
+            model: requestModel,
             prompt: userPrompt,
             systemPrompt,
             temperature,
             maxTokens: 4000
           });
+          res.json({ content: result });
         } catch (geminiError: any) {
           console.log('Gemini API unavailable, using OpenAI fallback');
           req.body.model = 'gpt-4o';
@@ -428,8 +428,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         return res.status(400).json({ error: 'Unsupported model' });
       }
-      
-      res.json({ content: result });
     } catch (error) {
       console.error('Content generation error:', error);
       res.status(500).json({ error: 'Failed to generate content' });
