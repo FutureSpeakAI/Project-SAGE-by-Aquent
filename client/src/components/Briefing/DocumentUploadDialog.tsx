@@ -134,34 +134,6 @@ export function DocumentUploadDialog({
       setIsLoading(false);
     }
   };
-  
-  // Function to read file content based on type
-  const readFileContent = (file: File, fileExt: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        try {
-          // For simplicity, we're just returning the text content
-          // In a real app, you would have server-side processing for PDFs and DOCXs
-          if (fileExt === 'txt' || fileExt === 'pdf' || fileExt === 'docx') {
-            const content = e.target?.result as string;
-            resolve(content);
-          } else {
-            reject(new Error("Unsupported file format"));
-          }
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      reader.onerror = () => {
-        reject(new Error("Failed to read file"));
-      };
-      
-      reader.readAsText(file);
-    });
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -2,8 +2,12 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import util from 'util';
 import OpenAI from 'openai';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
