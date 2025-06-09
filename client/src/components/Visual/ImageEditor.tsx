@@ -19,6 +19,7 @@ import {
   Loader2,
   Download
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface ImageEditorProps {
   open: boolean;
@@ -49,95 +50,96 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
   const [zoom, setZoom] = useState(1);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [model, setModel] = useState("dall-e-2");
+  const [model, setModel] = useState("gpt-image-1");
   const [size, setSize] = useState("1024x1024");
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
   const [imageLoadStatus, setImageLoadStatus] = useState<"loading" | "loaded" | "error">("loading");
 
-  // Debug image URL
+  // Fetch available models
+  const { data: modelsData } = useQuery({
+    queryKey: ["/api/models"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Get image models for the dropdown
+  const getImageModels = () => {
+    const imageModels = ["gpt-image-1"]; // Primary editing model
+    
+    if (modelsData && typeof modelsData === 'object' && 'openai' in modelsData) {
+      const openaiModels = (modelsData as any).openai;
+      if (Array.isArray(openaiModels)) {
+        if (openaiModels.includes("dall-e-3")) imageModels.push("dall-e-3");
+        if (openaiModels.includes("dall-e-2")) imageModels.push("dall-e-2");
+      }
+    }
+    
+    return imageModels;
+  };
+
+  // Debug image URL and reset states when dialog opens
   useEffect(() => {
     if (open && imageUrl) {
-      console.log("ImageEditor received imageUrl:", imageUrl);
+      console.log("ImageEditor received imageUrl:", imageUrl.substring(0, 100) + "...");
       console.log("ImageEditor received imageId:", imageId);
       setImageLoadStatus("loading");
+      setEditedImageUrl(null);
+      setMaskData(null);
+      setPrompt("");
     }
   }, [open, imageUrl, imageId]);
 
   // Load and draw the original image on canvas
   useEffect(() => {
-    if (!open || !imageUrl || !canvasRef.current) return;
+    if (!open || !imageUrl || !canvasRef.current) {
+      return;
+    }
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    console.log("Loading image:", imageUrl);
+    console.log("Loading image:", imageUrl.substring(0, 50) + "...");
+    
+    // Set canvas size first
+    canvas.width = 600;
+    canvas.height = 600;
+    
+    // Clear canvas with light background
+    ctx.fillStyle = "#f8f9fa";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const img = new Image();
-    
-    // Try without crossOrigin first for local images
-    img.onload = () => {
-      console.log("Image loaded successfully:", img.width, "x", img.height);
-      setImageLoadStatus("loaded");
+    const loadImage = () => {
+      const img = new Image();
       
-      // Set fixed canvas size
-      canvas.width = 600;
-      canvas.height = 600;
-      
-      // Calculate scaling to fit image in canvas while maintaining aspect ratio
-      const scaleX = canvas.width / img.width;
-      const scaleY = canvas.height / img.height;
-      const scale = Math.min(scaleX, scaleY);
-      
-      const scaledWidth = img.width * scale;
-      const scaledHeight = img.height * scale;
-      const offsetX = (canvas.width - scaledWidth) / 2;
-      const offsetY = (canvas.height - scaledHeight) / 2;
-      
-      // Clear canvas with white background
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw image centered on canvas
-      ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
-      
-      console.log("Image drawn on canvas at:", offsetX, offsetY, scaledWidth, scaledHeight);
-    };
-    
-    img.onerror = (error) => {
-      console.error("Failed to load image:", imageUrl, error);
-      
-      // Try with crossOrigin for external images
-      const img2 = new Image();
-      img2.crossOrigin = "anonymous";
-      
-      img2.onload = () => {
-        console.log("Image loaded with CORS:", img2.width, "x", img2.height);
+      img.onload = () => {
+        console.log("Image loaded successfully:", img.width, "x", img.height);
+        setImageLoadStatus("loaded");
         
-        canvas.width = 600;
-        canvas.height = 600;
-        
-        const scaleX = canvas.width / img2.width;
-        const scaleY = canvas.height / img2.height;
+        // Calculate scaling to fit image in canvas while maintaining aspect ratio
+        const scaleX = canvas.width / img.width;
+        const scaleY = canvas.height / img.height;
         const scale = Math.min(scaleX, scaleY);
         
-        const scaledWidth = img2.width * scale;
-        const scaledHeight = img2.height * scale;
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
         const offsetX = (canvas.width - scaledWidth) / 2;
         const offsetY = (canvas.height - scaledHeight) / 2;
         
+        // Clear canvas with white background
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img2, offsetX, offsetY, scaledWidth, scaledHeight);
+        
+        // Draw image centered on canvas
+        ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+        
+        console.log("Image drawn successfully");
       };
       
-      img2.onerror = () => {
-        console.error("Failed to load image even with CORS:", imageUrl);
+      img.onerror = (error) => {
+        console.error("Failed to load image:", error);
         setImageLoadStatus("error");
         
-        // Show placeholder with error message
-        canvas.width = 600;
-        canvas.height = 600;
+        // Show error state on canvas
         ctx.fillStyle = "#f3f4f6";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
@@ -149,16 +151,23 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         
         toast({
           title: "Error loading image",
-          description: "Could not load the image for editing. Please try a different image.",
+          description: "Could not load the image for editing.",
           variant: "destructive"
         });
       };
       
-      img2.src = imageUrl;
+      // For data URLs, no need for crossOrigin
+      if (imageUrl.startsWith('data:')) {
+        img.src = imageUrl;
+      } else {
+        // For external URLs, try with CORS
+        img.crossOrigin = "anonymous";
+        img.src = imageUrl;
+      }
     };
-    
-    // Start loading the image
-    img.src = imageUrl;
+
+    // Small delay to ensure canvas is ready
+    setTimeout(loadImage, 100);
   }, [open, imageUrl, toast]);
 
   // Drawing functions for inpainting mask
@@ -521,8 +530,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="dall-e-2">DALL-E 2</SelectItem>
-                              <SelectItem value="dall-e-3">DALL-E 3</SelectItem>
+                              {getImageModels().map((modelName) => (
+                                <SelectItem key={modelName} value={modelName}>
+                                  {modelName === "gpt-image-1" ? "GPT Image-1 (Best for editing)" : 
+                                   modelName === "dall-e-3" ? "DALL-E 3" : 
+                                   modelName === "dall-e-2" ? "DALL-E 2" : modelName}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
