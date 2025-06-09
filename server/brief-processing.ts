@@ -83,22 +83,45 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
             if (pdfData.Pages) {
               pdfData.Pages.forEach(page => {
                 if (page.Texts) {
-                  page.Texts.forEach(textItem => {
+                  // Sort texts by position to maintain reading order
+                  const sortedTexts = page.Texts.sort((a, b) => {
+                    if (Math.abs(a.y - b.y) < 0.1) {
+                      return a.x - b.x; // Same line, sort by x position
+                    }
+                    return a.y - b.y; // Different lines, sort by y position
+                  });
+                  
+                  sortedTexts.forEach(textItem => {
                     if (textItem.R) {
+                      let itemText = '';
                       textItem.R.forEach(run => {
                         if (run.T) {
-                          text += decodeURIComponent(run.T);
+                          itemText += decodeURIComponent(run.T);
                         }
                       });
-                      text += ' '; // Add space after each text item, not each run
+                      
+                      // Only add space if there's actual content and we're not at start of line
+                      if (itemText.trim()) {
+                        if (text.length > 0 && !text.endsWith('\n') && !text.endsWith(' ')) {
+                          text += ' ';
+                        }
+                        text += itemText.trim();
+                      }
                     }
                   });
                   text += '\n';
                 }
               });
             }
-            // Clean up excessive spaces and normalize text
-            text = text.replace(/\s+/g, ' ').replace(/\n\s+/g, '\n').trim();
+            
+            // Aggressive cleanup of PDF extraction artifacts
+            text = text
+              .replace(/\s+/g, ' ')           // Multiple spaces to single space
+              .replace(/\n\s+/g, '\n')        // Remove leading spaces after newlines
+              .replace(/\s+\n/g, '\n')        // Remove trailing spaces before newlines
+              .replace(/\n{3,}/g, '\n\n')     // Multiple newlines to double newline
+              .trim();
+            
             resolve(text);
           } catch (error) {
             reject(error);

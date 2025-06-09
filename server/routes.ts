@@ -386,7 +386,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   app.post("/api/generate", async (req: Request, res: Response) => {
-    // Use the multi-provider routing instead of always defaulting to OpenAI
     try {
       const { model, systemPrompt, userPrompt, temperature } = req.body;
       
@@ -397,26 +396,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let result: string;
       
       if (model.startsWith('gpt-')) {
-        // OpenAI models - use existing function
         return await generateContent(req, res);
       } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(model)) {
-        // Anthropic models
-        result = await AnthropicAPI.generateContent({
-          model,
-          prompt: userPrompt,
-          systemPrompt,
-          temperature,
-          maxTokens: 4000
-        });
+        try {
+          result = await AnthropicAPI.generateContent({
+            model,
+            prompt: userPrompt,
+            systemPrompt,
+            temperature,
+            maxTokens: 4000
+          });
+        } catch (anthropicError: any) {
+          console.log('Anthropic API unavailable, using OpenAI fallback');
+          const fallbackReq = { ...req, body: { ...req.body, model: 'gpt-4o' } };
+          return await generateContent(fallbackReq, res);
+        }
       } else if (GeminiAPI.GEMINI_MODELS.chat.includes(model)) {
-        // Gemini models
-        result = await GeminiAPI.generateContent({
-          model,
-          prompt: userPrompt,
-          systemPrompt,
-          temperature,
-          maxTokens: 4000
-        });
+        try {
+          result = await GeminiAPI.generateContent({
+            model,
+            prompt: userPrompt,
+            systemPrompt,
+            temperature,
+            maxTokens: 4000
+          });
+        } catch (geminiError: any) {
+          console.log('Gemini API unavailable, using OpenAI fallback');
+          const fallbackReq = { ...req, body: { ...req.body, model: 'gpt-4o' } };
+          return await generateContent(fallbackReq, res);
+        }
       } else {
         return res.status(400).json({ error: 'Unsupported model' });
       }
