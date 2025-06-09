@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface VoiceControlsProps {
   onTranscript?: (text: string, isVoiceInitiated?: boolean) => void;
-  onSendMessage?: () => void; // Function to automatically send the message
+  onSendMessage?: () => void;
   lastMessage?: string;
   autoPlayResponses?: boolean;
   isVoiceInitiated?: boolean;
@@ -31,81 +31,97 @@ export function VoiceControls({
     voiceActivity,
     startListening,
     stopListening,
-    stopSpeaking,
     toggleIntelligentMode,
     startIntelligentListening,
     cleanup
   } = useVoiceInteraction({ 
-    autoPlay: false, // Disable built-in audio
+    autoPlay: false,
     intelligentMode: false
   });
 
-  // Separate simple audio system
   const { isPlaying, isGenerating, playText, stopAudio } = useSimpleAudio({
     voiceId: 'XB0fDUnXU5powFXDhCwa',
     playbackRate: 1.33
   });
 
-  // Track the last spoken message to prevent repeats
   const lastSpokenRef = useRef<string>('');
-  // Track voice conversation state
   const [isVoiceSessionActive, setIsVoiceSessionActive] = useState<boolean>(false);
 
-  // Auto-play new assistant messages using simple audio system
+  // Auto-play assistant messages
   useEffect(() => {
     if (lastMessage && autoPlayResponses && (isVoiceSessionActive || isVoiceInitiated) && !isListening && !isPlaying && lastMessage !== lastSpokenRef.current) {
-      // Clean the message text for better speech synthesis
       const cleanText = lastMessage
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
-        .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
-        .replace(/`(.*?)`/g, '$1') // Remove code backticks
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
-        .replace(/#{1,6}\s/g, '') // Remove headers
-        .replace(/\n+/g, ' ') // Replace newlines with spaces
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/#{1,6}\s/g, '')
+        .replace(/\n+/g, ' ')
         .trim();
       
-      if (cleanText && cleanText.length > 10) { // Only speak substantial messages
-        lastSpokenRef.current = lastMessage; // Mark this message as spoken
+      if (cleanText && cleanText.length > 10) {
+        lastSpokenRef.current = lastMessage;
         playText(cleanText);
       }
     }
   }, [lastMessage, autoPlayResponses, isVoiceSessionActive, isListening, isPlaying, playText]);
 
-  // Microphone control is now fully manual - no automatic reactivation
-
-  // Cleanup on unmount
   useEffect(() => {
     return cleanup;
   }, [cleanup]);
 
   const handleMicToggle = () => {
-    console.log('Mic toggle clicked, isListening:', isListening, 'voiceSessionActive:', isVoiceSessionActive);
-    if (isListening) {
-      // User wants to stop current listening
-      stopListening();
-    } else if (isVoiceSessionActive) {
-      // User wants to end the voice session
-      setIsVoiceSessionActive(false);
-      onVoiceStateChange?.(false);
-      console.log('Voice session ended by user');
-    } else if (onTranscript) {
-      // User wants to start voice conversation
-      console.log('Starting voice session...');
-      setIsVoiceSessionActive(true);
-      onVoiceStateChange?.(true);
-      startListening((transcript) => {
-        console.log('Transcript received:', transcript);
+    if (isIntelligentMode) {
+      if (isListening) {
+        stopListening();
+        setIsVoiceSessionActive(false);
+        onVoiceStateChange?.(false);
+      } else {
+        setIsVoiceSessionActive(true);
+        onVoiceStateChange?.(true);
         if (onTranscript) {
-          onTranscript(transcript, true);
+          startIntelligentListening((transcript) => {
+            onTranscript(transcript, true);
+          });
         }
-      });
+      }
+      return;
+    }
+
+    // Handle interruption
+    if (isPlaying || isGenerating) {
+      stopAudio();
+      if (isIntelligentMode && onTranscript) {
+        startIntelligentListening((transcript) => {
+          onTranscript(transcript, true);
+        });
+      }
+      return;
+    }
+
+    // Regular mic toggle
+    if (!isIntelligentMode) {
+      if (isListening) {
+        stopListening();
+        setIsVoiceSessionActive(false);
+        onVoiceStateChange?.(false);
+      } else {
+        setIsVoiceSessionActive(true);
+        onVoiceStateChange?.(true);
+        startListening((transcript) => {
+          if (onTranscript) {
+            onTranscript(transcript, true);
+          }
+          if (onSendMessage) {
+            onSendMessage();
+          }
+        });
+      }
     }
   };
 
   const handleSpeakerToggle = () => {
-    console.log('Speaker toggle clicked, isPlaying:', isPlaying, 'lastMessage:', lastMessage);
     if (isPlaying || isGenerating) {
-      console.log('Stopping speech...');
       stopAudio();
     } else if (lastMessage) {
       const cleanText = lastMessage
@@ -117,143 +133,88 @@ export function VoiceControls({
         .replace(/\n+/g, ' ')
         .trim();
       
-      console.log('Clean text for speech:', cleanText);
       if (cleanText) {
-        console.log('Starting text-to-speech...');
         playText(cleanText);
       }
     }
   };
 
-  // Handle intelligent mode activation
   const handleIntelligentModeToggle = () => {
     if (isIntelligentMode) {
-      toggleIntelligentMode();
-      setIsVoiceSessionActive(false);
-      onVoiceStateChange?.(false);
-    } else {
-      toggleIntelligentMode();
-      setIsVoiceSessionActive(true);
-      onVoiceStateChange?.(true);
-      // Start intelligent listening after a brief delay
-      setTimeout(() => {
-        if (onTranscript) {
-          startIntelligentListening();
-        }
-      }, 500);
-    }
-  };
-
-  // Unified microphone handler for intelligent voice mode
-  const handleUnifiedMicToggle = () => {
-    console.log('Unified mic toggle clicked, current states:', { 
-      isIntelligentMode, 
-      isListening, 
-      isSpeaking,
-      isGeneratingAudio,
-      isVoiceSessionActive 
-    });
-    
-    // Priority 1: If SAGE is speaking, interrupt immediately
-    if (isSpeaking || isGeneratingAudio) {
-      console.log('🛑 CLICK INTERRUPTION - Stopping SAGE speech immediately...');
-      stopSpeaking();
-      
-      // Immediately restart listening after click interruption
-      if (isIntelligentMode && onTranscript) {
-        console.log('🎤 Immediately restarting listening after click interruption...');
-        // Start listening immediately without delay
-        startIntelligentListening((transcript) => {
-          onTranscript(transcript, true);
-        });
-      }
-      return;
-    }
-    
-    if (!isIntelligentMode) {
-      // First click - activate intelligent mode
-      console.log('Activating intelligent voice mode...');
-      toggleIntelligentMode().then(() => {
-        setIsVoiceSessionActive(true);
-        onVoiceStateChange?.(true);
-        
-        // Start intelligent listening after intelligent mode is fully activated
-        setTimeout(() => {
-          if (onTranscript) {
-            console.log('Starting intelligent listening...');
-            startIntelligentListening((transcript) => {
-              console.log('Intelligent transcript received:', transcript);
-              onTranscript(transcript, true);
-            });
-          }
-        }, 1000); // Longer delay to ensure audio context is ready
-      });
-    } else if (isListening) {
-      // Currently listening - stop listening but stay in intelligent mode
-      console.log('Stopping current listening...');
-      stopListening();
-    } else {
-      // In intelligent mode but not listening - restart listening
-      console.log('Restarting intelligent listening...');
-      if (onTranscript) {
-        startIntelligentListening((transcript) => {
-          console.log('Intelligent transcript received:', transcript);
-          onTranscript(transcript, true);
-        });
+      if (isListening) {
+        stopListening();
+        setIsVoiceSessionActive(false);
+        onVoiceStateChange?.(false);
       }
     }
+    toggleIntelligentMode();
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Unified Microphone Button */}
+    <div className={cn("flex items-center gap-2", className)}>
+      {/* Microphone Button */}
       <Button
-        variant={isIntelligentMode ? "default" : "outline"}
+        variant={isListening ? "default" : "outline"}
         size="sm"
-        onClick={handleUnifiedMicToggle}
-        disabled={isSpeaking || isGeneratingAudio}
+        onClick={handleMicToggle}
         className={cn(
-          "relative",
-          isListening 
-            ? "bg-green-500 hover:bg-green-600 text-white" 
-            : isIntelligentMode 
-              ? "bg-blue-500 hover:bg-blue-600 text-white" 
-              : "hover:bg-gray-50"
+          "relative transition-all duration-200 min-w-[80px]",
+          isIntelligentMode && isListening && "bg-green-500 hover:bg-green-600 text-white",
+          isIntelligentMode && !isListening && "bg-blue-500 hover:bg-blue-600 text-white",
+          !isIntelligentMode && isListening && "bg-red-500 hover:bg-red-600 text-white"
         )}
-        title={
-          !isIntelligentMode 
-            ? "Click to start intelligent voice mode" 
-            : isListening 
-              ? "Click to stop listening"
-              : "Click to start listening"
-        }
       >
-        {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-        {isIntelligentMode && (
-          <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+        {isIntelligentMode ? (
+          <Brain className="h-4 w-4 mr-1" />
+        ) : (
+          isListening ? <MicOff className="h-4 w-4 mr-1" /> : <Mic className="h-4 w-4 mr-1" />
+        )}
+        {isIntelligentMode ? "Smart" : (isListening ? "Stop" : "Speak")}
+        
+        {voiceActivity.isUserSpeaking && (
+          <div className="absolute -top-1 -right-1">
+            <Waves className="h-3 w-3 text-green-400 animate-pulse" />
+          </div>
         )}
       </Button>
 
-      {/* Voice Activity Indicator - only show when in intelligent mode */}
-      {isIntelligentMode && (
-        <div className="flex items-center gap-1">
-          <Waves className={cn(
-            "h-3 w-3 transition-colors",
-            voiceActivity?.isUserSpeaking ? "text-green-500" : "text-gray-400"
-          )} />
-          <div className="w-8 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-green-500 transition-all duration-100 ease-out"
-              style={{ width: `${Math.min((voiceActivity?.audioLevel || 0) * 500, 100)}%` }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Speaker/Audio Button */}
+      <Button
+        variant={isPlaying ? "default" : "outline"}
+        size="sm"
+        onClick={handleSpeakerToggle}
+        className={cn(
+          "transition-all duration-200",
+          isPlaying && "bg-blue-500 hover:bg-blue-600 text-white"
+        )}
+        disabled={!lastMessage && !isPlaying}
+      >
+        {isGenerating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : isPlaying ? (
+          <VolumeX className="h-4 w-4" />
+        ) : (
+          <Volume2 className="h-4 w-4" />
+        )}
+      </Button>
 
-      {/* Status Badge - only show when actively listening */}
-      {isIntelligentMode && isListening && (
+      {/* Intelligent Mode Toggle */}
+      <Button
+        variant={isIntelligentMode ? "default" : "outline"}
+        size="sm"
+        onClick={handleIntelligentModeToggle}
+        className={cn(
+          "transition-all duration-200",
+          isIntelligentMode && "bg-purple-500 hover:bg-purple-600 text-white"
+        )}
+      >
+        <Brain className="h-4 w-4" />
+      </Button>
+
+      {/* Status Badge */}
+      {(isListening || isPlaying || isGenerating) && (
         <Badge variant="secondary" className="text-xs">
-          Listening
+          {isGenerating ? "Generating..." : isPlaying ? "Speaking" : "Listening"}
         </Badge>
       )}
     </div>
