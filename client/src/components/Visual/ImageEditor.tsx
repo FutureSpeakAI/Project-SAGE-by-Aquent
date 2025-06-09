@@ -52,6 +52,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [model, setModel] = useState("gpt-image-1");
   const [size, setSize] = useState("1024x1024");
+  const [quality, setQuality] = useState("standard");
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
   const [imageLoadStatus, setImageLoadStatus] = useState<"loading" | "loaded" | "error">("loading");
 
