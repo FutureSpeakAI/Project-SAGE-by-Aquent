@@ -167,8 +167,17 @@ export function VoiceControls({
     console.log('Unified mic toggle clicked, current states:', { 
       isIntelligentMode, 
       isListening, 
+      isSpeaking,
+      isGeneratingAudio,
       isVoiceSessionActive 
     });
+    
+    // Priority 1: If SAGE is speaking, interrupt immediately
+    if (isSpeaking || isGeneratingAudio) {
+      console.log('Interrupting SAGE speech...');
+      stopSpeaking();
+      return;
+    }
     
     if (!isIntelligentMode) {
       // First click - activate intelligent mode

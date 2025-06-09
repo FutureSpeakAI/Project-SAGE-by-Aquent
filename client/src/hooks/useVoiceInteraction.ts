@@ -40,11 +40,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
   const vadTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranscriptRef = useRef<string>('');
   
-  // Adaptive thresholds
+  // Adaptive thresholds - lowered interrupt threshold for better responsiveness
   const SILENCE_THRESHOLD = config.silenceThreshold || 2000; // 2 seconds default
-  const INTERRUPT_THRESHOLD = config.interruptThreshold || 0.05; // Audio level threshold
-  const NOISE_GATE = 0.01; // Minimum audio level to consider as speech
-  const VAD_CHECK_INTERVAL = 100; // Check voice activity every 100ms
+  const INTERRUPT_THRESHOLD = config.interruptThreshold || 0.02; // Lower threshold for easier interruption
+  const NOISE_GATE = 0.008; // Lower noise gate for better detection
+  const VAD_CHECK_INTERVAL = 50; // Check voice activity every 50ms for faster response
 
   // Initialize audio context for voice activity detection
   const initializeAudioContext = useCallback(async () => {
@@ -134,9 +134,18 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         };
       });
 
-      // Handle interruption outside of state setter
+      // Handle interruption outside of state setter - more aggressive detection
       if (isSpeaking && rms > INTERRUPT_THRESHOLD) {
+        console.log('Voice interruption detected! Stopping speech...', { rms, threshold: INTERRUPT_THRESHOLD });
         stopSpeaking();
+        
+        // In intelligent mode, immediately start listening for the user's input
+        if (isIntelligentMode) {
+          setTimeout(() => {
+            console.log('Restarting listening after interruption...');
+            startIntelligentListening();
+          }, 100);
+        }
       }
     };
 
