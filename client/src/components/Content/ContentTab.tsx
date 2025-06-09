@@ -25,6 +25,8 @@ interface ContentTabProps {
   temperature: number;
   setTemperature: (temp: number) => void;
   personas: SavedPersona[] | undefined;
+  isFullScreen?: boolean;
+  onToggleFullScreen?: () => void;
 }
 
 export function ContentTab({
@@ -44,7 +46,9 @@ export function ContentTab({
   setModel,
   temperature,
   setTemperature,
-  personas
+  personas,
+  isFullScreen = false,
+  onToggleFullScreen
 }: ContentTabProps) {
   return (
     <motion.div
@@ -65,30 +69,32 @@ export function ContentTab({
         </Button>
       </div>
       
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left side (input) */}
-        <div className="w-full lg:w-1/2 space-y-6">
-          <SystemPromptPanel
-            systemPrompt={systemPrompt}
-            setSystemPrompt={setSystemPrompt}
-            model={model}
-            setModel={setModel}
-            temperature={temperature}
-            setTemperature={setTemperature}
-            onOpenPersonaLibrary={handleOpenPersonaLibrary}
-          />
-          
-          <UserPromptPanel
-            userPrompt={userPrompt}
-            setUserPrompt={setUserPrompt}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-            onOpenPromptLibrary={handleOpenPromptLibrary}
-          />
-        </div>
+      <div className={`flex ${isFullScreen ? 'flex-col' : 'flex-col lg:flex-row'} gap-6`}>
+        {/* Left side (input) - hidden in full screen mode */}
+        {!isFullScreen && (
+          <div className="w-full lg:w-1/2 space-y-6">
+            <SystemPromptPanel
+              systemPrompt={systemPrompt}
+              setSystemPrompt={setSystemPrompt}
+              model={model}
+              setModel={setModel}
+              temperature={temperature}
+              setTemperature={setTemperature}
+              onOpenPersonaLibrary={handleOpenPersonaLibrary}
+            />
+            
+            <UserPromptPanel
+              userPrompt={userPrompt}
+              setUserPrompt={setUserPrompt}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              onOpenPromptLibrary={handleOpenPromptLibrary}
+            />
+          </div>
+        )}
         
         {/* Right side (output) */}
-        <div className="w-full lg:w-1/2">
+        <div className={`w-full ${isFullScreen ? 'w-full' : 'lg:w-1/2'}`}>
           <RichOutputPanel
             content={generatedContent}
             isLoading={isGenerating}
@@ -99,6 +105,8 @@ export function ContentTab({
             temperature={temperature}
             onOpenPersonaLibrary={handleOpenPersonaLibrary}
             personas={personas}
+            isFullScreen={isFullScreen}
+            onToggleFullScreen={onToggleFullScreen}
           />
         </div>
       </div>

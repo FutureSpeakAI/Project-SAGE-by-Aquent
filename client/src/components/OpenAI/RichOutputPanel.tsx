@@ -718,6 +718,26 @@ export function RichOutputPanel({
                 </Tooltip>
               </TooltipProvider>
 
+              {onToggleFullScreen && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={onToggleFullScreen} 
+                        className="text-white hover:bg-black/20"
+                      >
+                        {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{isFullScreen ? 'Exit full screen' : 'Full screen'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

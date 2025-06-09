@@ -194,12 +194,45 @@ export default function Home() {
   const [briefingContent, setBriefingContent] = useState("");
   const [imageLibraryOpen, setImageLibraryOpen] = useState(false);
   
+  // Full-screen editor state
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  
   // Store variation prompt directly instead of the full image data
   const [variationPrompt, setVariationPrompt] = useState<string | null>(null);
   
   // Handle briefing-related actions
   const handleOpenBriefingLibrary = () => {
     setBriefingLibraryOpen(true);
+  };
+  
+  // Handle full-screen toggle
+  const handleToggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
+  
+  // Handle briefing selection with auto-generation
+  const handleSelectBriefingForAutoGeneration = (content: string) => {
+    setBriefingContent(content);
+    setBriefingLibraryOpen(false);
+    
+    // Auto-populate the user prompt with briefing content
+    setUserPrompt(`Based on the following creative brief, create the requested deliverables:\n\n${content}`);
+    
+    // Switch to content tab if not already there
+    setActiveTab(AppTab.CONTENT);
+    
+    // Enable full-screen mode
+    setIsFullScreen(true);
+    
+    // Auto-generate content
+    setTimeout(() => {
+      handleGenerate();
+    }, 500); // Small delay to allow UI to update
+    
+    toast({
+      title: "Briefing Selected",
+      description: "Auto-generating content in full-screen mode...",
+    });
   };
   
   // Handle image-related actions
