@@ -199,7 +199,7 @@ IMPORTANT: You have just received this briefing. Acknowledge its receipt and off
 
     generateContentMutation.mutate({
       model: "gpt-4o",
-      systemPrompt,
+      systemPrompt: getSystemPrompt(),
       userPrompt: userPromptWithContext,
       temperature: 0.7,
     });
@@ -220,6 +220,21 @@ IMPORTANT: You have just received this briefing. Acknowledge its receipt and off
         description: "The optimized prompt has been applied to the image generator.",
       });
     }
+  };
+
+  const handleBriefingProcessed = (briefContent: string, briefTitle: string) => {
+    setBriefingContext({ content: briefContent, title: briefTitle });
+    
+    // Add a message to the conversation acknowledging the briefing
+    const acknowledgmentMessage = `I've received your briefing "${briefTitle}". Let me analyze it and suggest specific visual elements we can create for this project. What type of visual content would you like to start with?`;
+    
+    setMessages(prev => [
+      ...prev,
+      { role: "assistant", content: acknowledgmentMessage }
+    ]);
+    
+    // Switch to conversation tab
+    setActiveTab("conversation");
   };
 
   const handleStartOver = () => {
@@ -335,7 +350,7 @@ IMPORTANT: You have just received this briefing. Acknowledge its receipt and off
                         
                         generateContentMutation.mutate({
                           model: "gpt-4o",
-                          systemPrompt: systemPrompt,
+                          systemPrompt: getSystemPrompt(),
                           userPrompt: newMessage,
                           temperature: 0.7,
                         });
@@ -405,6 +420,7 @@ IMPORTANT: You have just received this briefing. Acknowledge its receipt and off
                     onSwitchToConversation();
                   }
                 }}
+                onBriefingProcessed={handleBriefingProcessed}
               />
             </TabsContent>
           </Tabs>
