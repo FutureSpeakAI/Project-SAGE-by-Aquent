@@ -6,9 +6,11 @@ import { fileURLToPath } from 'url';
 import util from 'util';
 import OpenAI from 'openai';
 import mammoth from 'mammoth';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 // Configure OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
