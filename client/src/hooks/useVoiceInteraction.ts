@@ -432,6 +432,14 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
         console.log('Audio playback completed');
+        
+        // Resume voice detection after SAGE finishes speaking
+        if (isIntelligentMode) {
+          console.log('Resuming voice detection after SAGE response');
+          setTimeout(() => {
+            startVoiceActivityDetection();
+          }, 100);
+        }
       };
 
       audioRef.current.onerror = (error) => {
@@ -439,6 +447,14 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         setIsSpeaking(false);
         setIsGeneratingAudio(false);
         URL.revokeObjectURL(audioUrl);
+        
+        // Resume voice detection if it was paused
+        if (isIntelligentMode) {
+          console.log('Resuming voice detection after audio error');
+          setTimeout(() => {
+            startVoiceActivityDetection();
+          }, 100);
+        }
         
         // Attempt recovery by recreating audio element
         setTimeout(() => {
@@ -449,7 +465,16 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       };
 
       if (config.autoPlay !== false) {
-        // Start playback and set rate after audio loads
+        // Pause voice detection during SAGE response
+        if (isIntelligentMode) {
+          console.log('Pausing voice detection for SAGE response');
+          if (vadTimerRef.current) {
+            clearInterval(vadTimerRef.current);
+            vadTimerRef.current = null;
+          }
+        }
+        
+        // Start playbook and set rate after audio loads
         audioRef.current.onloadedmetadata = () => {
           if (audioRef.current) {
             audioRef.current.playbackRate = 1.33; // 33% faster
@@ -460,6 +485,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         audioRef.current.oncanplay = () => {
           setIsGeneratingAudio(false);
           setIsSpeaking(true);
+          console.log('Starting SAGE audio playback');
           audioRef.current?.play().catch((error) => {
             console.warn('Audio play failed, retrying:', error);
             // Retry playback once
@@ -516,8 +542,16 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       setIsSpeaking(false);
       setIsGeneratingAudio(false);
       console.log('Audio stopped cleanly');
+      
+      // Resume voice detection if it was paused due to SAGE speaking
+      if (isIntelligentMode && !vadTimerRef.current) {
+        console.log('Resuming voice detection after manual stop');
+        setTimeout(() => {
+          startVoiceActivityDetection();
+        }, 100);
+      }
     }
-  }, []);
+  }, [isIntelligentMode, startVoiceActivityDetection]);
 
   // Toggle intelligent mode with proper audio context initialization
   const toggleIntelligentMode = useCallback(async () => {
