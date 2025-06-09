@@ -67,6 +67,7 @@ export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation }: Imag
   const [currentMessage, setCurrentMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
+  const [activeTab, setActiveTab] = useState("conversation");
   
   const { toast } = useToast();
 
@@ -226,7 +227,7 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
     >
       <div className="grid grid-cols-1 gap-6">
         <Card className="p-4 shadow-md">
-          <Tabs defaultValue="conversation" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-4 grid grid-cols-2">
               <TabsTrigger value="conversation" className="flex items-center">
                 <SageLogo size={16} className="mr-2" />
@@ -383,7 +384,12 @@ REMEMBER: Always respond conversationally as if in a real chat. Ask short, focus
             <TabsContent value="brief">
               <BriefInterpreter 
                 onPromptGenerated={onApplyPrompt} 
-                onSwitchToConversation={onSwitchToConversation || (() => {})}
+                onSwitchToConversation={() => {
+                  setActiveTab("conversation");
+                  if (onSwitchToConversation) {
+                    onSwitchToConversation();
+                  }
+                }}
               />
             </TabsContent>
           </Tabs>
