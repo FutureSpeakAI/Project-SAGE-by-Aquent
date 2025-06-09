@@ -210,30 +210,7 @@ export default function Home() {
     setIsFullScreen(!isFullScreen);
   };
   
-  // Handle briefing selection with auto-generation
-  const handleSelectBriefingForAutoGeneration = (content: string) => {
-    setBriefingContent(content);
-    setBriefingLibraryOpen(false);
-    
-    // Auto-populate the user prompt with briefing content
-    setUserPrompt(`Based on the following creative brief, create the requested deliverables:\n\n${content}`);
-    
-    // Switch to content tab if not already there
-    setActiveTab(AppTab.CONTENT);
-    
-    // Enable full-screen mode
-    setIsFullScreen(true);
-    
-    // Auto-generate content
-    setTimeout(() => {
-      handleGenerate();
-    }, 500); // Small delay to allow UI to update
-    
-    toast({
-      title: "Briefing Selected",
-      description: "Auto-generating content in full-screen mode...",
-    });
-  };
+
   
   // Handle image-related actions
   const handleOpenImageLibrary = () => {
@@ -361,10 +338,18 @@ export default function Home() {
     // Switch to the Content tab after selecting a briefing
     setActiveTab(AppTab.CONTENT);
     
-    // Show a toast notification with clearer instructions
+    // Enable full-screen mode for content generation
+    setIsFullScreen(true);
+    
+    // Auto-generate content after a brief delay
+    setTimeout(() => {
+      handleGenerate();
+    }, 800);
+    
+    // Show a toast notification
     toast({
       title: "Briefing Selected",
-      description: `The briefing "${content.title}" has been loaded as your prompt. Click "Generate" to create content based on these instructions.`,
+      description: "Auto-generating content in full-screen mode...",
     });
     
     setBriefingLibraryOpen(false);
@@ -476,6 +461,8 @@ export default function Home() {
                   temperature={temperature}
                   setTemperature={setTemperature}
                   personas={personas}
+                  isFullScreen={isFullScreen}
+                  onToggleFullScreen={handleToggleFullScreen}
                 />
               ) : activeTab === AppTab.VISUAL ? (
                 <ErrorBoundary
