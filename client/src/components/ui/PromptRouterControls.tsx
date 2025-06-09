@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useModels } from '@/hooks/useModels';
+import { useModels, getModelDisplayName } from '@/hooks/useModels';
 
 export interface PromptRouterConfig {
   enabled: boolean;
@@ -28,6 +28,8 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
     manualModel: undefined,
     forceReasoning: undefined
   });
+  
+  const { data: models, isLoading: modelsLoading } = useModels();
 
   const updateConfig = (updates: Partial<PromptRouterConfig>) => {
     const newConfig = { ...config, ...updates };
@@ -35,17 +37,27 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
     onConfigChange(newConfig);
   };
 
+  const getModelOptions = (provider: 'openai' | 'anthropic' | 'gemini') => {
+    if (!models) return [];
+    
+    return models[provider].map(model => ({
+      value: model,
+      label: getModelDisplayName(model)
+    }));
+  };
+
   const handleProviderChange = (provider: string) => {
-    if (provider === '') {
+    if (provider === '' || provider === 'auto') {
       updateConfig({
         manualProvider: undefined,
         manualModel: undefined
       });
     } else {
       const typedProvider = provider as 'openai' | 'anthropic' | 'gemini';
+      const modelOptions = getModelOptions(typedProvider);
       updateConfig({
         manualProvider: typedProvider,
-        manualModel: MODEL_OPTIONS[typedProvider][0].value
+        manualModel: modelOptions.length > 0 ? modelOptions[0].value : undefined
       });
     }
   };
@@ -96,20 +108,20 @@ export function PromptRouterControls({ onConfigChange, className }: PromptRouter
               </Select>
             </div>
 
-            {config.manualProvider && (
+            {config.manualProvider && !modelsLoading && (
               <div className="space-y-2">
                 <Label htmlFor="manual-model" className="text-sm">
                   Model
                 </Label>
                 <Select
-                  value={config.manualModel || MODEL_OPTIONS[config.manualProvider][0].value}
+                  value={config.manualModel || getModelOptions(config.manualProvider)[0]?.value}
                   onValueChange={(model) => updateConfig({ manualModel: model })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {MODEL_OPTIONS[config.manualProvider].map(model => (
+                    {getModelOptions(config.manualProvider).map((model) => (
                       <SelectItem key={model.value} value={model.value}>
                         {model.label}
                       </SelectItem>
