@@ -61,10 +61,12 @@ export function RoutingValidationPanel() {
   const runValidationSuite = async () => {
     setIsRunningValidation(true);
     try {
-      const response = await apiRequest('/api/validate-routing', {
-        method: 'POST'
+      const response = await fetch('/api/validate-routing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
       });
-      setValidationResults(response);
+      const data = await response.json();
+      setValidationResults(data);
     } catch (error) {
       console.error('Validation failed:', error);
     } finally {
@@ -74,8 +76,9 @@ export function RoutingValidationPanel() {
 
   const checkProviderHealth = async () => {
     try {
-      const response = await apiRequest('/api/provider-health');
-      setProviderHealth(response);
+      const response = await fetch('/api/provider-health');
+      const data = await response.json();
+      setProviderHealth(data);
     } catch (error) {
       console.error('Health check failed:', error);
     }
@@ -85,9 +88,10 @@ export function RoutingValidationPanel() {
     if (!customQuery.trim()) return;
     
     try {
-      const response = await apiRequest('/api/test-routing-decision', {
+      const response = await fetch('/api/test-routing-decision', {
         method: 'POST',
-        body: {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           query: customQuery,
           context: customContext,
           config: testConfig.enabled ? {
@@ -95,9 +99,10 @@ export function RoutingValidationPanel() {
             ...(testConfig.manualProvider && { manualProvider: testConfig.manualProvider }),
             forceReasoning: testConfig.forceReasoning
           } : { enabled: false }
-        }
+        })
       });
-      setCustomTestResult(response);
+      const data = await response.json();
+      setCustomTestResult(data);
     } catch (error) {
       console.error('Custom test failed:', error);
     }
