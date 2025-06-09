@@ -92,8 +92,11 @@ export default function Home() {
     },
   });
 
-  const handleGenerate = () => {
-    if (!userPrompt.trim()) {
+  const handleGenerate = (customPrompt?: string, customSystemPrompt?: string) => {
+    const promptToUse = customPrompt || userPrompt;
+    const systemPromptToUse = customSystemPrompt || systemPrompt;
+    
+    if (!promptToUse.trim()) {
       toast({
         title: "Empty Prompt",
         description: "Please enter a prompt to generate content.",
@@ -104,8 +107,8 @@ export default function Home() {
 
     generateMutation.mutate({
       model,
-      systemPrompt,
-      userPrompt,
+      systemPrompt: systemPromptToUse,
+      userPrompt: promptToUse,
       temperature,
     });
   };
@@ -329,10 +332,11 @@ export default function Home() {
     // Add a clear instruction prefix to ensure the AI doesn't just repeat the briefing
     const enhancedPrompt = `CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT):\n\n${plainTextContent}\n\nBased on the creative brief above, create the actual deliverable content. Do not restate or summarize the brief. Produce only the final content as specified in the brief.`;
     
-    // Set the system prompt to reinforce the instruction
-    setSystemPrompt("You are a professional content creator. Your task is to create original content based on creative briefs. DO NOT repeat or summarize the brief itself. Produce ONLY the deliverable content described in the brief.");
+    // Create the system prompt for content creation
+    const contentSystemPrompt = "You are a professional content creator. Your task is to create original content based on creative briefs. DO NOT repeat or summarize the brief itself. Produce ONLY the deliverable content described in the brief.";
     
-    // Set the enhanced user prompt
+    // Set the prompts in state for display
+    setSystemPrompt(contentSystemPrompt);
     setUserPrompt(enhancedPrompt);
     
     // Switch to the Content tab after selecting a briefing
@@ -341,10 +345,10 @@ export default function Home() {
     // Enable full-screen mode for content generation
     setIsFullScreen(true);
     
-    // Auto-generate content after a brief delay
+    // Auto-generate content directly with the prompts (no delay needed)
     setTimeout(() => {
-      handleGenerate();
-    }, 800);
+      handleGenerate(enhancedPrompt, contentSystemPrompt);
+    }, 500);
     
     // Show a toast notification
     toast({
