@@ -226,7 +226,7 @@ export async function executeComprehensiveValidation() {
   }
   
   // Analyze consistency
-  const providers = [...new Set(sameQueryTests.map(t => t.provider))];
+  const providers = Array.from(new Set(sameQueryTests.map(t => t.provider)));
   const avgConsistencyResponseTime = sameQueryTests.reduce((sum, t) => sum + t.responseTime, 0) / sameQueryTests.length;
   
   console.log(`Consistency Test Results (5 iterations):`);

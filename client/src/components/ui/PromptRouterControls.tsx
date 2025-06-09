@@ -6,15 +6,8 @@ import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useModels } from '@/hooks/useModels';
 import { getModelDisplayName } from '@/utils/modelDisplay';
-import { useGlobalRoutingConfig } from '@/hooks/useGlobalRoutingConfig';
+import { useGlobalRoutingConfig, type PromptRouterConfig } from '@/hooks/useGlobalRoutingConfig';
 import { ModelSelector } from '@/components/ui/ModelSelector';
-
-export interface PromptRouterConfig {
-  enabled: boolean;
-  manualProvider?: 'openai' | 'anthropic' | 'gemini';
-  manualModel?: string;
-  forceReasoning?: boolean;
-}
 
 interface PromptRouterControlsProps {
   onConfigChange?: (config: PromptRouterConfig) => void;

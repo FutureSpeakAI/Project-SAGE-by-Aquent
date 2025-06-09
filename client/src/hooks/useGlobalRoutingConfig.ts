@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
 
 export interface PromptRouterConfig {
   enabled: boolean;
-  manualProvider?: 'openai' | 'anthropic' | 'gemini';
+  manualProvider?: 'openai' | 'anthropic' | 'gemini' | 'perplexity';
   manualModel?: string;
   forceReasoning?: boolean;
 }

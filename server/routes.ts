@@ -374,6 +374,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature,
           maxTokens: 4000
         });
+      } else if (model.includes('sonar') || model.includes('llama-3.1')) {
+        // Perplexity models - use fetch to call Perplexity API directly
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: temperature || 0.7,
+            max_tokens: 4000
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        result = data.choices[0].message.content;
       } else {
         return res.status(400).json({ error: 'Unsupported model' });
       }
@@ -1430,7 +1455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         consistencyResults.push(decision.provider);
       }
       
-      const uniqueProviders = [...new Set(consistencyResults)];
+      const uniqueProviders = Array.from(new Set(consistencyResults));
       
       // Generate validation summary
       const summary = {
