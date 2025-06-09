@@ -303,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'llama-3.1-sonar-huge-128k-online'
         ],
         imageGeneration: {
-          openai: ['dall-e-3', 'dall-e-2'],
+          openai: ['gpt-image-1', 'dall-e-3', 'dall-e-2'],
           gemini: GeminiAPI.GEMINI_MODELS.image
         }
       };

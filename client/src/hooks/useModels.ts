@@ -45,6 +45,7 @@ export const getModelDisplayName = (model: string): string => {
     'llama-3.1-sonar-huge-128k-online': 'Llama 3.1 Sonar Huge (Web)',
     'dall-e-3': 'DALL-E 3',
     'dall-e-2': 'DALL-E 2',
+    'gpt-image-1': 'GPT Image 1',
     'imagen-3.0-generate-001': 'Imagen 3.0',
     'imagen-3.0-fast-generate-001': 'Imagen 3.0 Fast'
   };

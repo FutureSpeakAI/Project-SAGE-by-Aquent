@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -58,17 +58,38 @@ interface ImagePromptAgentProps {
 }
 
 export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation }: ImagePromptAgentProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hello! I'm SAGE, your strategic marketing collaborator with voice processing capabilities. I can help you craft optimized prompts for image generation that align with your project goals. I have access to our previous conversations and can guide you through the visual creation process. What kind of visual content are you looking to create?",
-    },
-  ]);
+  // Initialize messages from localStorage or default
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const savedMessages = localStorage.getItem('sage-visual-conversation');
+      if (savedMessages) {
+        return JSON.parse(savedMessages);
+      }
+    } catch (error) {
+      console.warn('Failed to load saved conversation:', error);
+    }
+    return [
+      {
+        role: "assistant",
+        content: "Hello! I'm SAGE, your strategic marketing collaborator with voice processing capabilities. I can help you craft optimized prompts for image generation that align with your project goals. I have access to our previous conversations and can guide you through the visual creation process. What kind of visual content are you looking to create?",
+      },
+    ];
+  });
+  
   const [currentMessage, setCurrentMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
   const [activeTab, setActiveTab] = useState("conversation");
   const [briefingContext, setBriefingContext] = useState<{content: string, title: string} | null>(null);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('sage-visual-conversation', JSON.stringify(messages));
+    } catch (error) {
+      console.warn('Failed to save conversation:', error);
+    }
+  }, [messages]);
   
   const { toast } = useToast();
 
@@ -238,13 +259,21 @@ IMPORTANT: You have just received this briefing. Acknowledge its receipt and off
   };
 
   const handleStartOver = () => {
-    setMessages([
-      {
-        role: "assistant",
-        content: "Let's start over. What kind of image would you like to create today?",
-      },
-    ]);
+    const defaultMessage = {
+      role: "assistant" as const,
+      content: "Hello! I'm SAGE, your strategic marketing collaborator with voice processing capabilities. I can help you craft optimized prompts for image generation that align with your project goals. I have access to our previous conversations and can guide you through the visual creation process. What kind of visual content are you looking to create?",
+    };
+    
+    setMessages([defaultMessage]);
     setFinalPrompt("");
+    setBriefingContext(null);
+    
+    // Clear localStorage
+    try {
+      localStorage.removeItem('sage-visual-conversation');
+    } catch (error) {
+      console.warn('Failed to clear conversation history:', error);
+    }
   };
 
   return (
