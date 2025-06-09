@@ -67,12 +67,19 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
       let text = fileBuffer.toString('utf8');
       
       // Clean up excessive character spacing that may exist in source text
+      // This handles the specific "S a m p l e" pattern where each character is separated by spaces
       text = text
-        .replace(/([a-zA-Z])\s([a-zA-Z])\s([a-zA-Z])/g, '$1$2$3')  // Remove single spaces between individual letters (3+ pattern)
-        .replace(/([a-zA-Z])\s{2,}([a-zA-Z])/g, '$1 $2')          // Multiple spaces between letters to single space
-        .replace(/\s{3,}/g, ' ')                                   // 3+ consecutive spaces to single space
-        .replace(/\n\s+/g, '\n')                                   // Remove leading spaces after newlines
-        .replace(/\s+\n/g, '\n')                                   // Remove trailing spaces before newlines
+        // Pattern: letter + space + letter + space + letter (and so on)
+        // This will match sequences like "S a m p l e" and replace with "Sample"
+        .replace(/([a-zA-Z])\s+([a-zA-Z])\s+([a-zA-Z])(\s+[a-zA-Z])*/g, (match) => {
+          // Remove all spaces within the matched pattern
+          return match.replace(/\s+/g, '');
+        })
+        // Clean up any remaining multiple spaces
+        .replace(/\s{2,}/g, ' ')
+        // Remove leading/trailing spaces around newlines
+        .replace(/\n\s+/g, '\n')
+        .replace(/\s+\n/g, '\n')
         .trim();
       
       return text;
