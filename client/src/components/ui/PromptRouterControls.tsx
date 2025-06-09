@@ -24,19 +24,13 @@ interface PromptRouterControlsProps {
 
 export function PromptRouterControls({ onConfigChange, className }: PromptRouterControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [config, setConfig] = useState<PromptRouterConfig>({
-    enabled: true,
-    manualProvider: undefined,
-    manualModel: undefined,
-    forceReasoning: undefined
-  });
-  
+  const { config, updateConfig: updateGlobalConfig } = useGlobalRoutingConfig();
   const { data: models, isLoading: modelsLoading } = useModels();
 
   const updateConfig = (updates: Partial<PromptRouterConfig>) => {
     const newConfig = { ...config, ...updates };
-    setConfig(newConfig);
-    onConfigChange(newConfig);
+    updateGlobalConfig(updates);
+    onConfigChange?.(newConfig);
   };
 
   const getModelOptions = (provider: 'openai' | 'anthropic' | 'gemini') => {
