@@ -418,14 +418,8 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       }
 
       audioRef.current = new Audio(audioUrl);
-      
-      // Configure audio element for reliable playback
       audioRef.current.preload = 'auto';
-      audioRef.current.crossOrigin = 'anonymous';
-      audioRef.current.autoplay = false; // Explicit control over playback
-      
-      // Test audio element creation
-      console.log('Audio element created:', !!audioRef.current, 'URL length:', audioUrl.length);
+      audioRef.current.playbackRate = 1.33; // 33% faster
       
       audioRef.current.oncanplaythrough = () => {
         console.log('Audio ready for playback');
@@ -437,86 +431,46 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
         console.log('Audio playback completed');
-        
-        // Resume voice detection after SAGE finishes speaking
-        if (isIntelligentMode) {
-          console.log('Resuming voice detection after SAGE response');
-          setTimeout(() => {
-            startVoiceActivityDetection();
-          }, 100);
-        }
       };
 
-      audioRef.current.onerror = (error) => {
-        console.warn('Audio playback error, attempting recovery:', error);
+      audioRef.current.onerror = () => {
         setIsSpeaking(false);
         setIsGeneratingAudio(false);
         URL.revokeObjectURL(audioUrl);
-        
-        // Resume voice detection if it was paused
-        if (isIntelligentMode) {
-          console.log('Resuming voice detection after audio error');
-          setTimeout(() => {
-            startVoiceActivityDetection();
-          }, 100);
-        }
-        
-        // Attempt recovery by recreating audio element
-        setTimeout(() => {
-          if (audioRef.current) {
-            audioRef.current = null;
-          }
-        }, 100);
+        toast({
+          title: "Audio playback error",
+          description: "Failed to play generated speech",
+          variant: "destructive"
+        });
       };
 
       if (config.autoPlay !== false) {
-        // Pause voice detection during SAGE response
-        if (isIntelligentMode) {
-          console.log('Pausing voice detection for SAGE response');
-          if (vadTimerRef.current) {
-            clearInterval(vadTimerRef.current);
-            vadTimerRef.current = null;
-          }
-        }
-        
-        // Start playbook and set rate after audio loads
-        audioRef.current.onloadedmetadata = () => {
-          if (audioRef.current) {
-            audioRef.current.playbackRate = 1.33; // 33% faster
-            console.log('Playback rate set to:', audioRef.current.playbackRate);
-          }
-        };
+        console.log('Setting up auto-play audio handlers');
         
         audioRef.current.oncanplay = () => {
-          console.log('Audio can play - triggering immediate playback');
+          console.log('Audio can play - attempting playback');
           setIsGeneratingAudio(false);
           setIsSpeaking(true);
           
-          // Immediate playback attempt
-          if (audioRef.current) {
-            console.log('Attempting audio playback...');
-            audioRef.current.play().then(() => {
-              console.log('Audio started successfully');
+          const playPromise = audioRef.current?.play();
+          if (playPromise) {
+            playPromise.then(() => {
+              console.log('Audio playback started successfully');
             }).catch((error) => {
-              console.error('Initial playback failed:', error);
-              
-              // Try alternative approach - recreate audio element
-              setTimeout(() => {
-                if (audioRef.current && audioRef.current.src) {
-                  console.log('Retrying with fresh audio element...');
-                  const currentSrc = audioRef.current.src;
-                  audioRef.current.load();
-                  audioRef.current.play().catch((retryError) => {
-                    console.error('Retry also failed:', retryError);
-                    setIsSpeaking(false);
-                  });
-                }
-              }, 50);
+              console.error('Audio playback failed:', error);
+              setIsSpeaking(false);
             });
           }
         };
         
+        audioRef.current.onloadeddata = () => {
+          console.log('Audio data loaded, duration:', audioRef.current?.duration);
+        };
+        
         audioRef.current.load();
+        console.log('Audio element loading initiated');
+      } else {
+        console.log('Auto-play disabled by config');
       }
 
     } catch (error: any) {
@@ -602,24 +556,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     }
   }, [isIntelligentMode, isListening, stopListening, initializeAudioContext, startVoiceActivityDetection]);
 
-  // Ensure voice activity detection runs when in intelligent mode
-  useEffect(() => {
-    if (isIntelligentMode && analyserRef.current && !vadTimerRef.current) {
-      console.log('🟢 Starting voice activity detection for intelligent mode...');
-      startVoiceActivityDetection();
-    } else if (!isIntelligentMode && vadTimerRef.current) {
-      console.log('🔴 Stopping voice activity detection...');
-      clearInterval(vadTimerRef.current);
-      vadTimerRef.current = null;
-    }
-    
-    return () => {
-      if (vadTimerRef.current) {
-        clearInterval(vadTimerRef.current);
-        vadTimerRef.current = null;
-      }
-    };
-  }, [isIntelligentMode, startVoiceActivityDetection]);
+  // Remove automatic microphone reactivation - only manual control
 
   // Enhanced cleanup function with safe AudioContext handling
   const cleanup = useCallback(() => {

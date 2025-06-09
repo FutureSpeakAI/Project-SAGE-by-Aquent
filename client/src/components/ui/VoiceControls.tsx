@@ -67,29 +67,7 @@ export function VoiceControls({
     }
   }, [lastMessage, autoPlayResponses, isVoiceSessionActive, isListening, isSpeaking, speakText]);
 
-  // Auto-reactivate microphone only after SAGE finishes speaking (not on errors or initial load)
-  const lastSpeakingRef = useRef(false);
-  
-  useEffect(() => {
-    // Track when SAGE just finished speaking
-    if (lastSpeakingRef.current && !isSpeaking && !isGeneratingAudio) {
-      console.log('SAGE finished speaking, will reactivate microphone soon...');
-      if (isVoiceSessionActive && !isListening && onTranscript) {
-        const timer = setTimeout(() => {
-          if (isVoiceSessionActive && !isSpeaking && !isGeneratingAudio && !isListening && onTranscript) {
-            console.log('Auto-reactivating microphone after SAGE finished speaking...');
-            startListening((transcript) => {
-              if (onTranscript) {
-                onTranscript(transcript, isVoiceSessionActive);
-              }
-            });
-          }
-        }, 1500);
-        return () => clearTimeout(timer);
-      }
-    }
-    lastSpeakingRef.current = isSpeaking || isGeneratingAudio;
-  }, [isSpeaking, isGeneratingAudio, isVoiceSessionActive, isListening, onTranscript, startListening]);
+  // Microphone control is now fully manual - no automatic reactivation
 
   // Cleanup on unmount
   useEffect(() => {
