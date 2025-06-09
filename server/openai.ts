@@ -59,8 +59,12 @@ export const generateContent = async (req: Request, res: Response) => {
       openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
     }
     
-    // Initialize the OpenAI client
-    const openai = new OpenAI(openaiConfig);
+    // Initialize the OpenAI client with timeout configuration
+    const openai = new OpenAI({
+      ...openaiConfig,
+      timeout: 30000, // 30 second timeout
+      maxRetries: 2,
+    });
     
     // Check if this is a request from the image prompt agent
     const isImagePromptAgent = systemPrompt.includes("CONVERSATIONAL DIALOGUE") && 
@@ -81,8 +85,8 @@ export const generateContent = async (req: Request, res: Response) => {
       enhancedUserPrompt += "\n\nProvide a detailed, comprehensive response.";
     }
     
-    // Create completion with the OpenAI SDK
-    const completion = await openai.chat.completions.create({
+    // Create completion with timeout protection
+    const completionPromise = openai.chat.completions.create({
       model: model || "gpt-4o",
       messages: [
         {
@@ -97,6 +101,13 @@ export const generateContent = async (req: Request, res: Response) => {
       temperature: temperature || 0.7,
       max_tokens: 8000, // Further increased token limit to allow for approximately 6000 words
     });
+
+    // Add additional timeout protection
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout after 45 seconds')), 45000);
+    });
+
+    const completion = await Promise.race([completionPromise, timeoutPromise]) as any;
     
     content = completion.choices[0].message.content || "";
     
