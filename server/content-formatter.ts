@@ -76,33 +76,10 @@ export class ContentFormatter {
 <p><em>Note: This is basic content generated during API unavailability. For customized, high-quality posts, please try again when services are stable.</em></p>`;
     }
 
-    const topic = prompt.toLowerCase().includes('oreal') ? "L'Oréal" : 
-                 prompt.toLowerCase().includes('campaign') ? "Campaign" : "Content";
-    
+    // This should never execute since we have comprehensive social media fallback above
     return `
-<h1>${topic} Marketing Brief</h1>
-
-<h2>Campaign Overview</h2>
-<p>Professional marketing campaign designed to engage target audiences and drive measurable results.</p>
-
-<h2>Key Objectives</h2>
-<ul>
-<li>Increase brand awareness and recognition</li>
-<li>Drive customer engagement and interaction</li>
-<li>Generate qualified leads and conversions</li>
-<li>Build long-term customer relationships</li>
-</ul>
-
-<h2>Target Audience</h2>
-<p>Primary demographic segments based on market research and customer analysis.</p>
-
-<h2>Creative Strategy</h2>
-<p>Multi-channel approach leveraging digital and traditional marketing channels for maximum reach and impact.</p>
-
-<h2>Success Metrics</h2>
-<p>Measurable KPIs including engagement rates, conversion metrics, and ROI analysis.</p>
-
-<p><em>Note: This is a basic framework. For detailed, customized content, please try again when AI services are available.</em></p>
+<h1>Content Generation Unavailable</h1>
+<p>All AI services are temporarily unavailable. Please try again in a moment for your content request.</p>
     `.trim();
   }
 }

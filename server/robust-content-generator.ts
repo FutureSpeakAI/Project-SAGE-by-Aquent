@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import * as AnthropicAPI from "./anthropic";
 import * as GeminiAPI from "./gemini";
 import { ContentFormatter } from "./content-formatter";
+import { EmergencyFallback } from "./emergency-fallback";
 
 export interface ContentGenerationRequest {
   model: string;
