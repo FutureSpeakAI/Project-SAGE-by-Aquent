@@ -2021,7 +2021,7 @@ Respond only with conversational text - no buttons, badges, or UI elements. When
       }
       
       res.json({ 
-        content: reply,
+        content: chatReply,
         model: `${decision.provider}-${decision.model}`,
         provider: decision.provider,
         timestamp: new Date().toISOString()
