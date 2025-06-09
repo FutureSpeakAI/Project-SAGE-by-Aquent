@@ -177,14 +177,13 @@ export function VoiceControls({
       console.log('🛑 CLICK INTERRUPTION - Stopping SAGE speech immediately...');
       stopSpeaking();
       
-      // In intelligent mode, restart listening after interruption
+      // Immediately restart listening after click interruption
       if (isIntelligentMode && onTranscript) {
-        setTimeout(() => {
-          console.log('🎤 Restarting listening after click interruption...');
-          startIntelligentListening((transcript) => {
-            onTranscript(transcript, true);
-          });
-        }, 300);
+        console.log('🎤 Immediately restarting listening after click interruption...');
+        // Start listening immediately without delay
+        startIntelligentListening((transcript) => {
+          onTranscript(transcript, true);
+        });
       }
       return;
     }

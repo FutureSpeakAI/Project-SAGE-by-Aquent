@@ -134,22 +134,22 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
           frameCount 
         });
         
-        // Immediate audio stop
-        if (audioRef.current && !audioRef.current.paused) {
+        // Force immediate audio stop with multiple methods
+        if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
+          audioRef.current.src = '';
+          audioRef.current.load(); // Force reload to clear buffer
           setIsSpeaking(false);
           setIsGeneratingAudio(false);
-          console.log('🛑 Audio stopped immediately');
+          console.log('🛑 Audio force stopped with buffer clear');
           
-          // Restart listening in intelligent mode
+          // Immediately restart listening in intelligent mode
           if (isIntelligentMode && onTranscriptCompleteRef.current) {
-            setTimeout(() => {
-              console.log('🎤 Restarting listening after voice interruption...');
-              if (onTranscriptCompleteRef.current) {
-                startListening(onTranscriptCompleteRef.current);
-              }
-            }, 300);
+            console.log('🎤 Immediately restarting listening after interruption...');
+            const callback = onTranscriptCompleteRef.current;
+            // Start listening immediately without delay
+            startListening(callback);
           }
         }
       }
@@ -216,20 +216,22 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     }
   }, [isIntelligentMode, isSpeaking]);
 
-  // Start intelligent listening mode with continuous detection
+  // Start intelligent listening mode with minimal delay
   const startIntelligentListening = useCallback(async (onTranscript?: (transcript: string) => void) => {
     // Set the callback if provided
     if (onTranscript) {
       onTranscriptCompleteRef.current = onTranscript;
     }
 
-    if (isIntelligentMode) {
+    // Skip audio context initialization if already done (reduces delay)
+    if (isIntelligentMode && !analyserRef.current) {
       const audioInitialized = await initializeAudioContext();
       if (audioInitialized) {
         startVoiceActivityDetection();
       }
     }
     
+    // Reuse existing recognition instance to avoid initialization delay
     if (!recognitionRef.current) {
       recognitionRef.current = initializeSpeechRecognition();
       if (!recognitionRef.current) return;
@@ -484,15 +486,30 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     }
   }, [config.voiceId, config.autoPlay, toast]);
 
-  // Stop current speech
+  // Enhanced speech stopping with multiple methods
   const stopSpeaking = useCallback(() => {
-    console.log('Stopping speech playback...');
+    console.log('Force stopping speech with aggressive methods...');
     if (audioRef.current) {
+      // Multiple methods to ensure complete audio stop
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      audioRef.current.src = ''; // Clear the audio source
+      audioRef.current.src = '';
+      audioRef.current.load(); // Force buffer clear
+      audioRef.current.volume = 0; // Mute as backup
+      
+      // Find and stop any other audio elements on the page
+      const allAudio = document.querySelectorAll('audio');
+      allAudio.forEach(audio => {
+        if (!audio.paused) {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.src = '';
+        }
+      });
+      
       setIsSpeaking(false);
       setIsGeneratingAudio(false);
+      console.log('All audio forcefully stopped');
     }
   }, []);
 
