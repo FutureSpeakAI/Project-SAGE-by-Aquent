@@ -557,6 +557,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Image processing endpoint
   app.post("/api/image-processing", upload.single('image'), processImage);
+
+  // Image editing endpoint
+  app.post("/api/edit-image", async (req: Request, res: Response) => {
+    try {
+      const { image, mask, prompt, editMode, model = 'gpt-image-1', size = 'auto', quality = 'high' } = req.body;
+
+      if (!image || !prompt) {
+        return res.status(400).json({ error: 'Image and prompt are required' });
+      }
+
+      console.log('Image editing request:', {
+        editMode,
+        promptLength: prompt.length,
+        hasMask: !!mask,
+        model
+      });
+
+      // Configure OpenAI client
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        timeout: 60000, // 60 second timeout for image editing
+      });
+
+      // Prepare the request based on edit mode
+      let editRequest: any = {
+        model,
+        prompt,
+        size,
+        quality,
+        n: 1
+      };
+
+      // Convert data URLs to base64 strings if needed
+      let imageBase64 = image;
+      let maskBase64 = mask;
+
+      if (image.startsWith('data:image')) {
+        const base64Start = image.indexOf('base64,');
+        if (base64Start !== -1) {
+          imageBase64 = image.substring(base64Start + 7);
+        }
+      }
+
+      if (mask && mask.startsWith('data:image')) {
+        const base64Start = mask.indexOf('base64,');
+        if (base64Start !== -1) {
+          maskBase64 = mask.substring(base64Start + 7);
+        }
+      }
+
+      // Handle different edit modes
+      if (editMode === 'inpaint' && mask) {
+        // Inpainting with mask
+        editRequest.image = imageBase64;
+        editRequest.mask = maskBase64;
+        console.log('Performing inpainting with mask');
+      } else if (editMode === 'outpaint') {
+        // Outpainting (extend image)
+        editRequest.image = imageBase64;
+        console.log('Performing outpainting');
+      } else {
+        // Variation mode - treat as image-to-image
+        editRequest.image = imageBase64;
+        console.log('Performing image variation');
+      }
+
+      // Make the API call to OpenAI
+      const response = await openai.images.edit(editRequest);
+
+      if (!response.data || response.data.length === 0) {
+        throw new Error('No edited image returned from API');
+      }
+
+      // Process the response
+      const editedImages = response.data.map((img: any) => ({
+        url: img.url || `data:image/png;base64,${img.b64_json}`,
+        revised_prompt: img.revised_prompt
+      }));
+
+      console.log('Image editing successful, returning', editedImages.length, 'images');
+
+      res.json({
+        images: editedImages,
+        editMode,
+        originalPrompt: prompt
+      });
+
+    } catch (error: any) {
+      console.error('Image editing error:', error);
+      
+      if (error.status === 400) {
+        return res.status(400).json({ 
+          error: 'Invalid request. Please check your image format and prompt.',
+          details: error.message
+        });
+      }
+      
+      if (error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Rate limit exceeded. Please try again later.'
+        });
+      }
+
+      res.status(500).json({ 
+        error: 'Image editing failed',
+        message: error.message || 'Unknown error occurred'
+      });
+    }
+  });
   
   // Creative brief interpretation endpoint
   app.post("/api/process-brief", upload.single('file'), processBrief);
