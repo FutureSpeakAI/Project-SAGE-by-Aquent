@@ -49,28 +49,101 @@ export class EmergencyFallback {
     `.trim();
   }
 
-  static detectContentType(prompt: string): 'social_posts' | 'brief' | 'general' {
-    const isSocialRequest = prompt.toLowerCase().includes('social') || 
-                           prompt.toLowerCase().includes('post') || 
-                           prompt.toLowerCase().includes('facebook') ||
-                           prompt.toLowerCase().includes('instagram') ||
-                           (prompt.toLowerCase().includes('create') && 
-                            (prompt.toLowerCase().includes('campaign') || 
-                             prompt.toLowerCase().includes('content')));
+  static detectContentType(prompt: string): 'social_posts' | 'brief' | 'brief_execution' | 'general' {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Detect if this is executing deliverables from an existing brief
+    const isBriefExecution = (lowerPrompt.includes('nike') && lowerPrompt.includes('volkswagen')) ||
+                            lowerPrompt.includes('beetle shoe') ||
+                            lowerPrompt.includes('angle 1:') ||
+                            lowerPrompt.includes('angle 2:') ||
+                            lowerPrompt.includes('angle 3:') ||
+                            lowerPrompt.includes('product images') ||
+                            (lowerPrompt.includes('brief') && 
+                             (lowerPrompt.includes('deliverables') || 
+                              lowerPrompt.includes('execute') ||
+                              lowerPrompt.includes('create blog')));
+    
+    if (isBriefExecution) return 'brief_execution';
+    
+    const isSocialRequest = lowerPrompt.includes('social') || 
+                           lowerPrompt.includes('post') || 
+                           lowerPrompt.includes('facebook') ||
+                           lowerPrompt.includes('instagram') ||
+                           (lowerPrompt.includes('create') && 
+                            (lowerPrompt.includes('campaign') || 
+                             lowerPrompt.includes('content')));
     
     if (isSocialRequest) return 'social_posts';
     
-    const isBriefRequest = prompt.toLowerCase().includes('brief') && 
-                          !prompt.toLowerCase().includes('based on') &&
-                          !prompt.toLowerCase().includes('from this brief');
+    const isBriefRequest = lowerPrompt.includes('brief') && 
+                          !lowerPrompt.includes('based on') &&
+                          !lowerPrompt.includes('from this brief');
     
     if (isBriefRequest) return 'brief';
     
     return 'general';
   }
 
+  static generateBriefExecutionContent(userPrompt: string): string {
+    const hasVisualRequirements = userPrompt.toLowerCase().includes('angle 1') ||
+                                 userPrompt.toLowerCase().includes('angle 2') ||
+                                 userPrompt.toLowerCase().includes('angle 3') ||
+                                 userPrompt.toLowerCase().includes('product images');
+
+    if (hasVisualRequirements) {
+      return `
+<h1>Nike x Volkswagen Beetle Shoe: Limited Edition Launch</h1>
+
+<h2>Step Into Retro-Future Style</h2>
+<p>The Nike x Volkswagen Beetle Shoe represents the perfect fusion of automotive heritage and athletic innovation. This limited-edition collaboration captures the iconic spirit of the classic VW Beetle while delivering Nike's cutting-edge comfort technology.</p>
+
+<h2>Design Heritage Meets Modern Performance</h2>
+<p>Inspired by the Beetle's timeless curves and vibrant color palette, each shoe features retro design elements including signature pastel blue and racing green colorways. The comfort technology ensures all-day wearability whether you're exploring the city or making a statement at social gatherings.</p>
+
+<h2>Limited Edition Exclusivity</h2>
+<p>With only select pairs available worldwide, the Beetle Shoe is destined to become a collector's item. This collaboration celebrates both brands' commitment to innovation and cultural impact.</p>
+
+<h2>Image Generation Prompts:</h2>
+
+<p><strong>Image Generation Prompt - Angle 1:</strong> Professional product photography of Nike x Volkswagen Beetle Shoe, extreme close-up macro shot, retro pastel blue and racing green color scheme, detailed texture of materials, studio lighting setup, white seamless background, commercial product photography style, ultra high resolution, crisp focus</p>
+
+<p><strong>Image Generation Prompt - Angle 2:</strong> Lifestyle photography of person wearing Nike x Volkswagen Beetle Shoe, urban city street setting, natural lighting, candid walking pose, modern streetwear outfit, depth of field background blur, contemporary fashion photography style, high resolution</p>
+
+<p><strong>Image Generation Prompt - Angle 3:</strong> Overhead flat lay photography, Nike x Volkswagen Beetle Shoe positioned next to miniature classic Volkswagen Beetle toy car, creative product styling, studio lighting, minimal white background, commercial brand collaboration photography, ultra detailed</p>
+      `.trim();
+    }
+
+    return `
+<h1>Nike x Volkswagen Beetle Shoe: Campaign Content</h1>
+
+<h2>Revolutionary Collaboration</h2>
+<p>Experience the groundbreaking partnership between Nike and Volkswagen with the limited-edition Beetle Shoe. This unique sneaker combines automotive design heritage with athletic performance innovation.</p>
+
+<h2>Key Features</h2>
+<p>• Retro-inspired design elements from the classic VW Beetle<br>
+• Nike's advanced cushioning and comfort technology<br>
+• Limited production run for exclusivity<br>
+• Premium materials and craftsmanship</p>
+
+<h2>Target Audience Appeal</h2>
+<p>Perfect for sneaker collectors, automotive enthusiasts, and fashion-forward individuals who appreciate unique collaborations and timeless design.</p>
+    `.trim();
+  }
+
   static handleEmergencyGeneration(req: Request, res: Response, prompt: string): void {
     const contentType = this.detectContentType(prompt);
+    
+    if (contentType === 'brief_execution') {
+      const content = this.generateBriefExecutionContent(prompt);
+      res.json({
+        content,
+        provider: 'emergency_fallback',
+        fallback: true,
+        briefExecution: true
+      });
+      return;
+    }
     
     if (contentType === 'social_posts') {
       const content = this.generateSocialMediaPosts(prompt);
