@@ -87,16 +87,19 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
                     if (textItem.R) {
                       textItem.R.forEach(run => {
                         if (run.T) {
-                          text += decodeURIComponent(run.T) + ' ';
+                          text += decodeURIComponent(run.T);
                         }
                       });
+                      text += ' '; // Add space after each text item, not each run
                     }
                   });
                   text += '\n';
                 }
               });
             }
-            resolve(text.trim());
+            // Clean up excessive spaces and normalize text
+            text = text.replace(/\s+/g, ' ').replace(/\n\s+/g, '\n').trim();
+            resolve(text);
           } catch (error) {
             reject(error);
           }
