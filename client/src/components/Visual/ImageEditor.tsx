@@ -121,8 +121,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         console.log("Image loaded successfully:", img.width, "x", img.height);
         setImageLoadStatus("loaded");
         
-        // Use the original image dimensions for better quality, up to a maximum
-        const maxSize = 800;
+        // Use larger canvas size for better quality and space utilization
+        const maxSize = 1200; // Increased max size
         let canvasWidth = Math.min(img.width, maxSize);
         let canvasHeight = Math.min(img.height, maxSize);
         
@@ -131,6 +131,14 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
           canvasHeight = (canvasWidth * img.height) / img.width;
         } else {
           canvasWidth = (canvasHeight * img.width) / img.height;
+        }
+        
+        // Ensure minimum size for better visibility
+        const minSize = 400;
+        if (canvasWidth < minSize || canvasHeight < minSize) {
+          const scale = minSize / Math.min(canvasWidth, canvasHeight);
+          canvasWidth *= scale;
+          canvasHeight *= scale;
         }
         
         // Set canvas size to maintain quality
@@ -544,7 +552,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Advanced Options</Label>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <div>
                           <Label htmlFor="model-select" className="text-xs">Model</Label>
                           <Select value={model} onValueChange={setModel}>
@@ -554,9 +562,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                             <SelectContent>
                               {getImageModels().map((modelName) => (
                                 <SelectItem key={modelName} value={modelName}>
-                                  {modelName === "gpt-image-1" ? "GPT Image-1 (Best for editing)" : 
+                                  {modelName === "gpt-image-1" ? "DALL-E 3 (Latest)" : 
                                    modelName === "dall-e-3" ? "DALL-E 3" : 
-                                   modelName === "dall-e-2" ? "DALL-E 2" : modelName}
+                                   modelName === "dall-e-2" ? "DALL-E 2 (Legacy)" : modelName}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -569,9 +577,23 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="256x256">256×256</SelectItem>
-                              <SelectItem value="512x512">512×512</SelectItem>
-                              <SelectItem value="1024x1024">1024×1024</SelectItem>
+                              <SelectItem value="256x256">256×256 (Square)</SelectItem>
+                              <SelectItem value="512x512">512×512 (Square)</SelectItem>
+                              <SelectItem value="1024x1024">1024×1024 (High Res)</SelectItem>
+                              <SelectItem value="1024x1792">1024×1792 (Portrait)</SelectItem>
+                              <SelectItem value="1792x1024">1792×1024 (Landscape)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="quality-select" className="text-xs">Quality</Label>
+                          <Select value={quality} onValueChange={setQuality}>
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="standard">Standard</SelectItem>
+                              <SelectItem value="hd">HD (Premium)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

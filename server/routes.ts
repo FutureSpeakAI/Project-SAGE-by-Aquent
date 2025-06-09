@@ -630,7 +630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           model: model === 'gpt-image-1' ? 'dall-e-3' : model,
           prompt: prompt,
           size: size || '1024x1024',
-          quality: quality || 'standard',
+          quality: quality === 'high' ? 'hd' : (quality || 'standard'),
           n: 1
         });
 
