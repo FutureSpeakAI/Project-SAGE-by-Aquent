@@ -725,6 +725,23 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     });
   };
 
+  // Handle edit image trigger from variation prompt
+  useEffect(() => {
+    if (variationPrompt && variationPrompt.startsWith('EDIT_IMAGE:')) {
+      const parts = variationPrompt.split(':');
+      if (parts.length >= 3) {
+        const imageUrl = parts[1];
+        const imageId = parseInt(parts[2]);
+        handleEditImage(imageUrl, imageId);
+        
+        // Clear the variation prompt
+        if (setVariationPrompt) {
+          setVariationPrompt(null);
+        }
+      }
+    }
+  }, [variationPrompt, setVariationPrompt]);
+
   // Handle creating variations of an image
   const handleCreateVariations = async (imageUrl: string) => {
     if (!imageUrl) {
@@ -835,6 +852,15 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
         handlePromptFromAgent={handlePromptFromAgent}
         handleCreateVariations={handleCreateVariations}
         clearVisualTab={clearVisualTab}
+      />
+      
+      {/* Image Editor Dialog */}
+      <ImageEditor
+        open={isImageEditorOpen}
+        onOpenChange={setIsImageEditorOpen}
+        imageUrl={editingImageUrl}
+        imageId={editingImageId}
+        onImageEdited={handleImageEdited}
       />
     </ErrorBoundary>
   );
