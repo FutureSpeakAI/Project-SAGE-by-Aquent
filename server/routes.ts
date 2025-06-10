@@ -496,7 +496,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           maxTokens: maxTokens || 3000
         });
       } else {
-        result = await generateContentDirect(actualPrompt, systemPrompt, model || 'gpt-4o');
+        // Use more stable model by default and implement fallback
+        try {
+          result = await generateContentDirect(actualPrompt, systemPrompt, model || 'gpt-4o-mini');
+        } catch (error: any) {
+          // Fallback to Claude if OpenAI fails
+          console.warn('OpenAI failed, falling back to Anthropic:', error.message);
+          result = await AnthropicAPI.generateContent({
+            model: 'claude-3-5-sonnet-20241022',
+            prompt: actualPrompt,
+            systemPrompt,
+            temperature: temperature || 0.7,
+            maxTokens: maxTokens || 3000
+          });
+        }
       }
 
       res.json({ 
