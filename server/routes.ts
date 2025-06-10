@@ -12,6 +12,7 @@ import OpenAI from "openai";
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import FormData from 'form-data';
 import { performDeepResearch } from "./research-engine";
 import { reasoningEngine } from "./reasoning-engine";
 import { promptRouter, type PromptRouterConfig } from "./prompt-router";
@@ -694,53 +695,41 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         }
       }
 
-      // Create proper file objects with MIME type for OpenAI API
-      const FormData = require('form-data');
-      const form = new FormData();
+      // Use direct OpenAI SDK with proper buffer handling
+      const imageBlob = new Blob([imageBuffer], { type: 'image/png' });
       
-      // Add image with proper MIME type
-      form.append('image', imageBuffer, {
-        filename: 'image.png',
-        contentType: 'image/png'
-      });
-      form.append('prompt', prompt.trim());
-      form.append('n', String(parseInt(String(n)) || 1));
-      form.append('size', size || "1024x1024");
-
-      if (maskBuffer) {
-        form.append('mask', maskBuffer, {
-          filename: 'mask.png',
-          contentType: 'image/png'
-        });
-        console.log('Performing inpainting with mask');
-      } else {
-        console.log('Performing outpainting/extension');
-      }
-
       try {
-        // Call OpenAI Images Edit API with FormData
-        const response = await fetch('https://api.openai.com/v1/images/edits', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            ...form.getHeaders()
-          },
-          body: form
-        });
-
-        const result = await response.json();
+        let editResponse;
         
-        if (!response.ok) {
-          throw new Error(result.error?.message || 'OpenAI API error');
+        if (maskBuffer) {
+          const maskBlob = new Blob([maskBuffer], { type: 'image/png' });
+          console.log('Performing inpainting with mask');
+          
+          editResponse = await openai.images.edit({
+            image: imageBlob as any,
+            mask: maskBlob as any,
+            prompt: prompt.trim(),
+            n: parseInt(String(n)) || 1,
+            size: (size || "1024x1024") as any
+          });
+        } else {
+          console.log('Performing outpainting/extension');
+          
+          editResponse = await openai.images.edit({
+            image: imageBlob as any,
+            prompt: prompt.trim(),
+            n: parseInt(String(n)) || 1,
+            size: (size || "1024x1024") as any
+          });
         }
         
-        if (!result.data || result.data.length === 0) {
+        if (!editResponse.data || editResponse.data.length === 0) {
           throw new Error('No edited image returned from API');
         }
         
         return res.json({
           success: true,
-          images: result.data.map((img: any) => ({
+          images: editResponse.data.map(img => ({
             url: img.url,
             revised_prompt: img.revised_prompt || prompt
           }))
