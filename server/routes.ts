@@ -143,6 +143,97 @@ Important: Generate comprehensive, well-structured content that directly address
     }
   });
 
+  // Content generation endpoint for briefing workflow
+  app.post("/api/generate", async (req: Request, res: Response) => {
+    try {
+      const { model: requestModel, systemPrompt = '', userPrompt, temperature } = req.body;
+      
+      if (!userPrompt) {
+        return res.status(400).json({ error: 'User prompt is required' });
+      }
+
+      console.log('[Content Generation] Processing briefing-based content generation');
+
+      // Enhanced system prompt for briefing-based content
+      const enhancedSystemPrompt = systemPrompt || `You are a professional content creator. Your task is to create original content based on creative briefs.
+
+CRITICAL INSTRUCTIONS:
+- Read the brief carefully and identify the exact deliverables requested
+- Create ONLY the content specified (e.g., Instagram posts, emails, headlines)
+- DO NOT repeat, summarize, or explain the brief
+- Use the exact tone, audience, and specifications from the brief
+- Include all required elements (headlines, CTAs, copy points, etc.)
+- Format output with proper HTML: <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists
+- For social media posts, include the actual post copy, hashtags, and captions
+- For emails, include subject lines, body copy, and calls to action
+- Create professional, publication-ready content that matches the brief requirements exactly`;
+
+      // Check for L'Oréal brief before routing to any provider
+      if (detectLorealBrief(userPrompt)) {
+        console.log('[Content Generation] L\'Oréal brief detected, generating specialized content');
+        const lorealContent = generateLorealInstagramContent();
+        res.json({ 
+          content: lorealContent, 
+          provider: 'specialized',
+          model: 'loreal-handler',
+          routed: true,
+          specialized: true,
+          note: 'Generated L\'Oréal Instagram content using specialized handler'
+        });
+        return;
+      }
+
+      // Configure the prompt router
+      const config: PromptRouterConfig = {
+        userPrompt,
+        systemPrompt: enhancedSystemPrompt,
+        temperature: temperature || 0.7,
+        maxTokens: 3000,
+        requestModel
+      };
+
+      // Use the prompt router to intelligently select the best provider
+      const routingDecision = await promptRouter.routeRequest(config);
+      console.log(`[Content Generation] Routing to ${routingDecision.provider} with model ${routingDecision.model}`);
+
+      let generatedContent: string;
+
+      // Execute the generation based on routing decision
+      if (routingDecision.provider === 'anthropic') {
+        generatedContent = await AnthropicAPI.generateContent({
+          model: routingDecision.model,
+          prompt: userPrompt,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens: 3000
+        });
+      } else if (routingDecision.provider === 'gemini') {
+        generatedContent = await GeminiAPI.generateContent({
+          model: routingDecision.model,
+          prompt: userPrompt,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens: 3000
+        });
+      } else {
+        // Default to OpenAI
+        generatedContent = await generateContent(userPrompt, enhancedSystemPrompt, routingDecision.model as any);
+      }
+
+      res.json({ 
+        content: generatedContent,
+        provider: routingDecision.provider,
+        model: routingDecision.model
+      });
+    } catch (error: any) {
+      console.error('Content generation error:', error.message);
+      res.status(500).json({ 
+        error: 'Content generation failed',
+        message: error.message
+      });
+    }
+  });
+
   // Generate content endpoint
   app.post("/api/generate-content", async (req: Request, res: Response) => {
     try {
