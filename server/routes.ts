@@ -1089,5 +1089,139 @@ Focus on identifying the specific visual deliverables (number of images, type of
     }
   });
 
+  // Image Projects API Routes
+  app.get("/api/image-projects", async (_req: Request, res: Response) => {
+    try {
+      const projects = await storage.getImageProjects();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching image projects:", error);
+      res.json([]);
+    }
+  });
+
+  app.get("/api/image-projects/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const project = await storage.getImageProject(id);
+      
+      if (!project) {
+        return res.status(404).json({ error: "Image project not found" });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch image project" });
+    }
+  });
+
+  app.post("/api/image-projects", async (req: Request, res: Response) => {
+    try {
+      const { name, description } = req.body;
+      console.log("Creating project with name:", name, "description:", description);
+      
+      if (!name) {
+        return res.status(400).json({ error: "Project name is required" });
+      }
+      
+      const savedProject = await storage.saveImageProject({
+        name,
+        description: description || null
+      });
+      
+      console.log("Project saved successfully:", savedProject);
+      res.status(201).json(savedProject);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      res.status(500).json({ error: "Failed to save image project" });
+    }
+  });
+
+  app.delete("/api/image-projects/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const result = await storage.deleteImageProject(id);
+      
+      if (!result) {
+        return res.status(404).json({ error: "Image project not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete image project" });
+    }
+  });
+
+  // Endpoints for project/image relationships
+  app.post("/api/image-projects/:projectId/images/:imageId", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const imageId = parseInt(req.params.imageId);
+      
+      if (isNaN(projectId) || isNaN(imageId)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const project = await storage.getImageProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: "Image project not found" });
+      }
+      
+      const updatedImage = await storage.updateGeneratedImage(imageId, { projectId });
+      
+      if (!updatedImage) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+      
+      res.json(updatedImage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add image to project" });
+    }
+  });
+
+  app.delete("/api/image-projects/:projectId/images/:imageId", async (req: Request, res: Response) => {
+    try {
+      const imageId = parseInt(req.params.imageId);
+      
+      if (isNaN(imageId)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const updatedImage = await storage.updateGeneratedImage(imageId, { projectId: null });
+      
+      if (!updatedImage) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+      
+      res.json(updatedImage);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove image from project" });
+    }
+  });
+
+  app.get("/api/image-projects/:projectId/images", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const images = await storage.getGeneratedImagesByProjectId(projectId);
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching images for project:", error);
+      res.status(500).json({ error: "Failed to fetch images for project" });
+    }
+  });
+
   return server;
 }
