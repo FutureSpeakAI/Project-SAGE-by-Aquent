@@ -245,45 +245,13 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
       let usedModel: string = 'claude-sonnet-4-20250514';
 
       if (isBriefingContent) {
-        console.log('[Content Generation] Detected briefing content, using Anthropic for better instruction following');
+        console.log('[Content Generation] Detected briefing content, using OpenAI for reliable execution');
         console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
         
-        try {
-          // Add timeout wrapper for Anthropic
-          const anthropicPromise = AnthropicAPI.generateContent({
-            model: 'claude-sonnet-4-20250514',
-            prompt: userPrompt,
-            systemPrompt: enhancedSystemPrompt,
-            temperature: temperature || 0.7,
-            maxTokens: 2500 // Reduced for faster processing
-          });
-          
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Anthropic timeout')), 5000); // 5 second timeout
-          });
-          
-          generatedContent = await Promise.race([anthropicPromise, timeoutPromise]) as string;
-          usedProvider = 'anthropic';
-          usedModel = 'claude-sonnet-4-20250514';
-        } catch (anthropicError: any) {
-          console.log('[Content Generation] Anthropic failed/timeout for briefing, falling back to Gemini');
-          try {
-            generatedContent = await GeminiAPI.generateContent({
-              model: 'gemini-1.5-flash',
-              prompt: userPrompt,
-              systemPrompt: enhancedSystemPrompt,
-              temperature: temperature || 0.7,
-              maxTokens: 2500
-            });
-            usedProvider = 'gemini';
-            usedModel = 'gemini-1.5-flash';
-          } catch (geminiError: any) {
-            console.log('[Content Generation] Gemini also failed, using OpenAI fallback');
-            generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, 'gpt-4o-mini');
-            usedProvider = 'openai';
-            usedModel = 'gpt-4o-mini';
-          }
-        }
+        // Use OpenAI directly for briefing content - more reliable than timeout wrappers
+        generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, 'gpt-4o');
+        usedProvider = 'openai';
+        usedModel = 'gpt-4o';
       } else {
         // Use the prompt router for non-briefing content
         const routingDecision = await promptRouter.routeRequest(config);

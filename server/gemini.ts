@@ -34,9 +34,14 @@ export const generateContent = async (request: GeminiGenerateContentRequest): Pr
     ? `${enhancedSystemPrompt}\n\nUser: ${request.prompt}` 
     : request.prompt;
 
+  console.log('[Gemini] Making API request with model:', request.model);
+  console.log('[Gemini] Prompt length:', prompt.length);
+  
   const result = await model.generateContent(prompt);
   const response = await result.response;
   let content = response.text();
+  
+  console.log('[Gemini] API request completed successfully');
   
   // Apply consistent formatting if not brief execution
   if (!isBriefExecution) {

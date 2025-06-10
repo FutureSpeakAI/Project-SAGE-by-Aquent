@@ -50,6 +50,9 @@ Create the specific deliverables listed above. Be concise but compelling.`;
     console.log('[Anthropic] Streamlined complex brief for faster processing');
   }
 
+  console.log('[Anthropic] Making API request with model:', request.model);
+  console.log('[Anthropic] Prompt length:', optimizedPrompt.length);
+  
   const message = await anthropic.messages.create({
     model: request.model,
     max_tokens: maxTokens,
@@ -59,6 +62,8 @@ Create the specific deliverables listed above. Be concise but compelling.`;
       { role: 'user', content: optimizedPrompt }
     ],
   });
+  
+  console.log('[Anthropic] API request completed successfully');
 
   let content = message.content[0].type === 'text' ? message.content[0].text : '';
   
