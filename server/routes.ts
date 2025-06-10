@@ -216,7 +216,7 @@ Important: Generate comprehensive, well-structured content that directly address
       let enhancedSystemPrompt = systemPrompt;
       
       if (!systemPrompt || systemPrompt.trim().length === 0) {
-        enhancedSystemPrompt = `You are a professional content creator executing creative briefs.
+        enhancedSystemPrompt = `You are a professional content creator executing creative briefs for healthcare and pharmaceutical marketing.
 
 CRITICAL INSTRUCTIONS:
 - Read the brief carefully and identify the exact deliverables requested
@@ -227,7 +227,13 @@ CRITICAL INSTRUCTIONS:
 - Format output with proper HTML: <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists
 - For social media posts, include the actual post copy, hashtags, and captions
 - For emails, include subject lines, body copy, and calls to action
-- Create professional, publication-ready content that matches the brief requirements exactly`;
+- Create professional, publication-ready content that matches the brief requirements exactly
+
+CONTENT LENGTH REQUIREMENTS:
+- For healthcare/pharmaceutical emails: Include comprehensive body copy (300-500 words each), detailed clinical messaging, benefit statements, and professional CTAs
+- For blog posts: Create substantial articles (800-1200 words) with multiple sections, headings, and detailed information
+- For social media: Include full post copy, relevant hashtags, and engagement elements
+- Each deliverable must be complete, detailed, and ready for immediate use by sales teams or marketing departments`;
       }
 
       // Add specific deliverable guidance if detected
@@ -277,16 +283,17 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         
         // Optimize prompt for complex briefs to prevent timeouts
         let optimizedPrompt = userPrompt;
-        let maxTokens = 1500;
+        let maxTokens = 2000; // Increased for comprehensive healthcare content
         
         if (userPrompt.length > 2000) {
-          // For complex briefs, preserve key content while optimizing structure
-          const briefSections = userPrompt.match(/CREATIVE BRIEF[\s\S]*?(?=\n\n|\Z)/i);
-          const deliverableSection = userPrompt.match(/deliverable[s]?[\s\S]*?(?=\n\n|\Z)/i);
-          const productSection = userPrompt.match(/(product|brand|company)[\s\S]*?(?=\n\n|\Z)/i);
-          
           optimizedPrompt = userPrompt; // Keep full content for complex medical/healthcare briefs
-          maxTokens = 1200; // Slightly reduced but preserve quality
+          maxTokens = 2500; // Higher limit for detailed healthcare emails
+        }
+        
+        // For healthcare/pharmaceutical content, ensure comprehensive output
+        if (userPrompt.toLowerCase().includes('email') || userPrompt.toLowerCase().includes('healthcare') || 
+            userPrompt.toLowerCase().includes('pharmaceutical') || userPrompt.toLowerCase().includes('medical')) {
+          maxTokens = Math.max(maxTokens, 2000); // Minimum 2000 tokens for healthcare content
         }
 
         try {
@@ -297,11 +304,11 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-              model: 'gpt-3.5-turbo',
+              model: 'gpt-4o',
               messages: [
                 { 
                   role: 'system', 
-                  content: 'You are a professional content creator. Create engaging content based on the brief provided. Use HTML formatting with proper tags like <h1>, <h2>, <p>, <ul>, <li>. Be concise and direct.' 
+                  content: enhancedSystemPrompt
                 },
                 { role: 'user', content: optimizedPrompt }
               ],
