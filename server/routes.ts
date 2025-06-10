@@ -66,7 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         temperature = 0.7, 
         maxTokens = 3000,
         context = '',
-        sessionHistory = []
+        sessionHistory = [],
+        preferredProvider = 'anthropic',
+        model = 'claude-3-5-sonnet-20241022'
       } = req.body;
 
       if (!userPrompt) {
@@ -100,7 +102,25 @@ Important: Generate comprehensive, well-structured content that directly address
 - For emails, include subject lines, body copy, and calls to action
 - Create professional, publication-ready content that matches the brief requirements exactly`;
 
-      // Try Anthropic first
+      // Route to preferred provider
+      console.log(`[Content Generation] Provider: ${preferredProvider}, Model: ${model}`);
+      if (preferredProvider === 'openai' || model.startsWith('gpt-')) {
+        console.log('[Content Generation] Routing to OpenAI/GPT-4o');
+        try {
+          const result = await generateContentDirect(userPrompt, enhancedSystemPrompt, model);
+          res.json({ 
+            content: result, 
+            provider: 'openai',
+            model: model,
+            routed: true
+          });
+          return;
+        } catch (openaiError: any) {
+          console.log('[Content Generation] OpenAI failed, trying Anthropic fallback:', openaiError.message);
+        }
+      }
+
+      // Try Anthropic (default or fallback)
       try {
         const result = await AnthropicAPI.generateContent({
           model: 'claude-3-5-sonnet-20241022',
