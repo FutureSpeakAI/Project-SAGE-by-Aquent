@@ -102,16 +102,18 @@ Important: Generate comprehensive, well-structured content that directly address
 - For emails, include subject lines, body copy, and calls to action
 - Create professional, publication-ready content that matches the brief requirements exactly`;
 
-      // Route to preferred provider
+      // Route to preferred provider with model optimization for healthcare content
       console.log(`[Content Generation] Provider: ${preferredProvider}, Model: ${model}`);
       if (preferredProvider === 'openai' || model.startsWith('gpt-')) {
-        console.log('[Content Generation] Routing to OpenAI/GPT-4o');
+        // For complex healthcare content, use gpt-4o-mini for reliability
+        const optimizedModel = model === 'gpt-4o' && userPrompt.length > 200 ? 'gpt-4o-mini' : model;
+        console.log(`[Content Generation] Routing to OpenAI/${optimizedModel}`);
         try {
-          const result = await generateContentDirect(userPrompt, enhancedSystemPrompt, model);
+          const result = await generateContentDirect(userPrompt, enhancedSystemPrompt, optimizedModel);
           res.json({ 
             content: result, 
             provider: 'openai',
-            model: model,
+            model: optimizedModel,
             routed: true
           });
           return;

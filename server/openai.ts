@@ -38,6 +38,7 @@ export const generateContentDirect = async (userPrompt: string, systemPrompt: st
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    timeout: 45000, // 45 second timeout
   });
 
   try {
@@ -48,7 +49,7 @@ export const generateContentDirect = async (userPrompt: string, systemPrompt: st
         { role: "user" as const, content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 3000,
+      max_tokens: 4000,
     });
 
     return completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
