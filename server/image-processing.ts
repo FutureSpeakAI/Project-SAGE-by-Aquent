@@ -169,10 +169,17 @@ export const processImage = async (req: Request, res: Response) => {
         res.setHeader('Content-Disposition', `attachment; filename="processed_${Date.now()}.png"`);
         break;
         
+      case 'jpg':
       case 'jpeg':
         sharpInstance = sharpInstance.jpeg({ quality: 95 });
         res.setHeader('Content-Type', 'image/jpeg');
         res.setHeader('Content-Disposition', `attachment; filename="processed_${Date.now()}.jpg"`);
+        break;
+        
+      case 'webp':
+        sharpInstance = sharpInstance.webp({ quality: 95 });
+        res.setHeader('Content-Type', 'image/webp');
+        res.setHeader('Content-Disposition', `attachment; filename="processed_${Date.now()}.webp"`);
         break;
         
       case 'tiff':

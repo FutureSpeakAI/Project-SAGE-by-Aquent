@@ -46,6 +46,9 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDescription, setNewProjectDescription] = useState("");
+  const [downloadFormat, setDownloadFormat] = useState<string>("png");
+  const [downloadResolution, setDownloadResolution] = useState<string>("original");
+  const [isDownloading, setIsDownloading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -272,20 +275,88 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
     removeFromProjectMutation.mutate({ imageId, projectId });
   };
 
-  // Handle image download
-  const handleDownloadImage = (imageUrl: string, title: string) => {
-    // Create an invisible anchor element
-    const a = document.createElement("a");
-    a.href = imageUrl;
-    a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  // Handle image download with format and resolution options
+  const handleDownloadImage = async (imageUrl: string, title: string, format?: string, resolution?: string) => {
+    setIsDownloading(true);
     
-    toast({
-      title: "Download started",
-      description: "Your image download has begun",
-    });
+    try {
+      const useFormat = format || downloadFormat;
+      const useResolution = resolution || downloadResolution;
+      
+      // If original format and resolution, download directly
+      if (useFormat === "png" && useResolution === "original") {
+        const a = document.createElement("a");
+        a.href = imageUrl;
+        a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        toast({
+          title: "Download started",
+          description: "Your image download has begun",
+        });
+        return;
+      }
+      
+      // Calculate dimensions based on resolution
+      let width: number | undefined;
+      let height: number | undefined;
+      
+      if (useResolution !== "original") {
+        const multiplier = useResolution === "2x" ? 2 : useResolution === "4x" ? 4 : 1;
+        width = 1024 * multiplier;
+        height = 1024 * multiplier;
+      }
+      
+      // Process image through API
+      const response = await fetch("/api/image-processing", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUrl,
+          format: useFormat,
+          width,
+          height,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Image processing failed");
+      }
+      
+      // Get the processed image
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      // Download the processed image
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title.replace(/[^a-z0-9]/gi, '_')}_${useResolution}.${useFormat}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download complete",
+        description: `Image downloaded as ${useFormat.toUpperCase()} at ${useResolution} resolution`,
+      });
+      
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Download failed",
+        description: "Failed to process and download image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
   
   // Handle image deletion
@@ -398,14 +469,53 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
                 )}
               </div>
               
+              {/* Download Options */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="format-select">Format</Label>
+                    <Select value={downloadFormat} onValueChange={setDownloadFormat}>
+                      <SelectTrigger id="format-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="png">PNG</SelectItem>
+                        <SelectItem value="jpg">JPG</SelectItem>
+                        <SelectItem value="webp">WebP</SelectItem>
+                        <SelectItem value="svg">SVG</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="resolution-select">Resolution</Label>
+                    <Select value={downloadResolution} onValueChange={setDownloadResolution}>
+                      <SelectTrigger id="resolution-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="original">Original</SelectItem>
+                        <SelectItem value="2x">2x (2048px)</SelectItem>
+                        <SelectItem value="4x">4x (4096px)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   onClick={() => handleDownloadImage(previewImage.imageUrl, previewImage.title)}
                   className="flex-1"
+                  disabled={isDownloading}
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
+                  {isDownloading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
+                  {isDownloading ? "Processing..." : "Download"}
                 </Button>
                 
                 {/* Variations feature temporarily disabled */}
