@@ -55,6 +55,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [quality, setQuality] = useState("standard");
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
   const [imageLoadStatus, setImageLoadStatus] = useState<"loading" | "loaded" | "error">("loading");
+  const [imageTitle, setImageTitle] = useState("");
 
   // Fetch available models
   const { data: modelsData } = useQuery({
@@ -302,6 +303,55 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     },
   });
 
+  // Save edited image mutation
+  const saveImageMutation = useMutation({
+    mutationFn: async () => {
+      if (!editedImageUrl || !imageTitle.trim() || !prompt.trim()) {
+        throw new Error("Title, prompt, and image are required");
+      }
+      
+      const response = await apiRequest("POST", "/api/generated-images", {
+        title: imageTitle.trim(),
+        prompt: prompt.trim(),
+        imageUrl: editedImageUrl,
+        model: model,
+        size: size,
+        quality: quality,
+        projectId: 1, // Default project
+        metadata: JSON.stringify({ 
+          editedAt: new Date().toISOString(),
+          isEditedImage: true,
+          originalImageId: imageId
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || "Failed to save image");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Image saved",
+        description: "Your edited image has been saved to the library.",
+      });
+      // Clear the form
+      setImageTitle("");
+      setPrompt("");
+      setEditedImageUrl(null);
+      onOpenChange(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save image",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEdit = async () => {
     if (!prompt.trim()) {
       toast({
@@ -517,6 +567,38 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   alt="Edited result"
                   className="max-w-full max-h-48 object-contain rounded border"
                 />
+                
+                {/* Save to Library Section */}
+                <div className="mt-4 space-y-3 border-t pt-4">
+                  <Label className="text-sm font-medium">Save to Library</Label>
+                  <div>
+                    <Label htmlFor="image-title" className="text-xs">Image Title</Label>
+                    <Textarea
+                      id="image-title"
+                      placeholder="Enter a title for your edited image..."
+                      value={imageTitle}
+                      onChange={(e) => setImageTitle(e.target.value)}
+                      className="resize-none mt-1"
+                      rows={1}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => saveImageMutation.mutate()}
+                      disabled={saveImageMutation.isPending || !imageTitle.trim() || !prompt.trim()}
+                      className="flex-1"
+                    >
+                      {saveImageMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save to Library"
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
