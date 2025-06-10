@@ -858,21 +858,13 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         return res.status(400).json({ error: "Brief content is required" });
       }
 
-      const systemPrompt = `You are a visual content strategist. Analyze the brief and respond with EXACTLY this format:
-
-"I've analyzed your brief and identified these visual requirements:
-
-[List the specific visual deliverables needed - be very specific about quantities and types]
-
-Would you like me to create detailed image generation prompts for these visuals?"
-
-Be concise and professional. Do not include any other text or explanations.`;
+      const systemPrompt = `You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.`;
       
-      const userPrompt = `Brief to analyze: ${content}
+      const userPrompt = `Please analyze this creative brief and tell me what visual content we need to create:
 
-${visualRequirements ? `Additional requirements: ${visualRequirements}` : ''}
+${content}
 
-Identify the visual deliverables and respond in the exact format specified.`;
+Focus on identifying the specific visual deliverables (number of images, type of content, platforms) and ask if I'd like you to create image generation prompts for them.`;
 
       const result = await generateContentDirect(userPrompt, systemPrompt, model || 'gpt-4o');
       
