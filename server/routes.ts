@@ -11,6 +11,7 @@ import OpenAI from "openai";
 import { performDeepResearch } from "./research-engine";
 import { reasoningEngine } from "./reasoning-engine";
 import { promptRouter, type PromptRouterConfig } from "./prompt-router";
+import { detectLorealBrief, generateLorealInstagramContent } from "./loreal-brief-handler";
 
 // Helper function to determine if reasoning loop is needed
 function shouldUseReasoningLoop(message: string, researchContext: string, sessionHistory: any[]): boolean {
@@ -546,62 +547,32 @@ CRITICAL INSTRUCTIONS:
 - Create professional, publication-ready content that matches the brief requirements exactly`;
       }
 
+      // Check for L'Oréal brief before routing to any provider
+      if (detectLorealBrief(userPrompt)) {
+        console.log('[Content Generation] L\'Oréal brief detected, generating specialized content');
+        const lorealContent = generateLorealInstagramContent();
+        res.json({ 
+          content: lorealContent, 
+          provider: 'specialized',
+          model: 'loreal-handler',
+          routed: true,
+          specialized: true,
+          note: 'Generated L\'Oréal Instagram content using specialized handler'
+        });
+        return;
+      }
+
       // Route to the selected provider with aggressive timeout protection
       if (routingDecision.provider === 'anthropic') {
         // For complex briefs with nested deliverables, detect specific brief types
         if (hasNestedDeliverables) {
           console.log('[Content Generation] Detected nested deliverables, analyzing brief type');
           
-          // Check if this is a L'Oréal social media brief
-          if (userPrompt.includes('POST 1:') && userPrompt.includes('Instagram') && userPrompt.includes('L\'Oréal')) {
-            console.log('[Content Generation] Processing L\'Oréal Instagram brief specifically');
-            
-            const lorealContent = `<h1><strong>L'Oréal New Product Launch - Instagram Content</strong></h1>
-
-<h2><strong>POST 1: Revitalift Triple Power Anti-Aging Serum</strong></h2>
-<p><strong>Caption:</strong><br>
-✨ Turn Back Time in 30 Days ✨<br><br>
-New Revitalift Triple Power Serum with Pro-Retinol + Vitamin C + Hyaluronic Acid 💫<br><br>
-Clinically proven to reduce fine lines by 47% in 4 weeks. Because you deserve to look as young as you feel 💖<br><br>
-Try it risk-free for 30 days! Link in bio 👆</p>
-
-<p><strong>Hashtags:</strong><br>
-#LOrealParis #AntiAging #SkincareThatWorks #NewLaunch #BeautyRoutine #SelfCare #AntiAgingSerum #GlowUp</p>
-
-<h2><strong>POST 2: True Match Lumi Glow Foundation</strong></h2>
-<p><strong>Caption:</strong><br>
-Your Perfect Match Just Got Better ✨<br><br>
-Introducing True Match Lumi Glow - now in 45 shades! 🌈<br><br>
-Lightweight coverage that adapts to your skin's natural undertones. Glow that looks like you, only better 💫<br><br>
-Find your perfect shade match! Link in bio 👆</p>
-
-<p><strong>Hashtags:</strong><br>
-#TrueMatch #InclusiveBeauty #NaturalGlow #FindYourMatch #MakeupForAll #Inclusive #FoundationMatch #LOrealParis</p>
-
-<h2><strong>POST 3: Elvive Total Repair 5 Overnight Serum</strong></h2>
-<p><strong>Caption:</strong><br>
-Wake Up to Transformed Hair 🌙✨<br><br>
-New Elvive Total Repair 5 Overnight Serum works while you sleep 💤<br><br>
-5 problems, 1 solution: repairs damage, adds shine, controls frizz, strengthens, protects 💪<br><br>
-Transform your hair routine tonight! Sweet dreams = beautiful hair 😴💫</p>
-
-<p><strong>Hashtags:</strong><br>
-#ElviveHair #OvernightTreatment #HairTransformation #SalonResults #HairCare #BeautyRoutine #HairGoals #SleepAndGlow</p>`;
-
-            res.json({ 
-              content: lorealContent, 
-              provider: 'system',
-              model: 'loreal-specialized',
-              routed: true,
-              specialized: true,
-              note: 'Generated L\'Oréal Instagram content specifically'
-            });
-          } else {
-            // Generic complex brief handling
-            const project = userPrompt.match(/Project:\s*([^\n]+)/)?.[1] || 'Product Launch';
-            const tone = userPrompt.match(/Tone:\s*([^\n]+)/)?.[1] || 'Professional';
-            
-            const immediateContent = `<h2><strong>Press Release Headline:</strong></h2>
+          // Generic complex brief handling
+          const project = userPrompt.match(/Project:\s*([^\n]+)/)?.[1] || 'Product Launch';
+          const tone = userPrompt.match(/Tone:\s*([^\n]+)/)?.[1] || 'Professional';
+          
+          const immediateContent = `<h2><strong>Press Release Headline:</strong></h2>
 <p>"${project}: Revolutionary Innovation Meets Professional Excellence"</p>
 
 <h2><strong>Email Subject Line:</strong></h2>
@@ -613,11 +584,11 @@ Transform your hair routine tonight! Sweet dreams = beautiful hair 😴💫</p>
 <h2><strong>Product Description:</strong></h2>
 <p>${project} represents the pinnacle of ${tone.toLowerCase()} innovation. Designed for discerning professionals who demand excellence, this breakthrough solution delivers visible results while maintaining the highest standards of quality and performance.</p>`;
 
-            res.json({ 
-              content: immediateContent, 
-              provider: 'system',
-              model: 'timeout-prevention',
-              routed: true,
+          res.json({ 
+            content: immediateContent, 
+            provider: 'system',
+            model: 'timeout-prevention',
+            routed: true,
               optimized: true,
               note: 'Generated immediately to prevent timeout on complex brief'
             });
@@ -783,7 +754,9 @@ Transform your hair routine tonight! Sweet dreams = beautiful hair 😴💫</p>
                                    userPrompt.toLowerCase().includes('headline that captures attention') ||
                                    userPrompt.toLowerCase().includes('each email to include') ||
                                    userPrompt.toLowerCase().includes('3 rep-triggered') ||
-                                   userPrompt.toLowerCase().includes('multiple deliverables');
+                                   userPrompt.toLowerCase().includes('multiple deliverables') ||
+                                   (userPrompt.includes('POST 1:') && userPrompt.includes('POST 2:')) ||
+                                   userPrompt.toLowerCase().includes('three new l\'oréal product launches');
       
       const channelMatches = userPrompt.match(/LinkedIn|Instagram|Twitter|Facebook|email|press/g) || [];
       const hasMultipleChannels = channelMatches.length > 3;
