@@ -480,9 +480,13 @@ Important: Generate comprehensive, well-structured content that directly address
       });
 
       res.json({
-        ...analysis,
+        success: true,
+        content: analysis.content,
+        title: analysis.title,
+        category: analysis.category,
         id: savedContent.id,
-        saved: true
+        saved: true,
+        metadata: analysis.metadata
       });
     } catch (error: any) {
       console.error('Brief processing error:', error);
