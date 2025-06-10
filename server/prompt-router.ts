@@ -13,6 +13,18 @@ export interface RoutingDecision {
 }
 
 export interface PromptRouterConfig {
+  userPrompt: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  requestModel?: string;
+  enabled?: boolean;
+  manualProvider?: 'openai' | 'anthropic' | 'gemini' | 'perplexity';
+  manualModel?: string;
+  forceReasoning?: boolean;
+}
+
+interface InternalPromptRouterConfig {
   enabled: boolean;
   manualProvider?: 'openai' | 'anthropic' | 'gemini' | 'perplexity';
   manualModel?: string;
@@ -28,10 +40,23 @@ export interface WorkflowContext {
 
 export class PromptRouter {
   
+  async routeRequest(config: PromptRouterConfig): Promise<RoutingDecision> {
+    return this.routePrompt(
+      config.userPrompt,
+      '',
+      {
+        enabled: config.enabled ?? true,
+        manualProvider: config.manualProvider,
+        manualModel: config.requestModel || config.manualModel,
+        forceReasoning: config.forceReasoning
+      } as InternalPromptRouterConfig
+    );
+  }
+  
   async routePrompt(
     message: string, 
     researchContext: string,
-    config: PromptRouterConfig = { enabled: true },
+    config: InternalPromptRouterConfig = { enabled: true },
     workflowContext?: WorkflowContext
   ): Promise<RoutingDecision> {
     

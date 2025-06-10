@@ -183,48 +183,47 @@ CRITICAL INSTRUCTIONS:
         return;
       }
 
-      // Use Anthropic as primary provider for briefing content generation
-      console.log('[Content Generation] Using Anthropic for briefing-based content');
-      
-      let generatedContent: string;
-      let usedProvider = 'anthropic';
-      let usedModel = 'claude-sonnet-4-20250514';
+      // Configure the prompt router for intelligent provider selection
+      const config: PromptRouterConfig = {
+        userPrompt,
+        systemPrompt: enhancedSystemPrompt,
+        temperature: temperature || 0.7,
+        maxTokens: 3000,
+        requestModel
+      };
 
-      try {
-        // Try Anthropic first
+      // Use the prompt router to intelligently select the best provider
+      const routingDecision = await promptRouter.routeRequest(config);
+      console.log(`[Content Generation] Routing to ${routingDecision.provider} with model ${routingDecision.model}`);
+
+      let generatedContent: string;
+
+      // Execute the generation based on routing decision
+      if (routingDecision.provider === 'anthropic') {
         generatedContent = await AnthropicAPI.generateContent({
-          model: 'claude-sonnet-4-20250514',
+          model: routingDecision.model,
           prompt: userPrompt,
           systemPrompt: enhancedSystemPrompt,
           temperature: temperature || 0.7,
           maxTokens: 3000
         });
-      } catch (anthropicError: any) {
-        console.log('[Content Generation] Anthropic failed, trying OpenAI fallback');
-        try {
-          // Fallback to OpenAI
-          generatedContent = await generateContent(userPrompt, enhancedSystemPrompt, 'gpt-4o');
-          usedProvider = 'openai';
-          usedModel = 'gpt-4o';
-        } catch (openaiError: any) {
-          console.log('[Content Generation] OpenAI failed, trying Gemini fallback');
-          // Final fallback to Gemini
-          generatedContent = await GeminiAPI.generateContent({
-            model: 'gemini-1.5-flash',
-            prompt: userPrompt,
-            systemPrompt: enhancedSystemPrompt,
-            temperature: temperature || 0.7,
-            maxTokens: 3000
-          });
-          usedProvider = 'gemini';
-          usedModel = 'gemini-1.5-flash';
-        }
+      } else if (routingDecision.provider === 'gemini') {
+        generatedContent = await GeminiAPI.generateContent({
+          model: routingDecision.model,
+          prompt: userPrompt,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens: 3000
+        });
+      } else {
+        // Default to OpenAI
+        generatedContent = await generateContent(userPrompt, enhancedSystemPrompt, routingDecision.model as any);
       }
 
       res.json({ 
         content: generatedContent,
-        provider: usedProvider,
-        model: usedModel
+        provider: routingDecision.provider,
+        model: routingDecision.model
       });
     } catch (error: any) {
       console.error('Content generation error:', error.message);
