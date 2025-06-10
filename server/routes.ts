@@ -339,5 +339,189 @@ Important: Generate comprehensive, well-structured content that directly address
     }
   });
 
+  // Brief conversations CRUD operations
+  app.get("/api/brief-conversations", async (_req: Request, res: Response) => {
+    try {
+      const conversations = await storage.getBriefConversations();
+      res.json(conversations);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch brief conversations" });
+    }
+  });
+
+  app.get("/api/brief-conversations/:id", async (req: Request, res: Response) => {
+    try {
+      const conversation = await storage.getBriefConversation(parseInt(req.params.id));
+      if (!conversation) {
+        return res.status(404).json({ error: "Brief conversation not found" });
+      }
+      res.json(conversation);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch brief conversation" });
+    }
+  });
+
+  app.post("/api/brief-conversations", async (req: Request, res: Response) => {
+    try {
+      const conversation = await storage.createBriefConversation(req.body);
+      res.status(201).json(conversation);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to create brief conversation" });
+    }
+  });
+
+  app.put("/api/brief-conversations/:id", async (req: Request, res: Response) => {
+    try {
+      const conversation = await storage.updateBriefConversation(parseInt(req.params.id), req.body);
+      if (!conversation) {
+        return res.status(404).json({ error: "Brief conversation not found" });
+      }
+      res.json(conversation);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to update brief conversation" });
+    }
+  });
+
+  app.delete("/api/brief-conversations/:id", async (req: Request, res: Response) => {
+    try {
+      await storage.deleteBriefConversation(parseInt(req.params.id));
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to delete brief conversation" });
+    }
+  });
+
+  // Generated contents CRUD operations
+  app.get("/api/generated-contents", async (req: Request, res: Response) => {
+    try {
+      const contents = await storage.getGeneratedContents();
+      const { type } = req.query;
+      
+      if (type) {
+        const filtered = contents.filter(content => content.type === type);
+        res.json(filtered);
+      } else {
+        res.json(contents);
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch generated contents" });
+    }
+  });
+
+  app.get("/api/generated-contents/:id", async (req: Request, res: Response) => {
+    try {
+      const content = await storage.getGeneratedContent(parseInt(req.params.id));
+      if (!content) {
+        return res.status(404).json({ error: "Generated content not found" });
+      }
+      res.json(content);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch generated content" });
+    }
+  });
+
+  app.post("/api/generated-contents", async (req: Request, res: Response) => {
+    try {
+      const content = await storage.createGeneratedContent(req.body);
+      res.status(201).json(content);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to create generated content" });
+    }
+  });
+
+  app.put("/api/generated-contents/:id", async (req: Request, res: Response) => {
+    try {
+      const content = await storage.updateGeneratedContent(parseInt(req.params.id), req.body);
+      if (!content) {
+        return res.status(404).json({ error: "Generated content not found" });
+      }
+      res.json(content);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to update generated content" });
+    }
+  });
+
+  app.delete("/api/generated-contents/:id", async (req: Request, res: Response) => {
+    try {
+      await storage.deleteGeneratedContent(parseInt(req.params.id));
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to delete generated content" });
+    }
+  });
+
+  // Brief processing endpoint for file uploads
+  app.post("/api/process-brief", upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const analysis = await processBrief(req.file.path);
+      
+      // Save to generated contents as briefing type
+      const savedContent = await storage.createGeneratedContent({
+        title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
+        content: analysis.content,
+        type: 'briefing',
+        category: analysis.category || 'general',
+        metadata: {
+          filename: req.file.originalname,
+          filesize: req.file.size,
+          uploadedAt: new Date().toISOString(),
+          ...analysis.metadata
+        }
+      });
+
+      res.json({
+        ...analysis,
+        id: savedContent.id,
+        saved: true
+      });
+    } catch (error: any) {
+      console.error('Brief processing error:', error);
+      res.status(500).json({ 
+        error: "Brief processing failed", 
+        details: error.message 
+      });
+    }
+  });
+
+  // Brief interpretation endpoint
+  app.post("/api/interpret-brief", async (req: Request, res: Response) => {
+    try {
+      const { briefContent, visualRequirements } = req.body;
+      
+      if (!briefContent) {
+        return res.status(400).json({ error: "Brief content is required" });
+      }
+
+      const systemPrompt = `You are SAGE, a creative brief interpreter. Analyze the provided brief and extract key visual requirements, messaging, and deliverables. Focus on actionable creative direction.`;
+      
+      const userPrompt = `Analyze this creative brief and provide structured interpretation:
+
+${briefContent}
+
+${visualRequirements ? `Additional visual requirements: ${visualRequirements}` : ''}
+
+Please provide:
+1. Key messaging and positioning
+2. Visual direction and style requirements
+3. Specific deliverables needed
+4. Target audience insights
+5. Creative recommendations`;
+
+      const result = await generateContent(userPrompt, systemPrompt, 'gpt-4o');
+      
+      res.json({ interpretation: result });
+    } catch (error: any) {
+      console.error('Brief interpretation error:', error);
+      res.status(500).json({ 
+        error: "Brief interpretation failed", 
+        details: error.message 
+      });
+    }
+  });
+
   return server;
 }
