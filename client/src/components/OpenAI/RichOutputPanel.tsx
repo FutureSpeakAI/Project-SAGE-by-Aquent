@@ -40,6 +40,8 @@ interface RichOutputPanelProps {
   personas?: SavedPersona[];
   isFullScreen?: boolean;
   onToggleFullScreen?: () => void;
+  userPrompt?: string; // Add user prompt to detect briefing content
+  systemPrompt?: string; // Add system prompt for metadata
 }
 
 export function RichOutputPanel({
@@ -53,7 +55,9 @@ export function RichOutputPanel({
   onOpenPersonaLibrary,
   personas = [],
   isFullScreen = false,
-  onToggleFullScreen
+  onToggleFullScreen,
+  userPrompt = '',
+  systemPrompt = ''
 }: RichOutputPanelProps) {
   const [editableContent, setEditableContent] = useState(content);
   const [selectedText, setSelectedText] = useState("");
@@ -575,8 +579,20 @@ export function RichOutputPanel({
 
   // Save content mutation
   const saveContentMutation = useMutation({
-    mutationFn: async ({ title, content }: { title: string; content: string }) => {
-      return await apiRequest('POST', '/api/generated-contents', { title, content });
+    mutationFn: async ({ title, content, contentType, model, temperature }: { 
+      title: string; 
+      content: string; 
+      contentType: string;
+      model: string;
+      temperature: number;
+    }) => {
+      return await apiRequest('POST', '/api/generated-contents', { 
+        title, 
+        content, 
+        contentType: contentType || 'general',
+        model,
+        temperature: temperature.toString()
+      });
     },
     onSuccess: () => {
       setSaveDialogOpen(false);
@@ -620,7 +636,10 @@ export function RichOutputPanel({
 
     saveContentMutation.mutate({ 
       title: contentTitle, 
-      content: contentToSave 
+      content: contentToSave,
+      contentType: 'general',
+      model: model,
+      temperature: temperature
     });
   };
 
