@@ -248,7 +248,22 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
         console.log('[Content Generation] Detected briefing content, using reliable briefing execution');
         console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
         
-        // Use OpenAI with proper error handling for briefing content
+        // Optimize prompt for complex briefs to prevent timeouts
+        let optimizedPrompt = userPrompt;
+        let maxTokens = 1500;
+        
+        if (userPrompt.length > 2000) {
+          // For complex briefs, extract key information and streamline
+          const briefMatch = userPrompt.match(/CREATIVE BRIEF[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/i);
+          const deliverableMatch = userPrompt.match(/deliverable[s]?[:\s]*(.*?)(?=\n|$)/i);
+          
+          optimizedPrompt = `CREATIVE BRIEF: ${briefMatch?.[1]?.slice(0, 500) || 'Content creation request'}
+Deliverables: ${deliverableMatch?.[1] || briefDeliverables.join(', ')}
+
+Create the requested content directly without repeating the brief.`;
+          maxTokens = 1000; // Reduce tokens for faster processing
+        }
+
         try {
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -261,14 +276,14 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
               messages: [
                 { 
                   role: 'system', 
-                  content: enhancedSystemPrompt || 'You are a professional content creator. Create engaging content based on the brief provided. Use HTML formatting with proper tags like <h1>, <h2>, <p>, <ul>, <li>.' 
+                  content: 'You are a professional content creator. Create engaging content based on the brief provided. Use HTML formatting with proper tags like <h1>, <h2>, <p>, <ul>, <li>. Be concise and direct.' 
                 },
-                { role: 'user', content: userPrompt }
+                { role: 'user', content: optimizedPrompt }
               ],
               temperature: temperature || 0.7,
-              max_tokens: 1500
+              max_tokens: maxTokens
             }),
-            signal: AbortSignal.timeout(15000)
+            signal: AbortSignal.timeout(20000)
           });
           
           if (response.ok) {
