@@ -55,9 +55,10 @@ interface GenerateContentRequest {
 interface ImagePromptAgentProps {
   onApplyPrompt: (prompt: string) => void;
   onSwitchToConversation?: () => void;
+  model?: string;
 }
 
-export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation }: ImagePromptAgentProps) {
+export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation, model = "gpt-4o" }: ImagePromptAgentProps) {
   // Initialize messages from localStorage or default
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
@@ -338,10 +339,10 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     
     // Send the analysis prompt to AI for processing
     generateContentMutation.mutate({
-      model: selectedModel,
+      model: model,
       systemPrompt: "You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.",
       userPrompt: analysisPrompt,
-      conversation: messages.concat([{ role: "user", content: analysisPrompt }]),
+      temperature: 0.7,
     });
     
     // Switch to conversation tab

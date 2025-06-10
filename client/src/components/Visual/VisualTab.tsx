@@ -383,7 +383,7 @@ const TabContent = ({
       
       {/* Prompt Assistant Content */}
       <TabsContent value="assistant">
-        <ImagePromptAgent onApplyPrompt={handlePromptFromAgent} />
+        <ImagePromptAgent onApplyPrompt={handlePromptFromAgent} model={model} />
       </TabsContent>
     </Tabs>
     
