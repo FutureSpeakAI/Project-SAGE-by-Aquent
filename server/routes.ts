@@ -557,16 +557,78 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
   // Image generation endpoint
   app.post("/api/generate-image", async (req: Request, res: Response) => {
     try {
-      const { prompt, size, quality } = req.body;
+      const { 
+        prompt, 
+        model = "gpt-image-1", 
+        size = "1024x1024", 
+        quality = "high", 
+        background = "auto",
+        n = 1
+      } = req.body;
+      
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
-      const result = await generateImage(prompt, size, quality);
-      res.json(result);
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ error: "OpenAI API key not configured" });
+      }
+
+      console.log(`Generating image with ${model}, size: ${size}, quality: ${quality}`);
+      
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const response = await openai.images.generate({
+        model: "gpt-image-1",
+        prompt: prompt,
+        n: n,
+        size: size as any,
+        quality: quality as any,
+        background: background as any
+      });
+
+      if (!response.data || response.data.length === 0) {
+        return res.status(500).json({ error: "No images were generated" });
+      }
+
+      const firstImage = response.data[0];
+      const revisedPrompt = firstImage.revised_prompt || prompt;
+      let imageUrl = firstImage.url;
+
+      if (!imageUrl && firstImage.b64_json) {
+        imageUrl = `data:image/png;base64,${firstImage.b64_json}`;
+      }
+
+      return res.json({ 
+        images: [{ url: imageUrl, revised_prompt: revisedPrompt }],
+        model,
+        prompt
+      });
+
     } catch (error: any) {
       console.error('Image generation error:', error);
-      res.status(500).json({ error: "Image generation failed", details: error.message });
+      
+      if (error.status === 401) {
+        return res.status(401).json({ error: "Invalid API key" });
+      }
+      
+      if (error.status === 429) {
+        return res.status(429).json({ error: "Rate limit exceeded" });
+      }
+      
+      if (error.status === 400) {
+        return res.status(400).json({ 
+          error: "Bad request", 
+          details: error.message || "Invalid request parameters" 
+        });
+      }
+      
+      return res.status(500).json({ 
+        error: "Image generation failed", 
+        details: error.message || "Unknown error" 
+      });
     }
   });
 
