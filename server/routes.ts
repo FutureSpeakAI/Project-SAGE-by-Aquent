@@ -245,36 +245,44 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
       let usedModel: string = 'claude-sonnet-4-20250514';
 
       if (isBriefingContent) {
-        console.log('[Content Generation] Detected briefing content, using direct API call');
+        console.log('[Content Generation] Detected briefing content, using reliable briefing execution');
         console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
         
-        // Direct API call with timeout to avoid hanging
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
-            messages: [
-              { role: 'system', content: enhancedSystemPrompt },
-              { role: 'user', content: userPrompt }
-            ],
-            temperature: temperature || 0.7,
-            max_tokens: 2000
-          }),
-          signal: AbortSignal.timeout(15000) // 15 second timeout
-        });
-        
-        if (!response.ok) {
-          throw new Error(`OpenAI API error: ${response.status}`);
+        // Use OpenAI with reduced timeout for briefing content
+        try {
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: 'gpt-3.5-turbo',
+              messages: [
+                { 
+                  role: 'system', 
+                  content: enhancedSystemPrompt || 'You are a professional content creator. Create engaging content based on the brief provided. Use HTML formatting with proper tags like <h1>, <h2>, <p>, <ul>, <li>.' 
+                },
+                { role: 'user', content: userPrompt }
+              ],
+              temperature: temperature || 0.7,
+              max_tokens: 1500
+            }),
+            signal: AbortSignal.timeout(8000)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            generatedContent = data.choices[0]?.message?.content || 'Content generation unavailable';
+            usedProvider = 'openai';
+            usedModel = 'gpt-3.5-turbo';
+          } else {
+            throw new Error(`API response: ${response.status}`);
+          }
+        } catch (apiError: any) {
+          console.log('[Content Generation] API unavailable, checking authentication');
+          throw new Error('Content generation service temporarily unavailable. Please verify API keys are configured correctly.');
         }
-        
-        const data = await response.json();
-        generatedContent = data.choices[0].message.content || 'Content generation failed';
-        usedProvider = 'openai';
-        usedModel = 'gpt-4o-mini';
       } else {
         // Use the prompt router for non-briefing content
         const routingDecision = await promptRouter.routeRequest(config);
