@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateContent, generateImage } from "./openai";
+import { generateContent, generateContentDirect, generateImage } from "./openai";
 import * as GeminiAPI from "./gemini";
 import * as AnthropicAPI from "./anthropic";
 import { processBriefFile, analyzeBriefText, extractTextFromFile } from "./brief-processing";
@@ -118,7 +118,7 @@ Important: Generate comprehensive, well-structured content that directly address
       } catch (anthropicError: any) {
         console.log('[Content Generation] Anthropic failed, trying fallback:', anthropicError.message);
         try {
-          const fallbackResult = await generateContent(userPrompt, enhancedSystemPrompt, 'gpt-4o-mini');
+          const fallbackResult = await generateContentDirect(userPrompt, enhancedSystemPrompt, 'gpt-4o-mini');
           res.json({ 
             content: fallbackResult, 
             provider: 'openai',
@@ -217,7 +217,7 @@ CRITICAL INSTRUCTIONS:
         });
       } else {
         // Default to OpenAI
-        generatedContent = await generateContent(userPrompt, enhancedSystemPrompt, routingDecision.model as any);
+        generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, routingDecision.model);
       }
 
       res.json({ 
@@ -262,7 +262,7 @@ CRITICAL INSTRUCTIONS:
           maxTokens: maxTokens || 3000
         });
       } else {
-        result = await generateContent(prompt, systemPrompt, model || 'gpt-4o');
+        result = await generateContentDirect(prompt, systemPrompt, model || 'gpt-4o');
       }
 
       res.json({ 

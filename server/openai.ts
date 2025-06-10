@@ -26,6 +26,38 @@ export interface GenerateImageRequest {
   }>;
 }
 
+// Direct content generation function for internal use
+export const generateContentDirect = async (userPrompt: string, systemPrompt: string = '', model: string = 'gpt-4o'): Promise<string> => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI API key is not configured");
+  }
+
+  if (!userPrompt) {
+    throw new Error("User prompt is required");
+  }
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        ...(systemPrompt ? [{ role: "system" as const, content: systemPrompt }] : []),
+        { role: "user" as const, content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 3000,
+    });
+
+    return completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
+  } catch (error: any) {
+    console.error('OpenAI API error:', error);
+    throw new Error(`OpenAI generation failed: ${error.message}`);
+  }
+};
+
 export const generateContent = async (req: Request, res: Response) => {
   try {
     const { model, systemPrompt, userPrompt, temperature } = req.body as GenerateContentRequest;
