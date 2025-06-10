@@ -404,12 +404,12 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         requestModel
       };
 
-      // For briefing content, prioritize Anthropic for better instruction following
-      const isBriefingContent = userPrompt.includes('CREATIVE BRIEF') || userPrompt.includes('Based on the creative brief');
+      // Simplified briefing detection - only for actual formal briefs
+      const isBriefingContent = (userPrompt.includes('CREATIVE BRIEF') || userPrompt.includes('MARKETING BRIEF')) && userPrompt.length > 800;
       
-      let generatedContent: string;
+      let generatedContent: string = '';
       let usedProvider: string = 'anthropic';
-      let usedModel: string = 'claude-sonnet-4-20250514';
+      let usedModel: string = 'claude-3-5-sonnet-20241022';
 
       if (isBriefingContent) {
         console.log('[Content Generation] Detected briefing content, using reliable briefing execution');
