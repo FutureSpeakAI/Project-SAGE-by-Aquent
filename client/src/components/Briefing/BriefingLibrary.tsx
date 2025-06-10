@@ -131,6 +131,7 @@ export function BriefingLibrary({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden" hideDefaultCloseButton>
         <DialogHeader className="p-4 md:p-6 border-b bg-[#FF6600]/5">
@@ -280,37 +281,42 @@ export function BriefingLibrary({
           </div>
         </div>
 
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent className="max-w-md">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Briefing?</AlertDialogTitle>
-              <AlertDialogDescription className="break-words">
-                This will permanently delete "{selectedBriefing?.title}". This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={() => {
-                  if (selectedBriefing) {
-                    deleteMutation.mutate(selectedBriefing.id);
-                  }
-                }}
-                className="bg-red-500 hover:bg-red-600"
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                ) : null}
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </DialogContent>
     </Dialog>
+
+    {/* Delete Confirmation Dialog - Outside main dialog to prevent overflow */}
+    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialogContent className="max-w-sm mx-4 max-h-screen overflow-y-auto">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-lg">Delete Briefing?</AlertDialogTitle>
+          <AlertDialogDescription className="text-sm break-words">
+            Delete "{selectedBriefing?.title?.substring(0, 50) || ''}{selectedBriefing?.title && selectedBriefing.title.length > 50 ? '...' : ''}"?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="gap-2">
+          <AlertDialogCancel 
+            onClick={() => setIsDeleteDialogOpen(false)}
+            className="flex-1"
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={() => {
+              if (selectedBriefing) {
+                deleteMutation.mutate(selectedBriefing.id);
+              }
+            }}
+            className="bg-red-500 hover:bg-red-600 flex-1"
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : null}
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
