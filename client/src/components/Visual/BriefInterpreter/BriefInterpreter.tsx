@@ -28,48 +28,23 @@ export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation, on
   const { toast } = useToast();
 
   const processBrief = (briefContent: string, briefTitle: string) => {
-    // Simple, direct approach - analyze the brief client-side and create a response
-    const lowerContent = briefContent.toLowerCase();
-    let visualDeliverables = [];
-    
-    // Detect Instagram posts
-    if (lowerContent.includes('instagram')) {
-      const postMatches = briefContent.match(/(\d+)\s*(?:new|different)?\s*(?:l'oréal|loreal|product)/gi);
-      const productCount = postMatches ? parseInt(postMatches[0]) || 3 : 3;
-      visualDeliverables.push(`${productCount} Instagram posts for L'Oréal product launches`);
-    }
-    
-    // Detect other visual content
-    if (lowerContent.includes('social media')) {
-      visualDeliverables.push('Social media campaign visuals');
-    }
-    
-    if (lowerContent.includes('campaign') && lowerContent.includes('visual')) {
-      visualDeliverables.push('Campaign creative assets');
-    }
-    
-    // If no specific deliverables found, make a reasonable assumption
-    if (visualDeliverables.length === 0) {
-      visualDeliverables.push('Campaign visual content');
-    }
-    
-    // Create a professional response
-    const response = `Perfect! I've analyzed your ${briefTitle} and identified these visual requirements:
-
-• ${visualDeliverables.join('\n• ')}
-
-I can help you create detailed image generation prompts for these visuals. Would you like me to start developing prompts that capture the brand aesthetic and campaign objectives?`;
-    
-    // Switch to conversation and add the response
+    // Switch to conversation with the brief content
     onSwitchToConversation();
     
+    // Create a simple instruction prompt for SAGE to analyze the brief
+    const analysisPrompt = `Please analyze this creative brief and identify what visual content we need to create: "${briefTitle}"
+
+Brief content: ${briefContent}
+
+Tell me what specific visual deliverables you identify and ask if I'd like you to create image generation prompts for them.`;
+    
     if (onBriefingProcessed) {
-      onBriefingProcessed(response, briefTitle);
+      onBriefingProcessed(analysisPrompt, briefTitle);
     }
     
     toast({
-      title: "Brief analyzed",
-      description: "Switched to Conversation tab to continue.",
+      title: "Brief loaded",
+      description: "Switched to Conversation tab. SAGE will analyze the brief.",
     });
   };
 

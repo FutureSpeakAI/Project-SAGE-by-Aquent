@@ -327,14 +327,22 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     }
   };
 
-  const handleBriefingProcessed = (briefResponse: string, briefTitle: string) => {
-    setBriefingContext({ content: briefResponse, title: briefTitle });
+  const handleBriefingProcessed = (analysisPrompt: string, briefTitle: string) => {
+    setBriefingContext({ content: analysisPrompt, title: briefTitle });
     
-    // Add the brief interpretation response directly to the conversation
+    // Add user message to show the brief was loaded
     setMessages(prev => [
       ...prev,
-      { role: "assistant", content: briefResponse }
+      { role: "user", content: analysisPrompt }
     ]);
+    
+    // Send the analysis prompt to AI for processing
+    generateContentMutation.mutate({
+      model: selectedModel,
+      systemPrompt: "You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.",
+      userPrompt: analysisPrompt,
+      conversation: messages.concat([{ role: "user", content: analysisPrompt }]),
+    });
     
     // Switch to conversation tab
     setActiveTab("conversation");
