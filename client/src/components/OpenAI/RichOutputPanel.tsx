@@ -660,69 +660,73 @@ export function RichOutputPanel({
         <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200 flex flex-row items-center justify-between">
           <CardTitle className="font-semibold text-white">Generated Content</CardTitle>
           
-          {showContent && (
+          {(showContent || isFullScreen) && (
             <div className="flex gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={handleCopy} className="text-white hover:bg-black/20">
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy to clipboard</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <DropdownMenu>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-white hover:bg-black/20">
-                          <Download className="h-4 w-4" />
+              {showContent && (
+                <>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={handleCopy} className="text-white hover:bg-black/20">
+                          <Copy className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Export content</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => handleExport('html')}>
-                    <Code className="h-4 w-4 mr-2" />
-                    Export as HTML
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                    <File className="h-4 w-4 mr-2" />
-                    Export as PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport('docx')}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Export as DOCX
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Copy to clipboard</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setSaveDialogOpen(true)}
-                      className="text-[#FF6600] hover:bg-black/20"
-                    >
-                      <Bookmark className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Save to library</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  <DropdownMenu>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-white hover:bg-black/20">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Export content</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleExport('html')}>
+                        <Code className="h-4 w-4 mr-2" />
+                        Export as HTML
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                        <File className="h-4 w-4 mr-2" />
+                        Export as PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport('docx')}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Export as DOCX
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setSaveDialogOpen(true)}
+                          className="text-[#FF6600] hover:bg-black/20"
+                        >
+                          <Bookmark className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Save to library</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </>
+              )}
 
               <TooltipProvider>
                 <Tooltip>
@@ -762,18 +766,20 @@ export function RichOutputPanel({
                 </TooltipProvider>
               )}
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={onClear} className="text-white hover:bg-black/20">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Clear content</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {showContent && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={onClear} className="text-white hover:bg-black/20">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Clear content</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           )}
         </CardHeader>
