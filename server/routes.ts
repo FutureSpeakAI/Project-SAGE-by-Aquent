@@ -822,30 +822,40 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
   // Brief interpretation endpoint
   app.post("/api/interpret-brief", async (req: Request, res: Response) => {
     try {
-      const { briefContent, visualRequirements } = req.body;
+      const { brief, briefContent, model, visualRequirements } = req.body;
       
-      if (!briefContent) {
+      // Accept either 'brief' or 'briefContent' for compatibility
+      const content = brief || briefContent;
+      
+      if (!content) {
         return res.status(400).json({ error: "Brief content is required" });
       }
 
-      const systemPrompt = `You are SAGE, a creative brief interpreter. Analyze the provided brief and extract key visual requirements, messaging, and deliverables. Focus on actionable creative direction.`;
-      
-      const userPrompt = `Analyze this creative brief and provide structured interpretation:
+      const systemPrompt = `You are SAGE, a British marketing specialist and creative brief interpreter. 
 
-${briefContent}
+Analyze the provided creative brief and understand what visual deliverables are needed. Your role is to:
+
+1. Read and understand the creative brief thoroughly
+2. Identify what visual elements/deliverables are required for the campaign
+3. Respond in a conversational, helpful manner asking if the user would like to begin developing prompts for the visual elements
+
+Be personable, professional, and focus on the visual creative direction. Don't just repeat the brief content back - show that you understand it and are ready to help create the visual elements.`;
+      
+      const userPrompt = `I need your help interpreting this creative brief for visual content development:
+
+${content}
 
 ${visualRequirements ? `Additional visual requirements: ${visualRequirements}` : ''}
 
-Please provide:
-1. Key messaging and positioning
-2. Visual direction and style requirements
-3. Specific deliverables needed
-4. Target audience insights
-5. Creative recommendations`;
+Please read through this brief, understand what visual deliverables are needed, and then ask me if I'd like to begin developing prompts for the visual elements of this campaign. Be conversational and show that you understand the key visual requirements.`;
 
-      const result = await generateContentDirect(userPrompt, systemPrompt, 'gpt-4o');
+      const result = await generateContentDirect(userPrompt, systemPrompt, model || 'gpt-4o');
       
-      res.json({ interpretation: result });
+      res.json({ 
+        success: true,
+        interpretation: result,
+        prompt: result // For compatibility with existing frontend
+      });
     } catch (error: any) {
       console.error('Brief interpretation error:', error);
       res.status(500).json({ 
