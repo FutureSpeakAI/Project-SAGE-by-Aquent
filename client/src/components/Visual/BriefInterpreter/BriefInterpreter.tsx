@@ -44,29 +44,23 @@ export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation, on
       return response.json();
     },
     onSuccess: (data) => {
-      if (data.success && data.prompt) {
-        // Check if the prompt contains multiple image requests
-        const hasMultipleImages = data.prompt.toLowerCase().includes('image') && 
-          (data.prompt.includes('two') || data.prompt.includes('three') || data.prompt.includes('multiple') || 
-           data.prompt.includes('several') || /\d+.*image/i.test(data.prompt));
+      if (data.success && (data.interpretation || data.prompt)) {
+        const response = data.interpretation || data.prompt;
         
-        if (hasMultipleImages) {
-          // Switch to conversation tab for multiple image handling
-          onSwitchToConversation();
-          toast({
-            title: "Multiple prompts generated",
-            description: "Your brief requires multiple images. Switched to Conversation tab to select individual prompts.",
-          });
-        } else {
-          // Single image - use standard mode
-          onPromptGenerated(data.prompt);
-          toast({
-            title: "Brief interpreted successfully",
-            description: "Your creative brief has been converted to an image prompt.",
-          });
+        // Always switch to conversation tab and add the interpretation to the conversation
+        onSwitchToConversation();
+        
+        // Notify parent that briefing was processed with the response
+        if (onBriefingProcessed) {
+          onBriefingProcessed(response, "Brief Analysis");
         }
+        
+        toast({
+          title: "Brief analyzed",
+          description: "Analysis complete. Check the Conversation tab for SAGE's response.",
+        });
       } else {
-        throw new Error(data.message || "Failed to generate prompt");
+        throw new Error(data.message || "Failed to analyze brief");
       }
     },
     onError: (error) => {

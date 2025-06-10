@@ -327,15 +327,13 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     }
   };
 
-  const handleBriefingProcessed = (briefContent: string, briefTitle: string) => {
-    setBriefingContext({ content: briefContent, title: briefTitle });
+  const handleBriefingProcessed = (briefResponse: string, briefTitle: string) => {
+    setBriefingContext({ content: briefResponse, title: briefTitle });
     
-    // Add a message to the conversation acknowledging the briefing
-    const acknowledgmentMessage = `I've received your briefing "${briefTitle}". Let me analyze it and suggest specific visual elements we can create for this project. What type of visual content would you like to start with?`;
-    
+    // Add the brief interpretation response directly to the conversation
     setMessages(prev => [
       ...prev,
-      { role: "assistant", content: acknowledgmentMessage }
+      { role: "assistant", content: briefResponse }
     ]);
     
     // Switch to conversation tab

@@ -831,7 +831,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         return res.status(400).json({ error: "Prompt is required" });
       }
 
-      const result = await generateContentDirect(content, systemPrompt || '', model || 'gpt-4o', temperature || 0.7);
+      const result = await generateContentDirect(content, systemPrompt || '', model || 'gpt-4o');
       
       res.json({ 
         content: result,
@@ -858,23 +858,25 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         return res.status(400).json({ error: "Brief content is required" });
       }
 
-      const systemPrompt = `You are SAGE, a British marketing specialist and creative brief interpreter. 
+      const systemPrompt = `You are SAGE, a creative strategist specializing in visual content development.
 
-Your role is to:
-1. Analyze the creative brief and understand its key elements
-2. Identify what visual deliverables are needed
-3. Respond conversationally showing you understand the campaign
-4. Ask if they'd like to develop visual prompts
+TASK: Analyze creative briefs and identify specific visual deliverables needed.
 
-CRITICAL: Do NOT repeat or restate the brief content. Instead, demonstrate understanding through intelligent analysis and focus on visual creative direction.`;
+INSTRUCTIONS:
+- Read the brief and identify the visual content requirements (number of images, type of content, platforms)
+- Respond conversationally showing you understand what visuals are needed
+- Ask if they want you to create image generation prompts for these specific deliverables
+- Be concise and focus ONLY on the visual elements needed
+
+CRITICAL: Never repeat or quote the brief content. Only discuss the visual deliverables you identified.`;
       
-      const userPrompt = `I've uploaded a creative brief for visual content development. Please analyze it and tell me what visual elements we need to create for this campaign.
+      const userPrompt = `Analyze this creative brief and identify what visual content we need to create:
 
-Brief: ${content}
+${content}
 
 ${visualRequirements ? `Additional requirements: ${visualRequirements}` : ''}
 
-Show that you understand this campaign and ask if I'd like to start developing visual prompts. Be concise and focus on the visual creative direction needed.`;
+Tell me what specific visual deliverables you identified and ask if I want you to create image generation prompts for them.`;
 
       const result = await generateContentDirect(userPrompt, systemPrompt, model || 'gpt-4o');
       
