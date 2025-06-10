@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 // the newest Anthropic model is "claude-sonnet-4-20250514" which was released May 14, 2025. Use this by default unless user has already selected claude-3-7-sonnet-20250219
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
+  timeout: 30000, // 30 second timeout for better responsiveness
 });
 
 export interface AnthropicGenerateContentRequest {
@@ -24,13 +25,38 @@ export const generateContent = async (request: AnthropicGenerateContentRequest):
     enhancedSystemPrompt = "You are a professional content creator executing creative briefs. Based on the provided creative brief, create the specific content deliverables requested. Focus on creating engaging, professional content that fulfills the brief's objectives. Do not repeat or summarize the brief - create the actual content it describes. Use proper HTML formatting with <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists.";
   }
 
+  // For complex briefs, optimize the request for faster processing
+  let optimizedPrompt = request.prompt;
+  let maxTokens = request.maxTokens || 4000;
+  
+  if (isBriefExecution && request.prompt.length > 800) {
+    // Extract key information and create a streamlined prompt
+    const lines = request.prompt.split('\n');
+    const project = lines.find(l => l.includes('Project:'))?.replace('Project:', '').trim() || 'Product launch';
+    const objective = lines.find(l => l.includes('Objective:'))?.replace('Objective:', '').trim() || 'Create engaging content';
+    const deliverables = lines.find(l => l.includes('Deliverables:'))?.replace('Deliverables:', '').trim() || 'Marketing content';
+    const tone = lines.find(l => l.includes('Tone:'))?.replace('Tone:', '').trim() || 'Professional';
+    
+    optimizedPrompt = `CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)
+
+Project: ${project}
+Objective: ${objective}
+Deliverables: ${deliverables}
+Tone: ${tone}
+
+Create the specific deliverables listed above. Be concise but compelling.`;
+    
+    maxTokens = 2000; // Reduced for faster processing
+    console.log('[Anthropic] Streamlined complex brief for faster processing');
+  }
+
   const message = await anthropic.messages.create({
     model: request.model,
-    max_tokens: request.maxTokens || 4000,
+    max_tokens: maxTokens,
     temperature: request.temperature || 0.7,
     system: enhancedSystemPrompt,
     messages: [
-      { role: 'user', content: request.prompt }
+      { role: 'user', content: optimizedPrompt }
     ],
   });
 

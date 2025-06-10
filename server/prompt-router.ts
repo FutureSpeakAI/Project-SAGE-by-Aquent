@@ -103,8 +103,30 @@ export class PromptRouter {
       };
     }
 
-    // Creative & Image generation -> OpenAI or Gemini (with health checking)
+    // Creative & Image generation with complexity-aware routing
     if (this.isCreativeQuery(lowerMessage)) {
+      // Check for complex brief execution that may cause timeouts
+      const isBriefExecution = message.includes('CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)');
+      const isComplexBrief = isBriefExecution && (
+        message.length > 1000 || 
+        message.includes('deliverables') ||
+        message.includes('multiple') ||
+        message.toLowerCase().includes('loreal') ||
+        message.toLowerCase().includes("l'oreal") ||
+        (message.match(/\n/g) || []).length > 10
+      );
+
+      // For complex briefs, prefer Anthropic for better handling and timeout avoidance
+      if (isComplexBrief && healthyProviders.includes('anthropic')) {
+        return {
+          provider: 'anthropic',
+          model: this.getDefaultModel('anthropic'),
+          useReasoning: false,
+          rationale: 'Complex brief execution (optimized for Anthropic performance)'
+        };
+      }
+
+      // For simple creative tasks, prefer OpenAI or fallback
       const provider = preferredProviders.includes('openai') ? 'openai' : preferredProviders[0] || 'openai';
       return {
         provider: provider as 'openai' | 'anthropic' | 'gemini',

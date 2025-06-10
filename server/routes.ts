@@ -505,29 +505,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         manualModel: requestModel
       };
 
-      // For complex briefs, prioritize Anthropic over OpenAI to avoid timeouts
-      let routingDecision;
-      if (hasComplexRequirements && isBriefExecution) {
-        console.log('[Content Generation] Complex brief detected, forcing Anthropic routing');
-        routingDecision = {
-          provider: 'anthropic' as 'anthropic',
-          model: 'claude-sonnet-4-20250514',
-          useReasoning: false,
-          rationale: 'Complex brief optimization'
-        };
-      } else {
-        routingDecision = await promptRouter.routePrompt(
-          userPrompt,
-          isBriefExecution ? 'creative brief execution' : 'content generation',
-          routerConfig,
-          {
-            stage: 'content',
-            projectType: 'content',
-            complexity: hasComplexRequirements ? 'complex' : 'moderate',
-            priority: 'quality'
-          }
-        );
-      }
+      // Use prompt router with enhanced context for complex briefs
+      const routingDecision = await promptRouter.routePrompt(
+        userPrompt,
+        isBriefExecution ? 'creative brief execution' : 'content generation',
+        routerConfig,
+        {
+          stage: 'content',
+          projectType: 'content',
+          complexity: hasComplexRequirements ? 'complex' : 'moderate',
+          priority: 'quality'
+        }
+      );
 
       console.log(`[Content Generation] Routed to ${routingDecision.provider} with model ${routingDecision.model}`);
 
