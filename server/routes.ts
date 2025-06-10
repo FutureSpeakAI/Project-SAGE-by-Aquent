@@ -716,21 +716,65 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       }
 
       try {
-        // Enhanced image editing using DALL-E 3 with sophisticated prompt engineering
-        console.log('Processing image edit request with DALL-E 3');
+        // Use vision analysis + generation approach for proper reference image context
+        console.log('Processing image edit with vision analysis + contextual generation');
         
-        // Create sophisticated prompts based on the editing intent
+        // First, analyze the original image to understand its content
+        const base64Image = imageBuffer.toString('base64');
+        
+        const visionResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [{
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Analyze this image in detail. Describe: 1) Main objects and subjects, 2) Colors and lighting, 3) Style and composition, 4) Background and setting, 5) Overall mood and aesthetic. Be precise and comprehensive."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/png;base64,${base64Image}`
+                }
+              }
+            ]
+          }],
+          max_tokens: 600
+        });
+
+        const imageDescription = visionResponse.choices[0].message.content;
+        console.log('Vision analysis completed');
+        
+        // Create enhanced prompt that maintains original image context
         let enhancedPrompt: string;
         
         if (maskBuffer) {
-          // Inpainting-style generation
-          enhancedPrompt = `Professional digital artwork incorporating: ${prompt.trim()}. Create a cohesive composition with seamless integration, maintaining artistic consistency and high visual quality. Focus on detailed execution with proper lighting, shadows, and realistic textures.`;
+          // Inpainting style - modify specific areas while maintaining context
+          enhancedPrompt = `Create an image based on: ${imageDescription}. 
+
+Modification request: ${prompt.trim()}
+
+Requirements:
+- Keep the same lighting, style, and overall composition
+- Maintain the same color palette and mood
+- Seamlessly integrate the requested changes
+- Preserve all existing elements not being modified
+- Professional quality with consistent artistic style`;
         } else {
-          // Outpainting/extension-style generation
-          enhancedPrompt = `${prompt.trim()}. Professional digital illustration with rich detail, vibrant colors, and sophisticated composition. Emphasize visual clarity, artistic depth, and professional presentation quality.`;
+          // Outpainting/extension style - expand or enhance the scene
+          enhancedPrompt = `Create an enhanced version of: ${imageDescription}. 
+
+Enhancement request: ${prompt.trim()}
+
+Requirements:
+- Maintain the exact same main subject and composition
+- Keep identical lighting, colors, and artistic style
+- Expand or enhance as requested while preserving original elements
+- Seamless integration of new elements
+- Professional quality matching the original aesthetic`;
         }
 
-        // Generate image using DALL-E 3
+        // Generate the contextually appropriate image using DALL-E 3
         const generationResponse = await openai.images.generate({
           model: "dall-e-3",
           prompt: enhancedPrompt,
@@ -743,18 +787,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           throw new Error('No image returned from generation API');
         }
 
-        console.log('Image editing completed successfully');
+        console.log('Contextual image editing completed successfully');
 
         return res.json({
           success: true,
           images: generationResponse.data.map(img => ({
             url: img.url,
             revised_prompt: img.revised_prompt || enhancedPrompt
-          }))
+          })),
+          method: 'vision_contextual_generation',
+          original_analysis: imageDescription
         });
 
       } catch (apiError: any) {
-        console.error('DALL-E 3 generation error:', apiError);
+        console.error('Vision-based image editing error:', apiError);
         throw apiError;
       }
 
