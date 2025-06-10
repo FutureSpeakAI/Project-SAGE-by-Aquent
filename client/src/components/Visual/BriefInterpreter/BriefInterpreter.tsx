@@ -7,7 +7,7 @@ import { BriefingLibrary } from "@/components/Briefing/BriefingLibrary";
 import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog";
 
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText, Sparkles, Library, Upload } from "lucide-react";
+import { FileText, Sparkles, Library, Upload } from "lucide-react";
 import { ContentType, GeneratedContent } from "@shared/schema";
 
 interface BriefInterpreterProps {
