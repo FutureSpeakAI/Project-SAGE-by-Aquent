@@ -58,7 +58,7 @@ interface ImagePromptAgentProps {
   model?: string;
 }
 
-export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation, model = "gpt-4o-mini" }: ImagePromptAgentProps) {
+export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation, model = "gpt-4o" }: ImagePromptAgentProps) {
   // Initialize messages from localStorage or default
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
@@ -339,7 +339,7 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     
     // Send the analysis prompt to AI with proper error handling
     generateContentMutation.mutate({
-      model: "gpt-4o-mini", // Use stable model
+      model: model, // Use the full GPT-4o model with retry logic
       systemPrompt: "You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.",
       userPrompt: analysisPrompt,
       temperature: 0.7,

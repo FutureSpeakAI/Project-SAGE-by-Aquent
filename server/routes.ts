@@ -496,12 +496,9 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           maxTokens: maxTokens || 3000
         });
       } else {
-        // Use more stable model by default and implement fallback
-        try {
-          result = await generateContentDirect(actualPrompt, systemPrompt, model || 'gpt-4o-mini');
-        } catch (error: any) {
-          // Fallback to Claude if OpenAI fails
-          console.warn('OpenAI failed, falling back to Anthropic:', error.message);
+        // For brief analysis, prioritize Anthropic for better reasoning
+        if (actualPrompt.toLowerCase().includes('brief') || actualPrompt.toLowerCase().includes('analyze')) {
+          console.log('[Content Generation] Using Anthropic for brief analysis');
           result = await AnthropicAPI.generateContent({
             model: 'claude-3-5-sonnet-20241022',
             prompt: actualPrompt,
@@ -509,6 +506,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             temperature: temperature || 0.7,
             maxTokens: maxTokens || 3000
           });
+        } else {
+          // Use GPT-4o for other content with fallback
+          try {
+            result = await generateContentDirect(actualPrompt, systemPrompt, model || 'gpt-4o');
+          } catch (error: any) {
+            console.warn('OpenAI failed, falling back to Anthropic:', error.message);
+            result = await AnthropicAPI.generateContent({
+              model: 'claude-3-5-sonnet-20241022',
+              prompt: actualPrompt,
+              systemPrompt,
+              temperature: temperature || 0.7,
+              maxTokens: maxTokens || 3000
+            });
+          }
         }
       }
 

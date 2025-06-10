@@ -41,22 +41,51 @@ export const generateContentDirect = async (userPrompt: string, systemPrompt: st
     timeout: 45000, // 45 second timeout
   });
 
-  try {
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [
-        ...(systemPrompt ? [{ role: "system" as const, content: systemPrompt }] : []),
-        { role: "user" as const, content: userPrompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 4000,
-    });
+  // Implement retry logic for GPT-4o
+  const maxRetries = 3;
+  let lastError: any;
 
-    return completion.choices[0].message.content || "I apologize, but I couldn't generate a response.";
-  } catch (error: any) {
-    console.error('OpenAI API error:', error);
-    throw new Error(`OpenAI generation failed: ${error.message}`);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[OpenAI] Attempt ${attempt} for model ${model}`);
+      
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          ...(systemPrompt ? [{ role: "system" as const, content: systemPrompt }] : []),
+          { role: "user" as const, content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      });
+
+      const content = completion.choices[0].message.content;
+      if (!content) {
+        throw new Error("Empty response from OpenAI");
+      }
+
+      console.log(`[OpenAI] Success on attempt ${attempt}`);
+      return content;
+      
+    } catch (error: any) {
+      lastError = error;
+      console.error(`[OpenAI] Attempt ${attempt} failed:`, error.message);
+      
+      // If it's a 500 error or rate limit, wait and retry
+      if ((error.status === 500 || error.status === 429) && attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+        console.log(`[OpenAI] Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // For other errors or final attempt, break and throw
+      break;
+    }
   }
+
+  console.error(`[OpenAI] All ${maxRetries} attempts failed, last error:`, lastError?.message);
+  throw new Error(`OpenAI generation failed after ${maxRetries} attempts: ${lastError?.message}`);
 };
 
 export const generateContent = async (req: Request, res: Response) => {
