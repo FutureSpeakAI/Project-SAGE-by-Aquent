@@ -691,23 +691,58 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         }
       }
 
-      // Prepare OpenAI API request
-      const editRequest: any = {
-        image: imageBuffer,
+      // Write buffer to temporary file for OpenAI API
+      const fs = require('fs');
+      const tempImagePath = path.join(__dirname, `../temp_image_${Date.now()}.png`);
+      fs.writeFileSync(tempImagePath, imageBuffer);
+      
+      // Prepare OpenAI API request with file stream
+      const editRequestParams: any = {
+        image: fs.createReadStream(tempImagePath),
         prompt: prompt.trim(),
         n: parseInt(String(n)) || 1,
         size: size || "1024x1024"
       };
 
+      let tempMaskPath: string | null = null;
       if (maskBuffer) {
-        editRequest.mask = maskBuffer;
+        tempMaskPath = path.join(__dirname, `../temp_mask_${Date.now()}.png`);
+        fs.writeFileSync(tempMaskPath, maskBuffer);
+        editRequestParams.mask = fs.createReadStream(tempMaskPath);
         console.log('Performing inpainting with mask');
       } else {
         console.log('Performing outpainting/extension');
       }
 
-      // Call OpenAI Images Edit API
-      const response = await openai.images.edit(editRequest);
+      try {
+        // Call OpenAI Images Edit API
+        const response = await openai.images.edit(editRequestParams);
+        
+        // Clean up temporary files
+        fs.unlinkSync(tempImagePath);
+        if (tempMaskPath) fs.unlinkSync(tempMaskPath);
+        
+        if (!response.data || response.data.length === 0) {
+          throw new Error('No edited image returned from API');
+        }
+        
+        return res.json({
+          success: true,
+          images: response.data.map(img => ({
+            url: img.url,
+            revised_prompt: img.revised_prompt || prompt
+          }))
+        });
+      } catch (apiError) {
+        // Clean up temporary files on error
+        try {
+          fs.unlinkSync(tempImagePath);
+          if (tempMaskPath) fs.unlinkSync(tempMaskPath);
+        } catch (cleanupError) {
+          console.log('Failed to clean up temp files:', cleanupError);
+        }
+        throw apiError;
+      }
 
       if (!response.data || response.data.length === 0) {
         throw new Error('No edited image returned from API');
