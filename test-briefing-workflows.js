@@ -368,7 +368,7 @@ Week 9-12: Results analysis and follow-up campaigns
 
     // Process the B2B SaaS brief
     const formData = new FormData();
-    const blob = new Blob([saasPrefix], { type: 'text/plain' });
+    const blob = new Blob([saasbrief], { type: 'text/plain' });
     formData.append('file', blob, 'cloudsecure-brief.txt');
     formData.append('analysisType', 'detailed');
 
