@@ -494,7 +494,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasComplexRequirements = userPrompt.length > 1000 || 
                                    userPrompt.includes('deliverables') ||
                                    userPrompt.includes('multiple') ||
-                                   userPrompt.includes('campaign');
+                                   userPrompt.includes('campaign') ||
+                                   userPrompt.toLowerCase().includes('loreal') ||
+                                   userPrompt.toLowerCase().includes("l'oreal") ||
+                                   (userPrompt.match(/\n/g) || []).length > 10; // Multi-section briefs
 
       // Use prompt router for intelligent provider selection
       const routerConfig: PromptRouterConfig = {
@@ -552,11 +555,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
           routed: true
         });
       } else {
-        // Use OpenAI with the existing logic that handles brief detection
-        req.body.systemPrompt = enhancedSystemPrompt;
-        req.body.model = routingDecision.model;
-        const result = await generateContent(req, res);
-        return result;
+        // Use OpenAI with timeout fallback to other providers
+        try {
+          req.body.systemPrompt = enhancedSystemPrompt;
+          req.body.model = routingDecision.model;
+          const result = await generateContent(req, res);
+          return result;
+        } catch (openaiError: any) {
+          console.log('[Content Generation] OpenAI timeout, falling back to Anthropic');
+          
+          // Fallback to Anthropic for complex briefs
+          try {
+            const result = await AnthropicAPI.generateContent({
+              model: 'claude-sonnet-4-20250514',
+              prompt: userPrompt,
+              systemPrompt: enhancedSystemPrompt,
+              temperature: temperature || 0.7,
+              maxTokens: 4000
+            });
+            res.json({ 
+              content: result, 
+              provider: 'anthropic',
+              model: 'claude-sonnet-4-20250514',
+              routed: true,
+              fallback: 'openai_timeout'
+            });
+          } catch (anthropicError: any) {
+            console.log('[Content Generation] Anthropic also failed, trying Gemini');
+            
+            // Final fallback to Gemini
+            try {
+              const result = await GeminiAPI.generateContent({
+                model: 'gemini-1.5-pro',
+                prompt: userPrompt,
+                systemPrompt: enhancedSystemPrompt,
+                temperature: temperature || 0.7,
+                maxTokens: 4000
+              });
+              res.json({ 
+                content: result, 
+                provider: 'gemini',
+                model: 'gemini-1.5-pro',
+                routed: true,
+                fallback: 'openai_anthropic_timeout'
+              });
+            } catch (geminiError: any) {
+              console.error('[Content Generation] All providers failed:', geminiError);
+              res.status(500).json({ 
+                error: 'All content generation providers are currently unavailable. Please try again in a moment.',
+                providers_tried: ['openai', 'anthropic', 'gemini']
+              });
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Content generation error:', error);

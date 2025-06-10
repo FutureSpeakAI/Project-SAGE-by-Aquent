@@ -59,11 +59,11 @@ export const generateContent = async (req: Request, res: Response) => {
       openaiConfig.baseURL = process.env.OPENAI_API_BASE_URL;
     }
     
-    // Initialize the OpenAI client with balanced timeout configuration
+    // Initialize the OpenAI client with extended timeout for complex briefs
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      timeout: 20000, // 20 second timeout for content generation
-      maxRetries: 1, // Single retry for reliability
+      timeout: 60000, // 60 second timeout for complex content generation
+      maxRetries: 0, // No retries to prevent double timeouts
     });
     
     // Check if this is a request from the image prompt agent
