@@ -110,10 +110,7 @@ export function DocumentUploadDialog({
         // Pass the extracted content to the parent component
         onDocumentProcessed(data.content);
         
-        // Save the processed briefing to the library
-        await saveBriefingToLibrary(selectedFile.name, data.content);
-        
-        // Invalidate the briefing library cache to refresh the list
+        // The briefing is already saved by the server, just refresh the cache
         queryClient.invalidateQueries({ queryKey: ['/api/generated-contents', ContentType.BRIEFING] });
         
         onOpenChange(false);
