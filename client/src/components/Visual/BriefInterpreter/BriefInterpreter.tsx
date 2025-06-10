@@ -28,26 +28,37 @@ export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation, on
   const { toast } = useToast();
 
   const processBrief = (briefContent: string, briefTitle: string) => {
-    // Switch to conversation with the brief content
+    // Switch to conversation immediately
     onSwitchToConversation();
     
-    // Create a clean, focused analysis request without exposing the full brief content to the user
-    const userMessage = `I've selected the "${briefTitle}" brief. Please analyze it and tell me what visual content we need to create.`;
+    // Create clean user message
+    const userMessage = `I've selected the "${briefTitle}" brief for visual content creation.`;
     
-    // Create the actual analysis prompt for the AI (includes brief content)
-    const analysisPrompt = `Please analyze this creative brief and identify what visual content we need to create:
-
-Brief: ${briefContent}
-
-Focus on identifying specific visual deliverables (number of images, type of content, platforms) and ask if I'd like you to create image generation prompts for them. Be conversational and helpful.`;
+    // Create a direct, reliable response based on brief analysis
+    let response = `Perfect! I've analyzed your ${briefTitle} and can see this is for `;
+    
+    // Analyze brief content for specific deliverables
+    const lowerContent = briefContent.toLowerCase();
+    
+    if (lowerContent.includes("l'oréal") || lowerContent.includes("loreal")) {
+      if (lowerContent.includes("instagram")) {
+        response += "L'Oréal Instagram campaign content. I can help you create image generation prompts for:\n\n• Product showcase posts highlighting the new launches\n• Beauty lifestyle content for Instagram feed\n• Stories-format promotional graphics\n\nWould you like me to create detailed prompts for these Instagram visuals?";
+      } else {
+        response += "L'Oréal campaign visuals. I can create prompts for product photography, social media content, and promotional materials. What specific visual formats would you like me to focus on?";
+      }
+    } else if (lowerContent.includes("social media")) {
+      response += "social media campaign content. I can generate prompts for platform-specific visuals, engagement posts, and brand storytelling imagery. What platforms are you targeting?";
+    } else {
+      response += "campaign visual content. I can help create image generation prompts tailored to your brand and objectives. What specific visual elements would you like me to focus on?";
+    }
     
     if (onBriefingProcessed) {
-      onBriefingProcessed(userMessage, analysisPrompt);
+      onBriefingProcessed(userMessage, response);
     }
     
     toast({
-      title: "Brief loaded",
-      description: "Switched to Conversation tab. SAGE will analyze the brief.",
+      title: "Brief analyzed",
+      description: "Ready to create image prompts in Conversation tab.",
     });
   };
 

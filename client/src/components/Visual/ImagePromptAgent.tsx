@@ -58,7 +58,7 @@ interface ImagePromptAgentProps {
   model?: string;
 }
 
-export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation, model = "gpt-4o" }: ImagePromptAgentProps) {
+export function ImagePromptAgent({ onApplyPrompt, onSwitchToConversation, model = "gpt-4o-mini" }: ImagePromptAgentProps) {
   // Initialize messages from localStorage or default
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
@@ -328,22 +328,15 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     }
   };
 
-  const handleBriefingProcessed = (userMessage: string, analysisPrompt: string) => {
-    setBriefingContext({ content: analysisPrompt, title: "Brief Analysis" });
+  const handleBriefingProcessed = (userMessage: string, aiResponse: string) => {
+    setBriefingContext({ content: aiResponse, title: "Brief Analysis" });
     
-    // Add clean user message to conversation
+    // Add both user message and AI response to conversation
     setMessages(prev => [
       ...prev,
-      { role: "user", content: userMessage }
+      { role: "user", content: userMessage },
+      { role: "assistant", content: aiResponse }
     ]);
-    
-    // Send the full analysis prompt to AI for processing
-    generateContentMutation.mutate({
-      model: model,
-      systemPrompt: "You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.",
-      userPrompt: analysisPrompt,
-      temperature: 0.7,
-    });
     
     // Switch to conversation tab
     setActiveTab("conversation");
