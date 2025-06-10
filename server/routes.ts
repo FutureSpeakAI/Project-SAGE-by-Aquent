@@ -481,7 +481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/generate", async (req: Request, res: Response) => {
     try {
-      const { model: requestModel, systemPrompt, userPrompt, temperature } = req.body;
+      const { model: requestModel, systemPrompt = '', userPrompt, temperature } = req.body;
       
       if (!userPrompt) {
         return res.status(400).json({ error: 'User prompt is required' });
@@ -518,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Enhanced system prompt for brief execution
       let enhancedSystemPrompt = systemPrompt;
-      if (isBriefExecution && !systemPrompt.includes('professional content creator')) {
+      if (isBriefExecution && (!enhancedSystemPrompt || !enhancedSystemPrompt.includes('professional content creator'))) {
         enhancedSystemPrompt = "You are a professional content creator executing creative briefs. Based on the provided creative brief, create the specific content deliverables requested. Focus on creating engaging, professional content that fulfills the brief's objectives. Do not repeat or summarize the brief - create the actual content it describes. Use proper HTML formatting with <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists.";
       }
 
