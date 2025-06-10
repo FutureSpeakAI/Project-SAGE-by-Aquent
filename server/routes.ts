@@ -13,6 +13,7 @@ import { performDeepResearch } from "./research-engine";
 import { reasoningEngine } from "./reasoning-engine";
 import { promptRouter, type PromptRouterConfig } from "./prompt-router";
 import { detectLorealBrief, generateLorealInstagramContent } from "./loreal-brief-handler";
+import { generateBreathEaseEmails } from "./healthcare-content-generator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
@@ -55,6 +56,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "google" }
     ];
     res.json(models);
+  });
+
+  // Healthcare email generation endpoint
+  app.post("/api/generate-healthcare-emails", async (req: Request, res: Response) => {
+    try {
+      console.log('[Healthcare Email Generation] Starting BreathEase email generation');
+      const result = await generateBreathEaseEmails();
+      res.json({ 
+        content: result, 
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        type: 'healthcare-emails'
+      });
+    } catch (error: any) {
+      console.error('[Healthcare Email Generation] Error:', error);
+      res.status(500).json({ error: `Healthcare email generation failed: ${error.message}` });
+    }
   });
 
   // Content generation with L'Oréal detection
