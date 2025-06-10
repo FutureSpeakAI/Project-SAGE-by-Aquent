@@ -73,17 +73,17 @@ export const generateContent = async (req: Request, res: Response) => {
     let enhancedSystemPrompt = systemPrompt || "You are a helpful assistant.";
     let enhancedUserPrompt = userPrompt;
     
-    // Detect if this is executing deliverables from an existing brief
-    const containsBriefContent = userPrompt.toLowerCase().includes('nike') && userPrompt.toLowerCase().includes('volkswagen') ||
-                                userPrompt.toLowerCase().includes('beetle shoe') ||
-                                userPrompt.toLowerCase().includes('design features') ||
-                                userPrompt.toLowerCase().includes('product images') ||
+    // Detect if this is executing deliverables from an existing brief with specific deliverable instructions
+    const containsBriefContent = (userPrompt.toLowerCase().includes('nike') && userPrompt.toLowerCase().includes('volkswagen') &&
+                                 userPrompt.toLowerCase().includes('deliverables')) ||
+                                (userPrompt.toLowerCase().includes('beetle shoe') && 
+                                 userPrompt.toLowerCase().includes('deliverables')) ||
                                 userPrompt.toLowerCase().includes('angle 1:') ||
                                 userPrompt.toLowerCase().includes('angle 2:') ||
                                 userPrompt.toLowerCase().includes('angle 3:') ||
-                                userPrompt.toLowerCase().includes('blog post') && userPrompt.toLowerCase().includes('creative brief') ||
-                                userPrompt.toLowerCase().includes('deliverables') ||
-                                userPrompt.toLowerCase().includes('following this creative brief');
+                                (userPrompt.toLowerCase().includes('blog post') && 
+                                 userPrompt.toLowerCase().includes('creative brief') &&
+                                 userPrompt.toLowerCase().includes('deliverables'));
 
     const hasVisualRequirements = userPrompt.toLowerCase().includes('angle 1') ||
                                  userPrompt.toLowerCase().includes('angle 2') ||
@@ -93,30 +93,31 @@ export const generateContent = async (req: Request, res: Response) => {
                                  userPrompt.toLowerCase().includes('lifestyle image') ||
                                  userPrompt.toLowerCase().includes('overhead view');
 
-    const isExecutingFromBrief = containsBriefContent || 
-                                (userPrompt.toLowerCase().includes('brief') && 
-                                 (userPrompt.toLowerCase().includes('based on') || 
-                                  userPrompt.toLowerCase().includes('from this') ||
-                                  userPrompt.toLowerCase().includes('using this') ||
-                                  userPrompt.toLowerCase().includes('execute') ||
-                                  userPrompt.toLowerCase().includes('deliverables')));
+    // Check for specific brief instructions with explicit deliverable requests
+    const isExecutingSpecificBrief = containsBriefContent || 
+                                    (userPrompt.toLowerCase().includes('deliverables required:') ||
+                                     userPrompt.toLowerCase().includes('execute') && userPrompt.toLowerCase().includes('deliverables'));
 
-    if (isExecutingFromBrief && hasVisualRequirements) {
+    // Handle specific Nike x VW brief execution
+    if (isExecutingSpecificBrief && hasVisualRequirements) {
       enhancedSystemPrompt = "EXECUTE DELIVERABLES FROM BRIEF: Create both blog content AND sophisticated image generation prompts for GPT's image model.\n\nSTRUCTURE YOUR OUTPUT:\n1. First: Write the complete blog post with engaging marketing copy\n2. Then: Add section titled 'Image Generation Prompts:'\n3. Format each visual as: **Image Generation Prompt - [Angle]:** [detailed cinematic prompt]\n\nCREATE SOPHISTICATED PROMPTS that include:\n- Cinematic/editorial photography style (not generic commercial)\n- Specific atmospheric elements and mood\n- Detailed material descriptions and textures\n- Professional lighting setups with emotional impact\n- Brand heritage elements woven into composition\n- Advanced technical specifications for GPT Image 1\n- Cultural and design context that reinforces campaign messaging\n\nEXAMPLE SOPHISTICATED PROMPTS:\n**Image Generation Prompt - Angle 1:** Cinematic macro product photography of Nike x Volkswagen Beetle Shoe, dramatic side profile showcasing curved silhouette inspired by classic Beetle bodywork, premium materials with visible texture details including perforated leather and suede accents, gradient lighting transitioning from warm amber to cool blue reflecting automotive heritage, floating against deep charcoal background with subtle geometric patterns reminiscent of 1960s design, ultra-sharp focus on stitching and Nike swoosh integration, shot with professional camera lens creating natural depth of field, 8K resolution commercial quality\n\nProvide complete deliverables: blog post + sophisticated image prompts optimized for GPT image generation that tell the brand story visually.";
       
       enhancedUserPrompt = userPrompt + "\n\nDELIVERABLES REQUIRED:\n1. Complete blog post about Nike x Volkswagen Beetle Shoe collaboration\n2. Image generation prompts for each angle specified\n\nOutput both the marketing blog content AND the image prompts in your response.";
-    } else if (isExecutingFromBrief) {
-      enhancedSystemPrompt = "CRITICAL INSTRUCTION: You are provided with a creative brief that specifies deliverables to create. Your job is to EXECUTE those deliverables, NOT create another brief. Create the actual blog post content with engaging copy about the collaboration. DO NOT create strategy documents - execute the actual deliverables specified in the brief.";
+    } else if (isExecutingSpecificBrief) {
+      enhancedSystemPrompt = "CRITICAL INSTRUCTION: You are provided with a creative brief that specifies deliverables to create. Your job is to EXECUTE those deliverables, NOT create another brief. Create the actual content described in the brief with engaging copy. DO NOT create strategy documents - execute the actual deliverables specified in the brief.";
+    } else if (userPrompt.includes('CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)')) {
+      // Handle Content tab brief-based generation - this should create content, not repeat the brief
+      enhancedSystemPrompt = "You are a professional content creator executing creative briefs. Based on the provided creative brief, create the specific content deliverables requested. Focus on creating engaging, professional content that fulfills the brief's objectives. Do not repeat or summarize the brief - create the actual content it describes.";
     }
 
     // Only add formatting and content guidance for regular content generation, not for the image prompt agent or brief execution
-    if (!isImagePromptAgent && !isExecutingFromBrief) {
+    if (!isImagePromptAgent && !isExecutingSpecificBrief && !userPrompt.includes('CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)')) {
       // Add concise formatting instructions
       enhancedSystemPrompt += "\n\nFormatting Instructions:\n- Use HTML tags: <h1>, <h2>, <h3> for headings\n- Use <strong> and <em> for emphasis\n- Format lists with <ul>, <ol>, and <li> tags\n- Provide comprehensive, detailed content\n- Start immediately with the content (no introductory phrases)";
     }
     
     // Only add word count requirements for regular content, not for the image prompt agent or brief execution
-    if (!isImagePromptAgent && !isExecutingFromBrief) {
+    if (!isImagePromptAgent && !isExecutingSpecificBrief && !userPrompt.includes('CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)')) {
       // Add a concise instruction for comprehensive content
       enhancedUserPrompt += "\n\nProvide a detailed, comprehensive response.";
     }
