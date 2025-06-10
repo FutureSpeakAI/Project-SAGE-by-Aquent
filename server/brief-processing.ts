@@ -354,7 +354,7 @@ export const processBrief = async (req: Request, res: Response) => {
     } catch (aiError: any) {
       // If AI processing fails, provide a simplified fallback
       console.log('AI prompt generation failed, using fallback approach');
-      generatedPrompt = `Create a professional image based on this brief: ${extractedText.substring(0, 200)}...`;
+      generatedPrompt = `Professional image based on brief content: ${extractedText.substring(0, 150)}`;
     }
     
     // Return the results
