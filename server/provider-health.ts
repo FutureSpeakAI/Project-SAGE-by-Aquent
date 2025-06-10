@@ -91,16 +91,90 @@ export class ProviderHealthMonitor {
   }
 
   private async pingProvider(provider: string): Promise<boolean> {
-    // Simple health check - verify environment variables and basic connectivity
-    switch (provider) {
-      case 'openai':
-        return !!process.env.OPENAI_API_KEY;
-      case 'anthropic':
-        return !!process.env.ANTHROPIC_API_KEY;
-      case 'gemini':
-        return !!process.env.GOOGLE_API_KEY;
-      default:
-        return false;
+    try {
+      // Perform actual API test with simple request
+      switch (provider) {
+        case 'openai':
+          if (!process.env.OPENAI_API_KEY) return false;
+          return await this.testOpenAI();
+        case 'anthropic':
+          if (!process.env.ANTHROPIC_API_KEY) return false;
+          return await this.testAnthropic();
+        case 'gemini':
+          if (!process.env.GOOGLE_API_KEY) return false;
+          return await this.testGemini();
+        case 'perplexity':
+          if (!process.env.PERPLEXITY_API_KEY) return false;
+          return await this.testPerplexity();
+        default:
+          return false;
+      }
+    } catch (error) {
+      console.log(`Health check failed for ${provider}:`, error);
+      return false;
+    }
+  }
+
+  private async testOpenAI(): Promise<boolean> {
+    try {
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 5000 });
+      await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: 'test' }],
+        max_tokens: 5
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  private async testAnthropic(): Promise<boolean> {
+    try {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 5000 });
+      await anthropic.messages.create({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 5,
+        messages: [{ role: 'user', content: 'test' }]
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  private async testGemini(): Promise<boolean> {
+    try {
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+      await model.generateContent('test');
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  private async testPerplexity(): Promise<boolean> {
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [{ role: 'user', content: 'test' }],
+          max_tokens: 5
+        }),
+        signal: AbortSignal.timeout(5000)
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
     }
   }
 

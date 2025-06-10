@@ -18,6 +18,7 @@ import sharp from 'sharp';
 import { performDeepResearch } from "./research-engine";
 import { reasoningEngine } from "./reasoning-engine";
 import { promptRouter, type PromptRouterConfig } from "./prompt-router";
+import { providerHealthMonitor } from "./provider-health";
 import { detectLorealBrief, generateLorealInstagramContent } from "./loreal-brief-handler";
 import { generateBreathEaseEmails } from "./healthcare-content-generator";
 
@@ -163,24 +164,86 @@ Important: Generate comprehensive, well-structured content that directly address
 - For emails, include subject lines, body copy, and calls to action
 - Create professional, publication-ready content that matches the brief requirements exactly`;
 
-      // Route to preferred provider with model optimization for healthcare content
-      console.log(`[Content Generation] Provider: ${preferredProvider}, Model: ${model}`);
-      if (preferredProvider === 'openai' || model.startsWith('gpt-')) {
-        // For complex healthcare content, use gpt-4o-mini for reliability
-        const optimizedModel = model === 'gpt-4o' && userPrompt.length > 200 ? 'gpt-4o-mini' : model;
-        console.log(`[Content Generation] Routing to OpenAI/${optimizedModel}`);
+      // Route with automatic fallback system
+      console.log(`[Content Generation] Preferred provider: ${preferredProvider}, Model: ${model}`);
+      
+      // Get the best available providers based on health status
+      const healthCheck = providerHealthMonitor.getBestProvider([preferredProvider]);
+      const availableProviders = healthCheck.fallbackChain;
+      
+      console.log(`[Content Generation] Available providers: ${availableProviders.join(', ')}`);
+      
+      let generatedContent: string = '';
+      let usedProvider = '';
+      let usedModel = '';
+      let usedFallback = false;
+      
+      // Try providers in order of preference/health
+      for (let i = 0; i < availableProviders.length; i++) {
+        const currentProvider = availableProviders[i];
         try {
-          const result = await generateContentDirect(userPrompt, enhancedSystemPrompt, optimizedModel);
-          res.json({ 
-            content: result, 
-            provider: 'openai',
-            model: optimizedModel,
-            routed: true
-          });
-          return;
-        } catch (openaiError: any) {
-          console.log('[Content Generation] OpenAI failed, trying Anthropic fallback:', openaiError.message);
+          console.log(`[Content Generation] Attempting ${currentProvider} (attempt ${i + 1})`);
+          
+          if (currentProvider === 'openai') {
+            const optimizedModel = model === 'gpt-4o' && userPrompt.length > 200 ? 'gpt-4o-mini' : (model.startsWith('gpt-') ? model : 'gpt-4o');
+            generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, optimizedModel);
+            usedProvider = 'openai';
+            usedModel = optimizedModel;
+            providerHealthMonitor.recordProviderSuccess('openai', Date.now());
+            break;
+            
+          } else if (currentProvider === 'anthropic') {
+            generatedContent = await AnthropicAPI.generateContent({
+              model: 'claude-3-5-sonnet-20241022',
+              prompt: userPrompt,
+              systemPrompt: enhancedSystemPrompt,
+              temperature,
+              maxTokens
+            });
+            usedProvider = 'anthropic';
+            usedModel = 'claude-3-5-sonnet-20241022';
+            providerHealthMonitor.recordProviderSuccess('anthropic', Date.now());
+            usedFallback = i > 0;
+            break;
+            
+          } else if (currentProvider === 'gemini') {
+            generatedContent = await GeminiAPI.generateContent({
+              model: 'gemini-1.5-pro',
+              prompt: userPrompt,
+              systemPrompt: enhancedSystemPrompt,
+              temperature,
+              maxTokens
+            });
+            usedProvider = 'gemini';
+            usedModel = 'gemini-1.5-pro';
+            providerHealthMonitor.recordProviderSuccess('gemini', Date.now());
+            usedFallback = i > 0;
+            break;
+          }
+          
+        } catch (providerError: any) {
+          console.log(`[Content Generation] ${currentProvider} failed: ${providerError.message}`);
+          providerHealthMonitor.recordProviderError(currentProvider, providerError.message);
+          
+          // Continue to next provider unless this was the last one
+          if (i === availableProviders.length - 1) {
+            throw new Error(`All providers failed. Last error: ${providerError.message}`);
+          }
         }
+      }
+      
+      if (generatedContent) {
+        res.json({ 
+          content: generatedContent, 
+          provider: usedProvider,
+          model: usedModel,
+          routed: true,
+          fallback: usedFallback,
+          note: usedFallback ? `Automatically switched to ${usedProvider} due to primary provider issues` : undefined
+        });
+        return;
+      } else {
+        throw new Error(`Content generation failed. No content was generated.`);
       }
 
       // Try Anthropic (default or fallback)
@@ -370,60 +433,103 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           maxTokens = Math.max(maxTokens, 2000); // Minimum 2000 tokens for healthcare content
         }
 
-        try {
-          // Try GPT-4o first, fallback to GPT-3.5-turbo if timeout
-          let model = 'gpt-4o';
-          let timeout = 25000;
-          
-          const makeRequest = async (selectedModel: string, timeoutMs: number) => {
-            return fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-              },
-              body: JSON.stringify({
-                model: selectedModel,
-                messages: [
-                  { 
-                    role: 'system', 
-                    content: enhancedSystemPrompt
-                  },
-                  { role: 'user', content: optimizedPrompt }
-                ],
-                temperature: temperature || 0.7,
-                max_tokens: maxTokens
-              }),
-              signal: AbortSignal.timeout(timeoutMs)
-            });
-          };
-
-          let response;
-          let actualModel = 'gpt-4o';
+        // Use automatic fallback system with provider health monitoring
+        const fallbackProviders = ['openai', 'anthropic', 'gemini'];
+        let lastError: any;
+        let usedFallback = false;
+        
+        for (let i = 0; i < fallbackProviders.length; i++) {
+          const provider = fallbackProviders[i];
           try {
-            response = await makeRequest('gpt-4o', 30000);
-          } catch (error) {
-            console.log('[Content Generation] GPT-4o timeout, using GPT-3.5-turbo');
-            actualModel = 'gpt-3.5-turbo';
-            response = await makeRequest('gpt-3.5-turbo', 15000);
+            console.log(`[Content Generation] Attempting ${provider} (attempt ${i + 1})`);
+            
+            if (provider === 'openai') {
+              // Try multiple OpenAI models with progressive timeout
+              const models = ['gpt-4o', 'gpt-3.5-turbo'];
+              for (const model of models) {
+                try {
+                  const timeout = model === 'gpt-4o' ? 30000 : 15000;
+                  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                      model: model,
+                      messages: [
+                        { role: 'system', content: enhancedSystemPrompt },
+                        { role: 'user', content: optimizedPrompt }
+                      ],
+                      temperature: temperature || 0.7,
+                      max_tokens: maxTokens
+                    }),
+                    signal: AbortSignal.timeout(timeout)
+                  });
+                  
+                  if (response.ok) {
+                    const data = await response.json();
+                    generatedContent = data.choices[0]?.message?.content || '';
+                    usedProvider = 'openai';
+                    usedModel = model;
+                    providerHealthMonitor.recordProviderSuccess('openai', Date.now());
+                    break; // Success, exit both loops
+                  }
+                } catch (modelError) {
+                  console.log(`[Content Generation] ${model} failed, trying next model`);
+                  lastError = modelError;
+                }
+              }
+              if (generatedContent) break; // Exit provider loop if successful
+              
+            } else if (provider === 'anthropic') {
+              generatedContent = await AnthropicAPI.generateContent({
+                model: 'claude-3-5-sonnet-20241022',
+                prompt: optimizedPrompt,
+                systemPrompt: enhancedSystemPrompt,
+                temperature: temperature || 0.7,
+                maxTokens: maxTokens
+              });
+              usedProvider = 'anthropic';
+              usedModel = 'claude-3-5-sonnet-20241022';
+              providerHealthMonitor.recordProviderSuccess('anthropic', Date.now());
+              usedFallback = i > 0;
+              break;
+              
+            } else if (provider === 'gemini') {
+              generatedContent = await GeminiAPI.generateContent({
+                model: 'gemini-1.5-pro',
+                prompt: optimizedPrompt,
+                systemPrompt: enhancedSystemPrompt,
+                temperature: temperature || 0.7,
+                maxTokens: maxTokens
+              });
+              usedProvider = 'gemini';
+              usedModel = 'gemini-1.5-pro';
+              providerHealthMonitor.recordProviderSuccess('gemini', Date.now());
+              usedFallback = i > 0;
+              break;
+            }
+            
+          } catch (providerError: any) {
+            lastError = providerError;
+            console.log(`[Content Generation] ${provider} failed: ${providerError.message}`);
+            providerHealthMonitor.recordProviderError(provider, providerError.message);
+            
+            // Continue to next provider
+            if (i === fallbackProviders.length - 1) {
+              // All providers failed
+              throw new Error(`All providers failed. Last error: ${providerError.message}`);
+            }
           }
-          
-          if (response.ok) {
-            const data = await response.json();
-            generatedContent = data.choices[0]?.message?.content || 'Content generation unavailable';
-            usedProvider = 'openai';
-            usedModel = actualModel;
-          } else {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('[Content Generation] API Error:', response.status, errorData);
-            throw new Error(`OpenAI API returned ${response.status}: ${errorData.error?.message || 'Unknown error'}`);
-          }
-        } catch (apiError: any) {
-          console.error('[Content Generation] Full API Error:', apiError);
-          if (apiError.name === 'AbortError' || apiError.message.includes('timeout')) {
-            throw new Error('Content generation timed out. The request took too long to process.');
-          }
-          throw new Error(`API Error: ${apiError.message}`);
+        }
+        
+        if (!generatedContent) {
+          throw new Error(`Content generation failed across all providers. Last error: ${lastError?.message}`);
+        }
+        
+        if (usedFallback) {
+          console.log(`[Content Generation] Successfully used fallback provider: ${usedProvider}`);
         }
       } else {
         // Use the prompt router for non-briefing content
