@@ -579,19 +579,23 @@ export function RichOutputPanel({
 
   // Save content mutation
   const saveContentMutation = useMutation({
-    mutationFn: async ({ title, content, contentType, model, temperature }: { 
+    mutationFn: async ({ title, content, contentType, model, temperature, systemPrompt, userPrompt }: { 
       title: string; 
       content: string; 
       contentType: string;
       model: string;
       temperature: number;
+      systemPrompt?: string;
+      userPrompt?: string;
     }) => {
       return await apiRequest('POST', '/api/generated-contents', { 
         title, 
         content, 
         contentType: contentType || 'general',
         model,
-        temperature: temperature.toString()
+        temperature: temperature.toString(),
+        systemPrompt,
+        userPrompt
       });
     },
     onSuccess: () => {
@@ -634,12 +638,23 @@ export function RichOutputPanel({
       return;
     }
 
+    // Detect if this is briefing-based content
+    const isBriefingContent = userPrompt && (
+      userPrompt.length > 500 || 
+      userPrompt.toLowerCase().includes('brief') ||
+      userPrompt.toLowerCase().includes('campaign') ||
+      userPrompt.toLowerCase().includes('deliverable') ||
+      systemPrompt.toLowerCase().includes('briefing')
+    );
+
     saveContentMutation.mutate({ 
       title: contentTitle, 
       content: contentToSave,
-      contentType: 'general',
+      contentType: isBriefingContent ? 'briefing' : 'general',
       model: model,
-      temperature: temperature
+      temperature: temperature,
+      systemPrompt: systemPrompt,
+      userPrompt: userPrompt
     });
   };
 

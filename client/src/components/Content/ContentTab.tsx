@@ -151,6 +151,8 @@ export function ContentTab({
             personas={personas}
             isFullScreen={isFullScreen}
             onToggleFullScreen={onToggleFullScreen}
+            userPrompt={userPrompt}
+            systemPrompt={systemPrompt}
           />
         </div>
       </div>
