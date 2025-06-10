@@ -48,9 +48,13 @@ export function ModelSelector({
   };
 
   const getImageModels = () => {
+    if (!models?.imageGeneration) {
+      return [];
+    }
+    
     const allModels = [
-      ...models.imageGeneration.openai,
-      ...models.imageGeneration.gemini
+      ...(models.imageGeneration.openai || []),
+      ...(models.imageGeneration.gemini || [])
     ];
     return allModels;
   };

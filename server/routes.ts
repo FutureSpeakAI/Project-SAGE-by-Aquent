@@ -47,15 +47,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Models endpoint
   app.get("/api/models", async (_req: Request, res: Response) => {
-    const models = [
-      { id: "gpt-4o", name: "GPT-4o", provider: "openai" },
-      { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai" },
-      { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", provider: "anthropic" },
-      { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku", provider: "anthropic" },
-      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", provider: "google" },
-      { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "google" }
-    ];
-    res.json(models);
+    try {
+      const models = {
+        openai: [
+          'gpt-4o',
+          'gpt-4o-mini',
+          'gpt-4-turbo',
+          'gpt-3.5-turbo'
+        ],
+        anthropic: [
+          'claude-sonnet-4-20250514',
+          'claude-3-5-sonnet-20241022',
+          'claude-3-5-haiku-20241022'
+        ],
+        gemini: [
+          'gemini-1.5-pro',
+          'gemini-1.5-flash',
+          'gemini-1.5-pro-002'
+        ],
+        perplexity: [
+          'llama-3.1-sonar-small-128k-online',
+          'llama-3.1-sonar-large-128k-online',
+          'llama-3.1-sonar-huge-128k-online'
+        ],
+        imageGeneration: {
+          openai: [
+            'dall-e-3',
+            'dall-e-2'
+          ],
+          gemini: [
+            'gemini-1.5-pro-vision',
+            'gemini-1.5-flash-vision'
+          ]
+        }
+      };
+      
+      res.json(models);
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      res.status(500).json({ error: 'Failed to fetch available models' });
+    }
   });
 
   // Healthcare email generation endpoint
