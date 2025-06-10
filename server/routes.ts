@@ -216,24 +216,15 @@ Important: Generate comprehensive, well-structured content that directly address
       let enhancedSystemPrompt = systemPrompt;
       
       if (!systemPrompt || systemPrompt.trim().length === 0) {
-        enhancedSystemPrompt = `You are a professional content creator executing creative briefs for healthcare and pharmaceutical marketing.
+        enhancedSystemPrompt = `You are a professional healthcare content creator. Create comprehensive, detailed content exactly as specified in the brief.
 
-CRITICAL INSTRUCTIONS:
-- Read the brief carefully and identify the exact deliverables requested
-- Create ONLY the content specified (e.g., Instagram posts, emails, headlines, blog posts)
-- DO NOT repeat, summarize, or explain the brief
-- Use the exact tone, audience, and specifications from the brief
-- Include all required elements (headlines, CTAs, copy points, etc.)
-- Format output with proper HTML: <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists
-- For social media posts, include the actual post copy, hashtags, and captions
-- For emails, include subject lines, body copy, and calls to action
-- Create professional, publication-ready content that matches the brief requirements exactly
-
-CONTENT LENGTH REQUIREMENTS:
-- For healthcare/pharmaceutical emails: Include comprehensive body copy (300-500 words each), detailed clinical messaging, benefit statements, and professional CTAs
-- For blog posts: Create substantial articles (800-1200 words) with multiple sections, headings, and detailed information
-- For social media: Include full post copy, relevant hashtags, and engagement elements
-- Each deliverable must be complete, detailed, and ready for immediate use by sales teams or marketing departments`;
+REQUIREMENTS:
+- Generate ALL requested deliverables (emails, posts, articles, etc.)
+- For healthcare emails: Include detailed subject lines, comprehensive body copy (400-600 words), clinical benefits, and strong CTAs
+- Use proper HTML formatting: <h1>, <h2>, <p>, <ul>, <li>
+- Each deliverable must be complete and publication-ready
+- Focus on clinical efficacy, patient outcomes, and healthcare provider value
+- DO NOT summarize the brief - create the actual content requested`;
       }
 
       // Add specific deliverable guidance if detected
@@ -297,32 +288,48 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         }
 
         try {
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o',
-              messages: [
-                { 
-                  role: 'system', 
-                  content: enhancedSystemPrompt
-                },
-                { role: 'user', content: optimizedPrompt }
-              ],
-              temperature: temperature || 0.7,
-              max_tokens: maxTokens
-            }),
-            signal: AbortSignal.timeout(20000)
-          });
+          // Try GPT-4o first, fallback to GPT-3.5-turbo if timeout
+          let model = 'gpt-4o';
+          let timeout = 25000;
+          
+          const makeRequest = async (selectedModel: string, timeoutMs: number) => {
+            return fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+              },
+              body: JSON.stringify({
+                model: selectedModel,
+                messages: [
+                  { 
+                    role: 'system', 
+                    content: enhancedSystemPrompt
+                  },
+                  { role: 'user', content: optimizedPrompt }
+                ],
+                temperature: temperature || 0.7,
+                max_tokens: maxTokens
+              }),
+              signal: AbortSignal.timeout(timeoutMs)
+            });
+          };
+
+          let response;
+          let actualModel = 'gpt-4o';
+          try {
+            response = await makeRequest('gpt-4o', 30000);
+          } catch (error) {
+            console.log('[Content Generation] GPT-4o timeout, using GPT-3.5-turbo');
+            actualModel = 'gpt-3.5-turbo';
+            response = await makeRequest('gpt-3.5-turbo', 15000);
+          }
           
           if (response.ok) {
             const data = await response.json();
             generatedContent = data.choices[0]?.message?.content || 'Content generation unavailable';
             usedProvider = 'openai';
-            usedModel = 'gpt-3.5-turbo';
+            usedModel = actualModel;
           } else {
             const errorData = await response.json().catch(() => ({}));
             console.error('[Content Generation] API Error:', response.status, errorData);
