@@ -853,7 +853,7 @@ CRITICAL preservation rules:
 
   app.post("/api/chat-sessions", async (req: Request, res: Response) => {
     try {
-      const session = await storage.createChatSession(req.body);
+      const session = await storage.saveChatSession(req.body);
       res.status(201).json(session);
     } catch (error: any) {
       res.status(500).json({ error: "Failed to create chat session" });
@@ -893,7 +893,7 @@ CRITICAL preservation rules:
 
   app.get("/api/personas/:id", async (req: Request, res: Response) => {
     try {
-      const persona = await storage.getPersona(parseInt(req.params.id));
+      const persona = await storage.getPersona(req.params.id);
       if (!persona) {
         return res.status(404).json({ error: "Persona not found" });
       }
@@ -905,7 +905,7 @@ CRITICAL preservation rules:
 
   app.post("/api/personas", async (req: Request, res: Response) => {
     try {
-      const persona = await storage.createPersona(req.body);
+      const persona = await storage.savePersona(req.body);
       res.status(201).json(persona);
     } catch (error: any) {
       res.status(500).json({ error: "Failed to create persona" });
@@ -914,7 +914,7 @@ CRITICAL preservation rules:
 
   app.put("/api/personas/:id", async (req: Request, res: Response) => {
     try {
-      const persona = await storage.updatePersona(parseInt(req.params.id), req.body);
+      const persona = await storage.updatePersona(req.params.id, req.body);
       if (!persona) {
         return res.status(404).json({ error: "Persona not found" });
       }
@@ -926,7 +926,7 @@ CRITICAL preservation rules:
 
   app.delete("/api/personas/:id", async (req: Request, res: Response) => {
     try {
-      await storage.deletePersona(parseInt(req.params.id));
+      await storage.deletePersona(req.params.id);
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: "Failed to delete persona" });
@@ -957,7 +957,7 @@ CRITICAL preservation rules:
 
   app.post("/api/brief-conversations", async (req: Request, res: Response) => {
     try {
-      const conversation = await storage.createBriefConversation(req.body);
+      const conversation = await storage.saveBriefConversation(req.body);
       res.status(201).json(conversation);
     } catch (error: any) {
       res.status(500).json({ error: "Failed to create brief conversation" });
@@ -1016,9 +1016,10 @@ CRITICAL preservation rules:
 
   app.post("/api/generated-contents", async (req: Request, res: Response) => {
     try {
-      const content = await storage.createGeneratedContent(req.body);
+      const content = await storage.saveGeneratedContent(req.body);
       res.status(201).json(content);
     } catch (error: any) {
+      console.error('Error saving generated content:', error);
       res.status(500).json({ error: "Failed to create generated content" });
     }
   });
