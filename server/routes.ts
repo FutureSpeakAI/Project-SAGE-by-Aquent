@@ -863,6 +863,120 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
     }
   });
 
+  // Generated images CRUD operations
+  app.get("/api/generated-images", async (_req: Request, res: Response) => {
+    try {
+      const images = await storage.getGeneratedImages();
+      res.json(images);
+    } catch (error: any) {
+      console.error('Failed to fetch generated images:', error);
+      res.status(500).json({ error: "Failed to fetch generated images" });
+    }
+  });
+
+  app.get("/api/generated-images/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const image = await storage.getGeneratedImage(id);
+      
+      if (!image) {
+        return res.status(404).json({ error: "Generated image not found" });
+      }
+      
+      res.json(image);
+    } catch (error: any) {
+      console.error('Failed to fetch generated image:', error);
+      res.status(500).json({ error: "Failed to fetch generated image" });
+    }
+  });
+
+  app.post("/api/generated-images", async (req: Request, res: Response) => {
+    try {
+      const { title, prompt, imageUrl, style, size, quality, model, metadata } = req.body;
+      
+      if (!title || !prompt || !imageUrl) {
+        return res.status(400).json({ error: "Title, prompt, and imageUrl are required" });
+      }
+      
+      console.log('Saving generated image:', { title, model, size, quality });
+      
+      const savedImage = await storage.saveGeneratedImage({
+        title,
+        prompt,
+        imageUrl,
+        style: style || null,
+        size: size || null,
+        quality: quality || null,
+        model: model || "gpt-image-1",
+        metadata: metadata || null,
+      });
+      
+      res.status(201).json(savedImage);
+    } catch (error: any) {
+      console.error('Failed to save generated image:', error);
+      res.status(500).json({ error: "Failed to save generated image", details: error.message });
+    }
+  });
+
+  app.put("/api/generated-images/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const { title, prompt, imageUrl, style, size, quality, model, metadata } = req.body;
+      
+      if (!title && !prompt && !imageUrl) {
+        return res.status(400).json({ error: "At least title, prompt, or imageUrl must be provided for update" });
+      }
+      
+      const updatedImage = await storage.updateGeneratedImage(id, {
+        ...(title && { title }),
+        ...(prompt && { prompt }),
+        ...(imageUrl && { imageUrl }),
+        ...(style !== undefined && { style }),
+        ...(size !== undefined && { size }),
+        ...(quality !== undefined && { quality }),
+        ...(model !== undefined && { model }),
+        ...(metadata !== undefined && { metadata }),
+      });
+      
+      if (!updatedImage) {
+        return res.status(404).json({ error: "Generated image not found" });
+      }
+      
+      res.json(updatedImage);
+    } catch (error: any) {
+      console.error('Failed to update generated image:', error);
+      res.status(500).json({ error: "Failed to update generated image" });
+    }
+  });
+
+  app.delete("/api/generated-images/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const success = await storage.deleteGeneratedImage(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Generated image not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Failed to delete generated image:', error);
+      res.status(500).json({ error: "Failed to delete generated image" });
+    }
+  });
+
   // Brief processing endpoint for file uploads
   app.post("/api/process-brief", upload.single('file'), async (req: Request, res: Response) => {
     try {
