@@ -157,33 +157,58 @@ Important: Generate comprehensive, well-structured content that directly address
       console.log('[Content Generation] System prompt received:', systemPrompt ? 'Yes' : 'No');
 
       // Parse deliverables from the briefing content
-      const extractDeliverables = (briefContent: string): string[] => {
-        const deliverables: string[] = [];
-        const lines = briefContent.toLowerCase().split('\n');
+      const extractDeliverables = (briefContent: string): { type: string, count: number }[] => {
+        const deliverables: { type: string, count: number }[] = [];
+        const content = briefContent.toLowerCase();
         
-        // Look for explicit deliverables sections
-        let inDeliverablesSection = false;
-        for (const line of lines) {
-          if (line.includes('deliverable') || line.includes('requirement') || line.includes('needed:') || line.includes('create:')) {
-            inDeliverablesSection = true;
-          }
-          
-          // Extract specific content types
-          if (line.includes('blog post') || line.includes('blog content')) deliverables.push('blog post');
-          if (line.includes('instagram') || line.includes('social media post')) deliverables.push('Instagram posts');
-          if (line.includes('email') && !line.includes('@')) deliverables.push('email campaign');
-          if (line.includes('headline') || line.includes('tagline')) deliverables.push('headlines');
-          if (line.includes('press release')) deliverables.push('press release');
-          if (line.includes('product description')) deliverables.push('product description');
-        }
+        // Extract quantity patterns like "three emails", "5 posts", "two blog posts"
+        const quantityPatterns = [
+          // Number word patterns
+          /(?:create|write|develop|generate).*?(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(email|emails|post|posts|blog\s*post|instagram\s*post|headline|headlines)/g,
+          // Direct quantity patterns
+          /(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(email|emails|post|posts|blog\s*post|instagram\s*post|headline|headlines)/g,
+          // List patterns like "1. Email" "2. Blog post"
+          /\d+\.\s*(email|blog\s*post|instagram\s*post|headline|press\s*release)/g
+        ];
         
-        const uniqueDeliverables: string[] = [];
-        deliverables.forEach(item => {
-          if (!uniqueDeliverables.includes(item)) {
-            uniqueDeliverables.push(item);
+        const numberWords: { [key: string]: number } = {
+          'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+          'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+        };
+        
+        // Process each pattern
+        quantityPatterns.forEach(pattern => {
+          let match;
+          while ((match = pattern.exec(content)) !== null) {
+            const quantityStr = match[1] || match[2];
+            const contentType = match[2] || match[1];
+            
+            let count = parseInt(quantityStr) || numberWords[quantityStr] || 1;
+            let type = contentType.replace(/s$/, ''); // Remove plural
+            
+            // Normalize content types
+            if (type.includes('email')) type = 'email';
+            else if (type.includes('blog')) type = 'blog post';
+            else if (type.includes('instagram') || type.includes('post')) type = 'Instagram post';
+            else if (type.includes('headline')) type = 'headline';
+            
+            deliverables.push({ type, count });
           }
         });
-        return uniqueDeliverables;
+        
+        // Fallback: check for general content types without quantities
+        if (deliverables.length === 0) {
+          if (content.includes('blog post') || content.includes('blog content')) 
+            deliverables.push({ type: 'blog post', count: 1 });
+          if (content.includes('instagram') || content.includes('social media post')) 
+            deliverables.push({ type: 'Instagram post', count: 1 });
+          if (content.includes('email') && !content.includes('@')) 
+            deliverables.push({ type: 'email', count: 1 });
+          if (content.includes('headline') || content.includes('tagline')) 
+            deliverables.push({ type: 'headline', count: 1 });
+        }
+        
+        return deliverables;
       };
 
       const briefDeliverables = extractDeliverables(userPrompt);
@@ -209,8 +234,9 @@ CRITICAL INSTRUCTIONS:
 
       // Add specific deliverable guidance if detected
       if (hasSpecificDeliverables) {
-        enhancedSystemPrompt += `\n\nDETECTED DELIVERABLES: ${briefDeliverables.join(', ')}
-FOCUS: Create these specific deliverables based on the brief content. Each deliverable should be complete and ready for publication.`;
+        const deliverablesList = briefDeliverables.map(d => `${d.count} ${d.type}${d.count > 1 ? 's' : ''}`).join(', ');
+        enhancedSystemPrompt += `\n\nDETECTED DELIVERABLES: ${deliverablesList}
+FOCUS: Create ALL requested deliverables. For multiple items, number them clearly (e.g., Email 1, Email 2, Email 3). Each deliverable should be complete and ready for publication.`;
       }
 
       // Check for L'Oréal brief before routing to any provider
@@ -246,7 +272,10 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
 
       if (isBriefingContent) {
         console.log('[Content Generation] Detected briefing content, using reliable briefing execution');
-        console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
+        const deliverablesSummary = briefDeliverables.length > 0 
+          ? briefDeliverables.map(d => `${d.count} ${d.type}${d.count > 1 ? 's' : ''}`).join(', ')
+          : 'none specific';
+        console.log('[Content Generation] Deliverables detected:', deliverablesSummary);
         
         // Optimize prompt for complex briefs to prevent timeouts
         let optimizedPrompt = userPrompt;
@@ -257,10 +286,11 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
           const briefMatch = userPrompt.match(/CREATIVE BRIEF[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/i);
           const deliverableMatch = userPrompt.match(/deliverable[s]?[:\s]*(.*?)(?=\n|$)/i);
           
+          const deliverablesList = briefDeliverables.map(d => `${d.count} ${d.type}${d.count > 1 ? 's' : ''}`).join(', ');
           optimizedPrompt = `CREATIVE BRIEF: ${briefMatch?.[1]?.slice(0, 500) || 'Content creation request'}
-Deliverables: ${deliverableMatch?.[1] || briefDeliverables.join(', ')}
+Deliverables: ${deliverableMatch?.[1] || deliverablesList}
 
-Create the requested content directly without repeating the brief.`;
+Create ALL requested deliverables directly without repeating the brief. Number multiple items clearly.`;
           maxTokens = 1000; // Reduce tokens for faster processing
         }
 
