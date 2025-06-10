@@ -161,40 +161,38 @@ Important: Generate comprehensive, well-structured content that directly address
         const deliverables: { type: string, count: number }[] = [];
         const content = briefContent.toLowerCase();
         
-        // Extract quantity patterns like "three emails", "5 posts", "two blog posts"
-        const quantityPatterns = [
-          // Number word patterns
-          /(?:create|write|develop|generate).*?(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(email|emails|post|posts|blog\s*post|instagram\s*post|headline|headlines)/g,
-          // Direct quantity patterns
-          /(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(email|emails|post|posts|blog\s*post|instagram\s*post|headline|headlines)/g,
-          // List patterns like "1. Email" "2. Blog post"
-          /\d+\.\s*(email|blog\s*post|instagram\s*post|headline|press\s*release)/g
-        ];
+        // First, check for numbered items in the brief (Email 1:, Email 2:, etc.)
+        const emailMatches = content.match(/email\s*\d+:/gi);
+        if (emailMatches && emailMatches.length > 0) {
+          deliverables.push({ type: 'email', count: emailMatches.length });
+        }
         
-        const numberWords: { [key: string]: number } = {
-          'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-          'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
-        };
+        const postMatches = content.match(/post\s*\d+:/gi);
+        if (postMatches && postMatches.length > 0) {
+          deliverables.push({ type: 'Instagram post', count: postMatches.length });
+        }
         
-        // Process each pattern
-        quantityPatterns.forEach(pattern => {
+        // If no numbered items, look for quantity words
+        if (deliverables.length === 0) {
+          const numberWords: { [key: string]: number } = {
+            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+          };
+          
+          // Look for "three emails", "two posts", etc.
+          const quantityPattern = /(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(?:[\w-]+\s+)*(email|emails|post|posts|blog)/gi;
           let match;
-          while ((match = pattern.exec(content)) !== null) {
-            const quantityStr = match[1] || match[2];
-            const contentType = match[2] || match[1];
+          while ((match = quantityPattern.exec(content)) !== null) {
+            const quantityStr = match[1];
+            const contentType = match[2];
             
             let count = parseInt(quantityStr) || numberWords[quantityStr] || 1;
-            let type = contentType.replace(/s$/, ''); // Remove plural
-            
-            // Normalize content types
-            if (type.includes('email')) type = 'email';
-            else if (type.includes('blog')) type = 'blog post';
-            else if (type.includes('instagram') || type.includes('post')) type = 'Instagram post';
-            else if (type.includes('headline')) type = 'headline';
+            let type = contentType.includes('email') ? 'email' : 
+                      contentType.includes('blog') ? 'blog post' : 'Instagram post';
             
             deliverables.push({ type, count });
           }
-        });
+        }
         
         // Fallback: check for general content types without quantities
         if (deliverables.length === 0) {
