@@ -9,6 +9,9 @@ import path from 'path';
 import { processImage } from "./image-processing";
 import { upload } from './index';
 import OpenAI from "openai";
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { performDeepResearch } from "./research-engine";
 import { reasoningEngine } from "./reasoning-engine";
 import { promptRouter, type PromptRouterConfig } from "./prompt-router";
@@ -692,8 +695,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       }
 
       // Write buffer to temporary file for OpenAI API
-      const fs = require('fs');
-      const tempImagePath = path.join(__dirname, `../temp_image_${Date.now()}.png`);
+      const tempImagePath = path.join(process.cwd(), `temp_image_${Date.now()}.png`);
       fs.writeFileSync(tempImagePath, imageBuffer);
       
       // Prepare OpenAI API request with file stream
@@ -706,7 +708,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
       let tempMaskPath: string | null = null;
       if (maskBuffer) {
-        tempMaskPath = path.join(__dirname, `../temp_mask_${Date.now()}.png`);
+        tempMaskPath = path.join(process.cwd(), `temp_mask_${Date.now()}.png`);
         fs.writeFileSync(tempMaskPath, maskBuffer);
         editRequestParams.mask = fs.createReadStream(tempMaskPath);
         console.log('Performing inpainting with mask');
