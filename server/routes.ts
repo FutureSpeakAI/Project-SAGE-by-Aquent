@@ -606,55 +606,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         }
-          if (hasNestedDeliverables || hasComplexRequirements) {
-            const project = userPrompt.match(/Project:\s*([^\n]+)/)?.[1] || 'Product Launch';
-            const tone = userPrompt.match(/Tone:\s*([^\n]+)/)?.[1] || 'Professional';
-            
-            const immediateContent = `<h2><strong>Press Release Headline:</strong></h2>
-<p>"${project}: Revolutionary Innovation Meets Professional Excellence"</p>
-
-<h2><strong>Email Subject Line:</strong></h2>
-<p>"Introducing ${project} - Transform Your Experience Today"</p>
-
-<h2><strong>Social Media Post:</strong></h2>
-<p>🌟 Excited to announce ${project}! Experience the difference that professional-grade innovation can make. #Innovation #Professional #Excellence</p>
-
-<h2><strong>Product Description:</strong></h2>
-<p>${project} represents the pinnacle of ${tone.toLowerCase()} innovation. Designed for discerning professionals who demand excellence, this breakthrough solution delivers visible results while maintaining the highest standards of quality and performance.</p>`;
-
-            res.json({ 
-              content: immediateContent, 
-              provider: 'system',
-              model: 'timeout-fallback',
-              routed: true,
-              fallback: 'anthropic_timeout',
-              generated: 'immediate_response'
-            });
-          } else {
-            // Try Gemini for simpler briefs
-            try {
-              const result = await GeminiAPI.generateContent({
-                model: 'gemini-1.5-flash',
-                prompt: userPrompt,
-                systemPrompt: enhancedSystemPrompt,
-                temperature: temperature || 0.7,
-                maxTokens: 2000
-              });
-              res.json({ 
-                content: result, 
-                provider: 'gemini',
-                model: 'gemini-1.5-flash',
-                routed: true,
-                fallback: 'anthropic_timeout'
-              });
-            } catch (geminiError: any) {
-              res.status(500).json({ 
-                error: 'Content generation is temporarily unavailable. Please try again in a moment.',
-                providers_tried: ['anthropic', 'gemini']
-              });
-            }
-          }
-        }
       } else if (routingDecision.provider === 'gemini') {
         const result = await GeminiAPI.generateContent({
           model: routingDecision.model,
@@ -754,6 +705,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Content generation error:', error);
       res.status(500).json({ error: 'Failed to generate content' });
+    }
+  });
+
+  // Complex Brief Analysis API - for smart notifications
+  app.post("/api/analyze-brief", async (req: Request, res: Response) => {
+    try {
+      const { userPrompt } = req.body;
+      
+      if (!userPrompt) {
+        return res.status(400).json({ error: 'User prompt is required' });
+      }
+
+      // Detect complex brief patterns based on our analysis
+      const hasNestedDeliverables = userPrompt.toLowerCase().includes('and opening paragraph') || 
+                                   userPrompt.toLowerCase().includes('and preview text') ||
+                                   userPrompt.toLowerCase().includes('subject line and') ||
+                                   userPrompt.toLowerCase().includes('headline and');
+      
+      const channelMatches = userPrompt.match(/LinkedIn|Instagram|Twitter|Facebook|email|press/g) || [];
+      const hasMultipleChannels = channelMatches.length > 3;
+      
+      const hasDetailedSpecs = /targeting|professional|sophisticated|advanced|premium|career-focused/g.test(userPrompt);
+      
+      const isComplexBrief = hasNestedDeliverables || hasMultipleChannels || hasDetailedSpecs;
+      
+      if (isComplexBrief) {
+        // Extract brief components for breakdown
+        const project = userPrompt.match(/Project:\s*([^\n]+)/)?.[1] || 'Unknown Project';
+        const deliverables = userPrompt.match(/Deliverables:[^:]*?(?=\n[A-Z]|\n\n|$)/s)?.[0] || '';
+        
+        // Create breakdown suggestions
+        const suggestions = [];
+        
+        if (deliverables.includes('press release headline and opening paragraph')) {
+          suggestions.push({ 
+            title: 'Press Release Headline', 
+            description: 'Create just the headline first',
+            simplified: 'Create a compelling press release headline'
+          });
+          suggestions.push({ 
+            title: 'Press Release Opening', 
+            description: 'Then create the opening paragraph separately',
+            simplified: 'Write an engaging opening paragraph for the press release'
+          });
+        }
+        
+        if (deliverables.includes('email marketing subject line and preview text')) {
+          suggestions.push({ 
+            title: 'Email Subject Line', 
+            description: 'Focus on the subject line first',
+            simplified: 'Create an engaging email subject line'
+          });
+          suggestions.push({ 
+            title: 'Email Preview Text', 
+            description: 'Then create preview text separately',
+            simplified: 'Write compelling email preview text'
+          });
+        }
+        
+        if (hasMultipleChannels) {
+          channelMatches.forEach(channel => {
+            suggestions.push({ 
+              title: `${channel} Content`, 
+              description: `Create ${channel.toLowerCase()} content separately`,
+              simplified: `Create engaging ${channel.toLowerCase()} content for ${project}`
+            });
+          });
+        }
+
+        res.json({
+          isComplex: true,
+          reason: hasNestedDeliverables ? 'nested_deliverables' : 
+                  hasMultipleChannels ? 'multiple_channels' : 'detailed_specifications',
+          project,
+          suggestions,
+          recommendation: "This brief contains complex, nested deliverables that work better when broken down into individual requests. I can help you create each piece separately for better results."
+        });
+      } else {
+        res.json({
+          isComplex: false,
+          canProcess: true
+        });
+      }
+      
+    } catch (error) {
+      console.error('Brief analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze brief' });
     }
   });
   
