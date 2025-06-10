@@ -280,16 +280,13 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         let maxTokens = 1500;
         
         if (userPrompt.length > 2000) {
-          // For complex briefs, extract key information and streamline
-          const briefMatch = userPrompt.match(/CREATIVE BRIEF[:\s]*(.*?)(?=\n\n|\n[A-Z]|$)/i);
-          const deliverableMatch = userPrompt.match(/deliverable[s]?[:\s]*(.*?)(?=\n|$)/i);
+          // For complex briefs, preserve key content while optimizing structure
+          const briefSections = userPrompt.match(/CREATIVE BRIEF[\s\S]*?(?=\n\n|\Z)/i);
+          const deliverableSection = userPrompt.match(/deliverable[s]?[\s\S]*?(?=\n\n|\Z)/i);
+          const productSection = userPrompt.match(/(product|brand|company)[\s\S]*?(?=\n\n|\Z)/i);
           
-          const deliverablesList = briefDeliverables.map(d => `${d.count} ${d.type}${d.count > 1 ? 's' : ''}`).join(', ');
-          optimizedPrompt = `CREATIVE BRIEF: ${briefMatch?.[1]?.slice(0, 500) || 'Content creation request'}
-Deliverables: ${deliverableMatch?.[1] || deliverablesList}
-
-Create ALL requested deliverables directly without repeating the brief. Number multiple items clearly.`;
-          maxTokens = 1000; // Reduce tokens for faster processing
+          optimizedPrompt = userPrompt; // Keep full content for complex medical/healthcare briefs
+          maxTokens = 1200; // Slightly reduced but preserve quality
         }
 
         try {
