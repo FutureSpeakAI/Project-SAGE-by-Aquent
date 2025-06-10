@@ -396,10 +396,10 @@ Important: Generate comprehensive, well-structured content that directly address
   app.get("/api/generated-contents", async (req: Request, res: Response) => {
     try {
       const contents = await storage.getGeneratedContents();
-      const { type } = req.query;
+      const { contentType } = req.query;
       
-      if (type) {
-        const filtered = contents.filter(content => content.type === type);
+      if (contentType) {
+        const filtered = contents.filter(content => content.contentType === contentType);
         res.json(filtered);
       } else {
         res.json(contents);

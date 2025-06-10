@@ -96,7 +96,7 @@ export default function Home() {
   });
 
   const handleGenerate = (customPrompt?: string, customSystemPrompt?: string) => {
-    const promptToUse = customPrompt || userPrompt || '';
+    const promptToUse = String(customPrompt || userPrompt || '');
     const systemPromptToUse = customSystemPrompt || systemPrompt;
     
     if (!promptToUse || !promptToUse.trim()) {

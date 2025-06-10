@@ -51,7 +51,7 @@ export function BriefingLibrary({
   const { data: briefings = [], isLoading } = useQuery({
     queryKey: ['/api/generated-contents', ContentType.BRIEFING],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/generated-contents?type=${ContentType.BRIEFING}`);
+      const response = await apiRequest('GET', `/api/generated-contents?contentType=${ContentType.BRIEFING}`);
       const data = await response.json();
       return data as GeneratedContent[];
     },
