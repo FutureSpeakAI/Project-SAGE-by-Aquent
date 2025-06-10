@@ -245,11 +245,34 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
       let usedModel: string = 'claude-sonnet-4-20250514';
 
       if (isBriefingContent) {
-        console.log('[Content Generation] Detected briefing content, using simplified OpenAI execution');
+        console.log('[Content Generation] Detected briefing content, using direct API call');
         console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
         
-        // Use existing generateContentDirect function
-        generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, 'gpt-4o-mini');
+        // Direct API call with timeout to avoid hanging
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              { role: 'system', content: enhancedSystemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: temperature || 0.7,
+            max_tokens: 2000
+          }),
+          signal: AbortSignal.timeout(15000) // 15 second timeout
+        });
+        
+        if (!response.ok) {
+          throw new Error(`OpenAI API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        generatedContent = data.choices[0].message.content || 'Content generation failed';
         usedProvider = 'openai';
         usedModel = 'gpt-4o-mini';
       } else {
@@ -295,9 +318,11 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
       });
     } catch (error: any) {
       console.error('Content generation error:', error.message);
+      console.error('Full error stack:', error.stack);
       res.status(500).json({ 
         error: 'Content generation failed',
-        message: error.message
+        message: error.message,
+        stack: error.stack ? error.stack.split('\n')[1] : 'No stack trace'
       });
     }
   });
