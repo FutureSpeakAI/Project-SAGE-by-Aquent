@@ -72,6 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
         imageGeneration: {
           openai: [
+            'gpt-image-1',
             'dall-e-3',
             'dall-e-2'
           ],
