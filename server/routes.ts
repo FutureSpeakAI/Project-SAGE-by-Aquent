@@ -1050,6 +1050,9 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
     }
   });
 
+  // Image processing endpoint for format conversion and scaling
+  app.post("/api/image-processing", upload.single('image'), processImage);
+
   // Brief interpretation endpoint
   app.post("/api/interpret-brief", async (req: Request, res: Response) => {
     try {

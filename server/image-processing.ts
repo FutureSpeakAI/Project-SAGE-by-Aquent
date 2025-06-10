@@ -79,6 +79,14 @@ async function convertToSVG(imageBuffer: Buffer, width?: number, height?: number
     const base64Data = optimizedBuffer.toString('base64');
     const dataUri = `data:image/png;base64,${base64Data}`;
     
+    // Escape XML entities in the data URI to prevent parsing errors
+    const escapedDataUri = dataUri
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    
     console.log('Base64 data URI length:', dataUri.length, 'characters, starts with:', dataUri.substring(0, 50));
     
     // Create SVG with embedded image - preserves full quality and color
@@ -88,7 +96,7 @@ async function convertToSVG(imageBuffer: Buffer, width?: number, height?: number
   <title>AI Generated Image</title>
   <desc>High-quality AI-generated image preserved in SVG format</desc>
   <image x="0" y="0" width="${imgWidth}" height="${imgHeight}" 
-         xlink:href="${dataUri}" 
+         xlink:href="${escapedDataUri}" 
          style="image-rendering: auto; image-rendering: crisp-edges; image-rendering: pixelated"/>
 </svg>`;
     
