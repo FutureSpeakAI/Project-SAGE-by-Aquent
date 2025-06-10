@@ -241,35 +241,48 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
       const isBriefingContent = userPrompt.includes('CREATIVE BRIEF') || userPrompt.includes('Based on the creative brief');
       
       let generatedContent: string;
-      let usedProvider: string;
-      let usedModel: string;
+      let usedProvider: string = 'anthropic';
+      let usedModel: string = 'claude-sonnet-4-20250514';
 
       if (isBriefingContent) {
         console.log('[Content Generation] Detected briefing content, using Anthropic for better instruction following');
         console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
         
         try {
-          // Use Anthropic for briefing content as it follows instructions better
-          generatedContent = await AnthropicAPI.generateContent({
+          // Add timeout wrapper for Anthropic
+          const anthropicPromise = AnthropicAPI.generateContent({
             model: 'claude-sonnet-4-20250514',
             prompt: userPrompt,
             systemPrompt: enhancedSystemPrompt,
             temperature: temperature || 0.7,
-            maxTokens: 3000
+            maxTokens: 2500 // Reduced for faster processing
           });
+          
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Anthropic timeout')), 5000); // 5 second timeout
+          });
+          
+          generatedContent = await Promise.race([anthropicPromise, timeoutPromise]) as string;
           usedProvider = 'anthropic';
           usedModel = 'claude-sonnet-4-20250514';
         } catch (anthropicError: any) {
-          console.log('[Content Generation] Anthropic failed for briefing, falling back to Gemini');
-          generatedContent = await GeminiAPI.generateContent({
-            model: 'gemini-1.5-flash',
-            prompt: userPrompt,
-            systemPrompt: enhancedSystemPrompt,
-            temperature: temperature || 0.7,
-            maxTokens: 3000
-          });
-          usedProvider = 'gemini';
-          usedModel = 'gemini-1.5-flash';
+          console.log('[Content Generation] Anthropic failed/timeout for briefing, falling back to Gemini');
+          try {
+            generatedContent = await GeminiAPI.generateContent({
+              model: 'gemini-1.5-flash',
+              prompt: userPrompt,
+              systemPrompt: enhancedSystemPrompt,
+              temperature: temperature || 0.7,
+              maxTokens: 2500
+            });
+            usedProvider = 'gemini';
+            usedModel = 'gemini-1.5-flash';
+          } catch (geminiError: any) {
+            console.log('[Content Generation] Gemini also failed, using OpenAI fallback');
+            generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, 'gpt-4o-mini');
+            usedProvider = 'openai';
+            usedModel = 'gpt-4o-mini';
+          }
         }
       } else {
         // Use the prompt router for non-briefing content
@@ -296,16 +309,21 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
         } else {
           // Default to OpenAI
           generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, routingDecision.model);
+          usedProvider = 'openai';
+          usedModel = routingDecision.model;
         }
         
-        usedProvider = routingDecision.provider;
-        usedModel = routingDecision.model;
+        // Ensure provider and model are set from routing decision
+        if (routingDecision && !usedProvider.startsWith('anthropic')) {
+          usedProvider = routingDecision.provider;
+          usedModel = routingDecision.model;
+        }
       }
 
       res.json({ 
         content: generatedContent,
-        provider: routingDecision.provider,
-        model: routingDecision.model
+        provider: usedProvider,
+        model: usedModel
       });
     } catch (error: any) {
       console.error('Content generation error:', error.message);
