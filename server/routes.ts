@@ -696,64 +696,72 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         }
       }
 
-      // Create File-like objects compatible with Node.js for OpenAI SDK
-      const createFileObject = (buffer: Buffer, filename: string) => {
-        return Object.assign(buffer, {
-          name: filename,
-          type: 'image/png',
-          size: buffer.length,
-          lastModified: Date.now(),
-          stream: () => new ReadableStream({
-            start(controller) {
-              controller.enqueue(buffer);
-              controller.close();
-            }
-          }),
-          arrayBuffer: () => Promise.resolve(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)),
-          text: () => Promise.resolve(buffer.toString()),
-          slice: (start?: number, end?: number) => buffer.slice(start, end)
-        });
-      };
+      // Write temporary files and use native fetch for OpenAI API compatibility
+      const tempImagePath = path.join(process.cwd(), `temp_edit_${Date.now()}.png`);
+      fs.writeFileSync(tempImagePath, imageBuffer);
 
       try {
-        const imageFile = createFileObject(imageBuffer, 'image.png') as any;
-        
-        let editResponse;
-        
+        // Use form-data package for proper multipart/form-data handling
+        const form = new FormData();
+        form.append('image', fs.createReadStream(tempImagePath), {
+          filename: 'image.png',
+          contentType: 'image/png'
+        });
+        form.append('prompt', prompt.trim());
+        form.append('n', String(parseInt(String(n)) || 1));
+        form.append('size', size || "1024x1024");
+
         if (maskBuffer) {
-          const maskFile = createFileObject(maskBuffer, 'mask.png') as any;
-          console.log('Performing inpainting with mask');
-          
-          editResponse = await openai.images.edit({
-            image: imageFile,
-            mask: maskFile,
-            prompt: prompt.trim(),
-            n: parseInt(String(n)) || 1,
-            size: (size || "1024x1024") as any
+          const tempMaskPath = path.join(process.cwd(), `temp_mask_${Date.now()}.png`);
+          fs.writeFileSync(tempMaskPath, maskBuffer);
+          form.append('mask', fs.createReadStream(tempMaskPath), {
+            filename: 'mask.png',
+            contentType: 'image/png'
           });
+          console.log('Performing inpainting with mask');
         } else {
           console.log('Performing outpainting/extension');
-          
-          editResponse = await openai.images.edit({
-            image: imageFile,
-            prompt: prompt.trim(),
-            n: parseInt(String(n)) || 1,
-            size: (size || "1024x1024") as any
-          });
         }
 
-        if (!editResponse.data || editResponse.data.length === 0) {
+        // Call OpenAI API with axios and form-data
+        const response = await axios.post('https://api.openai.com/v1/images/edits', form, {
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            ...form.getHeaders()
+          },
+          timeout: 60000,
+          maxContentLength: 50 * 1024 * 1024 // 50MB limit
+        });
+
+        // Clean up temp files
+        fs.unlinkSync(tempImagePath);
+        if (maskBuffer) {
+          const tempMaskPath = path.join(process.cwd(), `temp_mask_${Date.now()}.png`);
+          try { fs.unlinkSync(tempMaskPath); } catch {}
+        }
+
+        const result = response.data;
+        
+        if (!result.data || result.data.length === 0) {
           throw new Error('No edited image returned from API');
         }
 
         return res.json({
           success: true,
-          images: editResponse.data.map(img => ({
+          images: result.data.map((img: any) => ({
             url: img.url,
             revised_prompt: img.revised_prompt || prompt
           }))
         });
-      } catch (apiError) {
+
+      } catch (apiError: any) {
+        // Clean up temp files on error
+        try { fs.unlinkSync(tempImagePath); } catch {}
+        
+        if (axios.isAxiosError(apiError)) {
+          console.error('OpenAI API Error:', apiError.response?.data || apiError.message);
+          throw new Error(apiError.response?.data?.error?.message || 'OpenAI API request failed');
+        }
         throw apiError;
       }
 
