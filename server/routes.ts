@@ -153,13 +153,51 @@ Important: Generate comprehensive, well-structured content that directly address
       }
 
       console.log('[Content Generation] Processing briefing-based content generation');
+      console.log('[Content Generation] User prompt length:', userPrompt.length);
+      console.log('[Content Generation] System prompt received:', systemPrompt ? 'Yes' : 'No');
 
-      // Enhanced system prompt for briefing-based content
-      const enhancedSystemPrompt = systemPrompt || `You are a professional content creator. Your task is to create original content based on creative briefs.
+      // Parse deliverables from the briefing content
+      const extractDeliverables = (briefContent: string): string[] => {
+        const deliverables: string[] = [];
+        const lines = briefContent.toLowerCase().split('\n');
+        
+        // Look for explicit deliverables sections
+        let inDeliverablesSection = false;
+        for (const line of lines) {
+          if (line.includes('deliverable') || line.includes('requirement') || line.includes('needed:') || line.includes('create:')) {
+            inDeliverablesSection = true;
+          }
+          
+          // Extract specific content types
+          if (line.includes('blog post') || line.includes('blog content')) deliverables.push('blog post');
+          if (line.includes('instagram') || line.includes('social media post')) deliverables.push('Instagram posts');
+          if (line.includes('email') && !line.includes('@')) deliverables.push('email campaign');
+          if (line.includes('headline') || line.includes('tagline')) deliverables.push('headlines');
+          if (line.includes('press release')) deliverables.push('press release');
+          if (line.includes('product description')) deliverables.push('product description');
+        }
+        
+        const uniqueDeliverables: string[] = [];
+        deliverables.forEach(item => {
+          if (!uniqueDeliverables.includes(item)) {
+            uniqueDeliverables.push(item);
+          }
+        });
+        return uniqueDeliverables;
+      };
+
+      const briefDeliverables = extractDeliverables(userPrompt);
+      const hasSpecificDeliverables = briefDeliverables.length > 0;
+
+      // Enhanced system prompt that prioritizes client's instructions
+      let enhancedSystemPrompt = systemPrompt;
+      
+      if (!systemPrompt || systemPrompt.trim().length === 0) {
+        enhancedSystemPrompt = `You are a professional content creator executing creative briefs.
 
 CRITICAL INSTRUCTIONS:
 - Read the brief carefully and identify the exact deliverables requested
-- Create ONLY the content specified (e.g., Instagram posts, emails, headlines)
+- Create ONLY the content specified (e.g., Instagram posts, emails, headlines, blog posts)
 - DO NOT repeat, summarize, or explain the brief
 - Use the exact tone, audience, and specifications from the brief
 - Include all required elements (headlines, CTAs, copy points, etc.)
@@ -167,6 +205,13 @@ CRITICAL INSTRUCTIONS:
 - For social media posts, include the actual post copy, hashtags, and captions
 - For emails, include subject lines, body copy, and calls to action
 - Create professional, publication-ready content that matches the brief requirements exactly`;
+      }
+
+      // Add specific deliverable guidance if detected
+      if (hasSpecificDeliverables) {
+        enhancedSystemPrompt += `\n\nDETECTED DELIVERABLES: ${briefDeliverables.join(', ')}
+FOCUS: Create these specific deliverables based on the brief content. Each deliverable should be complete and ready for publication.`;
+      }
 
       // Check for L'Oréal brief before routing to any provider
       if (detectLorealBrief(userPrompt)) {
@@ -192,32 +237,69 @@ CRITICAL INSTRUCTIONS:
         requestModel
       };
 
-      // Use the prompt router to intelligently select the best provider
-      const routingDecision = await promptRouter.routeRequest(config);
-      console.log(`[Content Generation] Routing to ${routingDecision.provider} with model ${routingDecision.model}`);
-
+      // For briefing content, prioritize Anthropic for better instruction following
+      const isBriefingContent = userPrompt.includes('CREATIVE BRIEF') || userPrompt.includes('Based on the creative brief');
+      
       let generatedContent: string;
+      let usedProvider: string;
+      let usedModel: string;
 
-      // Execute the generation based on routing decision
-      if (routingDecision.provider === 'anthropic') {
-        generatedContent = await AnthropicAPI.generateContent({
-          model: routingDecision.model,
-          prompt: userPrompt,
-          systemPrompt: enhancedSystemPrompt,
-          temperature: temperature || 0.7,
-          maxTokens: 3000
-        });
-      } else if (routingDecision.provider === 'gemini') {
-        generatedContent = await GeminiAPI.generateContent({
-          model: routingDecision.model,
-          prompt: userPrompt,
-          systemPrompt: enhancedSystemPrompt,
-          temperature: temperature || 0.7,
-          maxTokens: 3000
-        });
+      if (isBriefingContent) {
+        console.log('[Content Generation] Detected briefing content, using Anthropic for better instruction following');
+        console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
+        
+        try {
+          // Use Anthropic for briefing content as it follows instructions better
+          generatedContent = await AnthropicAPI.generateContent({
+            model: 'claude-sonnet-4-20250514',
+            prompt: userPrompt,
+            systemPrompt: enhancedSystemPrompt,
+            temperature: temperature || 0.7,
+            maxTokens: 3000
+          });
+          usedProvider = 'anthropic';
+          usedModel = 'claude-sonnet-4-20250514';
+        } catch (anthropicError: any) {
+          console.log('[Content Generation] Anthropic failed for briefing, falling back to Gemini');
+          generatedContent = await GeminiAPI.generateContent({
+            model: 'gemini-1.5-flash',
+            prompt: userPrompt,
+            systemPrompt: enhancedSystemPrompt,
+            temperature: temperature || 0.7,
+            maxTokens: 3000
+          });
+          usedProvider = 'gemini';
+          usedModel = 'gemini-1.5-flash';
+        }
       } else {
-        // Default to OpenAI
-        generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, routingDecision.model);
+        // Use the prompt router for non-briefing content
+        const routingDecision = await promptRouter.routeRequest(config);
+        console.log(`[Content Generation] Routing to ${routingDecision.provider} with model ${routingDecision.model}`);
+
+        // Execute the generation based on routing decision
+        if (routingDecision.provider === 'anthropic') {
+          generatedContent = await AnthropicAPI.generateContent({
+            model: routingDecision.model,
+            prompt: userPrompt,
+            systemPrompt: enhancedSystemPrompt,
+            temperature: temperature || 0.7,
+            maxTokens: 3000
+          });
+        } else if (routingDecision.provider === 'gemini') {
+          generatedContent = await GeminiAPI.generateContent({
+            model: routingDecision.model,
+            prompt: userPrompt,
+            systemPrompt: enhancedSystemPrompt,
+            temperature: temperature || 0.7,
+            maxTokens: 3000
+          });
+        } else {
+          // Default to OpenAI
+          generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, routingDecision.model);
+        }
+        
+        usedProvider = routingDecision.provider;
+        usedModel = routingDecision.model;
       }
 
       res.json({ 
