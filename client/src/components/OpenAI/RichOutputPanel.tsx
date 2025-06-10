@@ -638,19 +638,13 @@ export function RichOutputPanel({
       return;
     }
 
-    // Detect if this is briefing-based content
-    const isBriefingContent = userPrompt && (
-      userPrompt.length > 500 || 
-      userPrompt.toLowerCase().includes('brief') ||
-      userPrompt.toLowerCase().includes('campaign') ||
-      userPrompt.toLowerCase().includes('deliverable') ||
-      systemPrompt.toLowerCase().includes('briefing')
-    );
-
+    // Generated content from the Content tab should always be saved as 'general'
+    // regardless of whether it came from a briefing or not
+    // The 'briefing' content type is reserved for actual briefing documents
     saveContentMutation.mutate({ 
       title: contentTitle, 
       content: contentToSave,
-      contentType: isBriefingContent ? 'briefing' : 'general',
+      contentType: 'general',
       model: model,
       temperature: temperature,
       systemPrompt: systemPrompt,

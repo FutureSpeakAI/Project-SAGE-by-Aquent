@@ -24,11 +24,16 @@ export function SavedContentLibrary({ open, onOpenChange, onSelectContent }: Sav
   const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
-  // Fetch saved content
-  const { data: savedContents = [], isLoading } = useQuery<GeneratedContent[]>({
+  // Fetch saved content - only non-briefing content for the content library
+  const { data: allContents = [], isLoading } = useQuery<GeneratedContent[]>({
     queryKey: ['/api/generated-contents'],
     enabled: open,
   });
+
+  // Filter to only show general content (not briefing documents)
+  const savedContents = allContents.filter(content => 
+    content.contentType !== 'briefing' && content.contentType !== 'visual'
+  );
 
   // Delete content mutation
   const deleteMutation = useMutation({
