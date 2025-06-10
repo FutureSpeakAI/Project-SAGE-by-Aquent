@@ -65,7 +65,7 @@ const uploadFilePromise = (req: Request, res: Response): Promise<void> => {
 };
 
 // Function to extract text from a file buffer based on its extension
-async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise<string> {
+export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise<string> {
   try {
     if (fileExt === '.txt') {
       // For text files, convert buffer to string and clean up spacing
@@ -304,6 +304,37 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
     throw new Error(`Failed to extract text from ${fileExt} file: ${error.message}`);
   }
 }
+
+// Analyze brief content for text-based briefs
+export const analyzeBriefText = async (content: string) => {
+  try {
+    const lines = content.split('\n').filter(line => line.trim());
+    let title = lines[0]?.trim() || `Brief - ${new Date().toLocaleDateString()}`;
+    
+    // Look for common brief indicators
+    let category = 'general';
+    const lowercaseContent = content.toLowerCase();
+    if (lowercaseContent.includes('social media') || lowercaseContent.includes('instagram') || lowercaseContent.includes('facebook')) {
+      category = 'social-media';
+    } else if (lowercaseContent.includes('campaign') || lowercaseContent.includes('marketing')) {
+      category = 'marketing';
+    } else if (lowercaseContent.includes('product launch') || lowercaseContent.includes('new product')) {
+      category = 'product-launch';
+    }
+
+    return {
+      title: title,
+      content: content,
+      category: category,
+      metadata: {
+        wordCount: content.split(/\s+/).length,
+        extractedAt: new Date().toISOString()
+      }
+    };
+  } catch (error: any) {
+    throw new Error(`Brief analysis failed: ${error.message}`);
+  }
+};
 
 // Utility function to process a brief file
 export const processBriefFile = async (filePath: string) => {

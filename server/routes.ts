@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { generateContent, generateImage } from "./openai";
 import * as GeminiAPI from "./gemini";
 import * as AnthropicAPI from "./anthropic";
-import { processBriefFile } from "./brief-processing";
+import { processBriefFile, analyzeBriefText, extractTextFromFile } from "./brief-processing";
+import path from 'path';
 import { processImage } from "./image-processing";
 import { upload } from './index';
 import OpenAI from "openai";
@@ -195,7 +196,7 @@ Important: Generate comprehensive, well-structured content that directly address
         return res.status(400).json({ error: "Content is required" });
       }
 
-      const analysis = await processBrief(content);
+      const analysis = await analyzeBriefText(content);
       res.json(analysis);
     } catch (error: any) {
       console.error('Brief analysis error:', error);
@@ -457,7 +458,12 @@ Important: Generate comprehensive, well-structured content that directly address
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const analysis = await processBriefFile(req.file.path);
+      // Extract text from file buffer
+      const fileExt = path.extname(req.file.originalname).toLowerCase();
+      const extractedText = await extractTextFromFile(req.file.buffer, fileExt);
+      
+      // Analyze the extracted text
+      const analysis = await analyzeBriefText(extractedText);
       
       // Save to generated contents as briefing type
       const savedContent = await storage.saveGeneratedContent({
