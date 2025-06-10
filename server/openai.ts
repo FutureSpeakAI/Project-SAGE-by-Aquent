@@ -154,22 +154,32 @@ export const generateContent = async (req: Request, res: Response) => {
       enhancedUserPrompt += "\n\nProvide a detailed, comprehensive response.";
     }
     
-    // Create completion without timeout wrapper to let client timeout handle it
-    const completion = await openai.chat.completions.create({
-      model: model || "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: enhancedSystemPrompt
-        },
-        {
-          role: "user",
-          content: enhancedUserPrompt
-        }
-      ],
-      temperature: temperature || 0.7,
-      max_tokens: 4000, // Reduced for faster responses
-    });
+    console.log('[OpenAI] Making API request with model:', model || "gpt-4o-mini");
+    console.log('[OpenAI] Enhanced user prompt length:', enhancedUserPrompt.length);
+    
+    // Create completion with explicit timeout
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: model || "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: enhancedSystemPrompt
+          },
+          {
+            role: "user",
+            content: enhancedUserPrompt
+          }
+        ],
+        temperature: temperature || 0.7,
+        max_tokens: 4000,
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('OpenAI API timeout')), 15000)
+      )
+    ]) as any;
+    
+    console.log('[OpenAI] API request completed successfully');
     
     content = completion.choices[0].message.content || "";
     
