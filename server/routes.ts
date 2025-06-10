@@ -248,7 +248,7 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
         console.log('[Content Generation] Detected briefing content, using reliable briefing execution');
         console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
         
-        // Use OpenAI with reduced timeout for briefing content
+        // Use OpenAI with proper error handling for briefing content
         try {
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -268,7 +268,7 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
               temperature: temperature || 0.7,
               max_tokens: 1500
             }),
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(15000)
           });
           
           if (response.ok) {
@@ -277,11 +277,16 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
             usedProvider = 'openai';
             usedModel = 'gpt-3.5-turbo';
           } else {
-            throw new Error(`API response: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            console.error('[Content Generation] API Error:', response.status, errorData);
+            throw new Error(`OpenAI API returned ${response.status}: ${errorData.error?.message || 'Unknown error'}`);
           }
         } catch (apiError: any) {
-          console.log('[Content Generation] API unavailable, checking authentication');
-          throw new Error('Content generation service temporarily unavailable. Please verify API keys are configured correctly.');
+          console.error('[Content Generation] Full API Error:', apiError);
+          if (apiError.name === 'AbortError' || apiError.message.includes('timeout')) {
+            throw new Error('Content generation timed out. The request took too long to process.');
+          }
+          throw new Error(`API Error: ${apiError.message}`);
         }
       } else {
         // Use the prompt router for non-briefing content
