@@ -282,19 +282,25 @@ export function BriefingLibrary({
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="max-w-md">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete the briefing "{selectedBriefing?.title}". 
-                This action cannot be undone.
+              <AlertDialogTitle>Delete Briefing?</AlertDialogTitle>
+              <AlertDialogDescription className="break-words">
+                This will permanently delete "{selectedBriefing?.title}". This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
+              </AlertDialogCancel>
               <AlertDialogAction 
-                onClick={() => selectedBriefing && deleteMutation.mutate(selectedBriefing.id)}
+                onClick={() => {
+                  if (selectedBriefing) {
+                    deleteMutation.mutate(selectedBriefing.id);
+                  }
+                }}
                 className="bg-red-500 hover:bg-red-600"
+                disabled={deleteMutation.isPending}
               >
                 {deleteMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-1" />
