@@ -694,75 +694,60 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         }
       }
 
-      // Write buffer to temporary file for OpenAI API
-      const tempImagePath = path.join(process.cwd(), `temp_image_${Date.now()}.png`);
-      fs.writeFileSync(tempImagePath, imageBuffer);
+      // Create proper file objects with MIME type for OpenAI API
+      const FormData = require('form-data');
+      const form = new FormData();
       
-      // Prepare OpenAI API request with file stream
-      const editRequestParams: any = {
-        image: fs.createReadStream(tempImagePath),
-        prompt: prompt.trim(),
-        n: parseInt(String(n)) || 1,
-        size: size || "1024x1024"
-      };
+      // Add image with proper MIME type
+      form.append('image', imageBuffer, {
+        filename: 'image.png',
+        contentType: 'image/png'
+      });
+      form.append('prompt', prompt.trim());
+      form.append('n', String(parseInt(String(n)) || 1));
+      form.append('size', size || "1024x1024");
 
-      let tempMaskPath: string | null = null;
       if (maskBuffer) {
-        tempMaskPath = path.join(process.cwd(), `temp_mask_${Date.now()}.png`);
-        fs.writeFileSync(tempMaskPath, maskBuffer);
-        editRequestParams.mask = fs.createReadStream(tempMaskPath);
+        form.append('mask', maskBuffer, {
+          filename: 'mask.png',
+          contentType: 'image/png'
+        });
         console.log('Performing inpainting with mask');
       } else {
         console.log('Performing outpainting/extension');
       }
 
       try {
-        // Call OpenAI Images Edit API
-        const response = await openai.images.edit(editRequestParams);
+        // Call OpenAI Images Edit API with FormData
+        const response = await fetch('https://api.openai.com/v1/images/edits', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            ...form.getHeaders()
+          },
+          body: form
+        });
+
+        const result = await response.json();
         
-        // Clean up temporary files
-        fs.unlinkSync(tempImagePath);
-        if (tempMaskPath) fs.unlinkSync(tempMaskPath);
+        if (!response.ok) {
+          throw new Error(result.error?.message || 'OpenAI API error');
+        }
         
-        if (!response.data || response.data.length === 0) {
+        if (!result.data || result.data.length === 0) {
           throw new Error('No edited image returned from API');
         }
         
         return res.json({
           success: true,
-          images: response.data.map(img => ({
+          images: result.data.map((img: any) => ({
             url: img.url,
             revised_prompt: img.revised_prompt || prompt
           }))
         });
       } catch (apiError) {
-        // Clean up temporary files on error
-        try {
-          fs.unlinkSync(tempImagePath);
-          if (tempMaskPath) fs.unlinkSync(tempMaskPath);
-        } catch (cleanupError) {
-          console.log('Failed to clean up temp files:', cleanupError);
-        }
         throw apiError;
       }
-
-      if (!response.data || response.data.length === 0) {
-        throw new Error('No edited image returned from API');
-      }
-
-      // Process the response
-      const editedImages = response.data.map((img: any) => ({
-        url: img.url || `data:image/png;base64,${img.b64_json}`,
-        revised_prompt: img.revised_prompt
-      }));
-
-      console.log('Image editing successful, returning', editedImages.length, 'images');
-
-      res.json({
-        images: editedImages,
-        editMode: mask ? 'inpaint' : 'outpaint',
-        originalPrompt: prompt
-      });
 
     } catch (error: any) {
       console.error('Image editing error:', error);
