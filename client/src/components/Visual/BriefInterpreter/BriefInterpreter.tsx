@@ -31,15 +31,18 @@ export function BriefInterpreter({ onPromptGenerated, onSwitchToConversation, on
     // Switch to conversation with the brief content
     onSwitchToConversation();
     
-    // Create a simple instruction prompt for SAGE to analyze the brief
-    const analysisPrompt = `Please analyze this creative brief and identify what visual content we need to create: "${briefTitle}"
+    // Create a clean, focused analysis request without exposing the full brief content to the user
+    const userMessage = `I've selected the "${briefTitle}" brief. Please analyze it and tell me what visual content we need to create.`;
+    
+    // Create the actual analysis prompt for the AI (includes brief content)
+    const analysisPrompt = `Please analyze this creative brief and identify what visual content we need to create:
 
-Brief content: ${briefContent}
+Brief: ${briefContent}
 
-Tell me what specific visual deliverables you identify and ask if I'd like you to create image generation prompts for them.`;
+Focus on identifying specific visual deliverables (number of images, type of content, platforms) and ask if I'd like you to create image generation prompts for them. Be conversational and helpful.`;
     
     if (onBriefingProcessed) {
-      onBriefingProcessed(analysisPrompt, briefTitle);
+      onBriefingProcessed(userMessage, analysisPrompt);
     }
     
     toast({

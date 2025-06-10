@@ -468,9 +468,12 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
   // Generate content endpoint
   app.post("/api/generate-content", async (req: Request, res: Response) => {
     try {
-      const { prompt, systemPrompt, model, provider, temperature, maxTokens } = req.body;
+      const { prompt, userPrompt, systemPrompt, model, provider, temperature, maxTokens } = req.body;
       
-      if (!prompt) {
+      // Accept either 'userPrompt' or 'prompt' for compatibility
+      const actualPrompt = userPrompt || prompt;
+      
+      if (!actualPrompt) {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
@@ -479,7 +482,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       if (provider === 'anthropic') {
         result = await AnthropicAPI.generateContent({
           model: model || 'claude-3-5-sonnet-20241022',
-          prompt,
+          prompt: actualPrompt,
           systemPrompt,
           temperature: temperature || 0.7,
           maxTokens: maxTokens || 3000
@@ -487,13 +490,13 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       } else if (provider === 'gemini') {
         result = await GeminiAPI.generateContent({
           model: model || 'gemini-1.5-pro',
-          prompt,
+          prompt: actualPrompt,
           systemPrompt,
           temperature: temperature || 0.7,
           maxTokens: maxTokens || 3000
         });
       } else {
-        result = await generateContentDirect(prompt, systemPrompt, model || 'gpt-4o');
+        result = await generateContentDirect(actualPrompt, systemPrompt, model || 'gpt-4o');
       }
 
       res.json({ 
