@@ -612,7 +612,7 @@ Please provide:
 4. Target audience insights
 5. Creative recommendations`;
 
-      const result = await generateContent(userPrompt, systemPrompt, 'gpt-4o');
+      const result = await generateContentDirect(userPrompt, systemPrompt, 'gpt-4o');
       
       res.json({ interpretation: result });
     } catch (error: any) {
