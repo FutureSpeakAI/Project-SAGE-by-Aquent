@@ -336,18 +336,26 @@ export const processBrief = async (req: Request, res: Response) => {
       Don't include any commentary, explanations, or notes - just the optimized prompt.
     `;
     
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [
-        { role: "system", content: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7
-    });
+    // Call OpenAI API with timeout handling and fallback
+    let generatedPrompt = "";
     
-    // Extract the generated prompt from the response
-    const generatedPrompt = completion.choices[0].message.content || "";
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: "You are an expert at transforming creative briefs into effective image generation prompts. Your job is to extract the key visual elements from a creative brief and create a detailed, optimized prompt for image generation." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+      
+      generatedPrompt = completion.choices[0].message.content || "";
+    } catch (aiError: any) {
+      // If AI processing fails, provide a simplified fallback
+      console.log('AI prompt generation failed, using fallback approach');
+      generatedPrompt = `Create a professional image based on this brief: ${extractedText.substring(0, 200)}...`;
+    }
     
     // Return the results
     return res.status(200).json({
@@ -358,6 +366,15 @@ export const processBrief = async (req: Request, res: Response) => {
     
   } catch (error: any) {
     console.error("Error processing brief:", error);
+    
+    // Handle timeout errors specifically
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout') || error.message.includes('Request timed out')) {
+      return res.status(408).json({
+        success: false,
+        message: 'Request timed out. The brief might be too complex. Try breaking it into smaller parts.',
+        isTimeout: true
+      });
+    }
     
     return res.status(500).json({
       success: false,

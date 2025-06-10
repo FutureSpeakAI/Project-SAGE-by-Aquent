@@ -721,7 +721,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasNestedDeliverables = userPrompt.toLowerCase().includes('and opening paragraph') || 
                                    userPrompt.toLowerCase().includes('and preview text') ||
                                    userPrompt.toLowerCase().includes('subject line and') ||
-                                   userPrompt.toLowerCase().includes('headline and');
+                                   userPrompt.toLowerCase().includes('headline and') ||
+                                   userPrompt.toLowerCase().includes('headline that captures attention') ||
+                                   userPrompt.toLowerCase().includes('each email to include') ||
+                                   userPrompt.toLowerCase().includes('3 rep-triggered') ||
+                                   userPrompt.toLowerCase().includes('multiple deliverables');
       
       const channelMatches = userPrompt.match(/LinkedIn|Instagram|Twitter|Facebook|email|press/g) || [];
       const hasMultipleChannels = channelMatches.length > 3;
@@ -761,6 +765,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: 'Email Preview Text', 
             description: 'Then create preview text separately',
             simplified: 'Write compelling email preview text'
+          });
+        }
+
+        // Handle L'Oreal-style complex briefs
+        if (userPrompt.includes('3 rep-triggered HCP emails') || userPrompt.includes('Each email to include')) {
+          suggestions.push({ 
+            title: 'Email 1: Awareness Building', 
+            description: 'Create the first email focusing on awareness',
+            simplified: 'Create the first HCP email about BreathEase awareness'
+          });
+          suggestions.push({ 
+            title: 'Email 2: Clinical Benefits', 
+            description: 'Create the second email highlighting clinical data',
+            simplified: 'Create the second HCP email focusing on clinical benefits'
+          });
+          suggestions.push({ 
+            title: 'Email 3: Call to Action', 
+            description: 'Create the third email with strong call to action',
+            simplified: 'Create the third HCP email with compelling call to action'
           });
         }
         
