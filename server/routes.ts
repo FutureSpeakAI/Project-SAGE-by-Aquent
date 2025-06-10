@@ -15,6 +15,11 @@ import { promptRouter, type PromptRouterConfig } from "./prompt-router";
 import { detectLorealBrief, generateLorealInstagramContent } from "./loreal-brief-handler";
 import { generateBreathEaseEmails } from "./healthcare-content-generator";
 
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = createServer(app);
 
@@ -633,18 +638,115 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
   });
 
   // Image editing endpoint
-  app.post("/api/edit-image", upload.single('image'), async (req: Request, res: Response) => {
+  app.post("/api/edit-image", async (req: Request, res: Response) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: "Image file is required" });
+      const { image, mask, prompt, model = "gpt-image-1", size = "1024x1024", quality = "standard", n = 1 } = req.body;
+      
+      if (!image) {
+        return res.status(400).json({ error: "Image is required" });
+      }
+      
+      if (!prompt || !prompt.trim()) {
+        return res.status(400).json({ error: "Prompt is required" });
       }
 
-      const { prompt, mask } = req.body;
-      const result = await processImage(req.file.path, prompt, mask);
-      res.json(result);
+      console.log('Image editing request:', { 
+        hasImage: !!image, 
+        hasMask: !!mask, 
+        prompt: prompt.substring(0, 50) + '...',
+        model,
+        size 
+      });
+
+      // Convert image URL to buffer for OpenAI API
+      let imageBuffer: Buffer;
+      try {
+        if (image.startsWith('data:')) {
+          // Handle data URL
+          const base64Data = image.split(',')[1];
+          imageBuffer = Buffer.from(base64Data, 'base64');
+        } else {
+          // Handle HTTP URL
+          const response = await fetch(image);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+          }
+          const arrayBuffer = await response.arrayBuffer();
+          imageBuffer = Buffer.from(arrayBuffer);
+        }
+      } catch (error: any) {
+        console.error('Error processing image URL:', error);
+        return res.status(400).json({ error: "Invalid image URL or format" });
+      }
+
+      // Handle mask if provided for inpainting
+      let maskBuffer: Buffer | undefined;
+      if (mask) {
+        try {
+          const base64Data = mask.split(',')[1];
+          maskBuffer = Buffer.from(base64Data, 'base64');
+        } catch (error: any) {
+          console.error('Error processing mask:', error);
+          return res.status(400).json({ error: "Invalid mask format" });
+        }
+      }
+
+      // Prepare OpenAI API request
+      const editRequest: any = {
+        image: imageBuffer,
+        prompt: prompt.trim(),
+        n: parseInt(String(n)) || 1,
+        size: size || "1024x1024"
+      };
+
+      if (maskBuffer) {
+        editRequest.mask = maskBuffer;
+        console.log('Performing inpainting with mask');
+      } else {
+        console.log('Performing outpainting/extension');
+      }
+
+      // Call OpenAI Images Edit API
+      const response = await openai.images.edit(editRequest);
+
+      if (!response.data || response.data.length === 0) {
+        throw new Error('No edited image returned from API');
+      }
+
+      // Process the response
+      const editedImages = response.data.map((img: any) => ({
+        url: img.url || `data:image/png;base64,${img.b64_json}`,
+        revised_prompt: img.revised_prompt
+      }));
+
+      console.log('Image editing successful, returning', editedImages.length, 'images');
+
+      res.json({
+        images: editedImages,
+        editMode: mask ? 'inpaint' : 'outpaint',
+        originalPrompt: prompt
+      });
+
     } catch (error: any) {
       console.error('Image editing error:', error);
-      res.status(500).json({ error: "Image editing failed", details: error.message });
+      
+      if (error.status === 400) {
+        return res.status(400).json({ 
+          error: 'Invalid request. Please check your image format and prompt.',
+          details: error.message
+        });
+      }
+      
+      if (error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Rate limit exceeded. Please try again later.'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "Image editing failed", 
+        details: error.message || "Unknown error occurred"
+      });
     }
   });
 
