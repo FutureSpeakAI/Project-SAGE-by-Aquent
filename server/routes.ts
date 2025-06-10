@@ -248,21 +248,8 @@ FOCUS: Create these specific deliverables based on the brief content. Each deliv
         console.log('[Content Generation] Detected briefing content, using simplified OpenAI execution');
         console.log('[Content Generation] Deliverables detected:', briefDeliverables.join(', ') || 'none specific');
         
-        // Direct OpenAI API call without complex wrappers
-        const OpenAI = require('openai');
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: enhancedSystemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: temperature || 0.7,
-          max_tokens: 2000
-        });
-        
-        generatedContent = completion.choices[0].message.content || 'Content generation failed';
+        // Use existing generateContentDirect function
+        generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, 'gpt-4o-mini');
         usedProvider = 'openai';
         usedModel = 'gpt-4o-mini';
       } else {
