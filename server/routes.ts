@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { generateContent, generateImage } from "./openai";
 import * as GeminiAPI from "./gemini";
 import * as AnthropicAPI from "./anthropic";
-import { processBrief } from "./brief-processing";
+import { processBriefFile } from "./brief-processing";
 import { processImage } from "./image-processing";
 import { upload } from './index';
 import OpenAI from "openai";

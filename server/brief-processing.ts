@@ -305,6 +305,45 @@ async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise
   }
 }
 
+// Utility function to process a brief file
+export const processBriefFile = async (filePath: string) => {
+  try {
+    const fileExt = path.extname(filePath).toLowerCase();
+    let extractedText = '';
+    
+    if (fileExt === '.pdf') {
+      extractedText = await extractTextFromPDF(filePath);
+    } else if (fileExt === '.docx') {
+      extractedText = await extractTextFromDocx(filePath);
+    } else if (fileExt === '.txt') {
+      extractedText = await fs.promises.readFile(filePath, 'utf-8');
+    } else {
+      throw new Error('Unsupported file format. Please upload a PDF, DOCX, or TXT file.');
+    }
+
+    if (!extractedText || extractedText.trim().length === 0) {
+      throw new Error('No text could be extracted from the file');
+    }
+
+    // Analyze the brief content
+    const analysis = await analyzeBriefContent(extractedText);
+    
+    return {
+      title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
+      content: extractedText,
+      category: analysis.category || 'general',
+      metadata: {
+        wordCount: extractedText.split(/\s+/).length,
+        extractedAt: new Date().toISOString(),
+        fileExtension: fileExt,
+        ...analysis.metadata
+      }
+    };
+  } catch (error: any) {
+    throw new Error(`Brief processing failed: ${error.message}`);
+  }
+};
+
 // API endpoint to process a brief document and generate an image prompt
 export const processBrief = async (req: Request, res: Response) => {
   try {
