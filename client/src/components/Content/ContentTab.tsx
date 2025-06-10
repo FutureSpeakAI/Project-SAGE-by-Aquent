@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { pageTransition } from "@/App";
 import { SystemPromptPanel } from "@/components/OpenAI/SystemPromptPanel";
 import { UserPromptPanel } from "@/components/OpenAI/UserPromptPanel";
@@ -6,6 +7,8 @@ import { RichOutputPanel } from "@/components/OpenAI/RichOutputPanel";
 import { SavedPersona } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { FileBadge } from "lucide-react";
+import { SageNotification } from "@/components/ui/sage-notification";
+import { useLocation } from "wouter";
 
 interface ContentTabProps {
   systemPrompt: string;
@@ -50,6 +53,47 @@ export function ContentTab({
   isFullScreen = false,
   onToggleFullScreen
 }: ContentTabProps) {
+  const [, setLocation] = useLocation();
+  const [briefAnalysis, setBriefAnalysis] = useState<any>(null);
+  const [showNotification, setShowNotification] = useState(false);
+
+  // Analyze brief complexity when user prompt changes
+  useEffect(() => {
+    if (userPrompt.length > 100) {
+      const analyzeBrief = async () => {
+        try {
+          const response = await fetch('/api/analyze-brief', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userPrompt })
+          });
+          
+          if (response.ok) {
+            const analysis = await response.json();
+            if (analysis.isComplex) {
+              setBriefAnalysis(analysis);
+              setShowNotification(true);
+            } else {
+              setShowNotification(false);
+            }
+          }
+        } catch (error) {
+          console.error('Brief analysis failed:', error);
+        }
+      };
+
+      const debounceTimer = setTimeout(analyzeBrief, 1000);
+      return () => clearTimeout(debounceTimer);
+    } else {
+      setShowNotification(false);
+    }
+  }, [userPrompt]);
+
+  const handleGoToSage = () => {
+    setLocation('/');
+    setShowNotification(false);
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -110,6 +154,14 @@ export function ContentTab({
           />
         </div>
       </div>
+
+      {/* Smart Brief Complexity Notification */}
+      <SageNotification
+        isVisible={showNotification}
+        onClose={() => setShowNotification(false)}
+        onGoToSage={handleGoToSage}
+        briefAnalysis={briefAnalysis}
+      />
     </motion.div>
   );
 }

@@ -726,14 +726,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const channelMatches = userPrompt.match(/LinkedIn|Instagram|Twitter|Facebook|email|press/g) || [];
       const hasMultipleChannels = channelMatches.length > 3;
       
-      const hasDetailedSpecs = /targeting|professional|sophisticated|advanced|premium|career-focused/g.test(userPrompt);
+      const hasDetailedSpecs = userPrompt.match(/targeting|professional|sophisticated|advanced|premium|career-focused/g) !== null;
       
       const isComplexBrief = hasNestedDeliverables || hasMultipleChannels || hasDetailedSpecs;
       
       if (isComplexBrief) {
         // Extract brief components for breakdown
         const project = userPrompt.match(/Project:\s*([^\n]+)/)?.[1] || 'Unknown Project';
-        const deliverables = userPrompt.match(/Deliverables:[^:]*?(?=\n[A-Z]|\n\n|$)/s)?.[0] || '';
+        const deliverables = userPrompt.match(/Deliverables:[^:]*?(?=\n[A-Z]|\n\n|$)/)?.[0] || '';
         
         // Create breakdown suggestions
         const suggestions = [];
@@ -765,7 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         if (hasMultipleChannels) {
-          channelMatches.forEach(channel => {
+          channelMatches.forEach((channel: string) => {
             suggestions.push({ 
               title: `${channel} Content`, 
               description: `Create ${channel.toLowerCase()} content separately`,
