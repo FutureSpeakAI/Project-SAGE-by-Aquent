@@ -491,13 +491,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Detect content type and complexity for router
       const isBriefExecution = userPrompt.includes('CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)');
+      // Enhanced complexity detection based on brief analysis
+      const hasNestedDeliverables = userPrompt.toLowerCase().includes('and opening paragraph') || 
+                                   userPrompt.toLowerCase().includes('and preview text') ||
+                                   userPrompt.toLowerCase().includes('subject line and') ||
+                                   userPrompt.toLowerCase().includes('headline and');
+      const channelMatches = userPrompt.match(/LinkedIn|Instagram|Twitter|Facebook|email|press/g) || [];
+      const hasMultipleChannels = channelMatches.length > 3;
+      const hasDetailedSpecs = /targeting|professional|sophisticated|advanced|premium|career-focused/g.test(userPrompt);
+      
       const hasComplexRequirements = userPrompt.length > 1000 || 
-                                   userPrompt.includes('deliverables') ||
+                                   hasNestedDeliverables ||
+                                   hasMultipleChannels ||
+                                   hasDetailedSpecs ||
                                    userPrompt.includes('multiple') ||
                                    userPrompt.includes('campaign') ||
-                                   userPrompt.toLowerCase().includes('loreal') ||
-                                   userPrompt.toLowerCase().includes("l'oreal") ||
-                                   (userPrompt.match(/\n/g) || []).length > 10; // Multi-section briefs
+                                   (userPrompt.match(/\n/g) || []).length > 15;
 
       // Use prompt router for intelligent provider selection
       const routerConfig: PromptRouterConfig = {
@@ -526,21 +535,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         enhancedSystemPrompt = "You are a professional content creator executing creative briefs. Based on the provided creative brief, create the specific content deliverables requested. Focus on creating engaging, professional content that fulfills the brief's objectives. Do not repeat or summarize the brief - create the actual content it describes. Use proper HTML formatting with <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists.";
       }
 
-      // Route to the selected provider
+      // Route to the selected provider with timeout protection
       if (routingDecision.provider === 'anthropic') {
-        const result = await AnthropicAPI.generateContent({
-          model: routingDecision.model,
-          prompt: userPrompt,
-          systemPrompt: enhancedSystemPrompt,
-          temperature: temperature || 0.7,
-          maxTokens: 4000
-        });
-        res.json({ 
-          content: result, 
-          provider: 'anthropic',
-          model: routingDecision.model,
-          routed: true
-        });
+        try {
+          // For very complex briefs, simplify them before processing
+          let processedPrompt = userPrompt;
+          if (hasComplexRequirements && userPrompt.length > 600) {
+            // Extract core elements for faster processing
+            const briefMatch = userPrompt.match(/Project:\s*([^\n]+)/);
+            const objectiveMatch = userPrompt.match(/Objective:\s*([^\n]+)/);
+            const deliverablesMatch = userPrompt.match(/Deliverables:[^:]*?(?=\n[A-Z]|\n\n|$)/s);
+            const toneMatch = userPrompt.match(/Tone:\s*([^\n]+)/);
+            
+            if (briefMatch && objectiveMatch && deliverablesMatch) {
+              processedPrompt = `CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)
+
+Project: ${briefMatch[1].trim()}
+Objective: ${objectiveMatch[1].trim()}
+${deliverablesMatch[0].trim()}
+Tone: ${toneMatch ? toneMatch[1].trim() : 'Professional'}
+
+Create the specific deliverables listed above.`;
+              console.log('[Content Generation] Simplified complex brief for faster processing');
+            }
+          }
+          
+          const result = await AnthropicAPI.generateContent({
+            model: routingDecision.model,
+            prompt: processedPrompt,
+            systemPrompt: enhancedSystemPrompt,
+            temperature: temperature || 0.7,
+            maxTokens: 3000
+          });
+          res.json({ 
+            content: result, 
+            provider: 'anthropic',
+            model: routingDecision.model,
+            routed: true,
+            optimized: processedPrompt !== userPrompt
+          });
+        } catch (anthropicError: any) {
+          console.log('[Content Generation] Anthropic failed, trying Gemini with simplified brief');
+          
+          // Immediate fallback to Gemini with simplified prompt
+          try {
+            // Create a very simple version for Gemini
+            const simplifiedPrompt = hasComplexRequirements ? 
+              `Create marketing content for: ${userPrompt.match(/Project:\s*([^\n]+)/)?.[1] || 'product launch'}. Include: press headline, email subject, social post, product description. Tone: professional.` :
+              userPrompt;
+              
+            const result = await GeminiAPI.generateContent({
+              model: 'gemini-1.5-flash',
+              prompt: simplifiedPrompt,
+              systemPrompt: enhancedSystemPrompt,
+              temperature: temperature || 0.7,
+              maxTokens: 2000
+            });
+            res.json({ 
+              content: result, 
+              provider: 'gemini',
+              model: 'gemini-1.5-flash',
+              routed: true,
+              fallback: 'anthropic_timeout',
+              simplified: true
+            });
+          } catch (geminiError: any) {
+            console.error('[Content Generation] All providers failed');
+            res.status(500).json({ 
+              error: 'Content generation is temporarily unavailable for complex briefs. Please try a simpler request or retry later.',
+              providers_tried: ['anthropic', 'gemini']
+            });
+          }
+        }
       } else if (routingDecision.provider === 'gemini') {
         const result = await GeminiAPI.generateContent({
           model: routingDecision.model,
