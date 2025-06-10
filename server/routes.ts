@@ -487,40 +487,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'User prompt is required' });
       }
 
-      if (requestModel.startsWith('gpt-')) {
-        return await generateContent(req, res);
-      } else if (AnthropicAPI.ANTHROPIC_MODELS.includes(requestModel)) {
-        try {
-          const result = await AnthropicAPI.generateContent({
-            model: requestModel,
-            prompt: userPrompt,
-            systemPrompt,
-            temperature,
-            maxTokens: 4000
-          });
-          res.json({ content: result });
-        } catch (anthropicError: any) {
-          console.log('Anthropic API unavailable, using OpenAI fallback');
-          req.body.model = 'gpt-4o';
-          return await generateContent(req, res);
+      console.log('[Content Generation] Using prompt router for intelligent provider selection');
+
+      // Detect content type and complexity for router
+      const isBriefExecution = userPrompt.includes('CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)');
+      const hasComplexRequirements = userPrompt.length > 1000 || 
+                                   userPrompt.includes('deliverables') ||
+                                   userPrompt.includes('multiple') ||
+                                   userPrompt.includes('campaign');
+
+      // Use prompt router for intelligent provider selection
+      const routerConfig: PromptRouterConfig = {
+        enabled: true,
+        manualModel: requestModel
+      };
+
+      const routingDecision = await promptRouter.routePrompt(
+        userPrompt,
+        isBriefExecution ? 'creative brief execution' : 'content generation',
+        routerConfig,
+        {
+          stage: 'content',
+          projectType: 'content',
+          complexity: hasComplexRequirements ? 'complex' : 'moderate',
+          priority: 'quality'
         }
-      } else if (GeminiAPI.GEMINI_MODELS.chat.includes(requestModel)) {
-        try {
-          const result = await GeminiAPI.generateContent({
-            model: requestModel,
-            prompt: userPrompt,
-            systemPrompt,
-            temperature,
-            maxTokens: 4000
-          });
-          res.json({ content: result });
-        } catch (geminiError: any) {
-          console.log('Gemini API unavailable, using OpenAI fallback');
-          req.body.model = 'gpt-4o';
-          return await generateContent(req, res);
-        }
+      );
+
+      console.log(`[Content Generation] Routed to ${routingDecision.provider} with model ${routingDecision.model}`);
+
+      // Enhanced system prompt for brief execution
+      let enhancedSystemPrompt = systemPrompt;
+      if (isBriefExecution && !systemPrompt.includes('professional content creator')) {
+        enhancedSystemPrompt = "You are a professional content creator executing creative briefs. Based on the provided creative brief, create the specific content deliverables requested. Focus on creating engaging, professional content that fulfills the brief's objectives. Do not repeat or summarize the brief - create the actual content it describes. Use proper HTML formatting with <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists.";
+      }
+
+      // Route to the selected provider
+      if (routingDecision.provider === 'anthropic') {
+        const result = await AnthropicAPI.generateContent({
+          model: routingDecision.model,
+          prompt: userPrompt,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens: 4000
+        });
+        res.json({ 
+          content: result, 
+          provider: 'anthropic',
+          model: routingDecision.model,
+          routed: true
+        });
+      } else if (routingDecision.provider === 'gemini') {
+        const result = await GeminiAPI.generateContent({
+          model: routingDecision.model,
+          prompt: userPrompt,
+          systemPrompt: enhancedSystemPrompt,
+          temperature: temperature || 0.7,
+          maxTokens: 4000
+        });
+        res.json({ 
+          content: result, 
+          provider: 'gemini',
+          model: routingDecision.model,
+          routed: true
+        });
       } else {
-        return res.status(400).json({ error: 'Unsupported model' });
+        // Use OpenAI with the existing logic that handles brief detection
+        req.body.systemPrompt = enhancedSystemPrompt;
+        req.body.model = routingDecision.model;
+        const result = await generateContent(req, res);
+        return result;
       }
     } catch (error) {
       console.error('Content generation error:', error);

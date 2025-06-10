@@ -14,17 +14,39 @@ export interface AnthropicGenerateContentRequest {
 }
 
 export const generateContent = async (request: AnthropicGenerateContentRequest): Promise<string> => {
+  // Enhanced system prompt for brief execution consistency
+  let enhancedSystemPrompt = request.systemPrompt || '';
+  
+  // Detect brief execution requests
+  const isBriefExecution = request.prompt.includes('CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT)');
+  
+  if (isBriefExecution && !enhancedSystemPrompt.includes('professional content creator')) {
+    enhancedSystemPrompt = "You are a professional content creator executing creative briefs. Based on the provided creative brief, create the specific content deliverables requested. Focus on creating engaging, professional content that fulfills the brief's objectives. Do not repeat or summarize the brief - create the actual content it describes. Use proper HTML formatting with <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists.";
+  }
+
   const message = await anthropic.messages.create({
     model: request.model,
     max_tokens: request.maxTokens || 4000,
     temperature: request.temperature || 0.7,
-    system: request.systemPrompt || '',
+    system: enhancedSystemPrompt,
     messages: [
       { role: 'user', content: request.prompt }
     ],
   });
 
-  return message.content[0].type === 'text' ? message.content[0].text : '';
+  let content = message.content[0].type === 'text' ? message.content[0].text : '';
+  
+  // Apply consistent formatting if not brief execution
+  if (!isBriefExecution) {
+    // Convert markdown to HTML for consistency
+    content = content.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+    content = content.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+    content = content.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+    content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    content = content.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  }
+
+  return content;
 };
 
 export const ANTHROPIC_MODELS = [
