@@ -695,46 +695,76 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         }
       }
 
-      // Use direct OpenAI SDK with proper buffer handling
-      const imageBlob = new Blob([imageBuffer], { type: 'image/png' });
+      // Create temporary files for proper OpenAI API compatibility
+      const tempImagePath = path.join(process.cwd(), `temp_image_${Date.now()}.png`);
+      fs.writeFileSync(tempImagePath, imageBuffer);
       
+      let tempMaskPath: string | null = null;
+      if (maskBuffer) {
+        tempMaskPath = path.join(process.cwd(), `temp_mask_${Date.now()}.png`);
+        fs.writeFileSync(tempMaskPath, maskBuffer);
+        console.log('Performing inpainting with mask');
+      } else {
+        console.log('Performing outpainting/extension');
+      }
+
       try {
-        let editResponse;
+        // Create FormData with file streams
+        const form = new FormData();
+        form.append('image', fs.createReadStream(tempImagePath), {
+          filename: 'image.png',
+          contentType: 'image/png'
+        });
+        form.append('prompt', prompt.trim());
+        form.append('n', String(parseInt(String(n)) || 1));
+        form.append('size', size || "1024x1024");
         
-        if (maskBuffer) {
-          const maskBlob = new Blob([maskBuffer], { type: 'image/png' });
-          console.log('Performing inpainting with mask');
-          
-          editResponse = await openai.images.edit({
-            image: imageBlob as any,
-            mask: maskBlob as any,
-            prompt: prompt.trim(),
-            n: parseInt(String(n)) || 1,
-            size: (size || "1024x1024") as any
-          });
-        } else {
-          console.log('Performing outpainting/extension');
-          
-          editResponse = await openai.images.edit({
-            image: imageBlob as any,
-            prompt: prompt.trim(),
-            n: parseInt(String(n)) || 1,
-            size: (size || "1024x1024") as any
+        if (tempMaskPath) {
+          form.append('mask', fs.createReadStream(tempMaskPath), {
+            filename: 'mask.png',
+            contentType: 'image/png'
           });
         }
-        
-        if (!editResponse.data || editResponse.data.length === 0) {
+
+        // Call OpenAI API directly with fetch
+        const response = await fetch('https://api.openai.com/v1/images/edits', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            ...form.getHeaders()
+          },
+          body: form
+        });
+
+        const result = await response.json();
+
+        // Clean up temporary files
+        fs.unlinkSync(tempImagePath);
+        if (tempMaskPath) fs.unlinkSync(tempMaskPath);
+
+        if (!response.ok) {
+          throw new Error(result.error?.message || `OpenAI API error: ${response.status}`);
+        }
+
+        if (!result.data || result.data.length === 0) {
           throw new Error('No edited image returned from API');
         }
-        
+
         return res.json({
           success: true,
-          images: editResponse.data.map(img => ({
+          images: result.data.map((img: any) => ({
             url: img.url,
             revised_prompt: img.revised_prompt || prompt
           }))
         });
       } catch (apiError) {
+        // Clean up files on error
+        try {
+          fs.unlinkSync(tempImagePath);
+          if (tempMaskPath) fs.unlinkSync(tempMaskPath);
+        } catch (cleanupError) {
+          console.log('Failed to clean up temp files:', cleanupError);
+        }
         throw apiError;
       }
 
