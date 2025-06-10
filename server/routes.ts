@@ -505,17 +505,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         manualModel: requestModel
       };
 
-      const routingDecision = await promptRouter.routePrompt(
-        userPrompt,
-        isBriefExecution ? 'creative brief execution' : 'content generation',
-        routerConfig,
-        {
-          stage: 'content',
-          projectType: 'content',
-          complexity: hasComplexRequirements ? 'complex' : 'moderate',
-          priority: 'quality'
-        }
-      );
+      // For complex briefs, prioritize Anthropic over OpenAI to avoid timeouts
+      let routingDecision;
+      if (hasComplexRequirements && isBriefExecution) {
+        console.log('[Content Generation] Complex brief detected, forcing Anthropic routing');
+        routingDecision = {
+          provider: 'anthropic' as 'anthropic',
+          model: 'claude-sonnet-4-20250514',
+          useReasoning: false,
+          rationale: 'Complex brief optimization'
+        };
+      } else {
+        routingDecision = await promptRouter.routePrompt(
+          userPrompt,
+          isBriefExecution ? 'creative brief execution' : 'content generation',
+          routerConfig,
+          {
+            stage: 'content',
+            projectType: 'content',
+            complexity: hasComplexRequirements ? 'complex' : 'moderate',
+            priority: 'quality'
+          }
+        );
+      }
 
       console.log(`[Content Generation] Routed to ${routingDecision.provider} with model ${routingDecision.model}`);
 
@@ -555,12 +567,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           routed: true
         });
       } else {
-        // Use OpenAI with timeout fallback to other providers
+        // Use direct OpenAI API call with proper timeout handling
         try {
-          req.body.systemPrompt = enhancedSystemPrompt;
-          req.body.model = routingDecision.model;
-          const result = await generateContent(req, res);
-          return result;
+          const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+            timeout: 45000, // 45 second timeout
+            maxRetries: 0
+          });
+
+          // Create completion with timeout control
+          const completion = await openai.chat.completions.create({
+            model: routingDecision.model || "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: enhancedSystemPrompt || "You are a helpful assistant."
+              },
+              {
+                role: "user",
+                content: userPrompt
+              }
+            ],
+            temperature: temperature || 0.7,
+            max_tokens: 4000,
+          });
+
+          const content = completion.choices[0]?.message?.content || '';
+          res.json({ 
+            content: content, 
+            provider: 'openai',
+            model: routingDecision.model,
+            routed: true
+          });
+
         } catch (openaiError: any) {
           console.log('[Content Generation] OpenAI timeout, falling back to Anthropic');
           

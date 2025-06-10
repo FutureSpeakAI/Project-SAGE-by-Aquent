@@ -96,10 +96,10 @@ export default function Home() {
   });
 
   const handleGenerate = (customPrompt?: string, customSystemPrompt?: string) => {
-    const promptToUse = customPrompt || userPrompt;
+    const promptToUse = customPrompt || userPrompt || '';
     const systemPromptToUse = customSystemPrompt || systemPrompt;
     
-    if (!promptToUse.trim()) {
+    if (!promptToUse || !promptToUse.trim()) {
       toast({
         title: "Empty Prompt",
         description: "Please enter a prompt to generate content.",
