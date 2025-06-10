@@ -536,28 +536,64 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         const routingDecision = await promptRouter.routeRequest(config);
         console.log(`[Content Generation] Routing to ${routingDecision.provider} with model ${routingDecision.model}`);
 
-        // Execute the generation based on routing decision
-        if (routingDecision.provider === 'anthropic') {
-          generatedContent = await AnthropicAPI.generateContent({
-            model: routingDecision.model,
-            prompt: userPrompt,
-            systemPrompt: enhancedSystemPrompt,
-            temperature: temperature || 0.7,
-            maxTokens: 3000
-          });
-        } else if (routingDecision.provider === 'gemini') {
-          generatedContent = await GeminiAPI.generateContent({
-            model: routingDecision.model,
-            prompt: userPrompt,
-            systemPrompt: enhancedSystemPrompt,
-            temperature: temperature || 0.7,
-            maxTokens: 3000
-          });
-        } else {
-          // Default to OpenAI
-          generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, routingDecision.model);
-          usedProvider = 'openai';
-          usedModel = routingDecision.model;
+        // Execute the generation with fallback handling
+        const fallbackProviders = ['anthropic', 'openai', 'gemini'];
+        let lastError: any;
+        let providerIndex = 0;
+        
+        // Start with the routing decision provider
+        if (routingDecision.provider && fallbackProviders.includes(routingDecision.provider)) {
+          providerIndex = fallbackProviders.indexOf(routingDecision.provider);
+        }
+        
+        for (let i = 0; i < fallbackProviders.length; i++) {
+          const currentProvider = fallbackProviders[(providerIndex + i) % fallbackProviders.length];
+          try {
+            console.log(`[Content Generation] Attempting ${currentProvider} for non-briefing content`);
+            
+            if (currentProvider === 'anthropic') {
+              generatedContent = await AnthropicAPI.generateContent({
+                model: 'claude-3-5-sonnet-20241022',
+                prompt: userPrompt,
+                systemPrompt: enhancedSystemPrompt,
+                temperature: temperature || 0.7,
+                maxTokens: 3000
+              });
+              usedProvider = 'anthropic';
+              usedModel = 'claude-3-5-sonnet-20241022';
+              break;
+              
+            } else if (currentProvider === 'openai') {
+              // Use appropriate OpenAI model
+              const openaiModel = routingDecision.model && routingDecision.model.startsWith('gpt-') 
+                ? routingDecision.model 
+                : 'gpt-4o';
+              generatedContent = await generateContentDirect(userPrompt, enhancedSystemPrompt, openaiModel);
+              usedProvider = 'openai';
+              usedModel = openaiModel;
+              break;
+              
+            } else if (currentProvider === 'gemini') {
+              generatedContent = await GeminiAPI.generateContent({
+                model: 'gemini-1.5-pro',
+                prompt: userPrompt,
+                systemPrompt: enhancedSystemPrompt,
+                temperature: temperature || 0.7,
+                maxTokens: 3000
+              });
+              usedProvider = 'gemini';
+              usedModel = 'gemini-1.5-pro';
+              break;
+            }
+            
+          } catch (providerError: any) {
+            lastError = providerError;
+            console.log(`[Content Generation] ${currentProvider} failed: ${providerError.message}`);
+            
+            if (i === fallbackProviders.length - 1) {
+              throw new Error(`All providers failed. Last error: ${providerError.message}`);
+            }
+          }
         }
         
         // Ensure provider and model are set from routing decision
