@@ -819,6 +819,33 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
     }
   });
 
+  // Content generation endpoint for Visual tab
+  app.post("/api/generate-content", async (req: Request, res: Response) => {
+    try {
+      const { model, systemPrompt, userPrompt, prompt, temperature } = req.body;
+      
+      // Accept either 'userPrompt' or 'prompt' for compatibility
+      const content = userPrompt || prompt;
+      
+      if (!content) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      const result = await generateContentDirect(content, systemPrompt || '', model || 'gpt-4o', temperature || 0.7);
+      
+      res.json({ 
+        content: result,
+        model: model || 'gpt-4o'
+      });
+    } catch (error: any) {
+      console.error('Content generation error:', error);
+      res.status(500).json({ 
+        error: "Content generation failed", 
+        details: error.message 
+      });
+    }
+  });
+
   // Brief interpretation endpoint
   app.post("/api/interpret-brief", async (req: Request, res: Response) => {
     try {
@@ -833,21 +860,21 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
       const systemPrompt = `You are SAGE, a British marketing specialist and creative brief interpreter. 
 
-Analyze the provided creative brief and understand what visual deliverables are needed. Your role is to:
+Your role is to:
+1. Analyze the creative brief and understand its key elements
+2. Identify what visual deliverables are needed
+3. Respond conversationally showing you understand the campaign
+4. Ask if they'd like to develop visual prompts
 
-1. Read and understand the creative brief thoroughly
-2. Identify what visual elements/deliverables are required for the campaign
-3. Respond in a conversational, helpful manner asking if the user would like to begin developing prompts for the visual elements
-
-Be personable, professional, and focus on the visual creative direction. Don't just repeat the brief content back - show that you understand it and are ready to help create the visual elements.`;
+CRITICAL: Do NOT repeat or restate the brief content. Instead, demonstrate understanding through intelligent analysis and focus on visual creative direction.`;
       
-      const userPrompt = `I need your help interpreting this creative brief for visual content development:
+      const userPrompt = `I've uploaded a creative brief for visual content development. Please analyze it and tell me what visual elements we need to create for this campaign.
 
-${content}
+Brief: ${content}
 
-${visualRequirements ? `Additional visual requirements: ${visualRequirements}` : ''}
+${visualRequirements ? `Additional requirements: ${visualRequirements}` : ''}
 
-Please read through this brief, understand what visual deliverables are needed, and then ask me if I'd like to begin developing prompts for the visual elements of this campaign. Be conversational and show that you understand the key visual requirements.`;
+Show that you understand this campaign and ask if I'd like to start developing visual prompts. Be concise and focus on the visual creative direction needed.`;
 
       const result = await generateContentDirect(userPrompt, systemPrompt, model || 'gpt-4o');
       
