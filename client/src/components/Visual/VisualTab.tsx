@@ -802,10 +802,10 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     }
   };
 
-  // Basic variation prompt handler with error handling
+  // Basic variation prompt handler with error handling (exclude edit image prompts)
   useEffect(() => {
     try {
-      if (variationPrompt) {
+      if (variationPrompt && !variationPrompt.startsWith('EDIT_IMAGE:')) {
         console.log("Applying variation prompt:", variationPrompt.substring(0, 50) + "...");
         
         // Set the image prompt to the variation prompt and exit
