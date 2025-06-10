@@ -729,7 +729,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             content: [
               {
                 type: "text",
-                text: "Analyze this image in detail. Describe: 1) Main objects and subjects, 2) Colors and lighting, 3) Style and composition, 4) Background and setting, 5) Overall mood and aesthetic. Be precise and comprehensive."
+                text: "Analyze this image precisely for editing purposes. Describe: 1) Exact objects and their positions, 2) Specific colors, materials, and textures, 3) Lighting direction and intensity, 4) Camera angle and perspective, 5) Background details and depth, 6) Overall style (realistic/artistic/etc). Focus on preserving these exact visual elements."
               },
               {
                 type: "image_url",
@@ -739,7 +739,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               }
             ]
           }],
-          max_tokens: 600
+          max_tokens: 400
         });
 
         const imageDescription = visionResponse.choices[0].message.content;
@@ -750,28 +750,30 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         
         if (maskBuffer) {
           // Inpainting style - modify specific areas while maintaining context
-          enhancedPrompt = `Create an image based on: ${imageDescription}. 
+          enhancedPrompt = `Recreate this exact image: ${imageDescription}
 
-Modification request: ${prompt.trim()}
+CRITICAL: Keep everything identical except: ${prompt.trim()}
 
-Requirements:
-- Keep the same lighting, style, and overall composition
-- Maintain the same color palette and mood
-- Seamlessly integrate the requested changes
-- Preserve all existing elements not being modified
-- Professional quality with consistent artistic style`;
+Rules:
+- Same exact objects in same positions
+- Same materials, textures, and colors
+- Same lighting direction and shadows
+- Same camera angle and perspective
+- Only add/modify what's specifically requested
+- Match the original style perfectly`;
         } else {
           // Outpainting/extension style - expand or enhance the scene
-          enhancedPrompt = `Create an enhanced version of: ${imageDescription}. 
+          enhancedPrompt = `Recreate this exact scene: ${imageDescription}
 
-Enhancement request: ${prompt.trim()}
+Then add: ${prompt.trim()}
 
-Requirements:
-- Maintain the exact same main subject and composition
-- Keep identical lighting, colors, and artistic style
-- Expand or enhance as requested while preserving original elements
-- Seamless integration of new elements
-- Professional quality matching the original aesthetic`;
+CRITICAL preservation rules:
+- Keep the main subject absolutely identical in position, size, and appearance
+- Use the exact same lighting, shadows, and color palette
+- Maintain the same camera angle and perspective
+- Preserve all textures and materials exactly
+- Only extend or add elements around the existing composition
+- New elements must match the original lighting and style perfectly`;
         }
 
         // Generate the contextually appropriate image using DALL-E 3

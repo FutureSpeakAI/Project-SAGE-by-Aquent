@@ -728,7 +728,7 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   // Handle edit image trigger from variation prompt
   useEffect(() => {
     if (variationPrompt && variationPrompt.startsWith('EDIT_IMAGE:')) {
-      console.log("Full variation prompt:", variationPrompt.substring(0, 100) + "...");
+      console.log("Handling edit image request");
       
       // Find the last colon to separate the ID from the URL
       const lastColonIndex = variationPrompt.lastIndexOf(':');
@@ -739,22 +739,22 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
         const imageIdStr = variationPrompt.substring(lastColonIndex + 1);
         const imageId = parseInt(imageIdStr);
         
-        console.log("Parsed edit image data:", { 
-          imageUrlPreview: imageUrl.substring(0, 50) + "...", 
-          imageUrlLength: imageUrl.length,
-          imageId,
-          isDataUrl: imageUrl.startsWith('data:')
-        });
+        console.log("Opening image editor for image ID:", imageId);
         
         handleEditImage(imageUrl, imageId);
         
-        // Clear the variation prompt
+        // Clear the variation prompt immediately to prevent it from affecting the prompt field
         if (setVariationPrompt) {
           setVariationPrompt(null);
         }
       } else {
-        console.error("Could not parse variation prompt:", variationPrompt);
+        console.error("Could not parse edit image request");
+        // Clear invalid variation prompt
+        if (setVariationPrompt) {
+          setVariationPrompt(null);
+        }
       }
+      return; // Exit early to prevent the general variation handler from running
     }
   }, [variationPrompt, setVariationPrompt]);
 
