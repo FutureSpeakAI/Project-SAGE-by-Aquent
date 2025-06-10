@@ -311,32 +311,36 @@ export const processBriefFile = async (filePath: string) => {
     const fileExt = path.extname(filePath).toLowerCase();
     let extractedText = '';
     
-    if (fileExt === '.pdf') {
-      extractedText = await extractTextFromPDF(filePath);
-    } else if (fileExt === '.docx') {
-      extractedText = await extractTextFromDocx(filePath);
-    } else if (fileExt === '.txt') {
-      extractedText = await fs.promises.readFile(filePath, 'utf-8');
-    } else {
-      throw new Error('Unsupported file format. Please upload a PDF, DOCX, or TXT file.');
-    }
+    const fileBuffer = await fs.promises.readFile(filePath);
+    extractedText = await extractTextFromFile(fileBuffer, fileExt);
 
     if (!extractedText || extractedText.trim().length === 0) {
       throw new Error('No text could be extracted from the file');
     }
 
-    // Analyze the brief content
-    const analysis = await analyzeBriefContent(extractedText);
+    // Basic analysis - extract title and categorize
+    const lines = extractedText.split('\n').filter(line => line.trim());
+    let title = lines[0]?.trim() || `Brief - ${new Date().toLocaleDateString()}`;
+    
+    // Look for common brief indicators
+    let category = 'general';
+    const content = extractedText.toLowerCase();
+    if (content.includes('social media') || content.includes('instagram') || content.includes('facebook')) {
+      category = 'social-media';
+    } else if (content.includes('campaign') || content.includes('marketing')) {
+      category = 'marketing';
+    } else if (content.includes('product launch') || content.includes('new product')) {
+      category = 'product-launch';
+    }
     
     return {
-      title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
+      title: title,
       content: extractedText,
-      category: analysis.category || 'general',
+      category: category,
       metadata: {
         wordCount: extractedText.split(/\s+/).length,
         extractedAt: new Date().toISOString(),
-        fileExtension: fileExt,
-        ...analysis.metadata
+        fileExtension: fileExt
       }
     };
   } catch (error: any) {

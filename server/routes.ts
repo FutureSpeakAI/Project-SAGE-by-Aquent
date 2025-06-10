@@ -457,18 +457,18 @@ Important: Generate comprehensive, well-structured content that directly address
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const analysis = await processBrief(req.file.path);
+      const analysis = await processBriefFile(req.file.path);
       
       // Save to generated contents as briefing type
-      const savedContent = await storage.createGeneratedContent({
+      const savedContent = await storage.saveGeneratedContent({
         title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
         content: analysis.content,
-        type: 'briefing',
-        category: analysis.category || 'general',
+        contentType: 'briefing',
         metadata: {
           filename: req.file.originalname,
           filesize: req.file.size,
           uploadedAt: new Date().toISOString(),
+          category: analysis.category || 'general',
           ...analysis.metadata
         }
       });
