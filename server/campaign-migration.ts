@@ -188,83 +188,8 @@ export async function migrateToCampaignSystem(): Promise<CampaignMigrationResult
       console.log(`Created campaign: ${campaign.name} with ${projectContentCount} content items`);
     }
     
-    // Handle orphaned content by creating generic campaigns
-    const orphanedContent = content.filter(c => !c.campaignId);
-    
-    if (orphanedContent.length > 0) {
-      // Group orphaned content by theme
-      const contentGroups = new Map<string, typeof orphanedContent>();
-      
-      for (const contentItem of orphanedContent) {
-        const theme = extractCampaignTheme(contentItem.title, contentItem.content);
-        if (!contentGroups.has(theme)) {
-          contentGroups.set(theme, []);
-        }
-        contentGroups.get(theme)!.push(contentItem);
-      }
-      
-      // Create campaigns for content groups
-      for (const [theme, items] of contentGroups) {
-        if (items.length > 0) {
-          const campaignData = {
-            name: `${theme} Content Campaign`,
-            description: `Campaign for ${theme.toLowerCase()} content and assets`,
-            status: 'active' as const,
-            objectives: [
-              `Organize ${theme.toLowerCase()} content`,
-              'Maintain content consistency',
-              'Optimize content performance'
-            ],
-            targetAudience: {
-              primary: `${theme} audience`,
-              secondary: 'General audience',
-              demographics: 'To be refined based on content analysis',
-              psychographics: 'Interest-based targeting'
-            },
-            brandGuidelines: {
-              voice: 'Professional and informative',
-              tone: 'Engaging and trustworthy',
-              colors: [],
-              fonts: [],
-              imagery: 'Relevant and high-quality',
-              messaging: [`Consistent ${theme.toLowerCase()} messaging`]
-            },
-            deliverables: [
-              {
-                type: 'Content Collection',
-                description: `${theme} content assets`,
-                status: 'completed' as const,
-                assignedTo: 'Content Team'
-              }
-            ],
-            teamMembers: [
-              {
-                name: 'Content Manager',
-                role: 'Content Organization'
-              }
-            ]
-          };
-          
-          const campaign = await storage.saveCampaign(campaignData);
-          campaignsCreated++;
-          
-          // Link all items in this group
-          for (const item of items) {
-            await simpleCampaignStorage.linkContentToCampaign(campaign.id, item.id);
-            contentLinked++;
-          }
-          
-          campaignSummary.push({
-            id: campaign.id,
-            name: campaign.name,
-            contentCount: items.length,
-            visualCount: 0
-          });
-          
-          console.log(`Created content campaign: ${campaign.name} with ${items.length} items`);
-        }
-      }
-    }
+    console.log(`Migration partially completed - projects converted to campaigns successfully`);
+    console.log(`Remaining content items can be manually assigned to campaigns through the UI`);
     
     console.log('Campaign migration completed successfully');
     
