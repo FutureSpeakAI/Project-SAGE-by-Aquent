@@ -172,16 +172,7 @@ export async function migrateToCampaignSystem(): Promise<CampaignMigrationResult
         
         // Link content with similarity > 0.3 or if it contains project name keywords
         if (similarity > 0.3 || contentText.toLowerCase().includes(project.name.toLowerCase())) {
-          await storage.updateGeneratedContent(contentItem.id, {
-            ...contentItem,
-            campaignId: campaign.id,
-            campaignContext: {
-              name: campaign.name,
-              role: 'supporting_content',
-              deliverableType: contentItem.contentType,
-              brandGuidelines: campaignData.brandGuidelines.voice
-            }
-          });
+          await simpleCampaignStorage.linkContentToCampaign(campaign.id, contentItem.id);
           contentLinked++;
           projectContentCount++;
         }
@@ -259,16 +250,7 @@ export async function migrateToCampaignSystem(): Promise<CampaignMigrationResult
           
           // Link all items in this group
           for (const item of items) {
-            await storage.updateGeneratedContent(item.id, {
-              ...item,
-              campaignId: campaign.id,
-              campaignContext: {
-                name: campaign.name,
-                role: 'primary_brief',
-                deliverableType: item.contentType,
-                brandGuidelines: campaignData.brandGuidelines.voice
-              }
-            });
+            await simpleCampaignStorage.linkContentToCampaign(campaign.id, item.id);
             contentLinked++;
           }
           
