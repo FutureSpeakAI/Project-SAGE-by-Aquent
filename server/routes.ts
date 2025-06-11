@@ -1786,5 +1786,41 @@ Focus on identifying the specific visual deliverables (number of images, type of
     }
   });
 
+  // Campaign Migration Routes
+  app.post("/api/campaigns/migrate", async (_req: Request, res: Response) => {
+    try {
+      const { migrateToCampaignSystem } = await import('./campaign-migration');
+      const result = await migrateToCampaignSystem();
+      res.json({
+        success: true,
+        message: "Campaign migration completed successfully",
+        ...result
+      });
+    } catch (error: any) {
+      console.error("Campaign migration failed:", error);
+      res.status(500).json({ 
+        error: "Migration failed", 
+        details: error.message 
+      });
+    }
+  });
+
+  app.post("/api/campaigns/reset", async (_req: Request, res: Response) => {
+    try {
+      const { resetCampaignAssignments } = await import('./campaign-migration');
+      await resetCampaignAssignments();
+      res.json({
+        success: true,
+        message: "Campaign assignments reset successfully"
+      });
+    } catch (error: any) {
+      console.error("Failed to reset campaign assignments:", error);
+      res.status(500).json({ 
+        error: "Reset failed", 
+        details: error.message 
+      });
+    }
+  });
+
   return server;
 }
