@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, MessageSquare, Image, MessageCircle } from "lucide-react";
+import { FileText, MessageSquare, Image, MessageCircle, Target } from "lucide-react";
 import { AppTab } from "@/App";
 
 interface TabNavigationProps {
@@ -15,7 +15,7 @@ export function TabNavigation({ activeTab, onChangeTab }: TabNavigationProps) {
         onValueChange={(value) => onChangeTab(value as AppTab)}
         className="w-full max-w-md"
       >
-        <TabsList className="grid grid-cols-4 w-full relative overflow-hidden">
+        <TabsList className="grid grid-cols-5 w-full relative overflow-hidden">
           <TabsTrigger
             value={AppTab.FREE_PROMPT}
             className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
@@ -43,6 +43,13 @@ export function TabNavigation({ activeTab, onChangeTab }: TabNavigationProps) {
           >
             <Image className="h-4 w-4" />
             <span>Visual</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value={AppTab.CAMPAIGN}
+            className="data-[state=active]:bg-[#F15A22] data-[state=active]:text-white flex items-center justify-center gap-2"
+          >
+            <Target className="h-4 w-4" />
+            <span>Campaign</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>
