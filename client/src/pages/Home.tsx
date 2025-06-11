@@ -23,6 +23,7 @@ import { DocumentUploadDialog } from "@/components/Briefing/DocumentUploadDialog
 import { VisualTab } from "@/components/Visual/VisualTab";
 import { ImageLibrary } from "@/components/Visual/ImageLibrary";
 import { FreePromptTab } from "@/components/FreePrompt/FreePromptTab";
+import { CampaignPage } from "@/pages/CampaignPage";
 import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
 import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
@@ -499,6 +500,8 @@ export default function Home() {
                   isFullScreen={sageChatFullScreen}
                   onToggleFullScreen={() => setSageChatFullScreen(!sageChatFullScreen)}
                 />
+              ) : activeTab === AppTab.CAMPAIGN ? (
+                <CampaignPage key="campaign-tab" />
               ) : (
                 <BriefingTab
                   key="briefing-tab"

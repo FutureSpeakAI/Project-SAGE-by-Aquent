@@ -16,7 +16,8 @@ export enum AppTab {
   FREE_PROMPT = "free-prompt",  // SAGE tab - default starting point
   BRIEFING = "briefing",
   CONTENT = "content",
-  VISUAL = "visual"
+  VISUAL = "visual",
+  CAMPAIGN = "campaign"
 }
 
 // Page transition animations
