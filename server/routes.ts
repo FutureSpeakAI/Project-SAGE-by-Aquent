@@ -1861,7 +1861,14 @@ Focus on identifying the specific visual deliverables (number of images, type of
         campaign,
         assets: {
           content,
-          projects
+          projects,
+          briefings: content.filter(c => c.content_type === 'briefing')
+        },
+        stats: {
+          totalContent: content.length,
+          totalProjects: projects.length,
+          completedDeliverables: campaign.deliverables.filter(d => d.status === 'completed').length,
+          totalDeliverables: campaign.deliverables.length
         }
       });
     } catch (error: any) {
