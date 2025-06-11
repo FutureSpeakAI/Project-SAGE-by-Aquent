@@ -73,6 +73,15 @@ export const generatedContents = pgTable("generated_contents", {
   userPrompt: text("user_prompt"),
   model: text("model"),
   temperature: text("temperature"), // Store as text to handle potential floating point issues
+  campaignId: integer("campaign_id"), // Campaign association (optional)
+  campaignContext: json("campaign_context").$type<{
+    name?: string;
+    role?: 'primary_brief' | 'supporting_content' | 'reference_material';
+    deliverableType?: string;
+    status?: 'draft' | 'review' | 'approved' | 'published';
+    dueDate?: string;
+    assignedTo?: string;
+  }>(), // Campaign-specific context
   metadata: json("metadata").$type<Record<string, any>>(), // Additional data that might be useful
   referenceImages: json("reference_images").$type<Array<{
     id: string;
@@ -123,6 +132,13 @@ export const imageProjects = pgTable("image_projects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  campaignId: integer("campaign_id"), // Campaign association (optional)
+  campaignContext: json("campaign_context").$type<{
+    name?: string;
+    deliverableType?: string;
+    briefingReference?: number;
+    brandGuidelines?: string;
+  }>(), // Campaign-specific context for visual consistency
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -182,6 +198,57 @@ export const insertProjectMemorySchema = createInsertSchema(projectMemories).omi
 
 export type InsertProjectMemory = z.infer<typeof insertProjectMemorySchema>;
 export type ProjectMemory = typeof projectMemories.$inferSelect;
+
+// Table for managing campaigns
+export const campaigns = pgTable("campaigns", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").default('draft').notNull(), // 'draft', 'active', 'completed', 'archived'
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  budget: text("budget"), // Store as text to avoid decimal issues
+  objectives: json("objectives").$type<Array<string>>(),
+  targetAudience: json("target_audience").$type<{
+    primary?: string;
+    secondary?: string;
+    demographics?: string;
+    psychographics?: string;
+  }>(),
+  brandGuidelines: json("brand_guidelines").$type<{
+    voice?: string;
+    tone?: string;
+    colors?: string[];
+    fonts?: string[];
+    imagery?: string;
+    messaging?: string[];
+  }>(),
+  deliverables: json("deliverables").$type<Array<{
+    type: string;
+    description: string;
+    status: 'pending' | 'in_progress' | 'completed';
+    dueDate?: string;
+    assignedTo?: string;
+    linkedAssets?: number[];
+  }>>(),
+  teamMembers: json("team_members").$type<Array<{
+    name: string;
+    role: string;
+    email?: string;
+  }>>(),
+  metadata: json("metadata").$type<Record<string, any>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCampaignSchema = createInsertSchema(campaigns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+export type Campaign = typeof campaigns.$inferSelect;
 
 // Table for storing free prompt conversations with context
 export const freePromptSessions = pgTable("free_prompt_sessions", {

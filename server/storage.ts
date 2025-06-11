@@ -9,6 +9,7 @@ import {
   generatedImages, type GeneratedImage, type InsertGeneratedImage,
   imageProjects, type ImageProject, type InsertImageProject,
   chatSessions, type ChatSession, type InsertChatSession,
+  campaigns, type Campaign, type InsertCampaign,
   ContentType
 } from "@shared/schema";
 
@@ -89,6 +90,19 @@ export interface IStorage {
   saveChatSession(session: InsertChatSession): Promise<ChatSession>;
   updateChatSession(id: number, session: Partial<InsertChatSession>): Promise<ChatSession | undefined>;
   deleteChatSession(id: number): Promise<boolean>;
+  
+  // Campaign methods
+  getCampaigns(): Promise<Campaign[]>;
+  getCampaign(id: number): Promise<Campaign | undefined>;
+  saveCampaign(campaign: InsertCampaign): Promise<Campaign>;
+  updateCampaign(id: number, campaign: Partial<InsertCampaign>): Promise<Campaign | undefined>;
+  deleteCampaign(id: number): Promise<boolean>;
+  getCampaignAssets(campaignId: number): Promise<{
+    briefings: GeneratedContent[];
+    content: GeneratedContent[];
+    images: GeneratedImage[];
+    projects: ImageProject[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -926,6 +940,69 @@ export class MemoryStorage implements IStorage {
     
     this.chatSessions.splice(index, 1);
     return true;
+  }
+
+  // Campaign methods
+  async getCampaigns(): Promise<Campaign[]> {
+    if (!db) return [];
+    return await db.select().from(campaigns).orderBy(campaigns.updatedAt);
+  }
+
+  async getCampaign(id: number): Promise<Campaign | undefined> {
+    if (!db) return undefined;
+    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
+    return campaign;
+  }
+
+  async saveCampaign(campaign: InsertCampaign): Promise<Campaign> {
+    if (!db) throw new Error("Database not available");
+    const [saved] = await db.insert(campaigns).values(campaign).returning();
+    return saved;
+  }
+
+  async updateCampaign(id: number, campaign: Partial<InsertCampaign>): Promise<Campaign | undefined> {
+    if (!db) return undefined;
+    const [updated] = await db
+      .update(campaigns)
+      .set({ ...campaign, updatedAt: new Date() })
+      .where(eq(campaigns.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCampaign(id: number): Promise<boolean> {
+    if (!db) return false;
+    const result = await db.delete(campaigns).where(eq(campaigns.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getCampaignAssets(campaignId: number): Promise<{
+    briefings: GeneratedContent[];
+    content: GeneratedContent[];
+    images: GeneratedImage[];
+    projects: ImageProject[];
+  }> {
+    if (!db) return { briefings: [], content: [], images: [], projects: [] };
+
+    // Get all content associated with this campaign
+    const allContent = await db.select().from(generatedContents)
+      .where(eq(generatedContents.campaignId, campaignId));
+
+    const briefings = allContent.filter(c => c.contentType === 'briefing');
+    const content = allContent.filter(c => c.contentType !== 'briefing');
+
+    // Get image projects associated with this campaign
+    const projects = await db.select().from(imageProjects)
+      .where(eq(imageProjects.campaignId, campaignId));
+
+    // Get images from those projects
+    const projectIds = projects.map(p => p.id);
+    const images = projectIds.length > 0 
+      ? await db.select().from(generatedImages)
+          .where(generatedImages.projectId.in(projectIds))
+      : [];
+
+    return { briefings, content, images, projects };
   }
 }
 
