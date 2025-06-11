@@ -103,6 +103,18 @@ export function CampaignPage() {
         campaignId={selectedCampaign}
         onBack={() => setSelectedCampaign(null)}
         onShowLinkDialog={() => setShowLinkDialog(true)}
+        onNavigateToContent={(contentId) => {
+          // Navigate to Content tab with specific content loaded
+          window.location.hash = '#content';
+          localStorage.setItem('loadContentId', contentId.toString());
+          setSelectedCampaign(null);
+        }}
+        onNavigateToVisual={(projectId) => {
+          // Navigate to Visual tab with specific project loaded
+          window.location.hash = '#visual';
+          localStorage.setItem('loadProjectId', projectId.toString());
+          setSelectedCampaign(null);
+        }}
       />
     );
   }
