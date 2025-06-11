@@ -1347,16 +1347,16 @@ CRITICAL preservation rules:
             id: img.id,
             filename: img.filename,
             base64: img.base64,
-            analysis: img.analysis || `Extracted from ${req.file.originalname}`
+            analysis: img.analysis || `Extracted from ${req.file?.originalname || 'document'}`
           }));
         } catch (imageError) {
           console.log('Image extraction not available for this file type, continuing with text only');
         }
         
-        // Create metadata object
+        // Create metadata object with null checks
         const metadata = {
-          filename: req.file.originalname,
-          filesize: req.file.size,
+          filename: req.file?.originalname || 'unknown',
+          filesize: req.file?.size || 0,
           uploadedAt: new Date().toISOString(),
           category: analysis.category || 'general',
           imagesExtracted: referenceImages.length,
@@ -1380,7 +1380,7 @@ CRITICAL preservation rules:
           category: analysis.category,
           id: savedContent.id,
           saved: true,
-          imagesExtracted: extractedContent.images.length,
+          imagesExtracted: referenceImages.length,
           referenceImages: referenceImages,
           metadata: analysis.metadata
         });

@@ -375,9 +375,9 @@ export async function extractImagesFromFile(fileBuffer: Buffer, fileExt: string,
         pdfParser.on('pdfParser_dataReady', (pdfData: PDFData) => {
           try {
             if (pdfData.Pages) {
-              pdfData.Pages.forEach((page, pageIndex) => {
-                if (page.Images) {
-                  page.Images.forEach((image, imageIndex) => {
+              pdfData.Pages.forEach((page: any, pageIndex: number) => {
+                if ((page as any).Images) {
+                  (page as any).Images.forEach((image: any, imageIndex: number) => {
                     try {
                       // Extract image data if available
                       if (image.data) {
