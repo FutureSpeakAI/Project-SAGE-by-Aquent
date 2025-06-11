@@ -1631,82 +1631,60 @@ Focus on identifying the specific visual deliverables (number of images, type of
     }
   });
 
-  // Campaign Management API Routes
-  app.get("/api/campaigns", async (req: Request, res: Response) => {
-    try {
-      const { query, status } = req.query;
-      let campaigns;
-      
-      if (query || status) {
-        campaigns = await simpleCampaignStorage.searchCampaigns(
-          query as string, 
-          status as string
-        );
-      } else {
-        campaigns = await simpleCampaignStorage.getAllCampaigns();
-      }
-      
-      res.json(campaigns);
-    } catch (error: any) {
-      res.status(500).json({ error: "Failed to fetch campaigns" });
-    }
-  });
+  // Campaign Management API Routes (redirected to database)
 
-  app.get("/api/campaigns/:id", async (req: Request, res: Response) => {
-    try {
-      const campaignId = parseInt(req.params.id);
-      if (isNaN(campaignId)) {
-        return res.status(400).json({ error: "Invalid campaign ID" });
-      }
-      
-      const campaign = await simpleCampaignStorage.getCampaign(campaignId);
-      if (!campaign) {
-        return res.status(404).json({ error: "Campaign not found" });
-      }
-      
-      // Get associated content and projects
-      const allContent = await storage.getGeneratedContents();
-      const allProjects = await storage.getImageProjects();
-      
-      const linkedContent = allContent.filter(c => campaign.linkedContent.includes(c.id));
-      const linkedProjects = allProjects.filter(p => campaign.linkedProjects.includes(p.id));
-      
-      res.json({
-        campaign,
-        assets: {
-          content: linkedContent,
-          projects: linkedProjects,
-          briefings: linkedContent.filter(c => c.contentType === 'briefing')
-        },
-        stats: {
-          totalContent: linkedContent.length,
-          totalProjects: linkedProjects.length,
-          completedDeliverables: campaign.deliverables.filter(d => d.status === 'completed').length,
-          totalDeliverables: campaign.deliverables.length
-        }
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: "Failed to fetch campaign" });
-    }
-  });
+  // Removed duplicate route - using database version below
 
   app.post("/api/campaigns", async (req: Request, res: Response) => {
     try {
-      const campaignData = {
-        ...req.body,
-        linkedContent: [],
-        linkedProjects: [],
-        objectives: req.body.objectives || [],
-        targetAudience: req.body.targetAudience || {},
-        brandGuidelines: req.body.brandGuidelines || {},
-        deliverables: req.body.deliverables || [],
-        teamMembers: req.body.teamMembers || [],
-        metadata: req.body.metadata || {}
+      const result = await pool.query(`
+        INSERT INTO campaigns (
+          name, description, status, start_date, end_date, budget,
+          objectives, target_audience, brand_guidelines, deliverables,
+          team_members, linked_content, linked_projects, metadata
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *
+      `, [
+        req.body.name,
+        req.body.description || '',
+        req.body.status || 'draft',
+        req.body.startDate || null,
+        req.body.endDate || null,
+        req.body.budget || null,
+        JSON.stringify(req.body.objectives || []),
+        JSON.stringify(req.body.targetAudience || {}),
+        JSON.stringify(req.body.brandGuidelines || {}),
+        JSON.stringify(req.body.deliverables || []),
+        JSON.stringify(req.body.teamMembers || []),
+        JSON.stringify([]),
+        JSON.stringify([]),
+        JSON.stringify(req.body.metadata || {})
+      ]);
+      
+      const row = result.rows[0];
+      const campaign = {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        status: row.status,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        budget: row.budget,
+        objectives: row.objectives || [],
+        targetAudience: row.target_audience || {},
+        brandGuidelines: row.brand_guidelines || {},
+        deliverables: row.deliverables || [],
+        teamMembers: row.team_members || [],
+        linkedContent: row.linked_content || [],
+        linkedProjects: row.linked_projects || [],
+        metadata: row.metadata || {},
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
       };
       
-      const campaign = await simpleCampaignStorage.createCampaign(campaignData);
       res.json(campaign);
     } catch (error: any) {
+      console.error("Failed to create campaign:", error);
       res.status(500).json({ error: "Failed to create campaign" });
     }
   });
