@@ -21,8 +21,11 @@ export function parseBriefingDeliverables(briefingContent: string): ParsedBriefi
   let targetAudience = '';
   const keyMessages: string[] = [];
 
+  // Strip HTML tags for easier parsing
+  const cleanContent = briefingContent.replace(/<[^>]*>/g, '\n').replace(/\n+/g, '\n');
+
   // Extract objectives
-  const objectivesMatch = briefingContent.match(/(?:Objectives?|Goals?)[:\s]*\n((?:.+\n)*?)(?:\n\d+\.|$)/i);
+  const objectivesMatch = cleanContent.match(/(?:Objectives?|Goals?)[:\s]*\n((?:.+\n)*?)(?:\n[A-Z]|$)/i);
   if (objectivesMatch) {
     const objectivesList = objectivesMatch[1];
     const objectiveItems = objectivesList.match(/(?:•|-|\*|\d+\.)\s*(.+)/g);
@@ -32,13 +35,13 @@ export function parseBriefingDeliverables(briefingContent: string): ParsedBriefi
   }
 
   // Extract target audience
-  const audienceMatch = briefingContent.match(/(?:Target Audience|Audience)[:\s]*\n(.+?)(?:\n\d+\.|$)/i);
+  const audienceMatch = cleanContent.match(/(?:Target Audience|Audience)[:\s]*\n(.+?)(?:\n[A-Z]|$)/i);
   if (audienceMatch) {
     targetAudience = audienceMatch[1].trim();
   }
 
   // Extract key messages
-  const messagesMatch = briefingContent.match(/(?:Key Messages?|Messages?)[:\s]*\n((?:.+\n)*?)(?:\n\d+\.|$)/i);
+  const messagesMatch = cleanContent.match(/(?:Key Messages?|Messages?)[:\s]*\n((?:.+\n)*?)(?:\n[A-Z]|$)/i);
   if (messagesMatch) {
     const messagesList = messagesMatch[1];
     const messageItems = messagesList.match(/(?:•|-|\*|\d+\.)\s*(.+)/g);
@@ -47,19 +50,33 @@ export function parseBriefingDeliverables(briefingContent: string): ParsedBriefi
     }
   }
 
-  // Parse deliverables section
-  const deliverablesMatch = briefingContent.match(/(?:Deliverables?)[:\s]*\n((?:.+\n)*?)(?:\n\d+\.|$)/i);
+  // Parse deliverables section (handle both HTML and plain text)
+  const deliverablesMatch = cleanContent.match(/(?:Deliverables?)[:\s]*\n((?:.+\n)*?)(?:\n[A-Z]|$)/i);
   if (deliverablesMatch) {
     const deliverablesSection = deliverablesMatch[1];
     
     // Look for blog posts
     if (deliverablesSection.match(/blog\s*post/i)) {
-      const blogMatch = deliverablesSection.match(/blog\s*post[:\s]*(.+?)(?:\n|$)/i);
+      const blogMatch = deliverablesSection.match(/blog\s*post[:\s]*\(?\s*(\d+\-?\d*)\s*words?\)?/i);
+      const wordCount = blogMatch ? blogMatch[1] : '800-1000';
       deliverables.push({
         id: 'blog-post-1',
         type: 'content',
         title: 'Blog Post',
-        description: blogMatch ? blogMatch[1].trim() : 'Blog post content',
+        description: `Blog post content (${wordCount} words)`,
+        requirements: 'SEO-optimized, mobile-first formatting, include pricing and release information',
+        status: 'pending'
+      });
+    }
+
+    // Look for hero image
+    if (deliverablesSection.match(/hero\s*image/i)) {
+      deliverables.push({
+        id: 'hero-image-1',
+        type: 'visual',
+        title: 'Hero Image',
+        description: 'High resolution hero image for campaign',
+        requirements: 'Min 2000px wide, .jpg or .png format, sRGB color space, 90%+ quality',
         status: 'pending'
       });
     }

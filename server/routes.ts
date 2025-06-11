@@ -1870,11 +1870,15 @@ Focus on identifying the specific visual deliverables (number of images, type of
       
       // Parse briefing deliverables if briefings exist
       let parsedDeliverables: any[] = [];
+      console.log('DEBUG: Briefings found:', briefings.length);
       if (briefings.length > 0) {
         // Use the first briefing to extract deliverables
         const mainBriefing = briefings[0];
+        console.log('DEBUG: Main briefing content preview:', mainBriefing.content.substring(0, 200));
         const parsed = parseBriefingDeliverables(mainBriefing.content);
+        console.log('DEBUG: Parsed deliverables:', parsed.deliverables);
         parsedDeliverables = matchDeliverablesWithAssets(parsed.deliverables, content, projects);
+        console.log('DEBUG: Matched deliverables:', parsedDeliverables);
         
         // Update campaign objectives and target audience if they're empty
         if (campaign.objectives.length === 0 && parsed.objectives.length > 0) {
