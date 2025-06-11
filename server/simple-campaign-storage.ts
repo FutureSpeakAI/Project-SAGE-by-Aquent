@@ -46,6 +46,8 @@ export interface SimpleCampaign {
   updatedAt: string;
 }
 
+import { db } from './db';
+
 export class SimpleCampaignStorage {
   private campaigns: SimpleCampaign[] = [];
   private nextId = 1;
