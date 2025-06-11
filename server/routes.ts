@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { generateContent, generateContentDirect, generateImage } from "./openai";
 import * as GeminiAPI from "./gemini";
 import * as AnthropicAPI from "./anthropic";
-import { processBriefFile, analyzeBriefText, extractTextFromFile } from "./brief-processing";
+import { processBriefFile, analyzeBriefText, extractTextFromFile, extractContentFromFile } from "./brief-processing";
 import path from 'path';
 import { processImage } from "./image-processing";
 import { upload } from './index';
@@ -1333,18 +1333,36 @@ CRITICAL preservation rules:
       const fileExt = path.extname(req.file.originalname).toLowerCase();
       
       try {
-        const extractedContent = await extractContentFromFile(req.file.buffer, fileExt, req.file.originalname);
+        // First extract text content
+        const extractedText = await extractTextFromFile(req.file.buffer, fileExt);
         
         // Analyze the extracted text
-        const analysis = await analyzeBriefText(extractedContent.text);
+        const analysis = await analyzeBriefText(extractedText);
         
-        // Convert extracted images to the reference image format
-        const referenceImages = extractedContent.images.map(img => ({
-          id: img.id,
-          filename: img.filename,
-          base64: img.base64,
-          analysis: img.analysis || `Extracted from ${req.file?.originalname || 'document'}`
-        }));
+        // Try to extract images (if implemented for this file type)
+        let referenceImages: any[] = [];
+        try {
+          const extractedContent = await extractContentFromFile(req.file.buffer, fileExt, req.file.originalname);
+          referenceImages = extractedContent.images.map((img: any) => ({
+            id: img.id,
+            filename: img.filename,
+            base64: img.base64,
+            analysis: img.analysis || `Extracted from ${req.file.originalname}`
+          }));
+        } catch (imageError) {
+          console.log('Image extraction not available for this file type, continuing with text only');
+        }
+        
+        // Create metadata object
+        const metadata = {
+          filename: req.file.originalname,
+          filesize: req.file.size,
+          uploadedAt: new Date().toISOString(),
+          category: analysis.category || 'general',
+          imagesExtracted: referenceImages.length,
+          source: 'document_upload',
+          ...analysis.metadata
+        };
         
         // Save to generated contents as briefing type with images
         const savedContent = await storage.saveGeneratedContent({
@@ -1352,15 +1370,7 @@ CRITICAL preservation rules:
           content: analysis.content,
           contentType: 'briefing',
           referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
-          metadata: {
-            filename: req.file.originalname,
-            filesize: req.file.size,
-            uploadedAt: new Date().toISOString(),
-            category: analysis.category || 'general',
-            imagesExtracted: extractedContent.images.length,
-            source: 'document_upload',
-            ...analysis.metadata
-          }
+          metadata: metadata as any
         });
 
         res.json({
@@ -1381,19 +1391,22 @@ CRITICAL preservation rules:
         const extractedText = await extractTextFromFile(req.file.buffer, fileExt);
         const analysis = await analyzeBriefText(extractedText);
         
+        const fallbackMetadata = {
+          filename: req.file.originalname,
+          filesize: req.file.size,
+          uploadedAt: new Date().toISOString(),
+          category: analysis.category || 'general',
+          source: 'document_upload',
+          extractionMethod: 'text_only_fallback',
+          wordCount: analysis.metadata?.wordCount || 0,
+          extractedAt: analysis.metadata?.extractedAt || new Date().toISOString()
+        };
+
         const savedContent = await storage.saveGeneratedContent({
           title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
           content: analysis.content,
           contentType: 'briefing',
-          metadata: {
-            filename: req.file.originalname,
-            filesize: req.file.size,
-            uploadedAt: new Date().toISOString(),
-            category: analysis.category || 'general',
-            source: 'document_upload',
-            extractionMethod: 'text_only_fallback',
-            ...analysis.metadata
-          }
+          metadata: fallbackMetadata as any
         });
 
         res.json({
