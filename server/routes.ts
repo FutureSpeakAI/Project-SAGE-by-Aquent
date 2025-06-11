@@ -1791,11 +1791,14 @@ Focus on identifying the specific visual deliverables (number of images, type of
   // Get all campaigns
   app.get("/api/campaigns", async (_req: Request, res: Response) => {
     try {
+      console.log("Fetching campaigns from database...");
       const result = await pool.query(`
         SELECT * FROM campaigns ORDER BY created_at DESC
       `);
       
-      const campaigns = result.rows.map(row => ({
+      console.log("Database query result:", result.rows.length, "campaigns found");
+      
+      const campaigns = result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
         description: row.description,
@@ -1815,6 +1818,7 @@ Focus on identifying the specific visual deliverables (number of images, type of
         updatedAt: row.updated_at
       }));
       
+      console.log("Processed campaigns:", campaigns.length);
       res.json(campaigns);
     } catch (error: any) {
       console.error("Failed to fetch campaigns:", error);
@@ -1860,7 +1864,7 @@ Focus on identifying the specific visual deliverables (number of images, type of
       // Get linked content
       let content = [];
       if (campaign.linkedContent && campaign.linkedContent.length > 0) {
-        const contentResult = await db.query(`
+        const contentResult = await pool.query(`
           SELECT * FROM generated_content WHERE id = ANY($1)
         `, [campaign.linkedContent]);
         content = contentResult.rows;
@@ -1869,7 +1873,7 @@ Focus on identifying the specific visual deliverables (number of images, type of
       // Get linked projects
       let projects = [];
       if (campaign.linkedProjects && campaign.linkedProjects.length > 0) {
-        const projectsResult = await db.query(`
+        const projectsResult = await pool.query(`
           SELECT * FROM image_projects WHERE id = ANY($1)
         `, [campaign.linkedProjects]);
         projects = projectsResult.rows;
