@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import { CampaignPage } from "@/pages/CampaignPage";
+import CampaignPage from "@/pages/CampaignPage";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from 'react-error-boundary';

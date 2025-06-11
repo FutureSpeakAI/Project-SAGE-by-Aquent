@@ -54,7 +54,7 @@ interface SimpleCampaign {
   updatedAt: string;
 }
 
-export function CampaignPage() {
+function CampaignPage() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -302,3 +302,5 @@ export function CampaignPage() {
     </div>
   );
 }
+
+export default CampaignPage;
