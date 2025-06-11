@@ -1843,7 +1843,7 @@ Focus on identifying the specific visual deliverables (number of images, type of
       let content = [];
       if (campaign.linkedContent && campaign.linkedContent.length > 0) {
         const contentResult = await pool.query(`
-          SELECT * FROM generated_content WHERE id = ANY($1)
+          SELECT * FROM generated_contents WHERE id = ANY($1)
         `, [campaign.linkedContent]);
         content = contentResult.rows;
       }
@@ -1862,12 +1862,12 @@ Focus on identifying the specific visual deliverables (number of images, type of
         assets: {
           content,
           projects,
-          briefings: content.filter(c => c.content_type === 'briefing')
+          briefings: content.filter((c: any) => c.content_type === 'briefing')
         },
         stats: {
           totalContent: content.length,
           totalProjects: projects.length,
-          completedDeliverables: campaign.deliverables.filter(d => d.status === 'completed').length,
+          completedDeliverables: campaign.deliverables.filter((d: any) => d.status === 'completed').length,
           totalDeliverables: campaign.deliverables.length
         }
       });
