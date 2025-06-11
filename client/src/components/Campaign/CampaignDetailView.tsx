@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -19,7 +23,8 @@ import {
   Trash2,
   DollarSign,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -32,6 +37,16 @@ interface CampaignDetailViewProps {
 export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog }: CampaignDetailViewProps) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Content editing dialog state
+  const [contentEditDialog, setContentEditDialog] = useState({ open: false, content: null });
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  
+  // Visual project editing dialog state
+  const [visualEditDialog, setVisualEditDialog] = useState({ open: false, project: null });
+  const [editProjectName, setEditProjectName] = useState("");
+  const [editProjectDescription, setEditProjectDescription] = useState("");
 
   const { data: campaignData, isLoading } = useQuery({
     queryKey: ['/api/campaigns', campaignId],
@@ -49,6 +64,68 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog }: Cam
       onBack();
     }
   });
+
+  // Content update mutation
+  const updateContentMutation = useMutation({
+    mutationFn: (data: { id: number; title: string; content: string }) => 
+      apiRequest(`/api/content/${data.id}`, { 
+        method: 'PATCH', 
+        body: JSON.stringify({ title: data.title, content: data.content })
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId] });
+      setContentEditDialog({ open: false, content: null });
+    }
+  });
+
+  // Visual project update mutation
+  const updateProjectMutation = useMutation({
+    mutationFn: (data: { id: number; name: string; description: string }) => 
+      apiRequest(`/api/projects/${data.id}`, { 
+        method: 'PATCH', 
+        body: JSON.stringify({ name: data.name, description: data.description })
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId] });
+      setVisualEditDialog({ open: false, project: null });
+    }
+  });
+
+  // Handle content edit
+  const handleEditContent = (content: any) => {
+    setEditTitle(content.title);
+    setEditContent(content.content);
+    setContentEditDialog({ open: true, content });
+  };
+
+  // Handle visual project edit
+  const handleEditProject = (project: any) => {
+    setEditProjectName(project.name);
+    setEditProjectDescription(project.description || "");
+    setVisualEditDialog({ open: true, project });
+  };
+
+  // Save content changes
+  const handleSaveContent = () => {
+    if (contentEditDialog.content) {
+      updateContentMutation.mutate({
+        id: contentEditDialog.content.id,
+        title: editTitle,
+        content: editContent
+      });
+    }
+  };
+
+  // Save project changes
+  const handleSaveProject = () => {
+    if (visualEditDialog.project) {
+      updateProjectMutation.mutate({
+        id: visualEditDialog.project.id,
+        name: editProjectName,
+        description: editProjectDescription
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -332,9 +409,16 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog }: Cam
             {assets.content.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {assets.content.map((content: any) => (
-                  <Card key={content.id} className="hover:shadow-md transition-shadow">
+                  <Card 
+                    key={content.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleEditContent(content)}
+                  >
                     <CardHeader>
-                      <CardTitle className="text-lg">{content.title}</CardTitle>
+                      <CardTitle className="text-lg flex items-center justify-between">
+                        {content.title}
+                        <Edit className="w-4 h-4 text-gray-400" />
+                      </CardTitle>
                       <CardDescription>
                         {content.contentType} • {new Date(content.createdAt).toLocaleDateString()}
                       </CardDescription>
@@ -363,9 +447,16 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog }: Cam
             {assets.projects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {assets.projects.map((project: any) => (
-                  <Card key={project.id} className="hover:shadow-md transition-shadow">
+                  <Card 
+                    key={project.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleEditProject(project)}
+                  >
                     <CardHeader>
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
+                      <CardTitle className="text-lg flex items-center justify-between">
+                        {project.name}
+                        <Edit className="w-4 h-4 text-gray-400" />
+                      </CardTitle>
                       <CardDescription>
                         {new Date(project.createdAt).toLocaleDateString()}
                       </CardDescription>
@@ -468,6 +559,102 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog }: Cam
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Content Edit Dialog */}
+      <Dialog open={contentEditDialog.open} onOpenChange={(open) => setContentEditDialog({ open, content: null })}>
+        <DialogContent hideDefaultCloseButton>
+          <DialogHeader>
+            <div className="flex justify-between items-center">
+              <DialogTitle>Edit Content</DialogTitle>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-gray-100">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
+            </div>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-content">Content</Label>
+              <Textarea
+                id="edit-content"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={6}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setContentEditDialog({ open: false, content: null })}
+              disabled={updateContentMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveContent} disabled={updateContentMutation.isPending}>
+              {updateContentMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Visual Project Edit Dialog */}
+      <Dialog open={visualEditDialog.open} onOpenChange={(open) => setVisualEditDialog({ open, project: null })}>
+        <DialogContent hideDefaultCloseButton>
+          <DialogHeader>
+            <div className="flex justify-between items-center">
+              <DialogTitle>Edit Visual Project</DialogTitle>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-gray-100">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
+            </div>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-project-name">Project Name</Label>
+              <Input
+                id="edit-project-name"
+                value={editProjectName}
+                onChange={(e) => setEditProjectName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-project-description">Description</Label>
+              <Textarea
+                id="edit-project-description"
+                value={editProjectDescription}
+                onChange={(e) => setEditProjectDescription(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setVisualEditDialog({ open: false, project: null })}
+              disabled={updateProjectMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProject} disabled={updateProjectMutation.isPending}>
+              {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
