@@ -1,13 +1,4 @@
-/**
- * Unified Briefing System Validation Script
- * Tests document upload, form creation, and unified retrieval
- */
-
-import fs from 'fs';
-import path from 'path';
-
-// Create test brief content
-const testBriefContent = `CREATIVE BRIEF: EcoTech Smart Home Launch
+CREATIVE BRIEF: EcoTech Smart Home Launch
 
 PROJECT OVERVIEW:
 Revolutionary smart home ecosystem combining sustainability with cutting-edge technology
@@ -64,22 +55,4 @@ TIMELINE:
 Week 1-2: Content creation and asset development
 Week 3-4: Influencer outreach and partnership setup
 Week 5-8: Campaign launch and optimization
-Week 9-12: Scale and iterate based on performance data`;
-
-// Write test file
-fs.writeFileSync('./test-ecotech-brief.txt', testBriefContent);
-
-console.log('Test brief file created: test-ecotech-brief.txt');
-console.log('Content length:', testBriefContent.length, 'characters');
-console.log('\nTo test the unified briefing system:');
-console.log('1. Upload this file through the briefing form');
-console.log('2. Check that it appears in the Content tab briefing library');
-console.log('3. Verify reference images can be used in Visual tab');
-console.log('4. Test SAGE chat can access the briefing data');
-
-// Validate system endpoints
-console.log('\nValidating system endpoints...');
-console.log('Document upload: POST /api/process-brief');
-console.log('Unified retrieval: GET /api/generated-contents?contentType=briefing');
-console.log('Reference images: GET /api/briefs/:id/reference-images');
-console.log('\nUnified briefing system ready for testing!');
+Week 9-12: Scale and iterate based on performance data
