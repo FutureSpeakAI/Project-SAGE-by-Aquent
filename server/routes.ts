@@ -23,6 +23,7 @@ import { detectLorealBrief, generateLorealInstagramContent } from "./loreal-brie
 import { generateBreathEaseEmails } from "./healthcare-content-generator";
 import { simpleCampaignStorage, type SimpleCampaign } from "./simple-campaign-storage";
 import { pool } from "./db";
+import { parseBriefingDeliverables, matchDeliverablesWithAssets } from "./briefing-parser";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -1867,18 +1868,39 @@ Focus on identifying the specific visual deliverables (number of images, type of
         projects = projectsResult.rows;
       }
       
+      // Parse briefing deliverables if briefings exist
+      let parsedDeliverables: any[] = [];
+      if (briefings.length > 0) {
+        // Use the first briefing to extract deliverables
+        const mainBriefing = briefings[0];
+        const parsed = parseBriefingDeliverables(mainBriefing.content);
+        parsedDeliverables = matchDeliverablesWithAssets(parsed.deliverables, content, projects);
+        
+        // Update campaign objectives and target audience if they're empty
+        if (campaign.objectives.length === 0 && parsed.objectives.length > 0) {
+          campaign.objectives = parsed.objectives;
+        }
+        if (!campaign.targetAudience.primary && parsed.targetAudience) {
+          campaign.targetAudience.primary = parsed.targetAudience;
+        }
+      }
+
+      const completedCount = parsedDeliverables.filter(d => d.status === 'completed').length;
+      const totalCount = parsedDeliverables.length > 0 ? parsedDeliverables.length : campaign.deliverables.length;
+
       res.json({
         campaign,
         assets: {
           content,
           projects,
-          briefings: content.filter((c: any) => c.content_type === 'briefing')
+          briefings: briefings
         },
+        deliverables: parsedDeliverables,
         stats: {
           totalContent: content.length,
           totalProjects: projects.length,
-          completedDeliverables: campaign.deliverables.filter((d: any) => d.status === 'completed').length,
-          totalDeliverables: campaign.deliverables.length
+          completedDeliverables: completedCount,
+          totalDeliverables: totalCount
         }
       });
     } catch (error: any) {

@@ -87,7 +87,7 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
     );
   }
 
-  const { campaign, assets, stats } = campaignData;
+  const { campaign, assets, stats, deliverables = [] } = campaignData;
   const progressPercentage = stats.totalDeliverables > 0 ? Math.round((stats.completedDeliverables / stats.totalDeliverables) * 100) : 0;
 
   // Extract brief summary for the overview
@@ -97,6 +97,10 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
     hasBrandGuidelines: campaign.brandGuidelines?.tone || campaign.brandGuidelines?.voice,
     briefCount: assets.briefings.length
   } : null;
+
+  // Separate deliverables by type
+  const contentDeliverables = deliverables.filter((d: any) => d.type === 'content');
+  const visualDeliverables = deliverables.filter((d: any) => d.type === 'visual');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -321,27 +325,37 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
           </TabsContent>
 
           <TabsContent value="content" className="space-y-4">
-            {assets.content.length > 0 ? (
+            {contentDeliverables.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {assets.content.map((content: any) => (
+                {contentDeliverables.map((deliverable: any) => (
                   <Card 
-                    key={content.id} 
-                    className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => onNavigateToContent(content.id)}
+                    key={deliverable.id} 
+                    className={`hover:shadow-md transition-shadow ${deliverable.linkedAssetId ? 'cursor-pointer' : ''}`}
+                    onClick={() => deliverable.linkedAssetId && onNavigateToContent(deliverable.linkedAssetId)}
                   >
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center justify-between">
-                        {content.title}
-                        <Edit className="w-4 h-4 text-gray-400" />
+                        {deliverable.title}
+                        <div className="flex items-center gap-2">
+                          <Badge variant={deliverable.status === 'completed' ? 'default' : 'secondary'}>
+                            {deliverable.status}
+                          </Badge>
+                          {deliverable.linkedAssetId && <Edit className="w-4 h-4 text-gray-400" />}
+                        </div>
                       </CardTitle>
                       <CardDescription>
-                        {content.contentType} • {new Date(content.createdAt).toLocaleDateString()}
+                        {deliverable.type} deliverable from briefing requirements
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-gray-600 line-clamp-3">
-                        {content.content.substring(0, 150)}...
+                        {deliverable.description}
                       </p>
+                      {deliverable.requirements && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Requirements: {deliverable.requirements}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -350,8 +364,8 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
               <Card className="text-center py-12">
                 <CardContent>
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No content linked</h3>
-                  <p className="text-gray-600 mb-4">Link existing content or briefings to this campaign</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No content deliverables</h3>
+                  <p className="text-gray-600 mb-4">This campaign's briefing doesn't specify content deliverables</p>
                   <Button onClick={onShowLinkDialog}>Link Content</Button>
                 </CardContent>
               </Card>
@@ -359,27 +373,37 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
           </TabsContent>
 
           <TabsContent value="visuals" className="space-y-4">
-            {assets.projects.length > 0 ? (
+            {visualDeliverables.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {assets.projects.map((project: any) => (
+                {visualDeliverables.map((deliverable: any) => (
                   <Card 
-                    key={project.id} 
-                    className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => onNavigateToVisual(project.id)}
+                    key={deliverable.id} 
+                    className={`hover:shadow-md transition-shadow ${deliverable.linkedAssetId ? 'cursor-pointer' : ''}`}
+                    onClick={() => deliverable.linkedAssetId && onNavigateToVisual(deliverable.linkedAssetId)}
                   >
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center justify-between">
-                        {project.name}
-                        <Edit className="w-4 h-4 text-gray-400" />
+                        {deliverable.title}
+                        <div className="flex items-center gap-2">
+                          <Badge variant={deliverable.status === 'completed' ? 'default' : 'secondary'}>
+                            {deliverable.status}
+                          </Badge>
+                          {deliverable.linkedAssetId && <Edit className="w-4 h-4 text-gray-400" />}
+                        </div>
                       </CardTitle>
                       <CardDescription>
-                        {new Date(project.createdAt).toLocaleDateString()}
+                        {deliverable.type} deliverable from briefing requirements
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {project.description || "No description provided"}
+                      <p className="text-sm text-gray-600 line-clamp-3">
+                        {deliverable.description}
                       </p>
+                      {deliverable.requirements && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Requirements: {deliverable.requirements}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -388,8 +412,8 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
               <Card className="text-center py-12">
                 <CardContent>
                   <Image className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No visual projects linked</h3>
-                  <p className="text-gray-600 mb-4">Link existing image projects to this campaign</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No visual deliverables</h3>
+                  <p className="text-gray-600 mb-4">This campaign's briefing doesn't specify visual deliverables</p>
                   <Button onClick={onShowLinkDialog}>Link Projects</Button>
                 </CardContent>
               </Card>
