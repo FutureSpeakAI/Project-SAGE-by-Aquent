@@ -1329,36 +1329,84 @@ CRITICAL preservation rules:
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Extract text from file buffer
+      // Extract both text and images from file buffer
       const fileExt = path.extname(req.file.originalname).toLowerCase();
-      const extractedText = await extractTextFromFile(req.file.buffer, fileExt);
       
-      // Analyze the extracted text
-      const analysis = await analyzeBriefText(extractedText);
-      
-      // Save to generated contents as briefing type
-      const savedContent = await storage.saveGeneratedContent({
-        title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
-        content: analysis.content,
-        contentType: 'briefing',
-        metadata: {
-          filename: req.file.originalname,
-          filesize: req.file.size,
-          uploadedAt: new Date().toISOString(),
-          category: analysis.category || 'general',
-          ...analysis.metadata
-        }
-      });
+      try {
+        const extractedContent = await extractContentFromFile(req.file.buffer, fileExt, req.file.originalname);
+        
+        // Analyze the extracted text
+        const analysis = await analyzeBriefText(extractedContent.text);
+        
+        // Convert extracted images to the reference image format
+        const referenceImages = extractedContent.images.map(img => ({
+          id: img.id,
+          filename: img.filename,
+          base64: img.base64,
+          analysis: img.analysis || `Extracted from ${req.file?.originalname || 'document'}`
+        }));
+        
+        // Save to generated contents as briefing type with images
+        const savedContent = await storage.saveGeneratedContent({
+          title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
+          content: analysis.content,
+          contentType: 'briefing',
+          referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+          metadata: {
+            filename: req.file.originalname,
+            filesize: req.file.size,
+            uploadedAt: new Date().toISOString(),
+            category: analysis.category || 'general',
+            imagesExtracted: extractedContent.images.length,
+            source: 'document_upload',
+            ...analysis.metadata
+          }
+        });
 
-      res.json({
-        success: true,
-        content: analysis.content,
-        title: analysis.title,
-        category: analysis.category,
-        id: savedContent.id,
-        saved: true,
-        metadata: analysis.metadata
-      });
+        res.json({
+          success: true,
+          content: analysis.content,
+          title: analysis.title,
+          category: analysis.category,
+          id: savedContent.id,
+          saved: true,
+          imagesExtracted: extractedContent.images.length,
+          referenceImages: referenceImages,
+          metadata: analysis.metadata
+        });
+      } catch (extractError: any) {
+        // Fallback to text-only extraction if enhanced extraction fails
+        console.warn('Enhanced extraction failed, falling back to text-only:', extractError);
+        
+        const extractedText = await extractTextFromFile(req.file.buffer, fileExt);
+        const analysis = await analyzeBriefText(extractedText);
+        
+        const savedContent = await storage.saveGeneratedContent({
+          title: analysis.title || `Brief - ${new Date().toLocaleDateString()}`,
+          content: analysis.content,
+          contentType: 'briefing',
+          metadata: {
+            filename: req.file.originalname,
+            filesize: req.file.size,
+            uploadedAt: new Date().toISOString(),
+            category: analysis.category || 'general',
+            source: 'document_upload',
+            extractionMethod: 'text_only_fallback',
+            ...analysis.metadata
+          }
+        });
+
+        res.json({
+          success: true,
+          content: analysis.content,
+          title: analysis.title,
+          category: analysis.category,
+          id: savedContent.id,
+          saved: true,
+          imagesExtracted: 0,
+          metadata: analysis.metadata
+        });
+      }
     } catch (error: any) {
       console.error('Brief processing error:', error);
       res.status(500).json({ 

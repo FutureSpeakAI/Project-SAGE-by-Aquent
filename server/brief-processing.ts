@@ -64,6 +64,44 @@ const uploadFilePromise = (req: Request, res: Response): Promise<void> => {
   });
 };
 
+// Interface for extracted content including text and images
+interface ExtractedContent {
+  text: string;
+  images: Array<{
+    id: string;
+    filename: string;
+    base64: string;
+    mimeType: string;
+    analysis?: string;
+  }>;
+}
+
+// Function to extract text and images from a file buffer
+export async function extractContentFromFile(fileBuffer: Buffer, fileExt: string, originalFilename: string): Promise<ExtractedContent> {
+  // First extract text
+  const text = await extractTextFromFile(fileBuffer, fileExt);
+  
+  // Then extract images (defined later in file)
+  let images: Array<{
+    id: string;
+    filename: string;
+    base64: string;
+    mimeType: string;
+    analysis?: string;
+  }> = [];
+  
+  try {
+    images = await extractImagesFromFile(fileBuffer, fileExt, originalFilename);
+  } catch (error) {
+    console.warn('Image extraction failed, continuing with text only:', error);
+  }
+  
+  return {
+    text,
+    images
+  };
+}
+
 // Function to extract text from a file buffer based on its extension
 export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise<string> {
   try {
@@ -302,6 +340,92 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
   } catch (error: any) {
     console.error(`Error extracting text from ${fileExt} file:`, error);
     throw new Error(`Failed to extract text from ${fileExt} file: ${error.message}`);
+  }
+}
+
+// Function to extract images from file buffers
+export async function extractImagesFromFile(fileBuffer: Buffer, fileExt: string, originalFilename: string): Promise<Array<{
+  id: string;
+  filename: string;
+  base64: string;
+  mimeType: string;
+  analysis?: string;
+}>> {
+  const images: Array<{
+    id: string;
+    filename: string;
+    base64: string;
+    mimeType: string;
+    analysis?: string;
+  }> = [];
+
+  try {
+    if (fileExt === '.pdf') {
+      // Extract images from PDF using pdf2json
+      const PDFParser = require('pdf2json');
+      
+      return new Promise((resolve) => {
+        const pdfParser = new PDFParser();
+        
+        pdfParser.on('pdfParser_dataError', () => {
+          // If PDF parsing fails, return empty array
+          resolve([]);
+        });
+        
+        pdfParser.on('pdfParser_dataReady', (pdfData: PDFData) => {
+          try {
+            if (pdfData.Pages) {
+              pdfData.Pages.forEach((page, pageIndex) => {
+                if (page.Images) {
+                  page.Images.forEach((image, imageIndex) => {
+                    try {
+                      // Extract image data if available
+                      if (image.data) {
+                        const imageId = `${Date.now()}-${pageIndex}-${imageIndex}`;
+                        const filename = `${originalFilename}-page${pageIndex + 1}-img${imageIndex + 1}.png`;
+                        
+                        images.push({
+                          id: imageId,
+                          filename,
+                          base64: `data:image/png;base64,${image.data}`,
+                          mimeType: 'image/png',
+                          analysis: `Image extracted from page ${pageIndex + 1} of ${originalFilename}`
+                        });
+                      }
+                    } catch (imageError) {
+                      console.warn(`Failed to extract image ${imageIndex} from page ${pageIndex}:`, imageError);
+                    }
+                  });
+                }
+              });
+            }
+            resolve(images);
+          } catch (error) {
+            console.warn('PDF image extraction error:', error);
+            resolve([]);
+          }
+        });
+        
+        pdfParser.parseBuffer(fileBuffer);
+      });
+      
+    } else if (fileExt === '.docx') {
+      // Extract images from DOCX using mammoth
+      try {
+        const result = await mammoth.extractRawText({ buffer: fileBuffer });
+        // Note: mammoth doesn't easily extract images, but we could enhance this
+        // For now, return empty array for DOCX files
+        return [];
+      } catch (error) {
+        console.warn('DOCX image extraction not implemented:', error);
+        return [];
+      }
+    }
+    
+    return [];
+  } catch (error) {
+    console.warn('Image extraction failed:', error);
+    return [];
   }
 }
 
