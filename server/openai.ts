@@ -563,8 +563,8 @@ export const generateImage = async (req: Request, res: Response) => {
       size = "1024x1024", 
       quality = "high", 
       background = "auto",
-      n = 1
-      // Note: reference_images parameter is not used as gpt-image-1 doesn't support it
+      n = 1,
+      reference_images
     } = req.body as GenerateImageRequest;
     
     if (!process.env.OPENAI_API_KEY) {
@@ -626,7 +626,7 @@ export const generateImage = async (req: Request, res: Response) => {
     let revisedPrompt;
     
     try {
-      // Create a params object with only gpt-image-1 model
+      // Create a params object with gpt-image-1 model and reference images support
       let params: any = {
         model: "gpt-image-1", // Always use gpt-image-1 model 
         prompt: prompt,
@@ -636,8 +636,11 @@ export const generateImage = async (req: Request, res: Response) => {
         background: background as any
       };
       
-      // Note: We don't use reference_images at all with gpt-image-1 as it's not supported
-      // For variations, we rely solely on descriptive prompts that request variations
+      // Add reference images if provided - gpt-image-1 supports reference images
+      if (reference_images && reference_images.length > 0) {
+        params.reference_images = reference_images;
+        console.log(`Including ${reference_images.length} reference image(s) with gpt-image-1 generation`);
+      }
       
       // Make the API call with the prepared parameters
       const response = await openai.images.generate(params);

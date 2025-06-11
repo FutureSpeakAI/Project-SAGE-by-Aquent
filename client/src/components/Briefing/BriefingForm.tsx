@@ -723,6 +723,135 @@ IMPORTANT FORMATTING REQUIREMENTS:
               </AccordionContent>
             </AccordionItem>
             
+            <AccordionItem value="reference-images">
+              <AccordionTrigger className="text-lg font-medium text-[#F15A22]">
+                Reference Images & Brand Assets
+              </AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Brand Reference Images</Label>
+                  <p className="text-sm text-gray-600">
+                    Upload brand logos, style guides, or reference images to ensure visual consistency across all generated content using gpt-image-1.
+                  </p>
+                  
+                  {/* Upload Zone */}
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      isDragOver 
+                        ? 'border-[#F15A22] bg-[#F15A22]/5' 
+                        : 'border-gray-300 hover:border-[#F15A22]/50'
+                    }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
+                    <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-600 mb-2">
+                      Drag and drop images here, or click to select
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+                      className="hidden"
+                      id="reference-image-upload"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('reference-image-upload')?.click()}
+                    >
+                      Select Images
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Supports: PNG, JPG, WEBP, GIF • Max 20MB per image • Up to 4 images
+                    </p>
+                  </div>
+
+                  {/* Reference Images Grid */}
+                  {formData.referenceImages.length > 0 && (
+                    <div className="space-y-3">
+                      <Label>Uploaded Reference Images</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {formData.referenceImages.map((image) => (
+                          <Card key={image.id} className="p-3">
+                            <div className="flex gap-3">
+                              {/* Image Preview */}
+                              <div className="flex-shrink-0">
+                                <img
+                                  src={image.preview}
+                                  alt="Reference"
+                                  className="w-16 h-16 rounded object-cover"
+                                />
+                              </div>
+                              
+                              {/* Image Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {image.file.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {(image.file.size / 1024 / 1024).toFixed(1)} MB
+                                    </p>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeReferenceImage(image.id)}
+                                    className="flex-shrink-0 h-8 w-8 p-0"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                
+                                {/* Analysis Status */}
+                                {image.isAnalyzing && (
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <span className="text-xs text-gray-500">Analyzing...</span>
+                                  </div>
+                                )}
+                                
+                                {image.analysis && (
+                                  <div className="mt-2">
+                                    <div className="flex items-center gap-1 mb-1">
+                                      <Eye className="h-3 w-3 text-green-600" />
+                                      <span className="text-xs font-medium text-green-700">Analyzed</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Badge variant="outline" className="text-xs">
+                                        <Palette className="h-2 w-2 mr-1" />
+                                        {image.analysis.style}
+                                      </Badge>
+                                      <div className="flex flex-wrap gap-1">
+                                        {image.analysis.colors.slice(0, 3).map((color, i) => (
+                                          <div
+                                            key={i}
+                                            className="w-3 h-3 rounded-full border border-gray-300"
+                                            style={{ backgroundColor: color }}
+                                            title={color}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
             <AccordionItem value="additional">
               <AccordionTrigger className="text-lg font-medium text-[#F15A22]">
                 Additional Information
