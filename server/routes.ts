@@ -21,6 +21,7 @@ import { promptRouter, type PromptRouterConfig } from "./prompt-router";
 import { providerHealthMonitor } from "./provider-health";
 import { detectLorealBrief, generateLorealInstagramContent } from "./loreal-brief-handler";
 import { generateBreathEaseEmails } from "./healthcare-content-generator";
+import { simpleCampaignStorage, type SimpleCampaign } from "./simple-campaign-storage";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -1626,6 +1627,162 @@ Focus on identifying the specific visual deliverables (number of images, type of
     } catch (error) {
       console.error("Error fetching images for project:", error);
       res.status(500).json({ error: "Failed to fetch images for project" });
+    }
+  });
+
+  // Campaign Management API Routes
+  app.get("/api/campaigns", async (req: Request, res: Response) => {
+    try {
+      const { query, status } = req.query;
+      let campaigns;
+      
+      if (query || status) {
+        campaigns = await simpleCampaignStorage.searchCampaigns(
+          query as string, 
+          status as string
+        );
+      } else {
+        campaigns = await simpleCampaignStorage.getAllCampaigns();
+      }
+      
+      res.json(campaigns);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
+  });
+
+  app.get("/api/campaigns/:id", async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      if (isNaN(campaignId)) {
+        return res.status(400).json({ error: "Invalid campaign ID" });
+      }
+      
+      const campaign = await simpleCampaignStorage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      // Get associated content and projects
+      const allContent = await storage.getGeneratedContents();
+      const allProjects = await storage.getImageProjects();
+      
+      const linkedContent = allContent.filter(c => campaign.linkedContent.includes(c.id));
+      const linkedProjects = allProjects.filter(p => campaign.linkedProjects.includes(p.id));
+      
+      res.json({
+        campaign,
+        assets: {
+          content: linkedContent,
+          projects: linkedProjects,
+          briefings: linkedContent.filter(c => c.contentType === 'briefing')
+        },
+        stats: {
+          totalContent: linkedContent.length,
+          totalProjects: linkedProjects.length,
+          completedDeliverables: campaign.deliverables.filter(d => d.status === 'completed').length,
+          totalDeliverables: campaign.deliverables.length
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch campaign" });
+    }
+  });
+
+  app.post("/api/campaigns", async (req: Request, res: Response) => {
+    try {
+      const campaignData = {
+        ...req.body,
+        linkedContent: [],
+        linkedProjects: [],
+        objectives: req.body.objectives || [],
+        targetAudience: req.body.targetAudience || {},
+        brandGuidelines: req.body.brandGuidelines || {},
+        deliverables: req.body.deliverables || [],
+        teamMembers: req.body.teamMembers || [],
+        metadata: req.body.metadata || {}
+      };
+      
+      const campaign = await simpleCampaignStorage.createCampaign(campaignData);
+      res.json(campaign);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to create campaign" });
+    }
+  });
+
+  app.put("/api/campaigns/:id", async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      if (isNaN(campaignId)) {
+        return res.status(400).json({ error: "Invalid campaign ID" });
+      }
+      
+      const campaign = await simpleCampaignStorage.updateCampaign(campaignId, req.body);
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      res.json(campaign);
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to update campaign" });
+    }
+  });
+
+  app.delete("/api/campaigns/:id", async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      if (isNaN(campaignId)) {
+        return res.status(400).json({ error: "Invalid campaign ID" });
+      }
+      
+      const success = await simpleCampaignStorage.deleteCampaign(campaignId);
+      if (!success) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to delete campaign" });
+    }
+  });
+
+  app.post("/api/campaigns/:id/link-content/:contentId", async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      const contentId = parseInt(req.params.contentId);
+      
+      if (isNaN(campaignId) || isNaN(contentId)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const success = await simpleCampaignStorage.linkContentToCampaign(campaignId, contentId);
+      if (!success) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to link content to campaign" });
+    }
+  });
+
+  app.post("/api/campaigns/:id/link-project/:projectId", async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      const projectId = parseInt(req.params.projectId);
+      
+      if (isNaN(campaignId) || isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid ID format" });
+      }
+      
+      const success = await simpleCampaignStorage.linkProjectToCampaign(campaignId, projectId);
+      if (!success) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to link project to campaign" });
     }
   });
 
