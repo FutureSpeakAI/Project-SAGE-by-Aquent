@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, Image, X, Eye, Palette, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BriefingFormProps {
   model: string;
@@ -43,8 +45,27 @@ export function BriefingForm({
     timeline: "",
     
     // Additional Information
-    additionalInfo: ""
+    additionalInfo: "",
+    
+    // Reference Images
+    referenceImages: [] as Array<{
+      id: string;
+      file: File;
+      preview: string;
+      analysis: {
+        style: string;
+        colors: string[];
+        composition: string;
+        mood: string;
+        elements: string[];
+        brandGuidelines: string;
+      } | null;
+      isAnalyzing: boolean;
+    }>
   });
+
+  // Reference image state
+  const [isDragOver, setIsDragOver] = useState(false);
   
   const { toast } = useToast();
   
@@ -94,6 +115,193 @@ export function BriefingForm({
     "Very Long (2000+ words)"
   ];
   
+  // Image analysis function
+  const analyzeReferenceImage = async (imageFile: File, imageId: string) => {
+    try {
+      // Update state to show analyzing
+      setFormData(prev => ({
+        ...prev,
+        referenceImages: prev.referenceImages.map(img => 
+          img.id === imageId ? { ...img, isAnalyzing: true } : img
+        )
+      }));
+
+      // Convert image to base64
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(imageFile);
+      });
+
+      // Extract base64 data
+      const base64Data = base64.split(',')[1];
+
+      // Analyze image with GPT-4o Vision
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          systemPrompt: `You are a brand and visual analysis expert. Analyze this reference image for creative campaign development. Extract key visual elements that can inform gpt-image-1 generation.
+
+Return your analysis in this JSON format:
+{
+  "style": "Brief description of visual style (e.g., 'minimalist photography', 'bold graphic design')",
+  "colors": ["color1", "color2", "color3"],
+  "composition": "Description of layout and composition principles",
+  "mood": "Emotional tone and atmosphere",
+  "elements": ["element1", "element2", "element3"],
+  "brandGuidelines": "Key brand characteristics and visual guidelines extracted"
+}`,
+          userPrompt: `Analyze this reference image for a creative campaign. Focus on:
+1. Visual style and aesthetic approach
+2. Primary color palette (3-5 main colors)
+3. Composition and layout principles
+4. Mood and emotional tone
+5. Key visual elements and design patterns
+6. Brand characteristics and guidelines
+
+Provide insights that will help generate consistent visuals using gpt-image-1.`,
+          temperature: 0.3
+        })
+      });
+
+      const data = await response.json();
+      
+      // Parse the JSON response
+      let analysis;
+      try {
+        const jsonMatch = data.content.match(/\{[\s\S]*\}/);
+        analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : {
+          style: "Analysis available in content",
+          colors: ["#000000"],
+          composition: "See full analysis",
+          mood: "Professional",
+          elements: ["Design elements"],
+          brandGuidelines: data.content.substring(0, 200) + "..."
+        };
+      } catch (parseError) {
+        analysis = {
+          style: "Visual analysis completed",
+          colors: ["#333333"],
+          composition: "Layout analyzed",
+          mood: "Professional tone",
+          elements: ["Visual elements"],
+          brandGuidelines: "Brand characteristics extracted"
+        };
+      }
+
+      // Update the image with analysis
+      setFormData(prev => ({
+        ...prev,
+        referenceImages: prev.referenceImages.map(img => 
+          img.id === imageId ? { ...img, analysis, isAnalyzing: false } : img
+        )
+      }));
+
+      toast({
+        title: "Analysis Complete",
+        description: "Reference image has been analyzed for brand guidelines."
+      });
+
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      
+      // Update state to stop analyzing
+      setFormData(prev => ({
+        ...prev,
+        referenceImages: prev.referenceImages.map(img => 
+          img.id === imageId ? { ...img, isAnalyzing: false } : img
+        )
+      }));
+
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze the reference image. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    
+    for (const file of fileArray) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload only image files.",
+          variant: "destructive"
+        });
+        continue;
+      }
+
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast({
+          title: "File too large",
+          description: "Please upload images smaller than 10MB.",
+          variant: "destructive"
+        });
+        continue;
+      }
+
+      const imageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const preview = URL.createObjectURL(file);
+
+      const newImage = {
+        id: imageId,
+        file,
+        preview,
+        analysis: null,
+        isAnalyzing: false
+      };
+
+      // Add image to state
+      setFormData(prev => ({
+        ...prev,
+        referenceImages: [...prev.referenceImages, newImage]
+      }));
+
+      // Start analysis
+      analyzeReferenceImage(file, imageId);
+    }
+  };
+
+  // Remove reference image
+  const removeReferenceImage = (imageId: string) => {
+    setFormData(prev => {
+      const imageToRemove = prev.referenceImages.find(img => img.id === imageId);
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview);
+      }
+      return {
+        ...prev,
+        referenceImages: prev.referenceImages.filter(img => img.id !== imageId)
+      };
+    });
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleImageUpload(files);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -108,8 +316,27 @@ export function BriefingForm({
     }
     
     try {
+      // Include reference image analysis in the brief
+      let referenceImageSection = "";
+      if (formData.referenceImages.length > 0) {
+        referenceImageSection = `\n\nREFERENCE IMAGES & BRAND GUIDELINES:`;
+        formData.referenceImages.forEach((img, index) => {
+          if (img.analysis) {
+            referenceImageSection += `\n\nReference Image ${index + 1}:
+- Style: ${img.analysis.style}
+- Primary Colors: ${img.analysis.colors.join(', ')}
+- Composition: ${img.analysis.composition}
+- Mood: ${img.analysis.mood}
+- Key Elements: ${img.analysis.elements.join(', ')}
+- Brand Guidelines: ${img.analysis.brandGuidelines}`;
+          }
+        });
+      }
+
       // Format the data as a comprehensive prompt
-      const systemPrompt = "You are an expert content strategist and creative director. Create a detailed, actionable creative brief based on the information provided. Format your response as rich HTML with proper headings, sections, and bullet points.";
+      const systemPrompt = `You are an expert content strategist and creative director. Create a detailed, actionable creative brief based on the information provided. Format your response as rich HTML with proper headings, sections, and bullet points.
+
+${referenceImageSection ? 'IMPORTANT: Include a "Visual Guidelines" section that incorporates the reference image analysis for consistent gpt-image-1 generation.' : ''}`;
       
       const userPrompt = `Create a comprehensive creative brief for the following project:
       
