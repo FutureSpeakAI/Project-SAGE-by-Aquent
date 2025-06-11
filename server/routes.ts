@@ -1075,6 +1075,27 @@ CRITICAL preservation rules:
     }
   });
 
+  // Reference images endpoint for briefs
+  app.get("/api/briefs/:id/reference-images", async (req: Request, res: Response) => {
+    try {
+      const briefId = parseInt(req.params.id);
+      const brief = await storage.getGeneratedContent(briefId);
+      
+      if (!brief) {
+        return res.status(404).json({ error: "Brief not found" });
+      }
+      
+      if (brief.contentType !== 'briefing') {
+        return res.status(400).json({ error: "Content is not a briefing" });
+      }
+      
+      const referenceImages = brief.referenceImages || [];
+      res.json({ referenceImages });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to fetch reference images" });
+    }
+  });
+
   // Brief conversations CRUD operations
   app.get("/api/brief-conversations", async (_req: Request, res: Response) => {
     try {

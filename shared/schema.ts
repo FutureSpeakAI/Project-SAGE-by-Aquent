@@ -74,6 +74,19 @@ export const generatedContents = pgTable("generated_contents", {
   model: text("model"),
   temperature: text("temperature"), // Store as text to handle potential floating point issues
   metadata: json("metadata").$type<Record<string, any>>(), // Additional data that might be useful
+  referenceImages: json("reference_images").$type<Array<{
+    id: string;
+    filename: string;
+    base64: string;
+    analysis?: {
+      style: string;
+      colors: string[];
+      composition: string;
+      mood: string;
+      elements: string[];
+      brandGuidelines: string;
+    };
+  }>>(), // Store reference images for briefs
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

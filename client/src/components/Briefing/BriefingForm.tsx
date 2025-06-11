@@ -52,6 +52,7 @@ export function BriefingForm({
       id: string;
       file: File;
       preview: string;
+      base64: string;
       analysis: {
         style: string;
         colors: string[];
@@ -227,20 +228,32 @@ Provide insights that will help generate consistent visuals using gpt-image-1.`,
   const handleImageUpload = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
     
+    // Check if adding these files would exceed the 4 image limit
+    if (formData.referenceImages.length + fileArray.length > 4) {
+      toast({
+        title: "Too many images",
+        description: "You can upload a maximum of 4 reference images for gpt-image-1.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const supportedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    
     for (const file of fileArray) {
-      if (!file.type.startsWith('image/')) {
+      if (!supportedTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
-          description: "Please upload only image files.",
+          description: `Please upload PNG, JPG, WEBP, or GIF files only.`,
           variant: "destructive"
         });
         continue;
       }
 
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 20 * 1024 * 1024) { // 20MB limit per OpenAI specs
         toast({
           title: "File too large",
-          description: "Please upload images smaller than 10MB.",
+          description: "Please upload images smaller than 20MB.",
           variant: "destructive"
         });
         continue;
@@ -249,10 +262,18 @@ Provide insights that will help generate consistent visuals using gpt-image-1.`,
       const imageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const preview = URL.createObjectURL(file);
 
+      // Convert to base64 for API usage
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
       const newImage = {
         id: imageId,
         file,
         preview,
+        base64, // Store base64 for API calls
         analysis: null,
         isAnalyzing: false
       };
@@ -316,11 +337,23 @@ Provide insights that will help generate consistent visuals using gpt-image-1.`,
     }
     
     try {
-      // Include reference image analysis in the brief
+      // Include reference image analysis and prepare images for API
       let referenceImageSection = "";
+      const referenceImagesForAPI = [];
+      
       if (formData.referenceImages.length > 0) {
         referenceImageSection = `\n\nREFERENCE IMAGES & BRAND GUIDELINES:`;
+        
         formData.referenceImages.forEach((img, index) => {
+          // Add to API payload
+          referenceImagesForAPI.push({
+            image_url: {
+              url: img.base64,
+              detail: "high"
+            }
+          });
+          
+          // Add analysis to brief text
           if (img.analysis) {
             referenceImageSection += `\n\nReference Image ${index + 1}:
 - Style: ${img.analysis.style}
@@ -331,6 +364,8 @@ Provide insights that will help generate consistent visuals using gpt-image-1.`,
 - Brand Guidelines: ${img.analysis.brandGuidelines}`;
           }
         });
+        
+        referenceImageSection += `\n\nIMPORTANT: When generating visual content for this campaign, use the uploaded reference images to maintain brand consistency. The images will be automatically included in gpt-image-1 generation requests.`;
       }
 
       // Format the data as a comprehensive prompt
@@ -504,6 +539,40 @@ IMPORTANT FORMATTING REQUIREMENTS:
           // Add the remaining text
           result += cleanedContent.substring(lastIndex);
           cleanedContent = result;
+        }
+      }
+      
+      // If we have reference images, save the brief with images attached
+      if (formData.referenceImages.length > 0) {
+        const briefData = {
+          title: formData.projectName || 'Creative Brief',
+          content: cleanedContent,
+          contentType: 'briefing',
+          referenceImages: formData.referenceImages.map(img => ({
+            id: img.id,
+            filename: img.file.name,
+            base64: img.base64,
+            analysis: img.analysis
+          }))
+        };
+        
+        // Save the brief with reference images
+        try {
+          const saveResponse = await fetch('/api/generated-contents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(briefData)
+          });
+          
+          if (saveResponse.ok) {
+            toast({
+              title: "Brief saved with reference images",
+              description: "Your creative brief and brand assets are now available for visual content generation."
+            });
+          }
+        } catch (saveError) {
+          console.warn('Failed to save brief with images:', saveError);
+          // Continue with normal flow even if save fails
         }
       }
       
