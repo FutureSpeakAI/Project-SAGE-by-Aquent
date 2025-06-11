@@ -22,6 +22,7 @@ import { providerHealthMonitor } from "./provider-health";
 import { detectLorealBrief, generateLorealInstagramContent } from "./loreal-brief-handler";
 import { generateBreathEaseEmails } from "./healthcare-content-generator";
 import { simpleCampaignStorage, type SimpleCampaign } from "./simple-campaign-storage";
+import { pool } from "./db";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -1787,6 +1788,106 @@ Focus on identifying the specific visual deliverables (number of images, type of
   });
 
   // Campaign Migration Routes
+  // Get all campaigns
+  app.get("/api/campaigns", async (_req: Request, res: Response) => {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM campaigns ORDER BY created_at DESC
+      `);
+      
+      const campaigns = result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        status: row.status,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        budget: row.budget,
+        objectives: row.objectives || [],
+        targetAudience: row.target_audience || {},
+        brandGuidelines: row.brand_guidelines || {},
+        deliverables: row.deliverables || [],
+        teamMembers: row.team_members || [],
+        linkedContent: row.linked_content || [],
+        linkedProjects: row.linked_projects || [],
+        metadata: row.metadata || {},
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+      
+      res.json(campaigns);
+    } catch (error: any) {
+      console.error("Failed to fetch campaigns:", error);
+      res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
+  });
+
+  // Get campaign by ID with linked assets
+  app.get("/api/campaigns/:id", async (req: Request, res: Response) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      
+      // Get campaign
+      const campaignResult = await pool.query(`
+        SELECT * FROM campaigns WHERE id = $1
+      `, [campaignId]);
+      
+      if (campaignResult.rows.length === 0) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      const row = campaignResult.rows[0];
+      const campaign = {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        status: row.status,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        budget: row.budget,
+        objectives: row.objectives || [],
+        targetAudience: row.target_audience || {},
+        brandGuidelines: row.brand_guidelines || {},
+        deliverables: row.deliverables || [],
+        teamMembers: row.team_members || [],
+        linkedContent: row.linked_content || [],
+        linkedProjects: row.linked_projects || [],
+        metadata: row.metadata || {},
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      };
+      
+      // Get linked content
+      let content = [];
+      if (campaign.linkedContent && campaign.linkedContent.length > 0) {
+        const contentResult = await db.query(`
+          SELECT * FROM generated_content WHERE id = ANY($1)
+        `, [campaign.linkedContent]);
+        content = contentResult.rows;
+      }
+      
+      // Get linked projects
+      let projects = [];
+      if (campaign.linkedProjects && campaign.linkedProjects.length > 0) {
+        const projectsResult = await db.query(`
+          SELECT * FROM image_projects WHERE id = ANY($1)
+        `, [campaign.linkedProjects]);
+        projects = projectsResult.rows;
+      }
+      
+      res.json({
+        campaign,
+        assets: {
+          content,
+          projects
+        }
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch campaign:", error);
+      res.status(500).json({ error: "Failed to fetch campaign" });
+    }
+  });
+
   app.post("/api/campaigns/migrate", async (_req: Request, res: Response) => {
     try {
       const { migrateToCampaignSystem } = await import('./campaign-migration');
