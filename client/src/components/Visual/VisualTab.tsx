@@ -176,7 +176,16 @@ const TabContent = ({
                   />
                 </div>
                 
-                {/* Reference image uploader removed as gpt-image-1 doesn't support this feature */}
+                {/* Reference Images Display */}
+                <div id="reference-images-display" className="hidden">
+                  <Label>Brand Reference Images</Label>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Using images from your saved briefing
+                  </div>
+                  <div id="reference-images-grid" className="grid grid-cols-2 gap-2">
+                    {/* Images will be populated dynamically */}
+                  </div>
+                </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -657,7 +666,63 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     retry: false,
   });
   
-  const handleGenerateImage = () => {
+  // Function to fetch reference images from saved briefs
+  const fetchReferenceImagesFromBriefs = async (prompt: string): Promise<Array<{ image_url: { url: string; detail?: "auto" | "high" | "low" } }>> => {
+    try {
+      // Check if this prompt appears to be briefing-related
+      const isBriefingRelated = prompt.toLowerCase().includes('brief') || 
+                               prompt.toLowerCase().includes('brand') ||
+                               prompt.toLowerCase().includes('campaign') ||
+                               prompt.toLowerCase().includes('marketing') ||
+                               prompt.toLowerCase().includes('logo') ||
+                               prompt.toLowerCase().includes('visual identity');
+      
+      if (!isBriefingRelated) {
+        return [];
+      }
+
+      // Fetch all generated contents to find briefings with reference images
+      const response = await fetch('/api/generated-contents');
+      if (!response.ok) return [];
+      
+      const contents = await response.json();
+      
+      // Find briefings that have reference images
+      const briefingsWithImages = contents.filter((content: any) => 
+        content.contentType === 'briefing' && 
+        content.referenceImages && 
+        content.referenceImages.length > 0
+      );
+      
+      if (briefingsWithImages.length === 0) {
+        return [];
+      }
+      
+      // Use the most recent briefing with images
+      const latestBriefing = briefingsWithImages.sort((a: any, b: any) => 
+        new Date(b.createdAt || b.id).getTime() - new Date(a.createdAt || a.id).getTime()
+      )[0];
+      
+      // Convert reference images to the format expected by gpt-image-1
+      const referenceImages = latestBriefing.referenceImages
+        .slice(0, 4) // gpt-image-1 supports up to 4 reference images
+        .map((img: any) => ({
+          image_url: {
+            url: img.base64.startsWith('data:') ? img.base64 : `data:image/jpeg;base64,${img.base64}`,
+            detail: "high" as const
+          }
+        }));
+      
+      console.log(`Found ${referenceImages.length} reference images from briefing "${latestBriefing.title}"`);
+      return referenceImages;
+      
+    } catch (error) {
+      console.error('Error fetching reference images from briefs:', error);
+      return [];
+    }
+  };
+
+  const handleGenerateImage = async () => {
     if (!imagePrompt.trim()) {
       toast({
         title: "Empty prompt",
@@ -667,14 +732,51 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
       return;
     }
     
-    // We're exclusively using gpt-image-1 which doesn't support reference_images
-    // For variations, we rely on the prompt to describe what we want
+    // Fetch reference images from saved briefs if applicable
+    const referenceImages = await fetchReferenceImagesFromBriefs(imagePrompt);
+    
+    // Display reference images in the UI
+    const displayElement = document.getElementById('reference-images-display');
+    const gridElement = document.getElementById('reference-images-grid');
+    
+    if (referenceImages.length > 0) {
+      toast({
+        title: "Using brand reference images",
+        description: `Found ${referenceImages.length} reference images from your saved briefing.`,
+      });
+      
+      // Show the reference images display
+      if (displayElement) {
+        displayElement.classList.remove('hidden');
+      }
+      
+      // Populate the grid with reference images
+      if (gridElement) {
+        gridElement.innerHTML = referenceImages.map((ref, index) => 
+          `<div class="relative">
+            <img src="${ref.image_url.url}" alt="Reference ${index + 1}" 
+                 class="w-full h-20 object-cover rounded border" />
+            <div class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+              ${index + 1}
+            </div>
+           </div>`
+        ).join('');
+      }
+    } else {
+      // Hide the reference images display if no images
+      if (displayElement) {
+        displayElement.classList.add('hidden');
+      }
+    }
+    
+    // gpt-image-1 now supports reference_images parameter
     generateImageMutation.mutate({
       prompt: imagePrompt,
       model: "gpt-image-1",
       size,
       quality,
-      background: background
+      background: background,
+      reference_images: referenceImages.length > 0 ? referenceImages : undefined
     });
   };
   
