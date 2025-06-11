@@ -148,6 +148,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
         
+        // Initialize mask canvas with same dimensions
+        const maskCanvas = maskCanvasRef.current;
+        if (maskCanvas) {
+          maskCanvas.width = canvasWidth;
+          maskCanvas.height = canvasHeight;
+        }
+        
         // Enable high-quality rendering
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -209,7 +216,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (!ctx) return;
     
     ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; // Semi-transparent black for mask
+    ctx.strokeStyle = "rgba(0, 150, 255, 0.9)"; // Blue mask for better contrast
     ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -471,13 +478,29 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   ref={canvasRef}
                   width={600}
                   height={600}
-                  className="border border-gray-200 dark:border-gray-700 rounded cursor-crosshair shadow-lg"
+                  className="border border-gray-200 dark:border-gray-700 rounded shadow-lg"
                   style={{
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
                     maxWidth: '100%',
                     maxHeight: '100%',
                     display: imageLoadStatus === "error" ? 'none' : 'block'
+                  }}
+                />
+                
+                {/* Transparent mask overlay canvas */}
+                <canvas
+                  ref={maskCanvasRef}
+                  width={600}
+                  height={600}
+                  className="absolute top-0 left-0 cursor-crosshair pointer-events-auto"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transformOrigin: 'center',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    display: imageLoadStatus === "error" || activeTab !== "inpaint" ? 'none' : 'block',
+                    opacity: 0.7
                   }}
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
