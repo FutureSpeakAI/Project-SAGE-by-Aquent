@@ -42,6 +42,7 @@ interface EditRequest {
 export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdited }: ImageEditorProps) {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [maskData, setMaskData] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
@@ -197,20 +198,21 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (activeTab !== "inpaint" || tool !== "brush") return;
     
     setIsDrawing(true);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const maskCanvas = maskCanvasRef.current;
+    if (!maskCanvas) return;
     
-    const rect = canvas.getBoundingClientRect();
+    const rect = maskCanvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) / zoom;
     const y = (e.clientY - rect.top) / zoom;
     
-    const ctx = canvas.getContext("2d");
+    const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; // Semi-transparent black for mask
     ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -218,16 +220,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || activeTab !== "inpaint") return;
     
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const maskCanvas = maskCanvasRef.current;
+    if (!maskCanvas) return;
     
-    const rect = canvas.getBoundingClientRect();
+    const rect = maskCanvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) / zoom;
     const y = (e.clientY - rect.top) / zoom;
     
     setMousePos({ x, y });
     
-    const ctx = canvas.getContext("2d");
+    const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
     ctx.lineTo(x, y);
@@ -238,37 +240,22 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (!isDrawing) return;
     setIsDrawing(false);
     
-    // Capture mask data
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    // Capture mask data from mask canvas
+    const maskCanvas = maskCanvasRef.current;
+    if (!maskCanvas) return;
     
-    setMaskData(canvas.toDataURL());
+    setMaskData(maskCanvas.toDataURL());
   };
 
   const clearMask = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const maskCanvas = maskCanvasRef.current;
+    if (!maskCanvas) return;
     
-    // Redraw original image
-    const ctx = canvas.getContext("2d");
+    const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const scaleX = canvas.width / img.width;
-      const scaleY = canvas.height / img.height;
-      const scale = Math.min(scaleX, scaleY);
-      
-      const scaledWidth = img.width * scale;
-      const scaledHeight = img.height * scale;
-      const offsetX = (canvas.width - scaledWidth) / 2;
-      const offsetY = (canvas.height - scaledHeight) / 2;
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
-    };
-    img.src = imageUrl;
+    // Clear the mask canvas completely
+    ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
     
     setMaskData(null);
   };
