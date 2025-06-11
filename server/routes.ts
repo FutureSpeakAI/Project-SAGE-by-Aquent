@@ -1839,6 +1839,16 @@ Focus on identifying the specific visual deliverables (number of images, type of
         updatedAt: row.updated_at
       };
       
+      // Get briefings associated with this campaign
+      let briefings = [];
+      const briefingResult = await pool.query(`
+        SELECT * FROM generated_contents 
+        WHERE content_type = 'briefing' 
+        AND (campaign_id = $1 OR id = ANY($2))
+        ORDER BY created_at DESC
+      `, [campaignId, campaign.linkedContent]);
+      briefings = briefingResult.rows;
+      
       // Get linked content
       let content = [];
       if (campaign.linkedContent && campaign.linkedContent.length > 0) {
