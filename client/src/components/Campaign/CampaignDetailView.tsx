@@ -19,9 +19,14 @@ import {
   DollarSign,
   Clock,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  ExternalLink,
+  Eye,
+  Move
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { CampaignEditDialog } from "./CampaignEditDialog";
+import { AssetEditDialog } from "./AssetEditDialog";
 
 interface CampaignDetailViewProps {
   campaignId: number;
@@ -34,6 +39,8 @@ interface CampaignDetailViewProps {
 export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNavigateToContent, onNavigateToVisual }: CampaignDetailViewProps) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showEditCampaign, setShowEditCampaign] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<{ id: number; type: 'content' | 'visual' } | null>(null);
 
   const { data: campaignData, isLoading } = useQuery({
     queryKey: ['/api/campaigns', campaignId],
@@ -122,7 +129,7 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
               <Link2 className="w-4 h-4 mr-2" />
               Link Assets
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => setShowEditCampaign(true)}>
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
