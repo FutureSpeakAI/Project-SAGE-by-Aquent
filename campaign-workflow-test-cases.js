@@ -562,6 +562,13 @@ class CampaignWorkflowTester {
 // Export for browser console usage
 window.CampaignWorkflowTester = CampaignWorkflowTester;
 
-// Auto-run instructions
+// Immediate test execution for validation
+(async function() {
+  console.log('🚀 Auto-running Campaign Management Test Suite');
+  const tester = new CampaignWorkflowTester();
+  await tester.runAllTests();
+})();
+
+// Manual run instructions
 console.log('Campaign Management Test Suite Loaded!');
-console.log('To run tests: const tester = new CampaignWorkflowTester(); await tester.runAllTests();');
+console.log('To run tests manually: const tester = new CampaignWorkflowTester(); await tester.runAllTests();');

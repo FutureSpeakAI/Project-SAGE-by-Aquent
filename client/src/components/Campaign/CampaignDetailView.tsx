@@ -337,8 +337,7 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                 {contentDeliverables.map((deliverable: any) => (
                   <Card 
                     key={deliverable.id} 
-                    className={`hover:shadow-md transition-shadow ${deliverable.linkedAssetId ? 'cursor-pointer' : ''}`}
-                    onClick={() => deliverable.linkedAssetId && onNavigateToContent(deliverable.linkedAssetId)}
+                    className="hover:shadow-md transition-shadow group"
                   >
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center justify-between">
@@ -347,7 +346,34 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                           <Badge variant={deliverable.status === 'completed' ? 'default' : 'secondary'}>
                             {deliverable.status}
                           </Badge>
-                          {deliverable.linkedAssetId && <Edit className="w-4 h-4 text-gray-400" />}
+                          {deliverable.linkedAssetId && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => setEditingAsset({ id: deliverable.linkedAssetId, type: 'content' })}
+                                data-testid="edit-content-button"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => onNavigateToContent(deliverable.linkedAssetId)}
+                                data-testid="view-content-button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => onShowLinkDialog()}
+                                data-testid="move-content-button"
+                              >
+                                <Move className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardTitle>
                       <CardDescription>
@@ -362,6 +388,19 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                         <p className="text-xs text-gray-500 mt-2">
                           Requirements: {deliverable.requirements}
                         </p>
+                      )}
+                      {!deliverable.linkedAssetId && (
+                        <div className="mt-3">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={onShowLinkDialog}
+                            data-testid="link-content-button"
+                          >
+                            <Link2 className="w-4 h-4 mr-2" />
+                            Link Content
+                          </Button>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
@@ -373,7 +412,7 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No content deliverables</h3>
                   <p className="text-gray-600 mb-4">This campaign's briefing doesn't specify content deliverables</p>
-                  <Button onClick={onShowLinkDialog}>Link Content</Button>
+                  <Button onClick={onShowLinkDialog} data-testid="link-content-empty">Link Content</Button>
                 </CardContent>
               </Card>
             )}
@@ -385,8 +424,7 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                 {visualDeliverables.map((deliverable: any) => (
                   <Card 
                     key={deliverable.id} 
-                    className={`hover:shadow-md transition-shadow ${deliverable.linkedAssetId ? 'cursor-pointer' : ''}`}
-                    onClick={() => deliverable.linkedAssetId && onNavigateToVisual(deliverable.linkedAssetId)}
+                    className="hover:shadow-md transition-shadow group"
                   >
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center justify-between">
@@ -395,7 +433,34 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                           <Badge variant={deliverable.status === 'completed' ? 'default' : 'secondary'}>
                             {deliverable.status}
                           </Badge>
-                          {deliverable.linkedAssetId && <Edit className="w-4 h-4 text-gray-400" />}
+                          {deliverable.linkedAssetId && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => setEditingAsset({ id: deliverable.linkedAssetId, type: 'visual' })}
+                                data-testid="edit-visual-button"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => onNavigateToVisual(deliverable.linkedAssetId)}
+                                data-testid="view-visual-button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => onShowLinkDialog()}
+                                data-testid="move-visual-button"
+                              >
+                                <Move className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardTitle>
                       <CardDescription>
@@ -411,6 +476,19 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                           Requirements: {deliverable.requirements}
                         </p>
                       )}
+                      {!deliverable.linkedAssetId && (
+                        <div className="mt-3">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={onShowLinkDialog}
+                            data-testid="link-visual-button"
+                          >
+                            <Link2 className="w-4 h-4 mr-2" />
+                            Link Visual
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -421,12 +499,40 @@ export function CampaignDetailView({ campaignId, onBack, onShowLinkDialog, onNav
                   <Image className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No visual deliverables</h3>
                   <p className="text-gray-600 mb-4">This campaign's briefing doesn't specify visual deliverables</p>
-                  <Button onClick={onShowLinkDialog}>Link Projects</Button>
+                  <Button onClick={onShowLinkDialog} data-testid="link-visual-empty">Link Projects</Button>
                 </CardContent>
               </Card>
             )}
           </TabsContent>
         </Tabs>
+        
+        {/* Edit Dialogs */}
+        {campaign && (
+          <CampaignEditDialog
+            open={showEditCampaign}
+            onOpenChange={setShowEditCampaign}
+            campaign={campaign}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId] });
+            }}
+          />
+        )}
+        
+        {editingAsset && (
+          <AssetEditDialog
+            open={!!editingAsset}
+            onOpenChange={() => setEditingAsset(null)}
+            assetId={editingAsset.id}
+            assetType={editingAsset.type}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/campaigns', campaignId] });
+              queryClient.invalidateQueries({ queryKey: ['/api/generated-contents'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/image-projects'] });
+            }}
+          />
+        )}
       </div>
     </div>
   );
