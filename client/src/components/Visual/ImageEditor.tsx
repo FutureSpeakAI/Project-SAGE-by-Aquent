@@ -220,44 +220,51 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (activeTab !== "inpaint") return;
     
     setIsDrawing(true);
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setLastPoint({ x, y });
-    
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
+    
+    const rect = maskCanvas.getBoundingClientRect();
+    // Scale coordinates from display size to canvas size
+    const scaleX = maskCanvas.width / rect.width;
+    const scaleY = maskCanvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    setLastPoint({ x, y });
     
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.lineWidth = brushSize;
+    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.lineWidth = brushSize * scaleX; // Scale brush size
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.arc(x, y, brushSize / 2, 0, 2 * Math.PI);
+    ctx.arc(x, y, (brushSize * scaleX) / 2, 0, 2 * Math.PI);
     ctx.fill();
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !lastPoint || activeTab !== "inpaint") return;
     
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
+    
+    const rect = maskCanvas.getBoundingClientRect();
+    // Scale coordinates from display size to canvas size
+    const scaleX = maskCanvas.width / rect.width;
+    const scaleY = maskCanvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
     
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.lineWidth = brushSize;
+    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.lineWidth = brushSize * scaleX; // Scale brush size
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -276,7 +283,22 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
     
-    setMaskData(maskCanvas.toDataURL());
+    // Create proper mask: white areas = edit, black areas = keep
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = maskCanvas.width;
+    tempCanvas.height = maskCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+    
+    // Fill with black (keep original)
+    tempCtx.fillStyle = 'black';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    
+    // Draw white where user painted (areas to edit)
+    tempCtx.globalCompositeOperation = 'source-over';
+    tempCtx.drawImage(maskCanvas, 0, 0);
+    
+    setMaskData(tempCanvas.toDataURL());
   };
 
   const clearMask = () => {
@@ -554,7 +576,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       width: "100%",
                       height: "100%",
                       zIndex: 2,
-                      cursor: "crosshair"
+                      cursor: "crosshair",
+                      opacity: 0.6,
+                      mixBlendMode: "multiply" as const
                     }}
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
