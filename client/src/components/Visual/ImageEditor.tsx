@@ -556,7 +556,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
                     maxHeight: '100%',
-                    display: imageLoadStatus === "error" || activeTab !== "inpaint" || editedImageUrl ? 'none' : 'block',
+                    display: imageLoadStatus === "error" || activeTab !== "inpaint" ? 'none' : 'block',
                     opacity: 0.7
                   }}
                   onMouseDown={startDrawing}
@@ -859,6 +859,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       setImageTitle("");
                       setPrompt("");
                       setMaskData(null);
+                      clearMask();
                     }}
                     className="w-full"
                   >
