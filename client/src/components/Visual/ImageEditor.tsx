@@ -249,17 +249,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
       return;
     }
     
-    // Draw with red color for visibility during debugging
+    // Draw with white for proper mask (areas to edit)
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
-    ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
-    ctx.lineWidth = Math.max(brushSize * scaleX, 2); // Ensure minimum visibility
+    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.lineWidth = brushSize * scaleX;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.arc(x, y, Math.max((brushSize * scaleX) / 2, 5), 0, 2 * Math.PI);
+    ctx.arc(x, y, (brushSize * scaleX) / 2, 0, 2 * Math.PI);
     ctx.fill();
-    console.log('Drew initial mask point');
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -278,10 +277,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
-    // Draw with red color for visibility during debugging
+    // Draw with white for proper mask (areas to edit)
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
-    ctx.lineWidth = Math.max(brushSize * scaleX, 2); // Ensure minimum visibility
+    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.lineWidth = brushSize * scaleX;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -594,8 +593,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       height: "100%",
                       zIndex: 2,
                       cursor: "crosshair",
-                      opacity: 1.0, // Make fully visible for debugging
-                      backgroundColor: "transparent"
+                      opacity: 0.5,
+                      mixBlendMode: "difference" as const
                     }}
                     onMouseDown={startDrawing}
                     onMouseMove={(e) => {
