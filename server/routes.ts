@@ -849,121 +849,88 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       }
 
       try {
-        console.log('Using direct fetch to OpenAI API for better control');
+        console.log(`Using ${model} for image editing`);
+        
+        // Convert base64 to buffers and ensure proper PNG format
+        const imageBuffer = Buffer.from(imageBase64, 'base64');
+        const processedImageBuffer = await sharp(imageBuffer)
+          .png()
+          .toBuffer();
         
         if (maskBase64) {
-          // Use direct fetch with FormData for inpainting
-          console.log('Performing inpainting with mask using direct API call');
+          console.log('Performing inpainting with mask');
           
-          // Process buffers with Sharp to ensure proper PNG format
-          const imageBuffer = Buffer.from(imageBase64, 'base64');
           const maskBuffer = Buffer.from(maskBase64, 'base64');
-          
-          const processedImageBuffer = await sharp(imageBuffer)
-            .png()
-            .toBuffer();
           const processedMaskBuffer = await sharp(maskBuffer)
             .png()
             .toBuffer();
           
-          // Create FormData for direct API call using Node.js form-data
-          const formData = new FormData();
-          formData.append('model', model);
-          formData.append('prompt', prompt.trim());
-          formData.append('n', '1');
-          formData.append('size', size || '1024x1024');
+          // Save to temporary files for OpenAI SDK
+          const tempDir = '/tmp';
+          const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
+          const maskPath = `${tempDir}/edit_mask_${Date.now()}.png`;
           
-          // Append buffers as streams with proper content type
-          formData.append('image', processedImageBuffer, {
-            filename: 'image.png',
-            contentType: 'image/png'
-          });
-          formData.append('mask', processedMaskBuffer, {
-            filename: 'mask.png',
-            contentType: 'image/png'
-          });
+          fs.writeFileSync(imagePath, processedImageBuffer);
+          fs.writeFileSync(maskPath, processedMaskBuffer);
           
-          const apiResponse = await fetch('https://api.openai.com/v1/images/edits', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: formData
-          });
-          
-          if (!apiResponse.ok) {
-            const errorData = await apiResponse.json();
-            throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+          try {
+            const editResponse = await openai.images.edit({
+              model: model,
+              image: fs.createReadStream(imagePath),
+              mask: fs.createReadStream(maskPath),
+              prompt: prompt.trim(),
+              n: 1,
+              size: (size || "1024x1024") as any
+            });
+
+            console.log(`${model} inpainting completed successfully`);
+
+            return res.json({
+              success: true,
+              images: editResponse.data.map(img => ({
+                url: img.url || `data:image/png;base64,${img.b64_json}`,
+                revised_prompt: img.revised_prompt || prompt
+              })),
+              method: `${model}_inpaint`
+            });
+          } finally {
+            // Clean up temp files
+            [imagePath, maskPath].forEach(path => {
+              try { fs.unlinkSync(path); } catch (e) {}
+            });
           }
-          
-          const editResponse = await apiResponse.json();
-
-          if (!editResponse.data || editResponse.data.length === 0) {
-            throw new Error('No edited image returned from API');
-          }
-
-          console.log('GPT Image inpainting completed successfully');
-
-          return res.json({
-            success: true,
-            images: editResponse.data.map((img: any) => ({
-              url: img.url || `data:image/png;base64,${img.b64_json}`,
-              revised_prompt: img.revised_prompt || prompt
-            })),
-            method: 'gpt_image_inpaint_direct'
-          });
         } else {
-          // Use direct fetch for variations without mask
-          console.log('Creating variation using direct API call');
+          console.log('Creating image variation');
           
-          // Process buffer with Sharp to ensure proper PNG format
-          const imageBuffer = Buffer.from(imageBase64, 'base64');
-          const processedImageBuffer = await sharp(imageBuffer)
-            .png()
-            .toBuffer();
+          // Save to temporary file for OpenAI SDK
+          const tempDir = '/tmp';
+          const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
           
-          // Create FormData for direct API call using Node.js form-data
-          const formData = new FormData();
-          formData.append('model', model);
-          formData.append('prompt', prompt.trim());
-          formData.append('n', '1');
-          formData.append('size', size || '1024x1024');
+          fs.writeFileSync(imagePath, processedImageBuffer);
           
-          // Append buffer as stream with proper content type
-          formData.append('image', processedImageBuffer, {
-            filename: 'image.png',
-            contentType: 'image/png'
-          });
-          
-          const apiResponse = await fetch('https://api.openai.com/v1/images/edits', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: formData
-          });
-          
-          if (!apiResponse.ok) {
-            const errorData = await apiResponse.json();
-            throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+          try {
+            const editResponse = await openai.images.edit({
+              model: model,
+              image: fs.createReadStream(imagePath),
+              prompt: prompt.trim(),
+              n: 1,
+              size: (size || "1024x1024") as any
+            });
+
+            console.log(`${model} variation completed successfully`);
+
+            return res.json({
+              success: true,
+              images: editResponse.data.map(img => ({
+                url: img.url || `data:image/png;base64,${img.b64_json}`,
+                revised_prompt: img.revised_prompt || prompt
+              })),
+              method: `${model}_edit`
+            });
+          } finally {
+            // Clean up temp file
+            try { fs.unlinkSync(imagePath); } catch (e) {}
           }
-          
-          const editResponse = await apiResponse.json();
-
-          if (!editResponse.data || editResponse.data.length === 0) {
-            throw new Error('No edited image returned from API');
-          }
-
-          console.log('GPT Image variation completed successfully');
-
-          return res.json({
-            success: true,
-            images: editResponse.data.map((img: any) => ({
-              url: img.url || `data:image/png;base64,${img.b64_json}`,
-              revised_prompt: img.revised_prompt || prompt
-            })),
-            method: 'gpt_image_edit_direct'
-          });
         }
 
       } catch (apiError: any) {
