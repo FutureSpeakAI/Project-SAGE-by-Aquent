@@ -801,7 +801,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         return res.status(400).json({ error: "Prompt is required" });
       }
 
-      console.log('Image editing request:', { 
+      console.log('GPT Image editing request:', { 
         hasImage: !!image, 
         hasMask: !!mask, 
         prompt: prompt.substring(0, 50) + '...',
@@ -809,51 +809,39 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         size 
       });
 
-      // Convert image URL to buffer and ensure proper format for OpenAI API
-      let imageBuffer: Buffer;
+      // Convert image to proper base64 format for GPT Image
+      let imageBase64: string;
       try {
         if (image.startsWith('data:')) {
-          // Handle data URL
-          const base64Data = image.split(',')[1];
-          const rawBuffer = Buffer.from(base64Data, 'base64');
-          
-          // Process image to ensure it meets OpenAI requirements (square PNG with transparency)
-          imageBuffer = await sharp(rawBuffer)
-            .png({ force: true })
-            .resize(1024, 1024, { 
-              fit: 'contain', 
-              background: { r: 0, g: 0, b: 0, alpha: 0 } // Transparent background
-            })
-            .toBuffer();
-        } else {
-          // Handle HTTP URL
+          // Extract base64 data from data URL
+          imageBase64 = image.split(',')[1];
+        } else if (image.startsWith('http')) {
+          // Fetch image from URL and convert to base64
           const response = await fetch(image);
           if (!response.ok) {
             throw new Error(`Failed to fetch image: ${response.statusText}`);
           }
           const arrayBuffer = await response.arrayBuffer();
-          const rawBuffer = Buffer.from(arrayBuffer);
-          
-          // Process image to ensure it meets OpenAI requirements
-          imageBuffer = await sharp(rawBuffer)
-            .png({ force: true })
-            .resize(1024, 1024, { 
-              fit: 'contain', 
-              background: { r: 0, g: 0, b: 0, alpha: 0 } // Transparent background
-            })
-            .toBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          imageBase64 = buffer.toString('base64');
+        } else {
+          // Assume it's already base64
+          imageBase64 = image;
         }
       } catch (error: any) {
-        console.error('Error processing image URL:', error);
-        return res.status(400).json({ error: "Invalid image URL or format" });
+        console.error('Error processing image:', error);
+        return res.status(400).json({ error: "Invalid image format or URL" });
       }
 
-      // Handle mask if provided for inpainting
-      let maskBuffer: Buffer | undefined;
+      // Convert mask to base64 if provided
+      let maskBase64: string | undefined;
       if (mask) {
         try {
-          const base64Data = mask.split(',')[1];
-          maskBuffer = Buffer.from(base64Data, 'base64');
+          if (mask.startsWith('data:')) {
+            maskBase64 = mask.split(',')[1];
+          } else {
+            maskBase64 = mask;
+          }
         } catch (error: any) {
           console.error('Error processing mask:', error);
           return res.status(400).json({ error: "Invalid mask format" });
@@ -861,17 +849,16 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       }
 
       try {
-        // Use proper OpenAI image editing API
-        const openai = await getOpenAIClient();
+        console.log('Using GPT Image API for editing with reference images');
         
-        if (maskBuffer) {
-          // Use DALL-E 2 edit API for inpainting
-          console.log('Using OpenAI edit API for inpainting');
+        if (maskBase64) {
+          // Use OpenAI's edit API with mask for inpainting
+          console.log('Performing inpainting with mask using edit API');
           
           const editResponse = await openai.images.edit({
-            model: "dall-e-2",
-            image: imageBuffer,
-            mask: maskBuffer,
+            model: model,
+            image: Buffer.from(imageBase64, 'base64'),
+            mask: Buffer.from(maskBase64, 'base64'),
             prompt: prompt.trim(),
             n: 1,
             size: (size || "1024x1024") as any
@@ -881,73 +868,46 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             throw new Error('No edited image returned from API');
           }
 
-          console.log('OpenAI image edit completed successfully');
+          console.log('GPT Image inpainting completed successfully');
 
           return res.json({
             success: true,
             images: editResponse.data.map(img => ({
-              url: img.url,
-              revised_prompt: prompt
+              url: img.url || `data:image/png;base64,${img.b64_json}`,
+              revised_prompt: img.revised_prompt || prompt
             })),
-            method: 'openai_edit_api'
+            method: 'gpt_image_inpaint'
           });
         } else {
-          // For variations without mask, use DALL-E 3 generation with better prompting
-          console.log('Using DALL-E 3 for image variation');
+          // Use image generation with reference for variations/modifications
+          console.log('Creating variation using GPT Image with reference');
           
-          // Analyze the image first to create a better prompt
-          const base64Image = imageBuffer.toString('base64');
-          
-          const visionResponse = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [{
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Describe this image's key visual elements in 2-3 sentences for image generation: style, main subject, composition, colors, and setting."
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:image/png;base64,${base64Image}`
-                  }
-                }
-              ]
-            }],
-            max_tokens: 150
-          });
-
-          const imageDescription = visionResponse.choices[0].message.content;
-          const enhancedPrompt = `${imageDescription}. ${prompt.trim()}`;
-
-          const generationResponse = await openai.images.generate({
-            model: "dall-e-3",
-            prompt: enhancedPrompt,
+          const editResponse = await openai.images.edit({
+            model: model,
+            image: Buffer.from(imageBase64, 'base64'),
+            prompt: prompt.trim(),
             n: 1,
-            size: (size || "1024x1024") as any,
-            quality: "standard"
+            size: (size || "1024x1024") as any
           });
 
-          if (!generationResponse.data || generationResponse.data.length === 0) {
-            throw new Error('No image returned from generation API');
+          if (!editResponse.data || editResponse.data.length === 0) {
+            throw new Error('No edited image returned from API');
           }
 
-          console.log('Image variation completed successfully');
+          console.log('GPT Image variation completed successfully');
 
           return res.json({
             success: true,
-            images: generationResponse.data.map(img => ({
-              url: img.url,
-              revised_prompt: img.revised_prompt || enhancedPrompt
+            images: editResponse.data.map(img => ({
+              url: img.url || `data:image/png;base64,${img.b64_json}`,
+              revised_prompt: img.revised_prompt || prompt
             })),
-            method: 'dall_e_3_variation',
-            original_analysis: imageDescription
+            method: 'gpt_image_edit'
           });
         }
 
       } catch (apiError: any) {
-        console.error('Vision-based image editing error:', apiError);
+        console.error('GPT Image editing error:', apiError);
         throw apiError;
       }
 

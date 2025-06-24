@@ -51,7 +51,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
   const [zoom, setZoom] = useState(1);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [model, setModel] = useState("dall-e-2");
+  const [model, setModel] = useState("gpt-image-1");
   const [size, setSize] = useState("1024x1024");
   const [quality, setQuality] = useState("standard");
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
@@ -637,7 +637,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Inpainting</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Paint over areas to edit, then describe what should replace them. Uses OpenAI's actual edit API.
+                      Paint over areas to edit, then describe what should replace them. Uses GPT Image with your original as reference.
                     </p>
                   </div>
                   
@@ -656,20 +656,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Advanced Options</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <div>
-                          <Label htmlFor="model-select" className="text-xs">Model</Label>
-                          <Select value={model} onValueChange={setModel}>
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="dall-e-2">DALL-E 2 (Edit Support)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-gray-500 mt-1">
-                            DALL-E 2 required for inpainting
-                          </p>
-                        </div>
+
                         <div>
                           <Label htmlFor="size-select" className="text-xs">Size</Label>
                           <Select value={size} onValueChange={setSize}>
@@ -706,7 +693,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Outpainting</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Extend your image beyond its boundaries. Creates variations that expand the scene.
+                      Extend your image beyond its boundaries using GPT Image's edit capabilities.
                     </p>
                   </div>
                   
@@ -724,8 +711,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                       <p className="text-sm text-amber-800 dark:text-amber-200">
-                        <strong>Note:</strong> Outpainting uses DALL-E 3 to create variations that extend the scene. 
-                        May not perfectly preserve the original image boundaries.
+                        <strong>Note:</strong> GPT Image will use your original as reference to extend the scene naturally.
                       </p>
                     </div>
                   </div>
@@ -735,7 +721,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Image Variation</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Create a new version inspired by your image with DALL-E 3.
+                      Create a new version based on your image using GPT Image's reference capabilities.
                     </p>
                   </div>
                   
@@ -753,8 +739,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>Note:</strong> Variations analyze your image and create a new interpretation with DALL-E 3. 
-                        Results may differ significantly from the original.
+                        <strong>Note:</strong> GPT Image uses your original as reference to create variations with better context preservation.
                       </p>
                     </div>
                   </div>
