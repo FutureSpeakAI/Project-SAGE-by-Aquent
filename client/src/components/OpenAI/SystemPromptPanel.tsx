@@ -75,7 +75,7 @@ export function SystemPromptPanel({
               <Label htmlFor="model" className="text-[#FF6600] font-medium">AI Model</Label>
               <Select value={model} onValueChange={setModel}>
                 <SelectTrigger id="model" className="border-gray-300 focus:ring-[#FF6600] focus:border-[#FF6600]">
-                  <SelectValue placeholder="Select an AI model" />
+                  <SelectValue  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gpt-4o">GPT-4o (Latest & Most Capable)</SelectItem>

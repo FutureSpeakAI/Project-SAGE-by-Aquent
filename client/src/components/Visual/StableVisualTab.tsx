@@ -133,7 +133,7 @@ export function StableVisualTab({ model, setModel }: StableVisualTabProps) {
                   <Label htmlFor="size-select">Size</Label>
                   <Select value={size} onValueChange={setSize}>
                     <SelectTrigger id="size-select">
-                      <SelectValue placeholder="Select size" />
+                      <SelectValue  />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>

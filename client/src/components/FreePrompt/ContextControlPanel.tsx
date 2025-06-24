@@ -135,7 +135,7 @@ export function ContextControlPanel({ contextSettings, onContextChange }: Contex
                 onValueChange={(value) => updateContext({ selectedPersona: value === "none" ? undefined : parseInt(value) })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a persona..." />
+                  <SelectValue  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No Persona</SelectItem>
@@ -262,7 +262,7 @@ export function ContextControlPanel({ contextSettings, onContextChange }: Contex
                     value={contextSettings.model}
                     onValueChange={(value) => updateContext({ model: value })}
                     type="chat"
-                    placeholder="Select AI model"
+                    
                     className="w-full"
                   />
                 </div>

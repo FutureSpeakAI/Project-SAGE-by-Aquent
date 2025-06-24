@@ -568,7 +568,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
                   <div className="flex-shrink-0 min-w-[200px]">
                     <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
                       <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select project" />
+                        <SelectValue  />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Projects</SelectItem>

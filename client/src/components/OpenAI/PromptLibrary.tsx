@@ -399,7 +399,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
                   onValueChange={handleCategoryChange}
                 >
                   <SelectTrigger id="category" className="border-gray-300 focus-visible:ring-[#FF6600]/30">
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue  />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="General">General</SelectItem>

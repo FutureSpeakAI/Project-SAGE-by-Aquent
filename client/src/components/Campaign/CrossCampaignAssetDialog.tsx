@@ -147,7 +147,7 @@ export function CrossCampaignAssetDialog({ open, onOpenChange, currentCampaignId
               <Label htmlFor="targetCampaign">Target Campaign</Label>
               <Select value={targetCampaignId} onValueChange={setTargetCampaignId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select campaign to link assets to..." />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {availableCampaigns.map((campaign: any) => (

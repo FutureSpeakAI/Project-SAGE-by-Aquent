@@ -202,7 +202,7 @@ const TabContent = ({
                     <Label htmlFor="size-select">Size</Label>
                     <Select value={size} onValueChange={setSize}>
                       <SelectTrigger id="size-select">
-                        <SelectValue placeholder="Select size" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {/* GPT Image Model only supports these specific sizes */}
@@ -218,7 +218,7 @@ const TabContent = ({
                     <Label htmlFor="quality-select">Quality</Label>
                     <Select value={quality} onValueChange={setQuality}>
                       <SelectTrigger id="quality-select">
-                        <SelectValue placeholder="Select quality" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="low">Low (Faster)</SelectItem>
@@ -233,7 +233,7 @@ const TabContent = ({
                     <Label htmlFor="background-select">Background</Label>
                     <Select value={background} onValueChange={setBackground}>
                       <SelectTrigger id="background-select">
-                        <SelectValue placeholder="Select background" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="auto">Auto (AI Chooses)</SelectItem>

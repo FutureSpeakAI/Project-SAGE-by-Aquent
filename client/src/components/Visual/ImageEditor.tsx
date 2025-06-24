@@ -249,10 +249,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
       return;
     }
     
-    // Draw with white for proper mask (areas to edit)
+    // Draw with red for visibility (will be converted to white for API)
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
-    ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.strokeStyle = "rgba(255, 100, 100, 1.0)";
+    ctx.fillStyle = "rgba(255, 100, 100, 1.0)";
     ctx.lineWidth = brushSize * scaleX;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -277,9 +277,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
-    // Draw with white for proper mask (areas to edit)
+    // Draw with red for visibility (will be converted to white for API)
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.strokeStyle = "rgba(255, 100, 100, 1.0)";
     ctx.lineWidth = brushSize * scaleX;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -310,9 +310,25 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     tempCtx.fillStyle = 'black';
     tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
     
-    // Draw white where user painted (areas to edit)
-    tempCtx.globalCompositeOperation = 'source-over';
-    tempCtx.drawImage(maskCanvas, 0, 0);
+    // Convert red painted areas to white for the mask
+    const imageData = maskCanvas.getContext('2d')?.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+    if (imageData) {
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i];
+        const g = imageData.data[i + 1];
+        const b = imageData.data[i + 2];
+        const a = imageData.data[i + 3];
+        
+        // If pixel has red content (painted area), make it white
+        if (r > 100 && a > 0) {
+          imageData.data[i] = 255;     // R
+          imageData.data[i + 1] = 255; // G
+          imageData.data[i + 2] = 255; // B
+          imageData.data[i + 3] = 255; // A
+        }
+      }
+      tempCtx.putImageData(imageData, 0, 0);
+    }
     
     setMaskData(tempCanvas.toDataURL());
   };
@@ -593,8 +609,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       height: "100%",
                       zIndex: 2,
                       cursor: "crosshair",
-                      opacity: 0.5,
-                      mixBlendMode: "difference" as const
+                      opacity: 0.3,
+                      pointerEvents: "auto"
                     }}
                     onMouseDown={startDrawing}
                     onMouseMove={(e) => {
