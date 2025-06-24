@@ -93,6 +93,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     }
   }, [open, imageUrl, imageId]);
 
+  // Debug editedImageUrl state changes
+  useEffect(() => {
+    console.log('editedImageUrl state changed:', editedImageUrl ? 'HAS IMAGE' : 'NO IMAGE');
+    console.log('editedImageUrl length:', editedImageUrl?.length || 0);
+  }, [editedImageUrl]);
+
   // Load and draw the original image on canvas
   useEffect(() => {
     if (!open || !imageUrl) {
@@ -216,8 +222,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (!ctx) return;
     
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"; // White mask with good opacity
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)"; // Pure white for mask
+    ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
     ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -248,11 +254,27 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (!isDrawing) return;
     setIsDrawing(false);
     
-    // Capture mask data from mask canvas
+    // Capture mask data from mask canvas - convert to proper mask format
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
     
-    setMaskData(maskCanvas.toDataURL());
+    // Create a proper mask: white areas = edit, black areas = keep original
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = maskCanvas.width;
+    tempCanvas.height = maskCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+    
+    // Fill with black (keep original)
+    tempCtx.fillStyle = 'black';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    
+    // Draw white where user painted (areas to edit)
+    tempCtx.globalCompositeOperation = 'source-over';
+    tempCtx.drawImage(maskCanvas, 0, 0);
+    
+    console.log('Mask created - dimensions:', tempCanvas.width, 'x', tempCanvas.height);
+    setMaskData(tempCanvas.toDataURL());
   };
 
   const clearMask = () => {
@@ -289,6 +311,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         // Force a re-render by logging the state change
         setTimeout(() => {
           console.log('editedImageUrl state after setting:', newImageUrl ? 'SET' : 'NOT SET');
+          console.log('editedImageUrl length:', newImageUrl?.length);
+          console.log('Component should show edited image:', !!newImageUrl);
         }, 100);
         
         // Auto-populate title for quick saving
@@ -464,11 +488,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             </div>
             
-            <div className="flex-1 flex flex-col lg:flex-row gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
-              {/* Original Image Section */}
-              <div className="flex-1 flex flex-col">
-                <Label className="text-sm font-medium mb-2 text-center">Original</Label>
-                <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1">
+            <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
+              {/* Before & After Layout */}
+              <div className={`flex ${editedImageUrl ? 'flex-row gap-4' : 'flex-col'} h-full`}>
+                {/* Original Image Section */}
+                <div className="flex-1 flex flex-col">
+                  <Label className="text-sm font-medium mb-2 text-center">Original</Label>
+                  <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1">
                 {/* Loading state overlay */}
                 {imageLoadStatus === "loading" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded">
@@ -545,6 +571,27 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       top: `${mousePos.y * zoom - (brushSize * zoom) / 2}px`,
                     }}
                   />
+                )}
+                  </div>
+                </div>
+                
+                {/* Edited Image Section - Only show when we have an edited image */}
+                {editedImageUrl && (
+                  <div className="flex-1 flex flex-col">
+                    <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
+                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1">
+                      <img 
+                        src={editedImageUrl} 
+                        alt="Edited" 
+                        className="max-w-full max-h-full object-contain"
+                        onLoad={() => console.log('Edited image displayed successfully in before/after')}
+                        onError={(e) => console.error('Failed to display edited image in before/after:', e)}
+                      />
+                      <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs z-10">
+                        Edited
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

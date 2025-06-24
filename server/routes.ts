@@ -882,6 +882,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             .toBuffer();
           console.log('Processed mask buffer size:', processedMaskBuffer.length);
           console.log('Final dimensions - Image:', imageMetadata.width, 'x', imageMetadata.height, 'Mask: resized to match');
+          console.log('IMPORTANT: Sending FULL original image + mask (not just masked area)');
           
           // No need for temporary files when using toFile
           
