@@ -237,22 +237,29 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || activeTab !== "inpaint") return;
+    if (!isDrawing || !lastPoint || activeTab !== "inpaint") return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
     
-    const rect = maskCanvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom;
-    const y = (e.clientY - rect.top) / zoom;
-    
-    setMousePos({ x, y });
-    
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
     ctx.lineTo(x, y);
     ctx.stroke();
+    
+    setLastPoint({ x, y });
   };
 
   const stopDrawing = () => {
@@ -291,9 +298,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
-    // Clear the mask canvas completely
     ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-    
     setMaskData(null);
   };
 
@@ -550,23 +555,25 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   }}
                 />
                 
-                {/* Transparent mask overlay canvas */}
-                <canvas
-                  ref={maskCanvasRef}
-                  className="absolute top-0 left-0 cursor-crosshair pointer-events-auto max-w-full max-h-full"
-                  style={{
-                    transform: `scale(${zoom})`,
-                    transformOrigin: 'center',
-                    maxHeight: '100%',
-                    display: imageLoadStatus === "error" || activeTab !== "inpaint" ? 'none' : 'block',
-                    opacity: 0.7,
-                    zIndex: 10
-                  }}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                />
+                {/* Mask overlay canvas */}
+                {activeTab === "inpaint" && imageLoadStatus === "loaded" && (
+                  <canvas
+                    ref={maskCanvasRef}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      zIndex: 2,
+                      cursor: "crosshair"
+                    }}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                  />
+                )}
                 
                 {/* Brush preview */}
                 {activeTab === "inpaint" && tool === "brush" && imageLoadStatus === "loaded" && (
