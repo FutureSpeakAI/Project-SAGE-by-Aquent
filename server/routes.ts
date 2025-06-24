@@ -861,90 +861,90 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       }
 
       try {
-        // Use vision analysis + generation approach for proper reference image context
-        console.log('Processing image edit with vision analysis + contextual generation');
-        
-        // First, analyze the original image to understand its content
-        const base64Image = imageBuffer.toString('base64');
-        
-        const visionResponse = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [{
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Analyze this image precisely for editing purposes. Describe: 1) Exact objects and their positions, 2) Specific colors, materials, and textures, 3) Lighting direction and intensity, 4) Camera angle and perspective, 5) Background details and depth, 6) Overall style (realistic/artistic/etc). Focus on preserving these exact visual elements."
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/png;base64,${base64Image}`
-                }
-              }
-            ]
-          }],
-          max_tokens: 400
-        });
-
-        const imageDescription = visionResponse.choices[0].message.content;
-        console.log('Vision analysis completed');
-        
-        // Create enhanced prompt that maintains original image context
-        let enhancedPrompt: string;
+        // Use proper OpenAI image editing API
+        const openai = await getOpenAIClient();
         
         if (maskBuffer) {
-          // Inpainting style - modify specific areas while maintaining context
-          enhancedPrompt = `Recreate this exact image: ${imageDescription}
+          // Use DALL-E 2 edit API for inpainting
+          console.log('Using OpenAI edit API for inpainting');
+          
+          const editResponse = await openai.images.edit({
+            model: "dall-e-2",
+            image: imageBuffer,
+            mask: maskBuffer,
+            prompt: prompt.trim(),
+            n: 1,
+            size: (size || "1024x1024") as any
+          });
 
-CRITICAL: Keep everything identical except: ${prompt.trim()}
+          if (!editResponse.data || editResponse.data.length === 0) {
+            throw new Error('No edited image returned from API');
+          }
 
-Rules:
-- Same exact objects in same positions
-- Same materials, textures, and colors
-- Same lighting direction and shadows
-- Same camera angle and perspective
-- Only add/modify what's specifically requested
-- Match the original style perfectly`;
+          console.log('OpenAI image edit completed successfully');
+
+          return res.json({
+            success: true,
+            images: editResponse.data.map(img => ({
+              url: img.url,
+              revised_prompt: prompt
+            })),
+            method: 'openai_edit_api'
+          });
         } else {
-          // Outpainting/extension style - expand or enhance the scene
-          enhancedPrompt = `Recreate this exact scene: ${imageDescription}
+          // For variations without mask, use DALL-E 3 generation with better prompting
+          console.log('Using DALL-E 3 for image variation');
+          
+          // Analyze the image first to create a better prompt
+          const base64Image = imageBuffer.toString('base64');
+          
+          const visionResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [{
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Describe this image's key visual elements in 2-3 sentences for image generation: style, main subject, composition, colors, and setting."
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:image/png;base64,${base64Image}`
+                  }
+                }
+              ]
+            }],
+            max_tokens: 150
+          });
 
-Then add: ${prompt.trim()}
+          const imageDescription = visionResponse.choices[0].message.content;
+          const enhancedPrompt = `${imageDescription}. ${prompt.trim()}`;
 
-CRITICAL preservation rules:
-- Keep the main subject absolutely identical in position, size, and appearance
-- Use the exact same lighting, shadows, and color palette
-- Maintain the same camera angle and perspective
-- Preserve all textures and materials exactly
-- Only extend or add elements around the existing composition
-- New elements must match the original lighting and style perfectly`;
+          const generationResponse = await openai.images.generate({
+            model: "dall-e-3",
+            prompt: enhancedPrompt,
+            n: 1,
+            size: (size || "1024x1024") as any,
+            quality: "standard"
+          });
+
+          if (!generationResponse.data || generationResponse.data.length === 0) {
+            throw new Error('No image returned from generation API');
+          }
+
+          console.log('Image variation completed successfully');
+
+          return res.json({
+            success: true,
+            images: generationResponse.data.map(img => ({
+              url: img.url,
+              revised_prompt: img.revised_prompt || enhancedPrompt
+            })),
+            method: 'dall_e_3_variation',
+            original_analysis: imageDescription
+          });
         }
-
-        // Generate the contextually appropriate image using DALL-E 3
-        const generationResponse = await openai.images.generate({
-          model: "dall-e-3",
-          prompt: enhancedPrompt,
-          n: 1,
-          size: (size || "1024x1024") as any,
-          quality: "standard"
-        });
-
-        if (!generationResponse.data || generationResponse.data.length === 0) {
-          throw new Error('No image returned from generation API');
-        }
-
-        console.log('Contextual image editing completed successfully');
-
-        return res.json({
-          success: true,
-          images: generationResponse.data.map(img => ({
-            url: img.url,
-            revised_prompt: img.revised_prompt || enhancedPrompt
-          })),
-          method: 'vision_contextual_generation',
-          original_analysis: imageDescription
-        });
 
       } catch (apiError: any) {
         console.error('Vision-based image editing error:', apiError);

@@ -51,7 +51,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
   const [zoom, setZoom] = useState(1);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [model, setModel] = useState("gpt-image-1");
+  const [model, setModel] = useState("dall-e-2");
   const [size, setSize] = useState("1024x1024");
   const [quality, setQuality] = useState("standard");
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
@@ -415,10 +415,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         </DialogHeader>
 
         <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)]">
-          {/* Left Panel - Image Canvas */}
+          {/* Left Panel - Image Comparison */}
           <div className="w-full lg:w-[60%] bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-              <Label className="text-lg font-medium">Original Image</Label>
+              <Label className="text-lg font-medium">
+                {editedImageUrl ? "Before & After" : "Original Image"}
+              </Label>
               <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
@@ -444,8 +446,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             </div>
             
-            <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
-              <div className="relative">
+            <div className="flex-1 flex flex-col lg:flex-row gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
+              {/* Original Image Section */}
+              <div className="flex-1 flex flex-col">
+                <Label className="text-sm font-medium mb-2 text-center">Original</Label>
+                <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1">
                 {/* Loading state overlay */}
                 {imageLoadStatus === "loading" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded">
@@ -561,45 +566,45 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             )}
 
-            {/* Edited Image Preview */}
+            {/* Action Buttons for Edited Image */}
             {editedImageUrl && (
-              <div className="mt-4 p-2 sm:p-4 border rounded-lg bg-white dark:bg-gray-800">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-base font-medium">Edited Result</Label>
+              <div className="mt-4 flex flex-col gap-3">
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    size="sm"
                     onClick={downloadEditedImage}
+                    className="flex-1"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Download
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEditedImageUrl(null);
+                      setImageTitle("");
+                    }}
+                    className="flex-1"
+                  >
+                    Try Again
+                  </Button>
                 </div>
-                <img 
-                  src={editedImageUrl} 
-                  alt="Edited result"
-                  className="w-full max-h-48 sm:max-h-60 object-contain rounded border"
-                />
                 
-                {/* Save to Library Section */}
-                <div className="mt-4 space-y-3 border-t pt-4">
-                  <Label className="text-sm font-medium">Save to Library</Label>
-                  <div>
-                    <Label htmlFor="image-title" className="text-xs">Image Title</Label>
-                    <Textarea
-                      id="image-title"
-                      placeholder="Enter a title for your edited image..."
+                {/* Quick Save Section */}
+                <div className="p-3 border rounded-lg bg-white dark:bg-gray-800">
+                  <Label className="text-sm font-medium mb-2 block">Save to Library</Label>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Enter image title..."
                       value={imageTitle}
                       onChange={(e) => setImageTitle(e.target.value)}
-                      className="resize-none mt-1"
-                      rows={1}
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button
                       onClick={() => saveImageMutation.mutate()}
-                      disabled={saveImageMutation.isPending || !imageTitle.trim() || !prompt.trim()}
-                      className="flex-1"
+                      disabled={saveImageMutation.isPending || !imageTitle.trim()}
+                      className="w-full"
                       size="sm"
                     >
                       {saveImageMutation.isPending ? (
@@ -657,15 +662,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {getImageModels().map((modelName) => (
-                                <SelectItem key={modelName} value={modelName}>
-                                  {modelName === "gpt-image-1" ? "DALL-E 3 (Latest)" : 
-                                   modelName === "dall-e-3" ? "DALL-E 3" : 
-                                   modelName === "dall-e-2" ? "DALL-E 2 (Legacy)" : modelName}
-                                </SelectItem>
-                              ))}
+                              <SelectItem value="dall-e-2">DALL-E 2 (Edit Support)</SelectItem>
                             </SelectContent>
                           </Select>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Only DALL-E 2 supports image editing
+                          </p>
                         </div>
                         <div>
                           <Label htmlFor="size-select" className="text-xs">Size</Label>
