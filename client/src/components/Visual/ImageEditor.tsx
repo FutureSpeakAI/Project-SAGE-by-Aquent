@@ -225,13 +225,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (activeTab !== "inpaint") return;
     
-    console.log('Starting to draw mask');
     setIsDrawing(true);
     const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) {
-      console.log('No mask canvas found');
-      return;
-    }
+    if (!maskCanvas) return;
     
     const rect = maskCanvas.getBoundingClientRect();
     // Scale coordinates from display size to canvas size
@@ -240,14 +236,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
     
-    console.log('Drawing at:', x, y, 'Canvas size:', maskCanvas.width, maskCanvas.height);
     setLastPoint({ x, y });
     
     const ctx = maskCanvas.getContext("2d");
-    if (!ctx) {
-      console.log('No mask context found');
-      return;
-    }
+    if (!ctx) return;
     
     // Draw with red for visibility (will be converted to white for API)
     ctx.globalCompositeOperation = "source-over";
@@ -737,7 +729,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     />
                     <Select value={selectedCampaignId?.toString() || ""} onValueChange={(value) => setSelectedCampaignId(value ? parseInt(value) : null)}>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Assign to campaign (optional)" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">No campaign</SelectItem>
