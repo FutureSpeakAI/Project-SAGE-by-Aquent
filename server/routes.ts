@@ -866,19 +866,22 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             .png()
             .toBuffer();
           
-          // Create FormData for direct API call
+          // Create FormData for direct API call using Node.js form-data
           const formData = new FormData();
           formData.append('model', model);
           formData.append('prompt', prompt.trim());
           formData.append('n', '1');
           formData.append('size', size || '1024x1024');
           
-          // Create blobs with explicit content types
-          const imageBlob = new Blob([processedImageBuffer], { type: 'image/png' });
-          const maskBlob = new Blob([processedMaskBuffer], { type: 'image/png' });
-          
-          formData.append('image', imageBlob, 'image.png');
-          formData.append('mask', maskBlob, 'mask.png');
+          // Append buffers as streams with proper content type
+          formData.append('image', processedImageBuffer, {
+            filename: 'image.png',
+            contentType: 'image/png'
+          });
+          formData.append('mask', processedMaskBuffer, {
+            filename: 'mask.png',
+            contentType: 'image/png'
+          });
           
           const apiResponse = await fetch('https://api.openai.com/v1/images/edits', {
             method: 'POST',
@@ -919,16 +922,18 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             .png()
             .toBuffer();
           
-          // Create FormData for direct API call
+          // Create FormData for direct API call using Node.js form-data
           const formData = new FormData();
           formData.append('model', model);
           formData.append('prompt', prompt.trim());
           formData.append('n', '1');
           formData.append('size', size || '1024x1024');
           
-          // Create blob with explicit content type
-          const imageBlob = new Blob([processedImageBuffer], { type: 'image/png' });
-          formData.append('image', imageBlob, 'image.png');
+          // Append buffer as stream with proper content type
+          formData.append('image', processedImageBuffer, {
+            filename: 'image.png',
+            contentType: 'image/png'
+          });
           
           const apiResponse = await fetch('https://api.openai.com/v1/images/edits', {
             method: 'POST',
