@@ -54,6 +54,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [model, setModel] = useState("gpt-image-1");
   const [size, setSize] = useState("1024x1024");
   const [quality, setQuality] = useState("standard");
+  
+  // Fetch campaigns for assignment
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ['/api/campaigns']
+  });
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
   const [imageLoadStatus, setImageLoadStatus] = useState<"loading" | "loaded" | "error">("loading");
   const [imageTitle, setImageTitle] = useState("");
@@ -579,11 +584,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {editedImageUrl && (
                   <div className="flex-1 flex flex-col">
                     <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
-                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1">
+                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 overflow-auto">
                       <img 
                         src={editedImageUrl} 
                         alt="Edited" 
-                        className="max-w-full max-h-full object-contain"
+                        className="w-full h-full object-contain"
                         onLoad={() => console.log('Edited image displayed successfully in before/after')}
                         onError={(e) => console.error('Failed to display edited image in before/after:', e)}
                       />
@@ -668,6 +673,19 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       onChange={(e) => setImageTitle(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    <Select value={selectedCampaignId?.toString() || ""} onValueChange={(value) => setSelectedCampaignId(value ? parseInt(value) : null)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Assign to campaign (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No campaign</SelectItem>
+                        {campaigns.map((campaign: any) => (
+                          <SelectItem key={campaign.id} value={campaign.id.toString()}>
+                            {campaign.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       onClick={() => saveImageMutation.mutate()}
                       disabled={saveImageMutation.isPending || !imageTitle.trim()}
