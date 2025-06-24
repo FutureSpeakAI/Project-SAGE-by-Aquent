@@ -859,13 +859,21 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           const imageBuffer = Buffer.from(imageBase64, 'base64');
           const maskBuffer = Buffer.from(maskBase64, 'base64');
           
-          // Save buffers to temporary files
+          // Save buffers to temporary files with proper PNG format
           const tempDir = '/tmp';
           const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
           const maskPath = `${tempDir}/edit_mask_${Date.now()}.png`;
           
-          fs.writeFileSync(imagePath, imageBuffer);
-          fs.writeFileSync(maskPath, maskBuffer);
+          // Use Sharp to ensure proper PNG format with correct headers
+          const processedImageBuffer = await sharp(imageBuffer)
+            .png()
+            .toBuffer();
+          const processedMaskBuffer = await sharp(maskBuffer)
+            .png()
+            .toBuffer();
+          
+          fs.writeFileSync(imagePath, processedImageBuffer);
+          fs.writeFileSync(maskPath, processedMaskBuffer);
           
           try {
             const editResponse = await openai.images.edit({
@@ -909,7 +917,12 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           const tempDir = '/tmp';
           const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
           
-          fs.writeFileSync(imagePath, imageBuffer);
+          // Use Sharp to ensure proper PNG format with correct headers
+          const processedImageBuffer = await sharp(imageBuffer)
+            .png()
+            .toBuffer();
+          
+          fs.writeFileSync(imagePath, processedImageBuffer);
           
           try {
             const editResponse = await openai.images.edit({
