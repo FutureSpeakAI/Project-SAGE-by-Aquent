@@ -855,55 +855,93 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           // Use OpenAI's edit API with mask for inpainting
           console.log('Performing inpainting with mask using edit API');
           
-          const editResponse = await openai.images.edit({
-            model: model,
-            image: Buffer.from(imageBase64, 'base64'),
-            mask: Buffer.from(maskBase64, 'base64'),
-            prompt: prompt.trim(),
-            n: 1,
-            size: (size || "1024x1024") as any
-          });
+          // Create proper Node.js file streams for the API
+          const imageBuffer = Buffer.from(imageBase64, 'base64');
+          const maskBuffer = Buffer.from(maskBase64, 'base64');
+          
+          // Save buffers to temporary files
+          const tempDir = '/tmp';
+          const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
+          const maskPath = `${tempDir}/edit_mask_${Date.now()}.png`;
+          
+          fs.writeFileSync(imagePath, imageBuffer);
+          fs.writeFileSync(maskPath, maskBuffer);
+          
+          try {
+            const editResponse = await openai.images.edit({
+              model: model,
+              image: fs.createReadStream(imagePath),
+              mask: fs.createReadStream(maskPath),
+              prompt: prompt.trim(),
+              n: 1,
+              size: (size || "1024x1024") as any
+            });
 
-          if (!editResponse.data || editResponse.data.length === 0) {
-            throw new Error('No edited image returned from API');
+            if (!editResponse.data || editResponse.data.length === 0) {
+              throw new Error('No edited image returned from API');
+            }
+
+            console.log('GPT Image inpainting completed successfully');
+
+            return res.json({
+              success: true,
+              images: editResponse.data.map(img => ({
+                url: img.url || `data:image/png;base64,${img.b64_json}`,
+                revised_prompt: img.revised_prompt || prompt
+              })),
+              method: 'gpt_image_inpaint'
+            });
+          } finally {
+            // Clean up temporary files
+            try {
+              fs.unlinkSync(imagePath);
+              fs.unlinkSync(maskPath);
+            } catch (e) {
+              console.log('Error cleaning up temp files:', e);
+            }
           }
-
-          console.log('GPT Image inpainting completed successfully');
-
-          return res.json({
-            success: true,
-            images: editResponse.data.map(img => ({
-              url: img.url || `data:image/png;base64,${img.b64_json}`,
-              revised_prompt: img.revised_prompt || prompt
-            })),
-            method: 'gpt_image_inpaint'
-          });
         } else {
           // Use image generation with reference for variations/modifications
           console.log('Creating variation using GPT Image with reference');
           
-          const editResponse = await openai.images.edit({
-            model: model,
-            image: Buffer.from(imageBase64, 'base64'),
-            prompt: prompt.trim(),
-            n: 1,
-            size: (size || "1024x1024") as any
-          });
+          // Create proper Node.js file stream for the API
+          const imageBuffer = Buffer.from(imageBase64, 'base64');
+          const tempDir = '/tmp';
+          const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
+          
+          fs.writeFileSync(imagePath, imageBuffer);
+          
+          try {
+            const editResponse = await openai.images.edit({
+              model: model,
+              image: fs.createReadStream(imagePath),
+              prompt: prompt.trim(),
+              n: 1,
+              size: (size || "1024x1024") as any
+            });
 
-          if (!editResponse.data || editResponse.data.length === 0) {
-            throw new Error('No edited image returned from API');
+            if (!editResponse.data || editResponse.data.length === 0) {
+              throw new Error('No edited image returned from API');
+            }
+
+            console.log('GPT Image variation completed successfully');
+
+            return res.json({
+              success: true,
+              images: editResponse.data.map(img => ({
+                url: img.url || `data:image/png;base64,${img.b64_json}`,
+                revised_prompt: img.revised_prompt || prompt
+              })),
+              method: 'gpt_image_edit'
+            });
+          } finally {
+            // Clean up temporary file
+            try {
+              fs.unlinkSync(imagePath);
+            } catch (e) {
+              console.log('Error cleaning up temp file:', e);
+            }
           }
-
-          console.log('GPT Image variation completed successfully');
-
-          return res.json({
-            success: true,
-            images: editResponse.data.map(img => ({
-              url: img.url || `data:image/png;base64,${img.b64_json}`,
-              revised_prompt: img.revised_prompt || prompt
-            })),
-            method: 'gpt_image_edit'
-          });
         }
 
       } catch (apiError: any) {
