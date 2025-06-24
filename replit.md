@@ -1,0 +1,108 @@
+# SAGE Platform Architecture Summary
+
+## Overview
+
+SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creation platform that leverages multiple AI providers to create intelligent, context-aware marketing materials. The platform features smart AI routing, multi-provider fallbacks, voice interaction capabilities, and a complete briefing-to-deliverable workflow.
+
+## System Architecture
+
+### Frontend Architecture
+- **React + TypeScript**: Modern component-based architecture
+- **Tailwind CSS + shadcn/ui**: Comprehensive UI component library
+- **Tab-Based Navigation**: Five main modules (Free Prompt, Briefing, Content, Visual, Campaign)
+- **Context Management**: React Context for cross-tab state persistence
+- **Real-time Voice Interface**: Web Audio API integration with voice activity detection
+
+### Backend Architecture
+- **Node.js + Express**: RESTful API with ES modules
+- **TypeScript**: Type-safe server implementation
+- **Multi-Provider AI Integration**: OpenAI, Anthropic, Gemini, and Perplexity APIs
+- **File Processing**: PDF (pdf-parse), DOCX (mammoth), and text file extraction
+- **Smart Routing Engine**: Intelligent provider selection based on query type
+
+### Database Architecture
+- **PostgreSQL**: Primary data storage with Drizzle ORM
+- **Neon Database**: Cloud-hosted PostgreSQL instance
+- **Schema**: Conversations, content library, briefings, and user sessions
+
+## Key Components
+
+### 1. Smart AI Routing System
+- **Intelligent Provider Selection**: Routes queries to optimal AI provider
+- **Research Queries**: Perplexity (web-enabled) → Anthropic → Gemini
+- **Creative Content**: OpenAI → Anthropic → Gemini
+- **Technical Analysis**: Gemini → Anthropic → OpenAI
+- **Fallback Mechanisms**: Automatic provider switching on failures
+
+### 2. Multi-Modal Content Processing
+- **File Upload System**: PDF, DOCX, TXT file extraction and processing
+- **Image Processing**: Reference image upload and integration
+- **Voice Interface**: Continuous listening with interruption detection
+- **Content Generation**: Brief-to-deliverable conversion pipeline
+
+### 3. Context-Aware Briefing System
+- **Document Upload**: Real file processing (not simulation)
+- **Form-Based Creation**: Structured briefing input
+- **Library Management**: Persistent storage and retrieval
+- **Visual Integration**: Brief interpretation for image generation
+
+### 4. Cross-Tab Persistence
+- **Global State Management**: Context-based state preservation
+- **localStorage Integration**: Automatic state persistence
+- **Session Continuity**: Maintains context across navigation
+
+## Data Flow
+
+### Content Generation Pipeline
+1. **Input Processing**: User query or briefing upload
+2. **Smart Routing**: AI provider selection based on content type
+3. **Context Assembly**: Briefing, personas, and memory integration
+4. **AI Processing**: Multi-provider generation with fallbacks
+5. **Output Delivery**: Formatted content with metadata
+
+### Voice Interaction Flow
+1. **Voice Activation**: Intelligent mode with continuous listening
+2. **Speech Detection**: Real-time voice activity monitoring
+3. **Interruption Handling**: Immediate audio stop on user speech
+4. **Transcription**: Multi-alternative speech recognition
+5. **Response Generation**: AI-powered conversation continuation
+
+## External Dependencies
+
+### AI Providers
+- **OpenAI**: GPT-4o, GPT-4o Mini, GPT-4 Turbo for creative content
+- **Anthropic**: Claude Sonnet 4, Claude 3.7 Sonnet for analysis
+- **Gemini**: 1.5 Pro, 1.5 Flash for technical processing
+- **Perplexity**: Sonar models for real-time web research
+
+### Third-Party Services
+- **Neon Database**: PostgreSQL hosting
+- **File Processing**: pdf-parse, mammoth libraries
+- **Speech Services**: Web Speech API for transcription
+- **Audio Processing**: Web Audio API for voice detection
+
+## Deployment Strategy
+
+### Development Environment
+- **Replit Integration**: Native development environment
+- **Hot Reload**: Vite-powered development server
+- **Database**: Replit-hosted PostgreSQL instance
+
+### Production Deployment
+- **Autoscale Target**: Replit deployment infrastructure
+- **Build Process**: Vite frontend + esbuild server bundling
+- **Environment Variables**: API keys and database configuration
+- **Port Configuration**: External port 80 mapped to internal 5000
+
+### Health Monitoring
+- **Provider Health Checks**: Real-time API availability monitoring
+- **Fallback Routing**: Automatic provider switching on failures
+- **Error Tracking**: Comprehensive logging and error handling
+
+## Changelog
+
+- June 24, 2025. Initial setup
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.

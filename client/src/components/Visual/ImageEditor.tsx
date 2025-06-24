@@ -279,6 +279,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
       if (data.images && data.images.length > 0) {
         const newImageUrl = data.images[0].url;
         setEditedImageUrl(newImageUrl);
+        
+        // Auto-populate title for quick saving
+        if (!imageTitle) {
+          setImageTitle(`Edited: ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}`);
+        }
+        
         if (onImageEdited) {
           onImageEdited(newImageUrl);
         }
@@ -297,7 +303,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     },
   });
 
-  // Save edited image mutation
+  // Save edited image mutation with improved campaign integration
   const saveImageMutation = useMutation({
     mutationFn: async () => {
       if (!editedImageUrl || !imageTitle.trim() || !prompt.trim()) {
@@ -311,12 +317,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         model: model,
         size: size,
         quality: quality,
-        projectId: 1, // Default project
-        metadata: JSON.stringify({ 
+        metadata: { 
           editedAt: new Date().toISOString(),
           isEditedImage: true,
-          originalImageId: imageId
-        })
+          originalImageId: imageId,
+          editType: activeTab,
+          editingSession: Date.now()
+        }
       });
       
       if (!response.ok) {
@@ -326,16 +333,19 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (savedImage) => {
+      // Invalidate queries to refresh the library
+      queryClient.invalidateQueries({ queryKey: ["/api/generated-images"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/image-projects"] });
+      
       toast({
-        title: "Image saved",
-        description: "Your edited image has been saved to the library.",
+        title: "Image saved successfully",
+        description: "Your edited image has been saved to the library and is available for use in campaigns.",
       });
-      // Clear the form
+      
+      // Keep the dialog open but show success state
       setImageTitle("");
-      setPrompt("");
-      setEditedImageUrl(null);
-      onOpenChange(false);
+      // Don't clear the edited image so user can continue working
     },
     onError: (error: Error) => {
       toast({
@@ -393,7 +403,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0 sm:max-w-[95vw]">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center">
             <Edit className="mr-2 h-5 w-5" />
@@ -404,12 +414,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex h-[calc(95vh-120px)]">
-          {/* Left Panel - Image Canvas (60%) */}
-          <div className="w-[60%] bg-gray-50 dark:bg-gray-900 p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)]">
+          {/* Left Panel - Image Canvas */}
+          <div className="w-full lg:w-[60%] bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <Label className="text-lg font-medium">Original Image</Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
@@ -476,14 +486,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 
                 <canvas
                   ref={canvasRef}
-                  width={600}
-                  height={600}
-                  className="border border-gray-200 dark:border-gray-700 rounded shadow-lg"
+                  width={800}
+                  height={800}
+                  className="border border-gray-200 dark:border-gray-700 rounded shadow-lg max-w-full max-h-full"
                   style={{
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
-                    maxWidth: '100%',
-                    maxHeight: '100%',
                     display: imageLoadStatus === "error" ? 'none' : 'block'
                   }}
                 />
@@ -491,13 +499,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {/* Transparent mask overlay canvas */}
                 <canvas
                   ref={maskCanvasRef}
-                  width={600}
-                  height={600}
-                  className="absolute top-0 left-0 cursor-crosshair pointer-events-auto"
+                  width={800}
+                  height={800}
+                  className="absolute top-0 left-0 cursor-crosshair pointer-events-auto max-w-full max-h-full"
                   style={{
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
-                    maxWidth: '100%',
                     maxHeight: '100%',
                     display: imageLoadStatus === "error" || activeTab !== "inpaint" ? 'none' : 'block',
                     opacity: 0.7
