@@ -850,12 +850,18 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
       try {
         console.log(`Using ${model} for image editing`);
+        console.log('=== DETAILED DEBUG INFO ===');
         
         // Convert base64 to buffers and ensure proper PNG format
         const imageBuffer = Buffer.from(imageBase64, 'base64');
+        console.log('Original buffer size:', imageBuffer.length);
+        console.log('Original buffer first 20 bytes:', imageBuffer.subarray(0, 20));
+        
         const processedImageBuffer = await sharp(imageBuffer)
           .png()
           .toBuffer();
+        console.log('Processed buffer size:', processedImageBuffer.length);
+        console.log('Processed buffer first 20 bytes:', processedImageBuffer.subarray(0, 20));
         
         if (maskBase64) {
           console.log('Performing inpainting with mask');
@@ -871,10 +877,30 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             // Use toFile from OpenAI SDK for proper file handling
             const { toFile } = await import('openai');
             
+            const imageFile = await toFile(processedImageBuffer, 'image.png', { type: 'image/png' });
+            const maskFile = await toFile(processedMaskBuffer, 'mask.png', { type: 'image/png' });
+            
+            console.log('Image file object:', {
+              type: typeof imageFile,
+              constructor: imageFile.constructor.name,
+              size: imageFile.size,
+              type_prop: imageFile.type,
+              name: imageFile.name
+            });
+            
+            console.log('Mask file object:', {
+              type: typeof maskFile,
+              constructor: maskFile.constructor.name,
+              size: maskFile.size,
+              type_prop: maskFile.type,
+              name: maskFile.name
+            });
+            
+            console.log('Calling OpenAI API with model:', model);
             const editResponse = await openai.images.edit({
               model: model,
-              image: await toFile(processedImageBuffer, 'image.png'),
-              mask: await toFile(processedMaskBuffer, 'mask.png'),
+              image: imageFile,
+              mask: maskFile,
               prompt: prompt.trim(),
               n: 1,
               size: (size || "1024x1024") as any
@@ -902,9 +928,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             // Use toFile from OpenAI SDK for proper file handling
             const { toFile } = await import('openai');
             
+            const imageFile = await toFile(processedImageBuffer, 'image.png', { type: 'image/png' });
+            
+            console.log('Image file object:', {
+              type: typeof imageFile,
+              constructor: imageFile.constructor.name,
+              size: imageFile.size,
+              type_prop: imageFile.type,
+              name: imageFile.name
+            });
+            
+            console.log('Calling OpenAI API with model:', model);
             const editResponse = await openai.images.edit({
               model: model,
-              image: await toFile(processedImageBuffer, 'image.png'),
+              image: imageFile,
               prompt: prompt.trim(),
               n: 1,
               size: (size || "1024x1024") as any
