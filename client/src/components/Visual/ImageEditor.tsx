@@ -584,11 +584,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {editedImageUrl && (
                   <div className="flex-1 flex flex-col">
                     <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
-                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 overflow-auto">
+                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 overflow-hidden">
                       <img 
                         src={editedImageUrl} 
                         alt="Edited" 
-                        className="w-full h-full object-contain"
+                        className="max-w-full max-h-full object-contain"
                         onLoad={() => console.log('Edited image displayed successfully in before/after')}
                         onError={(e) => console.error('Failed to display edited image in before/after:', e)}
                       />
