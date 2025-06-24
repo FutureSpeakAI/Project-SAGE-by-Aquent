@@ -168,6 +168,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         if (maskCanvas) {
           maskCanvas.width = canvasWidth;
           maskCanvas.height = canvasHeight;
+          
+          // Clear any existing content
+          const maskCtx = maskCanvas.getContext('2d');
+          if (maskCtx) {
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+          }
         }
         
         // Enable high-quality rendering
@@ -581,7 +587,15 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       mixBlendMode: "multiply" as const
                     }}
                     onMouseDown={startDrawing}
-                    onMouseMove={draw}
+                    onMouseMove={(e) => {
+                      // Update mouse position for brush preview
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setMousePos({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                      });
+                      draw(e);
+                    }}
                     onMouseUp={stopDrawing}
                     onMouseLeave={stopDrawing}
                   />
