@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
   Edit, 
   Paintbrush, 
@@ -597,7 +597,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             </div>
             
             {/* Canvas Tools */}
-            {activeTab === "inpaint" && (
+            {activeTab === "inpaint" && !editedImageUrl && (
               <div className="mt-4 flex flex-wrap gap-2 items-center justify-center lg:justify-start">
                 <Button
                   variant={tool === "brush" ? "default" : "outline"}
