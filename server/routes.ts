@@ -854,22 +854,34 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         
         // Convert base64 to buffers and ensure proper PNG format
         const imageBuffer = Buffer.from(imageBase64, 'base64');
-        console.log('Original buffer size:', imageBuffer.length);
-        console.log('Original buffer first 20 bytes:', imageBuffer.subarray(0, 20));
+        console.log('Original image buffer size:', imageBuffer.length);
+        
+        // Get image metadata to ensure consistent sizing
+        const imageMetadata = await sharp(imageBuffer).metadata();
+        console.log('Original image dimensions:', imageMetadata.width, 'x', imageMetadata.height);
         
         const processedImageBuffer = await sharp(imageBuffer)
           .png()
           .toBuffer();
-        console.log('Processed buffer size:', processedImageBuffer.length);
-        console.log('Processed buffer first 20 bytes:', processedImageBuffer.subarray(0, 20));
+        console.log('Processed image buffer size:', processedImageBuffer.length);
         
         if (maskBase64) {
           console.log('Performing inpainting with mask');
           
           const maskBuffer = Buffer.from(maskBase64, 'base64');
+          console.log('Original mask buffer size:', maskBuffer.length);
+          
+          // Get mask metadata
+          const maskMetadata = await sharp(maskBuffer).metadata();
+          console.log('Original mask dimensions:', maskMetadata.width, 'x', maskMetadata.height);
+          
+          // Ensure mask matches image dimensions exactly
           const processedMaskBuffer = await sharp(maskBuffer)
+            .resize(imageMetadata.width, imageMetadata.height, { fit: 'fill' })
             .png()
             .toBuffer();
+          console.log('Processed mask buffer size:', processedMaskBuffer.length);
+          console.log('Final dimensions - Image:', imageMetadata.width, 'x', imageMetadata.height, 'Mask: resized to match');
           
           // No need for temporary files when using toFile
           
