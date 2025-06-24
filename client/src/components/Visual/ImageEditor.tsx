@@ -688,7 +688,6 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             )}
           </div>
-          </div>
 
           {/* Right Panel - Controls */}
           <div className="w-full lg:w-[40%] border-t lg:border-t-0 lg:border-l bg-white dark:bg-gray-950 flex flex-col">
