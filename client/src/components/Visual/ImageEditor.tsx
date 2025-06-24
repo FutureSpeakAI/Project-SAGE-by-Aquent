@@ -621,6 +621,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             )}
           </div>
+          </div>
 
           {/* Right Panel - Controls */}
           <div className="w-full lg:w-[40%] border-t lg:border-t-0 lg:border-l bg-white dark:bg-gray-950 flex flex-col">
@@ -636,7 +637,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Inpainting</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Paint over areas you want to modify, then describe the changes you want.
+                      Paint over areas to edit, then describe what should replace them. Uses OpenAI's actual edit API.
                     </p>
                   </div>
                   
@@ -666,7 +667,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                             </SelectContent>
                           </Select>
                           <p className="text-xs text-gray-500 mt-1">
-                            Only DALL-E 2 supports image editing
+                            DALL-E 2 required for inpainting
                           </p>
                         </div>
                         <div>
@@ -705,7 +706,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Outpainting</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Extend your image beyond its current boundaries by describing what should be added.
+                      Extend your image beyond its boundaries. Creates variations that expand the scene.
                     </p>
                   </div>
                   
@@ -720,6 +721,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                         className="min-h-[120px] mt-2"
                       />
                     </div>
+                    
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        <strong>Note:</strong> Outpainting uses DALL-E 3 to create variations that extend the scene. 
+                        May not perfectly preserve the original image boundaries.
+                      </p>
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -727,7 +735,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Image Variation</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Create a variation of your image based on a text description.
+                      Create a new version inspired by your image with DALL-E 3.
                     </p>
                   </div>
                   
@@ -736,11 +744,18 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       <Label htmlFor="variation-prompt" className="text-base font-medium">Variation Instructions</Label>
                       <Textarea
                         id="variation-prompt"
-                        placeholder="Describe how you want to change the overall image..."
+                        placeholder="Describe changes or style adaptations you want..."
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         className="min-h-[120px] mt-2"
                       />
+                    </div>
+                    
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Note:</strong> Variations analyze your image and create a new interpretation with DALL-E 3. 
+                        Results may differ significantly from the original.
+                      </p>
                     </div>
                   </div>
                 </TabsContent>
@@ -767,12 +782,27 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   )}
                 </Button>
                 
+                {editedImageUrl && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEditedImageUrl(null);
+                      setImageTitle("");
+                      setPrompt("");
+                      setMaskData(null);
+                    }}
+                    className="w-full"
+                  >
+                    Start New Edit
+                  </Button>
+                )}
+                
                 <Button
                   variant="outline"
                   onClick={() => onOpenChange(false)}
                   className="w-full"
                 >
-                  Cancel
+                  Close
                 </Button>
               </div>
             </Tabs>
