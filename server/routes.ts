@@ -920,14 +920,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
             console.log(`${model} inpainting completed successfully`);
 
-            return res.json({
+            const responseData = {
               success: true,
               images: editResponse.data.map(img => ({
                 url: img.url || `data:image/png;base64,${img.b64_json}`,
                 revised_prompt: img.revised_prompt || prompt
               })),
               method: `${model}_inpaint`
-            });
+            };
+            
+            console.log('Sending response with', responseData.images.length, 'images');
+            console.log('First image URL length:', responseData.images[0]?.url?.length);
+            console.log('First image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
+            
+            return res.json(responseData);
           } finally {
             // No cleanup needed with toFile
           }
@@ -961,14 +967,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
             console.log(`${model} variation completed successfully`);
 
-            return res.json({
+            const responseData = {
               success: true,
               images: editResponse.data.map(img => ({
                 url: img.url || `data:image/png;base64,${img.b64_json}`,
                 revised_prompt: img.revised_prompt || prompt
               })),
               method: `${model}_edit`
-            });
+            };
+            
+            console.log('Sending variation response with', responseData.images.length, 'images');
+            console.log('First image URL length:', responseData.images[0]?.url?.length);
+            console.log('First image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
+            
+            return res.json(responseData);
           } finally {
             // No cleanup needed with toFile
           }

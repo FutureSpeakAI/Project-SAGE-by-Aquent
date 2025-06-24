@@ -276,8 +276,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
       return await response.json();
     },
     onSuccess: (data) => {
+      console.log('Image editing response received:', data);
+      
       if (data.images && data.images.length > 0) {
         const newImageUrl = data.images[0].url;
+        console.log('Setting edited image URL:', newImageUrl.substring(0, 100) + '...');
         setEditedImageUrl(newImageUrl);
         
         // Auto-populate title for quick saving
@@ -291,6 +294,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         toast({
           title: "Image edited successfully",
           description: "Your edited image is ready for download or saving.",
+        });
+      } else {
+        console.error('No images in response or empty images array:', data);
+        toast({
+          title: "No edited image received",
+          description: "The API response didn't contain any images.",
+          variant: "destructive"
         });
       }
     },
