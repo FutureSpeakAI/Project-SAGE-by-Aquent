@@ -354,12 +354,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         
         setEditedImageUrl(newImageUrl);
         
-        // Force a re-render by logging the state change
-        setTimeout(() => {
-          console.log('editedImageUrl state after setting:', newImageUrl ? 'SET' : 'NOT SET');
-          console.log('editedImageUrl length:', newImageUrl?.length);
-          console.log('Component should show edited image:', !!newImageUrl);
-        }, 100);
+        // Clear the mask overlay immediately after successful edit
+        clearMask();
         
         // Auto-populate title for quick saving
         if (!imageTitle) {
@@ -369,6 +365,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         if (onImageEdited) {
           onImageEdited(newImageUrl);
         }
+        
         toast({
           title: "Image edited successfully",
           description: "Your edited image is ready for download or saving.",
