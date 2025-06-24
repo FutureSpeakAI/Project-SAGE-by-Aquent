@@ -241,7 +241,7 @@ export function RoutingValidationPanel() {
                   <SelectValue placeholder="Auto Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Auto Select</SelectItem>
+                  <SelectItem value={undefined}>Auto Select</SelectItem>
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
                   <SelectItem value="gemini">Gemini</SelectItem>

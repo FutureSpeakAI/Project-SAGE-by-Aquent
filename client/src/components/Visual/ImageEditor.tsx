@@ -727,12 +727,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       onChange={(e) => setImageTitle(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <Select value={selectedCampaignId?.toString() || ""} onValueChange={(value) => setSelectedCampaignId(value ? parseInt(value) : null)}>
+                    <Select value={selectedCampaignId?.toString() || undefined} onValueChange={(value) => setSelectedCampaignId(value ? parseInt(value) : null)}>
                       <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No campaign</SelectItem>
+                        <SelectItem value={undefined}>No campaign</SelectItem>
                         {campaigns.map((campaign: any) => (
                           <SelectItem key={campaign.id} value={campaign.id.toString()}>
                             {campaign.name}
