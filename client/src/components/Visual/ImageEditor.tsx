@@ -461,9 +461,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)]">
+        <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)] min-h-0">
           {/* Left Panel - Image Comparison */}
-          <div className="w-full lg:w-[60%] bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col">
+          <div className="w-full lg:w-[60%] bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <Label className="text-lg font-medium">
                 {editedImageUrl ? "Before & After" : "Original Image"}
@@ -495,11 +495,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             
             <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
               {/* Before & After Layout */}
-              <div className={`flex ${editedImageUrl ? 'flex-row gap-4' : 'flex-col'} h-full`}>
+              <div className={`flex ${editedImageUrl ? 'flex-row gap-4' : 'flex-col'} h-full min-h-0`}>
                 {/* Original Image Section */}
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1 flex flex-col min-h-0">
                   <Label className="text-sm font-medium mb-2 text-center">Original</Label>
-                  <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1">
+                  <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-0">
                 {/* Loading state overlay */}
                 {imageLoadStatus === "loading" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded">
@@ -556,7 +556,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
                     maxHeight: '100%',
-                    display: imageLoadStatus === "error" || activeTab !== "inpaint" ? 'none' : 'block',
+                    display: imageLoadStatus === "error" || activeTab !== "inpaint" || editedImageUrl ? 'none' : 'block',
                     opacity: 0.7
                   }}
                   onMouseDown={startDrawing}
@@ -582,13 +582,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 
                 {/* Edited Image Section - Only show when we have an edited image */}
                 {editedImageUrl && (
-                  <div className="flex-1 flex flex-col">
+                  <div className="flex-1 flex flex-col min-h-0">
                     <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
-                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 overflow-hidden">
+                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-0 overflow-hidden">
                       <img 
                         src={editedImageUrl} 
                         alt="Edited" 
-                        className="max-w-full max-h-full object-contain"
+                        className="w-full h-full object-contain"
                         onLoad={() => console.log('Edited image displayed successfully in before/after')}
                         onError={(e) => console.error('Failed to display edited image in before/after:', e)}
                       />
