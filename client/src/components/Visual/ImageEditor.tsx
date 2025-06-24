@@ -278,8 +278,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     tempCtx.globalCompositeOperation = 'source-over';
     tempCtx.drawImage(maskCanvas, 0, 0);
     
+    const maskDataUrl = tempCanvas.toDataURL();
     console.log('Mask created - dimensions:', tempCanvas.width, 'x', tempCanvas.height);
-    setMaskData(tempCanvas.toDataURL());
+    console.log('Mask data URL length:', maskDataUrl.length);
+    setMaskData(maskDataUrl);
   };
 
   const clearMask = () => {
@@ -557,7 +559,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     transformOrigin: 'center',
                     maxHeight: '100%',
                     display: imageLoadStatus === "error" || activeTab !== "inpaint" ? 'none' : 'block',
-                    opacity: 0.7
+                    opacity: 0.7,
+                    zIndex: 10
                   }}
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
