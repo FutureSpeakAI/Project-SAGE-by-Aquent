@@ -216,7 +216,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (!ctx) return;
     
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(0, 150, 255, 0.9)"; // Blue mask for better contrast
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"; // White mask with good opacity
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
     ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -593,10 +594,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     onClick={() => {
                       setEditedImageUrl(null);
                       setImageTitle("");
+                      setMaskData(null);
+                      clearMask();
                     }}
                     className="flex-1"
                   >
-                    Try Again
+                    Start New Edit
                   </Button>
                 </div>
                 
