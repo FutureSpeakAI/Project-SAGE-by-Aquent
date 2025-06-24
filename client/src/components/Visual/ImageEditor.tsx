@@ -225,9 +225,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (activeTab !== "inpaint") return;
     
+    console.log('Starting to draw mask');
     setIsDrawing(true);
     const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) return;
+    if (!maskCanvas) {
+      console.log('No mask canvas found');
+      return;
+    }
     
     const rect = maskCanvas.getBoundingClientRect();
     // Scale coordinates from display size to canvas size
@@ -236,20 +240,26 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
     
+    console.log('Drawing at:', x, y, 'Canvas size:', maskCanvas.width, maskCanvas.height);
     setLastPoint({ x, y });
     
     const ctx = maskCanvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('No mask context found');
+      return;
+    }
     
+    // Draw with red color for visibility during debugging
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
-    ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
-    ctx.lineWidth = brushSize * scaleX; // Scale brush size
+    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
+    ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+    ctx.lineWidth = Math.max(brushSize * scaleX, 2); // Ensure minimum visibility
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.arc(x, y, (brushSize * scaleX) / 2, 0, 2 * Math.PI);
+    ctx.arc(x, y, Math.max((brushSize * scaleX) / 2, 5), 0, 2 * Math.PI);
     ctx.fill();
+    console.log('Drew initial mask point');
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -268,9 +278,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
+    // Draw with red color for visibility during debugging
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)";
-    ctx.lineWidth = brushSize * scaleX; // Scale brush size
+    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
+    ctx.lineWidth = Math.max(brushSize * scaleX, 2); // Ensure minimum visibility
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -583,8 +594,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       height: "100%",
                       zIndex: 2,
                       cursor: "crosshair",
-                      opacity: 0.6,
-                      mixBlendMode: "multiply" as const
+                      opacity: 1.0, // Make fully visible for debugging
+                      backgroundColor: "transparent"
                     }}
                     onMouseDown={startDrawing}
                     onMouseMove={(e) => {
