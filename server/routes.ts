@@ -865,19 +865,16 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             .png()
             .toBuffer();
           
-          // Save to temporary files for OpenAI SDK
-          const tempDir = '/tmp';
-          const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
-          const maskPath = `${tempDir}/edit_mask_${Date.now()}.png`;
-          
-          fs.writeFileSync(imagePath, processedImageBuffer);
-          fs.writeFileSync(maskPath, processedMaskBuffer);
+          // No need for temporary files when using toFile
           
           try {
+            // Use toFile from OpenAI SDK for proper file handling
+            const { toFile } = await import('openai');
+            
             const editResponse = await openai.images.edit({
               model: model,
-              image: fs.createReadStream(imagePath),
-              mask: fs.createReadStream(maskPath),
+              image: await toFile(processedImageBuffer, 'image.png'),
+              mask: await toFile(processedMaskBuffer, 'mask.png'),
               prompt: prompt.trim(),
               n: 1,
               size: (size || "1024x1024") as any
@@ -894,24 +891,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               method: `${model}_inpaint`
             });
           } finally {
-            // Clean up temp files
-            [imagePath, maskPath].forEach(path => {
-              try { fs.unlinkSync(path); } catch (e) {}
-            });
+            // No cleanup needed with toFile
           }
         } else {
           console.log('Creating image variation');
           
-          // Save to temporary file for OpenAI SDK
-          const tempDir = '/tmp';
-          const imagePath = `${tempDir}/edit_image_${Date.now()}.png`;
-          
-          fs.writeFileSync(imagePath, processedImageBuffer);
+          // No need for temporary files when using toFile
           
           try {
+            // Use toFile from OpenAI SDK for proper file handling
+            const { toFile } = await import('openai');
+            
             const editResponse = await openai.images.edit({
               model: model,
-              image: fs.createReadStream(imagePath),
+              image: await toFile(processedImageBuffer, 'image.png'),
               prompt: prompt.trim(),
               n: 1,
               size: (size || "1024x1024") as any
@@ -928,8 +921,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               method: `${model}_edit`
             });
           } finally {
-            // Clean up temp file
-            try { fs.unlinkSync(imagePath); } catch (e) {}
+            // No cleanup needed with toFile
           }
         }
 
