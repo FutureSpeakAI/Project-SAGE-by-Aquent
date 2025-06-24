@@ -43,25 +43,29 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  
+  // State variables
+  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
+  const [imageLoadStatus, setImageLoadStatus] = useState<"loading" | "loaded" | "error">("loading");
+  const [imageTitle, setImageTitle] = useState("");
   const [maskData, setMaskData] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState("");
-  const [activeTab, setActiveTab] = useState("inpaint");
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [lastPoint, setLastPoint] = useState<{ x: number; y: number } | null>(null);
   const [brushSize, setBrushSize] = useState(20);
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
   const [zoom, setZoom] = useState(1);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [prompt, setPrompt] = useState("");
+  const [activeTab, setActiveTab] = useState("inpaint");
   const [model, setModel] = useState("gpt-image-1");
   const [size, setSize] = useState("1024x1024");
   const [quality, setQuality] = useState("standard");
+  const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
   
   // Fetch campaigns for assignment
   const { data: campaigns = [] } = useQuery({
     queryKey: ['/api/campaigns']
   });
-  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
-  const [imageLoadStatus, setImageLoadStatus] = useState<"loading" | "loaded" | "error">("loading");
-  const [imageTitle, setImageTitle] = useState("");
 
   // Fetch available models
   const { data: modelsData } = useQuery({
@@ -213,27 +217,29 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
   // Drawing functions for inpainting mask
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (activeTab !== "inpaint" || tool !== "brush") return;
+    if (activeTab !== "inpaint") return;
     
     setIsDrawing(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setLastPoint({ x, y });
+    
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
-    
-    const rect = maskCanvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / zoom;
-    const y = (e.clientY - rect.top) / zoom;
     
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
     
     ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(255, 255, 255, 1.0)"; // Pure white for mask
-    ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
     ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.arc(x, y, brushSize / 2, 0, 2 * Math.PI);
+    ctx.fill();
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -266,29 +272,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (!isDrawing) return;
     setIsDrawing(false);
     
-    // Capture mask data from mask canvas - convert to proper mask format
+    // Capture mask data from mask canvas
     const maskCanvas = maskCanvasRef.current;
     if (!maskCanvas) return;
     
-    // Create a proper mask: white areas = edit, black areas = keep original
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = maskCanvas.width;
-    tempCanvas.height = maskCanvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    if (!tempCtx) return;
-    
-    // Fill with black (keep original)
-    tempCtx.fillStyle = 'black';
-    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-    
-    // Draw white where user painted (areas to edit)
-    tempCtx.globalCompositeOperation = 'source-over';
-    tempCtx.drawImage(maskCanvas, 0, 0);
-    
-    const maskDataUrl = tempCanvas.toDataURL();
-    console.log('Mask created - dimensions:', tempCanvas.width, 'x', tempCanvas.height);
-    console.log('Mask data URL length:', maskDataUrl.length);
-    setMaskData(maskDataUrl);
+    setMaskData(maskCanvas.toDataURL());
   };
 
   const clearMask = () => {
