@@ -282,7 +282,14 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
       if (data.images && data.images.length > 0) {
         const newImageUrl = data.images[0].url;
         console.log('Setting edited image URL:', newImageUrl.substring(0, 100) + '...');
+        console.log('editedImageUrl state before setting:', editedImageUrl);
+        
         setEditedImageUrl(newImageUrl);
+        
+        // Force a re-render by logging the state change
+        setTimeout(() => {
+          console.log('editedImageUrl state after setting:', newImageUrl ? 'SET' : 'NOT SET');
+        }, 100);
         
         // Auto-populate title for quick saving
         if (!imageTitle) {
