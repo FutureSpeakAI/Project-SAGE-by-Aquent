@@ -99,6 +99,14 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 - **Fallback Routing**: Automatic provider switching on failures
 - **Error Tracking**: Comprehensive logging and error handling
 
+## Recent Changes
+
+- **June 24, 2025**: Image editing system fully operational
+  - Red mask overlay system working with 30% transparency
+  - GPT Image API integration complete with full image + mask processing
+  - All Select component crashes resolved by removing placeholder props
+  - Successful inpainting demonstrated with proper API responses
+
 ## Changelog
 
 - June 24, 2025. Initial setup
