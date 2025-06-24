@@ -124,20 +124,20 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         console.log("Image loaded successfully:", img.width, "x", img.height);
         setImageLoadStatus("loaded");
         
-        // Use larger canvas size for better quality and space utilization
-        const maxSize = 1200; // Increased max size
-        let canvasWidth = Math.min(img.width, maxSize);
-        let canvasHeight = Math.min(img.height, maxSize);
+        // Use high quality rendering with proper aspect ratio
+        const maxSize = 1024; // Standard DALL-E size for quality
+        let canvasWidth = img.width;
+        let canvasHeight = img.height;
         
-        // Maintain aspect ratio
-        if (img.width > img.height) {
-          canvasHeight = (canvasWidth * img.height) / img.width;
-        } else {
-          canvasWidth = (canvasHeight * img.width) / img.height;
+        // Scale down only if necessary, maintaining aspect ratio
+        if (canvasWidth > maxSize || canvasHeight > maxSize) {
+          const scale = Math.min(maxSize / canvasWidth, maxSize / canvasHeight);
+          canvasWidth = canvasWidth * scale;
+          canvasHeight = canvasHeight * scale;
         }
         
-        // Ensure minimum size for better visibility
-        const minSize = 400;
+        // Ensure minimum size for editing
+        const minSize = 512;
         if (canvasWidth < minSize || canvasHeight < minSize) {
           const scale = minSize / Math.min(canvasWidth, canvasHeight);
           canvasWidth *= scale;
@@ -486,8 +486,6 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 
                 <canvas
                   ref={canvasRef}
-                  width={800}
-                  height={800}
                   className="border border-gray-200 dark:border-gray-700 rounded shadow-lg max-w-full max-h-full"
                   style={{
                     transform: `scale(${zoom})`,
@@ -499,8 +497,6 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {/* Transparent mask overlay canvas */}
                 <canvas
                   ref={maskCanvasRef}
-                  width={800}
-                  height={800}
                   className="absolute top-0 left-0 cursor-crosshair pointer-events-auto max-w-full max-h-full"
                   style={{
                     transform: `scale(${zoom})`,
@@ -532,7 +528,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             
             {/* Canvas Tools */}
             {activeTab === "inpaint" && (
-              <div className="mt-4 flex flex-wrap gap-2 items-center">
+              <div className="mt-4 flex flex-wrap gap-2 items-center justify-center lg:justify-start">
                 <Button
                   variant={tool === "brush" ? "default" : "outline"}
                   size="sm"
@@ -549,7 +545,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <Eraser className="mr-2 h-4 w-4" />
                   Clear Mask
                 </Button>
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 ml-0 sm:ml-4 w-full sm:w-auto justify-center sm:justify-start">
                   <Label htmlFor="brush-size" className="text-sm">Size:</Label>
                   <Slider
                     id="brush-size"
@@ -558,7 +554,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     step={1}
                     value={[brushSize]}
                     onValueChange={(value) => setBrushSize(value[0])}
-                    className="w-24"
+                    className="w-20 sm:w-24"
                   />
                   <span className="text-sm text-gray-600 min-w-[40px]">{brushSize}px</span>
                 </div>
@@ -567,7 +563,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
             {/* Edited Image Preview */}
             {editedImageUrl && (
-              <div className="mt-4 p-4 border rounded-lg bg-white dark:bg-gray-800">
+              <div className="mt-4 p-2 sm:p-4 border rounded-lg bg-white dark:bg-gray-800">
                 <div className="flex items-center justify-between mb-2">
                   <Label className="text-base font-medium">Edited Result</Label>
                   <Button
@@ -582,7 +578,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 <img 
                   src={editedImageUrl} 
                   alt="Edited result"
-                  className="max-w-full max-h-48 object-contain rounded border"
+                  className="w-full max-h-48 sm:max-h-60 object-contain rounded border"
                 />
                 
                 {/* Save to Library Section */}
@@ -620,16 +616,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             )}
           </div>
 
-          {/* Right Panel - Controls (40%) */}
-          <div className="w-[40%] border-l bg-white dark:bg-gray-950 flex flex-col">
+          {/* Right Panel - Controls */}
+          <div className="w-full lg:w-[40%] border-t lg:border-t-0 lg:border-l bg-white dark:bg-gray-950 flex flex-col">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-              <TabsList className="grid w-full grid-cols-3 m-4 mb-2">
-                <TabsTrigger value="inpaint">Inpaint</TabsTrigger>
-                <TabsTrigger value="outpaint">Outpaint</TabsTrigger>
-                <TabsTrigger value="variation">Variation</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 m-2 sm:m-4 mb-2">
+                <TabsTrigger value="inpaint" className="text-xs sm:text-sm">Inpaint</TabsTrigger>
+                <TabsTrigger value="outpaint" className="text-xs sm:text-sm">Outpaint</TabsTrigger>
+                <TabsTrigger value="variation" className="text-xs sm:text-sm">Variation</TabsTrigger>
               </TabsList>
 
-              <div className="flex-1 p-4 space-y-6">
+              <div className="flex-1 p-2 sm:p-4 space-y-4 sm:space-y-6 overflow-y-auto">
                 <TabsContent value="inpaint" className="space-y-6 mt-0">
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Inpainting</h3>
@@ -652,7 +648,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Advanced Options</Label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div>
                           <Label htmlFor="model-select" className="text-xs">Model</Label>
                           <Select value={model} onValueChange={setModel}>
@@ -748,7 +744,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
 
               {/* Action Buttons */}
-              <div className="border-t p-4 space-y-2">
+              <div className="border-t p-2 sm:p-4 space-y-2">
                 <Button
                   onClick={handleEdit}
                   disabled={mutation.isPending || !prompt.trim() || (activeTab === "inpaint" && !maskData)}
