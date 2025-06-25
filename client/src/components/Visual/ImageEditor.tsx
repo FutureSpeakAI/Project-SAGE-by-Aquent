@@ -543,12 +543,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   </Button>
                 </div>
                 
-                {/* Original Image Download Menu */}
-                <ImageDownloadMenu 
-                  imageUrl={imageUrl}
-                  filename="original-image"
-                  className=""
-                />
+
               </div>
             </div>
             
