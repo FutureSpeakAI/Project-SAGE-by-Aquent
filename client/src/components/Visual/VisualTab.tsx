@@ -553,8 +553,8 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     quality,
     background,
     isProcessingDialogOpen,
-    uploadedImages,
-    selectedUploadedImage
+    uploadedImages = [],
+    selectedUploadedImage = null
   } = visualState;
   
   // Create a mutation to handle image generation with improved stability

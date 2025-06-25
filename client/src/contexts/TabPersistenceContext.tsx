@@ -176,6 +176,10 @@ export function TabPersistenceProvider({ children }: { children: ReactNode }) {
         briefing: {
           ...tabState.briefing,
           uploadedFiles: [], // Don't persist file objects
+        },
+        visual: {
+          ...tabState.visual,
+          uploadedImages: [], // Don't persist file objects, only URLs
         }
       };
       
