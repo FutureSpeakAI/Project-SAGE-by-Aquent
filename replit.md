@@ -103,11 +103,12 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 - **June 25, 2025**: Voice interface updates and SAGE personality changes
   - Simplified voice interface to single "Voice" button (removed speaker and brain icons)
-  - Updated SAGE to have Boston accent personality - friendly, professional, polite Boston woman
+  - Updated SAGE to professional marketer personality with Boston-accented voice
   - Fixed missing /api/chat endpoint that was causing "Error getting response from agent"
-  - Added text-to-speech endpoint with Boston-accented voice (Adam voice ID: pNInz6obpgDQGcFmaJgB)
+  - Added text-to-speech endpoint with professional Boston voice (Bella voice ID: EXAVITQu4vr4xnSDxMaL)
   - Ensured prompt router integration (not bypassing routing logic)
   - Updated voice configuration throughout all components for consistency
+  - IMPORTANT: SAGE responds in professional marketing language (no dialect/slang), but voice pronunciation has Boston accent
 
 - **June 24, 2025**: Image editing system fully operational and confirmed working
   - Red mask overlay system working with 30% transparency
