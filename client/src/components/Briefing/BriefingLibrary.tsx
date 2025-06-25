@@ -124,7 +124,10 @@ export function BriefingLibrary({
   };
 
   // Get a preview of the HTML content
-  const getContentPreview = (htmlContent: string): string => {
+  const getContentPreview = (htmlContent: string | undefined): string => {
+    if (!htmlContent || typeof htmlContent !== 'string') {
+      return 'No content available';
+    }
     // Strip HTML tags to get plain text
     const plainText = htmlContent.replace(/<[^>]*>/g, '');
     return plainText;
@@ -250,7 +253,7 @@ export function BriefingLibrary({
                               Briefing Content:
                             </h4>
                             <div className="bg-gray-50 p-2.5 rounded-md border min-h-[100px] max-h-[150px] overflow-y-auto">
-                              <p className="text-xs leading-relaxed line-clamp-6">{getContentPreview(briefing.content)}</p>
+                              <p className="text-xs leading-relaxed line-clamp-6">{getContentPreview(briefing?.content)}</p>
                             </div>
                           </div>
                         </div>
