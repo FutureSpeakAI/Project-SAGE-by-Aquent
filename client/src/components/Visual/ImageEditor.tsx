@@ -105,11 +105,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
   // Debug editedImageUrl state changes
   useEffect(() => {
+    console.log('=== IMAGE EDITOR STATE DEBUG ===');
     console.log('editedImageUrl state changed:', editedImageUrl ? 'HAS IMAGE' : 'NO IMAGE');
     console.log('editedImageUrl length:', editedImageUrl?.length || 0);
+    console.log('editedImageUrl preview:', editedImageUrl?.substring(0, 50) + '...');
     if (editedImageUrl) {
-      console.log('Before/after view should now be active');
+      console.log('✓ Before/after view should now be active');
+    } else {
+      console.log('× Still in editing mode');
     }
+    console.log('================================');
   }, [editedImageUrl]);
 
   // Load and draw the original image on canvas
@@ -377,8 +382,15 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
           onImageEdited(newImageUrl);
         }
         
-        console.log('Edited image URL set successfully, length:', newImageUrl?.length);
-        console.log('Should trigger before/after view with editedImageUrl:', !!newImageUrl);
+        console.log('✓ Edited image URL set successfully, length:', newImageUrl?.length);
+        console.log('✓ Should trigger before/after view with editedImageUrl:', !!newImageUrl);
+        
+        // Additional debugging
+        setTimeout(() => {
+          console.log('=== POST-SET STATE CHECK ===');
+          console.log('editedImageUrl after setState:', editedImageUrl ? 'SET' : 'NOT SET');
+          console.log('Expected transition to before/after view');
+        }, 50);
         
         toast({
           title: "Image edited successfully",
@@ -561,11 +573,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             </div>
             
             <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
-              {(() => {
-                console.log('Rendering check - editedImageUrl exists:', !!editedImageUrl);
-                console.log('editedImageUrl value preview:', editedImageUrl?.substring(0, 50));
-                return editedImageUrl;
-              })() ? (
+              {editedImageUrl ? (
                 <>
                   {/* Before & After Comparison Mode */}
                   <div className="text-center mb-4">
