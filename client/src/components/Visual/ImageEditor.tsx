@@ -664,17 +664,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             </div>
             
-            {/* Canvas Tools */}
+            {/* Simplified Brush Controls */}
             {activeTab === "inpaint" && !editedImageUrl && (
               <div className="mt-4 flex flex-wrap gap-2 items-center justify-center lg:justify-start">
-                <Button
-                  variant={tool === "brush" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTool("brush")}
-                >
-                  <Paintbrush className="mr-2 h-4 w-4" />
-                  Brush
-                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -683,18 +675,17 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <Eraser className="mr-2 h-4 w-4" />
                   Clear Mask
                 </Button>
-                <div className="flex items-center gap-2 ml-0 sm:ml-4 w-full sm:w-auto justify-center sm:justify-start">
-                  <Label htmlFor="brush-size" className="text-sm">Size:</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Size:</Label>
                   <Slider
-                    id="brush-size"
-                    min={5}
-                    max={100}
-                    step={1}
                     value={[brushSize]}
                     onValueChange={(value) => setBrushSize(value[0])}
-                    className="w-20 sm:w-24"
+                    max={100}
+                    min={5}
+                    step={5}
+                    className="w-20"
                   />
-                  <span className="text-sm text-gray-600 min-w-[40px]">{brushSize}px</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[40px]">{brushSize}px</span>
                 </div>
               </div>
             )}
