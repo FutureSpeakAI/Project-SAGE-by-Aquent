@@ -101,6 +101,13 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Streamlined generated image interface in Visual tab
+  - Removed "Variations" and "Convert" buttons from generated image actions
+  - Updated button grid from 5 columns to 3 columns for cleaner layout
+  - Variations functionality remains available through Image Editor
+  - Format conversion remains available through Download menu options
+  - Simplified interface reduces clutter and improves user experience
+
 - **June 25, 2025**: Enhanced client briefing page with comprehensive editing tools
   - Added EditableBriefingOutput component with right-click context menu
   - Implemented text formatting options (bold, italic) and AI-powered text improvement

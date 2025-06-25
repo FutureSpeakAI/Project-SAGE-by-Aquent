@@ -305,7 +305,7 @@ const TabContent = ({
                       </div>
                       
                       {/* Mobile-friendly grid layout for buttons */}
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -350,25 +350,7 @@ const TabContent = ({
                           Edit
                         </Button>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-purple-500 border-purple-200 hover:bg-purple-50 w-full"
-                          onClick={() => handleCreateVariations(generatedImageUrl || '')}
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Variations
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-green-500 border-green-200 hover:bg-green-50 w-full"
-                          onClick={() => setIsProcessingDialogOpen(true)}
-                        >
-                          <ArrowUpRight className="mr-2 h-4 w-4" />
-                          Convert
-                        </Button>
+
                       </div>
                     </div>
                   ) : (
