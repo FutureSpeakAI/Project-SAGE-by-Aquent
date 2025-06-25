@@ -284,14 +284,29 @@ export class PromptRouter {
     
     let researchResults = '';
     
-    // Perform research if needed
+    // Perform research if needed with graceful fallback
     if (researchContext && researchContext.trim().length > 0 && decision.useReasoning) {
       console.log(`Using ${decision.provider} with reasoning loop`);
-      const reasoningResult = await reasoningEngine.performReasoningLoop(message, researchContext);
-      researchResults = reasoningResult.finalInsights;
+      try {
+        const reasoningResult = await reasoningEngine.performReasoningLoop(message, researchContext);
+        researchResults = reasoningResult.finalInsights;
+      } catch (error) {
+        console.log('Reasoning loop failed, using direct research fallback');
+        try {
+          researchResults = await performDeepResearch(message, researchContext);
+        } catch (fallbackError) {
+          console.log('Research failed, proceeding without research context');
+          researchResults = '';
+        }
+      }
     } else if (researchContext && researchContext.trim().length > 0) {
       console.log(`Using ${decision.provider} with direct research`);
-      researchResults = await performDeepResearch(message, researchContext);
+      try {
+        researchResults = await performDeepResearch(message, researchContext);
+      } catch (error) {
+        console.log('Direct research failed, proceeding without research context');
+        researchResults = '';
+      }
     }
 
     // Build enhanced system prompt

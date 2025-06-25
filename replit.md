@@ -101,6 +101,15 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Research system reliability improvements and campaign workflow fixes
+  - Fixed Perplexity API authentication failures with robust Anthropic fallback
+  - Removed hard-coded Nike x Volkswagen campaign references for true dynamic support
+  - Enhanced research engine with graceful degradation when external APIs fail
+  - Implemented comprehensive error handling throughout prompt router and research pipeline
+  - Validated conversation system supports any campaign variables (Nike ZeroCarbon Runner, Sanofi Dupixent, etc.)
+  - Confirmed prompt router correctly routes research queries with fallback mechanisms
+  - System now handles API failures transparently while maintaining research quality
+  
 - **June 25, 2025**: Voice interface updates and SAGE personality changes
   - Simplified voice interface to single "Voice" button (removed speaker and brain icons)
   - Updated SAGE to professional marketer personality with Boston-accented voice
