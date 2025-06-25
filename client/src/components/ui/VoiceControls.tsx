@@ -41,7 +41,7 @@ export function VoiceControls({
 
   const { isPlaying, isGenerating, playText, stopAudio } = useSimpleAudio({
     voiceId: 'RPdRfxxQOaNxn1LtRQqm',
-    playbackRate: 1.2,
+    playbackRate: 1.38,
     onPlaybackEnd: () => {
       console.log('🎵 Playback ended callback triggered', { 
         isVoiceSessionActive, 
