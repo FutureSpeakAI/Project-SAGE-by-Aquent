@@ -2010,5 +2010,70 @@ Focus on identifying the specific visual deliverables (number of images, type of
     }
   });
 
+  // Chat endpoint for SAGE conversations
+  app.post("/api/chat", async (req: Request, res: Response) => {
+    try {
+      const { message, model, temperature, context } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      console.log(`[Chat] Processing message with model preference: ${model || 'auto'}`);
+
+      // Extract router configuration from context or use defaults
+      const routerConfig: PromptRouterConfig = {
+        enabled: true,
+        manualProvider: context?.manualProvider,
+        manualModel: model,
+        forceReasoning: context?.forceReasoning
+      };
+
+      // Use prompt router for all chat requests
+      const decision = await promptRouter.routePrompt(
+        message, 
+        context?.researchContext || '', 
+        routerConfig,
+        { stage: 'discovery', projectType: 'content', complexity: 'moderate', priority: 'speed' }
+      );
+
+      console.log(`[Chat] Routed to ${decision.provider} with model ${decision.model}`);
+
+      // Build system prompt for SAGE
+      const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), a British marketing specialist with 20 years of experience from London. You use she/her pronouns and maintain memory across all application modules and can reference previous conversations. You have voice input processing capabilities and can guide users through the app interface.
+
+CONVERSATION CONTEXT: ${context?.researchContext || 'No additional context'}
+
+You are helpful, knowledgeable, and maintain continuity across conversations. Keep responses conversational and focused on helping with marketing, content creation, and strategic planning.`;
+
+      let chatReply = '';
+
+      // Execute the routed prompt using the prompt router
+      const routedResponse = await promptRouter.executeRoutedPrompt(
+        decision,
+        message,
+        context?.researchContext || '',
+        systemPrompt
+      );
+
+      chatReply = routedResponse.content;
+
+      res.json({ 
+        content: chatReply,
+        model: `${routedResponse.actualProvider}-${routedResponse.actualModel}`,
+        provider: routedResponse.actualProvider,
+        routing: decision.rationale,
+        fallback: routedResponse.actualProvider !== decision.provider ? `Fell back to ${routedResponse.actualProvider}` : undefined,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Chat error:', error);
+      res.status(500).json({ 
+        error: "Failed to generate chat response",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   return server;
 }
