@@ -107,6 +107,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   useEffect(() => {
     console.log('editedImageUrl state changed:', editedImageUrl ? 'HAS IMAGE' : 'NO IMAGE');
     console.log('editedImageUrl length:', editedImageUrl?.length || 0);
+    if (editedImageUrl) {
+      console.log('Before/after view should now be active');
+    }
   }, [editedImageUrl]);
 
   // Load and draw the original image on canvas
@@ -353,6 +356,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         console.log('Setting edited image URL:', newImageUrl.substring(0, 100) + '...');
         console.log('editedImageUrl state before setting:', editedImageUrl);
         
+        // Ensure state is properly set with immediate effect
         setEditedImageUrl(newImageUrl);
         
         // Clear the mask overlay immediately after successful edit
@@ -367,9 +371,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
           onImageEdited(newImageUrl);
         }
         
+        console.log('Edited image URL set successfully, length:', newImageUrl?.length);
+        
         toast({
           title: "Image edited successfully",
-          description: "Your edited image is ready for download or saving.",
+          description: "View your before & after comparison with download and save options.",
         });
       } else {
         console.error('No images in response or empty images array:', data);
@@ -652,11 +658,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {editedImageUrl && (
                   <div className="flex-1 flex flex-col min-h-0">
                     <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
-                    <div className="relative flex items-center justify-center border-2 border-blue-200 rounded bg-blue-50 flex-1 min-h-[300px]">
+                    <div className="relative flex items-center justify-center border-2 border-blue-200 rounded bg-blue-50 flex-1 overflow-auto p-2">
                       <img 
                         src={editedImageUrl} 
                         alt="Edited" 
-                        className="w-auto h-auto max-w-full max-h-full object-contain"
+                        className="w-auto h-auto max-w-full object-contain"
+                        style={{
+                          maxWidth: "100%",
+                          objectFit: "contain",
+                          height: "auto"
+                        }}
                         onLoad={() => {
                           console.log('Edited image displayed successfully in before/after');
                           console.log('Edited image URL length:', editedImageUrl?.length);
