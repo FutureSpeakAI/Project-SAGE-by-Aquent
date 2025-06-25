@@ -41,7 +41,13 @@ export function VoiceControls({
 
   const { isPlaying, isGenerating, playText, stopAudio } = useSimpleAudio({
     voiceId: 'Hybl6rg76ZOcgqZqN5WN',
-    playbackRate: 1.1
+    playbackRate: 1.1,
+    onPlaybackEnd: () => {
+      // Automatically restart listening after SAGE finishes speaking
+      if (!isListening && !isGenerating) {
+        setTimeout(() => startListening(), 500); // Small delay for natural flow
+      }
+    }
   });
 
   const lastSpokenRef = useRef<string>('');

@@ -3,6 +3,7 @@ import { useState, useRef, useCallback } from 'react';
 interface SimpleAudioConfig {
   voiceId?: string;
   playbackRate?: number;
+  onPlaybackEnd?: () => void;
 }
 
 export function useSimpleAudio(config: SimpleAudioConfig = {}) {
@@ -57,6 +58,10 @@ export function useSimpleAudio(config: SimpleAudioConfig = {}) {
         console.log('🎵 Audio finished');
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
+        // Trigger callback when playback ends
+        if (config.onPlaybackEnd) {
+          config.onPlaybackEnd();
+        }
       };
 
       audio.onerror = (error) => {
