@@ -196,11 +196,30 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     return basePrompt;
   };
 
-  // Mutation for generating content
+  // Mutation for generating content - using chat endpoint like other tabs
   const generateContentMutation = useMutation({
-    mutationFn: async (data: GenerateContentRequest) => {
-      const response = await apiRequest("POST", "/api/generate-content", data);
-      return response.json();
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: data.userPrompt,
+          context: {
+            capabilities: ["Context Memory", "Cross-Module Learning", "Visual Generation"],
+            persona: "default",
+            sessionHistory: messages.slice(-5),
+            researchContext: null,
+            systemPrompt: data.systemPrompt
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get response from SAGE');
+      }
+      
+      const result = await response.json();
+      return { content: result.content || result.text || 'No response received' };
     },
     onSuccess: (data) => {
       // Extract the response
@@ -304,10 +323,8 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     
 
     generateContentMutation.mutate({
-      model: "gpt-4o",
-      systemPrompt: getSystemPrompt(),
       userPrompt: userPromptWithContext,
-      temperature: 0.7,
+      systemPrompt: getSystemPrompt(),
     });
   };
 
@@ -339,10 +356,8 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     
     // Send the analysis prompt to AI with proper error handling
     generateContentMutation.mutate({
-      model: model, // Use the full GPT-4o model with retry logic
-      systemPrompt: "You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.",
       userPrompt: analysisPrompt,
-      temperature: 0.7,
+      systemPrompt: "You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.",
     });
     
     // Switch to conversation tab

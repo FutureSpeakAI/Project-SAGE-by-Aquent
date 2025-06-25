@@ -1367,14 +1367,23 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
     }
   });
 
-  // Generated images CRUD operations
+  // Generated images CRUD operations with enhanced error handling
   app.get("/api/generated-images", async (_req: Request, res: Response) => {
     try {
       const images = await storage.getGeneratedImages();
       res.json(images);
     } catch (error: any) {
       console.error('Failed to fetch generated images:', error);
-      res.status(500).json({ error: "Failed to fetch generated images" });
+      
+      // Enhanced error handling for database connection issues
+      if (error.message?.includes('Control plane request failed') || 
+          error.code === 'XX000' || 
+          error.message?.includes('connection')) {
+        console.log("Database connection issue detected, returning empty array to prevent UI breaking");
+        res.json([]);
+      } else {
+        res.status(500).json({ error: "Failed to fetch generated images", details: error.message });
+      }
     }
   });
 
@@ -1654,14 +1663,26 @@ Focus on identifying the specific visual deliverables (number of images, type of
     }
   });
 
-  // Image Projects API Routes
+  // Image Projects API Routes with enhanced error handling
   app.get("/api/image-projects", async (_req: Request, res: Response) => {
     try {
       const projects = await storage.getImageProjects();
       res.json(projects);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching image projects:", error);
-      res.json([]);
+      
+      // Enhanced error handling for database connection issues
+      if (error.message?.includes('Control plane request failed') || 
+          error.code === 'XX000' || 
+          error.message?.includes('connection')) {
+        console.log("Database connection issue detected, returning empty array to prevent UI breaking");
+        res.json([]);
+      } else {
+        res.status(500).json({ 
+          error: "Failed to fetch image projects", 
+          details: error.message 
+        });
+      }
     }
   });
 
