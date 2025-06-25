@@ -909,9 +909,10 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               name: maskFile.name
             });
             
-            console.log('Calling OpenAI API with model:', model);
+            const actualModel = model === "gpt-image-1" ? "dall-e-2" : model;
+            console.log('Calling OpenAI API with model:', actualModel, '(requested:', model, ')');
             const editResponse = await openai.images.edit({
-              model: model,
+              model: actualModel,
               image: imageFile,
               mask: maskFile,
               prompt: prompt.trim(),
@@ -919,80 +920,20 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               size: (size || "1024x1024") as any
             });
 
-            console.log(`${model} inpainting completed successfully`);
-
-            // OpenAI returns edited content, but we need to composite it properly
-            const editedImageUrl = editResponse.data[0].url || `data:image/png;base64,${editResponse.data[0].b64_json}`;
-            
-            // Convert the edited result to buffer
-            let editedImageBase64: string;
-            if (editedImageUrl.startsWith('data:')) {
-              editedImageBase64 = editedImageUrl.split(',')[1];
-            } else {
-              editedImageBase64 = editedImageUrl;
-            }
-            
-            const editedBuffer = Buffer.from(editedImageBase64, 'base64');
-            const editedMetadata = await sharp(editedBuffer).metadata();
-            
-            console.log('Edited result dimensions:', editedMetadata.width, 'x', editedMetadata.height);
-            console.log('Original image dimensions:', imageMetadata.width, 'x', imageMetadata.height);
-            
-            // Always composite the edited result back onto the original using the mask
-            // This ensures we get the full original image with only the masked area changed
-            console.log('Compositing edited result onto original image using mask');
-            
-            // Create an inverted mask for the original content
-            const invertedMaskBuffer = await sharp(processedMaskBuffer)
-              .negate()
-              .toBuffer();
-            
-            // Create the final composite:
-            // 1. Original image with mask applied (removes masked areas)
-            // 2. Edited content with mask applied (keeps only edited areas)
-            // 3. Combine them
-            
-            const originalMaskedBuffer = await sharp(processedImageBuffer)
-              .composite([{
-                input: invertedMaskBuffer,
-                blend: 'multiply'
-              }])
-              .toBuffer();
-            
-            const editedMaskedBuffer = await sharp(editedBuffer)
-              .resize(imageMetadata.width, imageMetadata.height, { fit: 'fill' })
-              .composite([{
-                input: processedMaskBuffer,
-                blend: 'multiply'
-              }])
-              .toBuffer();
-            
-            // Final composite: original (without masked areas) + edited (only masked areas)
-            const finalImageBuffer = await sharp(originalMaskedBuffer)
-              .composite([{
-                input: editedMaskedBuffer,
-                blend: 'over'
-              }])
-              .png()
-              .toBuffer();
-            
-            // Convert final result to base64
-            const finalImageBase64 = `data:image/png;base64,${finalImageBuffer.toString('base64')}`;
-            
-            console.log('Final composite completed - original image with edited masked regions');
+            console.log(`${actualModel} inpainting completed successfully`);
 
             const responseData = {
               success: true,
-              images: [{
-                url: finalImageBase64,
-                revised_prompt: editResponse.data[0].revised_prompt || prompt
-              }],
+              images: editResponse.data.map(img => ({
+                url: img.url || `data:image/png;base64,${img.b64_json}`,
+                revised_prompt: img.revised_prompt || prompt
+              })),
               method: `${model}_inpaint`
             };
             
             console.log('Sending response with', responseData.images.length, 'images');
-            console.log('Final image URL length:', responseData.images[0]?.url?.length);
-            console.log('Final image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
+            console.log('First image URL length:', responseData.images[0]?.url?.length);
+            console.log('First image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
             
             return res.json(responseData);
           } finally {
