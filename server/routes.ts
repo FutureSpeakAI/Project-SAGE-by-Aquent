@@ -913,8 +913,11 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             });
             
             console.log('Calling OpenAI API with model:', model);
-            // Enhance prompt to encourage full scene preservation
-            const enhancedPrompt = `${prompt.trim()}. Preserve the entire original scene and background, only modify the masked area while keeping all other elements exactly as they are in the original image.`;
+            // Critical: gpt-image-1 needs explicit instructions to preserve the full scene context
+            const enhancedPrompt = `In this medical office scene with a doctor and patient, ${prompt.trim()}. Keep the doctor, medical equipment, office background, and all other elements exactly the same. Only change the patient figure in the marked area.`;
+            console.log('Scene-aware prompt:', enhancedPrompt.substring(0, 100) + '...');
+            console.log('Image dimensions:', imageMetadata.width, 'x', imageMetadata.height);
+            console.log('Mask dimensions after processing:', processedMaskBuffer.length, 'bytes');
             
             const editResponse = await openai.images.edit({
               model: model,
