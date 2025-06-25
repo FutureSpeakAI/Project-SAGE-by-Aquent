@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ImageDownloadMenu } from "./ImageDownloadMenu";
 import { 
   Edit, 
   Paintbrush, 
@@ -517,28 +518,37 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               <Label className="text-lg font-medium">
                 {editedImageUrl ? "Before & After" : "Original Image"}
               </Label>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setZoom(Math.min(zoom * 1.2, 3))}
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setZoom(Math.max(zoom / 1.2, 0.5))}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setZoom(1)}
-                >
-                  Reset
-                </Button>
+              <div className="flex gap-2 flex-wrap items-center">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setZoom(Math.min(zoom * 1.2, 3))}
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setZoom(Math.max(zoom / 1.2, 0.5))}
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setZoom(1)}
+                  >
+                    Reset
+                  </Button>
+                </div>
+                
+                {/* Original Image Download Menu */}
+                <ImageDownloadMenu 
+                  imageUrl={imageUrl}
+                  filename="original-image"
+                  className=""
+                />
               </div>
             </div>
             
@@ -646,7 +656,14 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {/* Edited Image Section - Only show when we have an edited image */}
                 {editedImageUrl && (
                   <div className="flex-1 flex flex-col min-h-0">
-                    <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm font-medium">Edited</Label>
+                      <ImageDownloadMenu 
+                        imageUrl={editedImageUrl}
+                        filename="edited-image"
+                        className=""
+                      />
+                    </div>
                     <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-0 overflow-hidden">
                       <img 
                         src={editedImageUrl} 
@@ -694,14 +711,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             {editedImageUrl && (
               <div className="mt-4 flex flex-col gap-3">
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={downloadEditedImage}
+                  <ImageDownloadMenu 
+                    imageUrl={editedImageUrl}
+                    filename="edited-image"
                     className="flex-1"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
+                  />
                   <Button
                     variant="outline"
                     onClick={() => {
