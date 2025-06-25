@@ -40,7 +40,7 @@ export function VoiceControls({
   });
 
   const { isPlaying, isGenerating, playText, stopAudio } = useSimpleAudio({
-    voiceId: 'EXAVITQu4vr4xnSDxMaL',
+    voiceId: 'G5lggmHQWDc5AgZ8QCSR',
     playbackRate: 1.1
   });
 

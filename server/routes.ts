@@ -2080,8 +2080,8 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
   // Text-to-speech endpoint
   app.post("/api/text-to-speech", async (req: Request, res: Response) => {
     try {
-      // Use Bella voice with Boston accent settings
-      const { text, voiceId = 'EXAVITQu4vr4xnSDxMaL' } = req.body; // Bella voice - professional female with Boston capability
+      // Use user's custom ElevenLabs voice
+      const { text, voiceId = 'G5lggmHQWDc5AgZ8QCSR' } = req.body; // User's custom Boston voice
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: 'Text is required' });
