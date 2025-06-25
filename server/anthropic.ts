@@ -12,6 +12,7 @@ export interface AnthropicGenerateContentRequest {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  sessionHistory?: Array<{role: string, content: string}>;
 }
 
 export const generateContent = async (request: AnthropicGenerateContentRequest): Promise<string> => {
@@ -53,14 +54,27 @@ Create the specific deliverables listed above. Be concise but compelling.`;
   console.log('[Anthropic] Making API request with model:', request.model);
   console.log('[Anthropic] Prompt length:', optimizedPrompt.length);
   
+  // Build messages array with session history
+  const messages: Array<{role: 'user' | 'assistant', content: string}> = [];
+  
+  // Add session history
+  if (request.sessionHistory) {
+    request.sessionHistory.forEach(msg => {
+      if (msg.role === 'user' || msg.role === 'assistant') {
+        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+      }
+    });
+  }
+  
+  // Add current message
+  messages.push({ role: 'user', content: optimizedPrompt });
+
   const message = await anthropic.messages.create({
     model: request.model,
     max_tokens: maxTokens,
     temperature: request.temperature || 0.7,
     system: enhancedSystemPrompt,
-    messages: [
-      { role: 'user', content: optimizedPrompt }
-    ],
+    messages: messages,
   });
   
   console.log('[Anthropic] API request completed successfully');

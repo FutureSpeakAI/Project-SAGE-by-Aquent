@@ -101,6 +101,14 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: CRITICAL FIX - SAGE chat context handling restored
+  - Fixed conversation memory loss where SAGE was forgetting previous messages
+  - Updated prompt router to properly pass sessionHistory to AI providers
+  - Modified Anthropic and Gemini API modules to support conversation context
+  - SAGE now maintains full conversation continuity across all messages
+  - Resolved issue where each message was treated as isolated conversation
+  - Enhanced OpenAI, Anthropic, and Gemini integrations with proper message history
+
 - **June 25, 2025**: Streamlined generated image interface in Visual tab
   - Removed "Variations" and "Convert" buttons from generated image actions
   - Updated button grid from 5 columns to 3 columns for cleaner layout

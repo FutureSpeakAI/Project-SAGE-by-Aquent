@@ -8,6 +8,7 @@ export interface GeminiGenerateContentRequest {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  sessionHistory?: Array<{role: string, content: string}>;
 }
 
 export interface GeminiGenerateImageRequest {
@@ -30,14 +31,28 @@ export const generateContent = async (request: GeminiGenerateContentRequest): Pr
     enhancedSystemPrompt = "You are a professional content creator executing creative briefs. Based on the provided creative brief, create the specific content deliverables requested. Focus on creating engaging, professional content that fulfills the brief's objectives. Do not repeat or summarize the brief - create the actual content it describes. Use proper HTML formatting with <h1>, <h2>, <h3> for headings, <strong> for emphasis, <ul>/<li> for lists.";
   }
   
-  const prompt = enhancedSystemPrompt 
-    ? `${enhancedSystemPrompt}\n\nUser: ${request.prompt}` 
-    : request.prompt;
+  // Build conversation history for Gemini
+  let conversationPrompt = enhancedSystemPrompt ? `${enhancedSystemPrompt}\n\n` : '';
+  
+  // Add session history
+  if (request.sessionHistory) {
+    request.sessionHistory.forEach(msg => {
+      if (msg.role === 'user') {
+        conversationPrompt += `User: ${msg.content}\n\n`;
+      } else if (msg.role === 'assistant') {
+        conversationPrompt += `Assistant: ${msg.content}\n\n`;
+      }
+    });
+  }
+  
+  // Add current message
+  conversationPrompt += `User: ${request.prompt}`;
 
   console.log('[Gemini] Making API request with model:', request.model);
-  console.log('[Gemini] Prompt length:', prompt.length);
+  console.log('[Gemini] Prompt length:', conversationPrompt.length);
+  console.log('[Gemini] Session history entries:', request.sessionHistory?.length || 0);
   
-  const result = await model.generateContent(prompt);
+  const result = await model.generateContent(conversationPrompt);
   const response = await result.response;
   let content = response.text();
   
