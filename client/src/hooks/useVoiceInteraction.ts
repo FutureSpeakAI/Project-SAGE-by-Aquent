@@ -304,10 +304,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
 
   // Start listening for speech input
   const startListening = useCallback((onResult: (transcript: string) => void) => {
-    console.log('🎤 startListening called with callback');
+    console.log('🎤 startListening called with callback, current isListening:', isListening);
     onTranscriptCompleteRef.current = onResult;
     
     if (isIntelligentMode) {
+      console.log('🎤 Starting intelligent listening');
       startIntelligentListening();
       return;
     }
@@ -322,9 +323,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       }
     }
 
+    // Always reinitialize to ensure fresh state
+    recognitionRef.current = initializeSpeechRecognition();
     if (!recognitionRef.current) {
-      recognitionRef.current = initializeSpeechRecognition();
-      if (!recognitionRef.current) return;
+      console.error('🎤 Failed to initialize speech recognition');
+      return;
     }
 
     const recognition = recognitionRef.current;
@@ -368,9 +371,11 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
     };
 
     try {
+      console.log('🎤 Starting speech recognition...');
       recognition.start();
+      console.log('🎤 Speech recognition started successfully');
     } catch (error) {
-      console.error('Failed to start speech recognition:', error);
+      console.error('🎤 Failed to start speech recognition:', error);
       setIsListening(false);
     }
   }, [initializeSpeechRecognition, toast]);

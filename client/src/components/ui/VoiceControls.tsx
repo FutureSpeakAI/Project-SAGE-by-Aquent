@@ -50,11 +50,19 @@ export function VoiceControls({
         isPlaying
       });
       
-      // Automatically restart listening after SAGE finishes speaking
-      if (isVoiceSessionActive && !isListening && !isGenerating && !isPlaying) {
-        console.log('🎤 Attempting auto-reactivation of microphone...');
-        setTimeout(() => {
-          console.log('🎤 Executing microphone reactivation');
+      // Use a longer delay and check state multiple times for reliability
+      setTimeout(() => {
+        console.log('🎤 Checking state for microphone reactivation', {
+          isVoiceSessionActive,
+          isListening,
+          isGenerating,
+          isPlaying
+        });
+        
+        // Automatically restart listening after SAGE finishes speaking
+        if (isVoiceSessionActive && !isListening && !isGenerating && !isPlaying) {
+          console.log('🎤 Attempting auto-reactivation of microphone...');
+          
           startListening((transcript) => {
             console.log('🎤 Auto-reactivated microphone received transcript:', transcript);
             if (onTranscript) {
@@ -65,15 +73,15 @@ export function VoiceControls({
               onSendMessage();
             }
           });
-        }, 1000); // Longer delay to ensure audio cleanup is complete
-      } else {
-        console.log('🎤 Skipping auto-reactivation:', { 
-          isVoiceSessionActive, 
-          isListening, 
-          isGenerating,
-          isPlaying
-        });
-      }
+        } else {
+          console.log('🎤 Skipping auto-reactivation due to state conditions:', { 
+            isVoiceSessionActive, 
+            isListening, 
+            isGenerating,
+            isPlaying
+          });
+        }
+      }, 1500); // Increased delay to ensure all states are properly updated
     }
   });
 
