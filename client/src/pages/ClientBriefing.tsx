@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, Target, Users, TrendingUp, Clock, Award, CheckCircle, Star } from 'lucide-react';
+import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, Target, TrendingUp, Clock, Award, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -915,35 +915,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
             </motion.div>
           </div>
 
-          {/* Trust Indicators */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.0 }}
-            className="mt-16 text-center"
-          >
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Trusted by Marketing Leaders</h3>
-              <div className="flex items-center justify-center gap-8 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                  <span className="text-gray-700 font-semibold ml-2">4.9/5 Client Satisfaction</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Users className="h-5 w-5" />
-                  <span>500+ Marketing Teams</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Award className="h-5 w-5" />
-                  <span>Industry Recognition</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+
         </div>
 
         {/* Hidden file input */}
