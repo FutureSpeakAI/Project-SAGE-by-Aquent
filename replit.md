@@ -101,6 +101,15 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Image upload functionality added to Visual tab
+  - Added new "Upload & Edit" tab alongside existing Generate and SAGE modes
+  - Users can now upload images directly for AI-powered editing without campaigns
+  - Integrated with existing Image Editor and AI Processing tools
+  - Supports drag-and-drop upload with validation for PNG, JPG, WEBP, GIF formats
+  - Connected to inpainting, background removal, style transfer features
+  - Streamlined UI by removing duplicate download buttons
+  - Enhanced state persistence to handle uploaded image data
+
 - **June 25, 2025**: Research system optimization with Anthropic as primary provider
   - Migrated from Perplexity to Anthropic as primary research provider for reliability
   - Implemented OpenAI as secondary fallback for research continuity

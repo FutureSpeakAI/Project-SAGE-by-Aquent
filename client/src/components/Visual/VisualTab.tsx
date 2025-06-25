@@ -475,24 +475,6 @@ const TabContent = ({
                       <ArrowUpRight className="mr-2 h-4 w-4" />
                       AI Processing Tools
                     </Button>
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (selectedUploadedImage) {
-                          const a = document.createElement("a");
-                          a.href = selectedUploadedImage;
-                          a.download = `processed_image_${new Date().getTime()}.png`;
-                          document.body.appendChild(a);
-                          a.click();
-                          document.body.removeChild(a);
-                        }
-                      }}
-                      className="w-full"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Image
-                    </Button>
                   </div>
                   
                   {/* Available AI Features */}
