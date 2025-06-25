@@ -388,7 +388,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         },
         body: JSON.stringify({
           text,
-          voiceId: config.voiceId || 'pNInz6obpgDQGcFmaJgB' // Boston-accented voice
+          voiceId: config.voiceId || 'jsCqWAovK2LkecY7zXl4' // Rachel voice
         }),
       });
 

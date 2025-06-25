@@ -34,7 +34,7 @@ export function useSimpleAudio(config: SimpleAudioConfig = {}) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
-          voiceId: config.voiceId || 'pNInz6obpgDQGcFmaJgB'
+          voiceId: config.voiceId || 'jsCqWAovK2LkecY7zXl4'
         }),
       });
 
@@ -66,10 +66,10 @@ export function useSimpleAudio(config: SimpleAudioConfig = {}) {
         URL.revokeObjectURL(audioUrl);
       };
 
-      // Start playback immediately when ready
-      audio.oncanplaythrough = async () => {
+      // Try to play immediately
+      audio.onloadeddata = async () => {
         try {
-          console.log('🎵 Starting playback');
+          console.log('🎵 Audio loaded, attempting playback');
           setIsGenerating(false);
           setIsPlaying(true);
           await audio.play();
@@ -78,6 +78,16 @@ export function useSimpleAudio(config: SimpleAudioConfig = {}) {
           console.error('🎵 Playback failed:', playError);
           setIsPlaying(false);
           setIsGenerating(false);
+          
+          // Fallback: try playing on user interaction
+          const playOnClick = () => {
+            audio.play().then(() => {
+              console.log('🎵 Playback started after user interaction');
+              setIsPlaying(true);
+              document.removeEventListener('click', playOnClick);
+            }).catch(err => console.error('🎵 Manual play failed:', err));
+          };
+          document.addEventListener('click', playOnClick, { once: true });
         }
       };
 
