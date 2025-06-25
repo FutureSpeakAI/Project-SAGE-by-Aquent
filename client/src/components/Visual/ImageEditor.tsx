@@ -554,12 +554,55 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             </div>
             
             <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
-              {/* Before & After Layout */}
-              <div className={`flex ${editedImageUrl ? 'flex-row gap-4' : 'flex-col'} flex-1 min-h-[400px]`}>
-                {/* Original Image Section */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  <Label className="text-sm font-medium mb-2 text-center">Original</Label>
-                  <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-0">
+              {editedImageUrl ? (
+                <>
+                  {/* Before & After Comparison Mode */}
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold text-green-600">✓ Edit Complete</h3>
+                    <p className="text-sm text-gray-600">Compare your original and edited images</p>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 flex-1 min-h-[400px]">
+                    {/* Original Image */}
+                    <div className="flex-1 flex flex-col">
+                      <Label className="text-sm font-medium mb-2 text-center bg-gray-100 py-1 rounded">Original</Label>
+                      <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 overflow-auto p-2">
+                        <img 
+                          src={imageUrl} 
+                          alt="Original" 
+                          className="max-w-full h-auto object-contain"
+                          style={{ maxHeight: 'none' }}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Edited Image */}
+                    <div className="flex-1 flex flex-col">
+                      <Label className="text-sm font-medium mb-2 text-center bg-green-100 py-1 rounded text-green-800">✓ Edited</Label>
+                      <div className="relative flex items-center justify-center border-2 border-green-200 rounded bg-green-50 flex-1 overflow-auto p-2">
+                        <img 
+                          src={editedImageUrl} 
+                          alt="Edited" 
+                          className="max-w-full h-auto object-contain"
+                          style={{ maxHeight: 'none' }}
+                          onLoad={() => {
+                            console.log('Edited image displayed successfully in before/after');
+                            console.log('Edited image URL length:', editedImageUrl?.length);
+                          }}
+                          onError={(e) => {
+                            console.error('Failed to display edited image in before/after:', e);
+                            console.error('Edited image URL:', editedImageUrl?.substring(0, 100));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col flex-1 min-h-[400px]">
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <Label className="text-sm font-medium mb-2 text-center">Original</Label>
+                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-0">
                 {/* Loading state overlay */}
                 {imageLoadStatus === "loading" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded">
@@ -651,39 +694,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     }}
                   />
                 )}
-                  </div>
-                </div>
-                
-                {/* Edited Image Section - Only show when we have an edited image */}
-                {editedImageUrl && (
-                  <div className="flex-1 flex flex-col min-h-0">
-                    <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
-                    <div className="relative flex items-center justify-center border-2 border-blue-200 rounded bg-blue-50 flex-1 overflow-auto p-2">
-                      <img 
-                        src={editedImageUrl} 
-                        alt="Edited" 
-                        className="w-auto h-auto max-w-full object-contain"
-                        style={{
-                          maxWidth: "100%",
-                          objectFit: "contain",
-                          height: "auto"
-                        }}
-                        onLoad={() => {
-                          console.log('Edited image displayed successfully in before/after');
-                          console.log('Edited image URL length:', editedImageUrl?.length);
-                        }}
-                        onError={(e) => {
-                          console.error('Failed to display edited image in before/after:', e);
-                          console.error('Edited image URL:', editedImageUrl?.substring(0, 100));
-                        }}
-                      />
-                      <div className="absolute top-2 left-2 bg-green-100 text-green-800 px-2 py-1 rounded text-xs z-10 font-medium">
-                        ✓ Edited
-                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             
             {/* Simplified Brush Controls */}
