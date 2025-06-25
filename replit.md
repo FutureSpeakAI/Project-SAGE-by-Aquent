@@ -105,7 +105,9 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Restored proper mask overlay positioning that was broken during image display improvements
   - Fixed coordinate mapping between display canvas and mask canvas for accurate drawing
   - Updated mask canvas positioning to use absolute positioning with proper scaling
+  - Fixed brush cursor alignment to match mouse position correctly
   - Transparency masking now works correctly for inpainting operations
+  - Fixed image resolution issue in ImageLibrary - images now open at full resolution in editor
 
 - **June 25, 2025**: Fixed briefing content generation bug in Content tab
   - Resolved issue where briefs from library loaded as [object Object] instead of actual content

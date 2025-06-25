@@ -681,7 +681,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     }}
                     onMouseDown={startDrawing}
                     onMouseMove={(e) => {
-                      // Update mouse position for brush preview
+                      // Update mouse position for brush preview relative to mask canvas
                       const rect = e.currentTarget.getBoundingClientRect();
                       setMousePos({
                         x: e.clientX - rect.left,
@@ -699,12 +699,14 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <div
                     className="absolute pointer-events-none border-2 border-blue-500 rounded-full opacity-50"
                     style={{
-                      width: `${brushSize * zoom}px`,
-                      height: `${brushSize * zoom}px`,
-                      left: `${mousePos.x - (brushSize * zoom) / 2}px`,
-                      top: `${mousePos.y - (brushSize * zoom) / 2}px`,
-                      transform: `translate(-50%, -50%) scale(${zoom})`,
-                      transformOrigin: 'center'
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: `${brushSize}px`,
+                      height: `${brushSize}px`,
+                      transform: `translate(-50%, -50%) translate(${(mousePos.x - brushSize/2) * zoom}px, ${(mousePos.y - brushSize/2) * zoom}px) scale(${zoom})`,
+                      transformOrigin: 'center',
+                      zIndex: 3
                     }}
                   />
                 )}

@@ -475,11 +475,12 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
                 </p>
               </div>
               
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4 flex justify-center">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4 flex justify-center overflow-auto">
                 <img 
                   src={previewImage.imageUrl} 
                   alt={previewImage.title}
-                  className="max-w-full max-h-[50vh] object-contain rounded-md" 
+                  className="w-auto h-auto object-contain rounded-md" 
+                  style={{ maxWidth: 'none', maxHeight: 'none' }}
                 />
               </div>
               
