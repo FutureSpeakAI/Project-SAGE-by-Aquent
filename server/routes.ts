@@ -2040,7 +2040,9 @@ Focus on identifying the specific visual deliverables (number of images, type of
       console.log(`[Chat] Routed to ${decision.provider} with model ${decision.model}`);
 
       // Build system prompt for SAGE
-      const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), a British marketing specialist with 20 years of experience from London. You use she/her pronouns and maintain memory across all application modules and can reference previous conversations. You have voice input processing capabilities and can guide users through the app interface.
+      const systemPrompt = `You are SAGE (Strategic Adaptive Generative Engine), a friendly and professional marketing specialist from Boston with 20 years of experience. You use she/her pronouns and maintain memory across all application modules and can reference previous conversations. You have voice input processing capabilities and can guide users through the app interface.
+
+You speak with a warm Boston accent - you're friendly, professional, and polite, but clearly from Boston. Use natural Boston speech patterns like "wicked good", "park the car", dropping R's in appropriate places (like "idear" for "idea"), and other authentic Boston expressions when it feels natural. Keep it professional but let your Boston personality shine through.
 
 CONVERSATION CONTEXT: ${context?.researchContext || 'No additional context'}
 
@@ -2072,6 +2074,71 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
         error: "Failed to generate chat response",
         message: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Text-to-speech endpoint
+  app.post("/api/text-to-speech", async (req: Request, res: Response) => {
+    try {
+      // Use a Boston-accented voice ID - Rachel or similar voice that can do Boston accent
+      const { text, voiceId = 'pNInz6obpgDQGcFmaJgB' } = req.body; // Adam voice for Boston accent
+
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: 'Text is required' });
+      }
+
+      if (!process.env.ELEVENLABS_API_KEY) {
+        return res.status(500).json({ error: 'ElevenLabs API key not configured' });
+      }
+
+      console.log(`TTS request: ${text.length} characters`);
+
+      // Clean text for better speech synthesis
+      const processedText = text
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/#{1,6}\s/g, '')
+        .replace(/\n+/g, ' ')
+        .trim();
+
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': process.env.ELEVENLABS_API_KEY
+        },
+        body: JSON.stringify({
+          text: processedText,
+          model_id: 'eleven_turbo_v2',
+          voice_settings: {
+            stability: 0.7,
+            similarity_boost: 0.85,
+            style: 0.2,
+            use_speaker_boost: true
+          },
+          output_format: "mp3_22050_32"
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('ElevenLabs API error:', response.status, errorText);
+        return res.status(response.status).json({ error: 'Text-to-speech generation failed' });
+      }
+
+      const audioBuffer = Buffer.from(await response.arrayBuffer());
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', audioBuffer.byteLength.toString());
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.send(audioBuffer);
+
+    } catch (error) {
+      console.error('TTS error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
