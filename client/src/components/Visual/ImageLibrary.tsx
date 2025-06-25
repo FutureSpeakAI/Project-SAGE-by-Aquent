@@ -283,7 +283,47 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
       const useFormat = format || downloadFormat;
       const useResolution = resolution || downloadResolution;
       
-      // If original format and resolution, download directly
+      // Handle SVG format specially since it's vector-based
+      if (useFormat === "svg") {
+        // Create SVG with embedded raster image
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+
+        const multiplier = useResolution === "2x" ? 2 : useResolution === "4x" ? 4 : 1;
+        const width = img.width * multiplier;
+        const height = img.height * multiplier;
+
+        // Create SVG with embedded base64 image
+        const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <image x="0" y="0" width="${width}" height="${height}" xlink:href="${imageUrl}"/>
+</svg>`;
+
+        const blob = new Blob([svgContent], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${title.replace(/[^a-z0-9]/gi, '_')}_${useResolution}.svg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Download complete",
+          description: `Image downloaded as SVG at ${useResolution} resolution`,
+        });
+        return;
+      }
+      
+      // If original format and resolution for raster formats, download directly
       if (useFormat === "png" && useResolution === "original") {
         const a = document.createElement("a");
         a.href = imageUrl;
@@ -299,7 +339,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
         return;
       }
       
-      // Calculate dimensions based on resolution
+      // Calculate dimensions based on resolution for raster formats
       let width: number | undefined;
       let height: number | undefined;
       
@@ -309,7 +349,7 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
         height = 1024 * multiplier;
       }
       
-      // Process image through API
+      // Process image through API for raster formats
       const response = await fetch("/api/image-processing", {
         method: "POST",
         headers: {

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Loader2, ImagePlus, Download } from "lucide-react";
+import { ImageDownloadMenu } from "./ImageDownloadMenu";
 import { pageTransition } from "@/App";
 import { useToast } from "@/hooks/use-toast";
 
@@ -91,16 +92,7 @@ export function StableVisualTab({ model, setModel }: StableVisualTabProps) {
     }
   };
   
-  const handleDownload = () => {
-    if (generatedImageUrl) {
-      const a = document.createElement("a");
-      a.href = generatedImageUrl;
-      a.download = `image_${new Date().getTime()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  };
+  // Removed handleDownload - now using ImageDownloadMenu component for consistency;
   
   return (
     <motion.div
@@ -193,14 +185,13 @@ export function StableVisualTab({ model, setModel }: StableVisualTabProps) {
                         />
                       </div>
                       
-                      <Button
-                        variant="outline"
-                        className="mx-auto"
-                        onClick={handleDownload}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Image
-                      </Button>
+                      <div className="flex justify-center">
+                        <ImageDownloadMenu 
+                          imageUrl={generatedImageUrl}
+                          filename="generated-image"
+                          className=""
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center p-6 text-gray-500">

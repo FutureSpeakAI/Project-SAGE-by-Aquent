@@ -114,6 +114,8 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Better error handling for OpenAI content policy violations
   - Improved Visual tab mobile responsiveness with proper button layout and spacing
   - Fixed SVG download functionality to properly handle vector format conversion from raster images
+  - Updated all download interfaces throughout the app to use consistent SVG handling
+  - Replaced basic download buttons with comprehensive ImageDownloadMenu across all components
 
 ## Changelog
 
