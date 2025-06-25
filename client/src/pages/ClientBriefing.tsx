@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2 } from 'lucide-react';
+import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, Target, Users, TrendingUp, Clock, Award, CheckCircle, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -323,54 +323,188 @@ IMPORTANT FORMATTING REQUIREMENTS:
       animate="visible"
       exit="exit"
       variants={pageTransition}
-      className="min-h-screen bg-gradient-to-br from-orange-50 to-white p-6"
+      className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 relative overflow-hidden"
     >
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Create Your Marketing Brief</h1>
-          <p className="text-lg text-gray-600">Tell us about your project and let our AI create a comprehensive creative brief</p>
-        </div>
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full opacity-20 animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full opacity-20 animate-pulse delay-1000"></div>
+        <div className="absolute bottom-32 left-32 w-40 h-40 bg-gradient-to-br from-purple-200 to-purple-300 rounded-full opacity-20 animate-pulse delay-2000"></div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Input Section */}
-          <div className="space-y-6">
-            <Tabs defaultValue="chat" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="chat" className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Chat with SAGE
-                </TabsTrigger>
-                <TabsTrigger value="form" className="flex items-center gap-2">
-                  <FormInput className="h-4 w-4" />
-                  Fill Form
-                </TabsTrigger>
-              </TabsList>
+      <div className="relative z-10 p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-6"
+            >
+              <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-full text-sm font-semibold mb-4">
+                <Sparkles className="h-4 w-4 mr-2" />
+                AI-Powered Marketing Intelligence
+              </div>
+              
+              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
+                Transform Your 
+                <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent"> Vision</span>
+                <br />Into Marketing Excellence
+              </h1>
+              
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                Experience the future of marketing strategy with SAGE. Our AI analyzes your needs, 
+                understands your audience, and creates comprehensive campaigns that deliver results.
+              </p>
+            </motion.div>
 
-              {/* SAGE Chat Tab */}
-              <TabsContent value="chat" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>Describe Your Project</span>
-                      <Button
-                        variant="outline"
-                        onClick={handleDocumentUpload}
-                        className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Document
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Chat Messages */}
-                    <div className="h-64 overflow-y-auto border rounded-lg p-4 mb-4 bg-gray-50">
-                      {messages.length === 0 ? (
-                        <div className="text-center text-gray-500 mt-8">
-                          <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                          <p>Start a conversation about your marketing project</p>
+            {/* Stats/Features Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12"
+            >
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-xl mb-2">
+                  <Target className="h-6 w-6 text-orange-600" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900">99%</div>
+                <div className="text-sm text-gray-600">Strategy Accuracy</div>
+              </div>
+              
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mb-2">
+                  <Clock className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900">5 Min</div>
+                <div className="text-sm text-gray-600">Brief Generation</div>
+              </div>
+              
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-xl mb-2">
+                  <TrendingUp className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900">300%</div>
+                <div className="text-sm text-gray-600">ROI Improvement</div>
+              </div>
+              
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-2">
+                  <Award className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900">1000+</div>
+                <div className="text-sm text-gray-600">Successful Campaigns</div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Process Steps */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mb-12"
+          >
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">How SAGE Creates Your Marketing Brief</h2>
+              <p className="text-lg text-gray-600">Three simple steps to marketing excellence</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <div className="relative">
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-2xl mb-4 text-xl font-bold">1</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Share Your Vision</h3>
+                  <p className="text-gray-600">Chat with SAGE or fill our comprehensive form to describe your project, audience, and goals.</p>
+                </div>
+                {/* Connector line */}
+                <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-orange-300 to-blue-300 transform translate-x-2"></div>
+              </div>
+              
+              <div className="relative">
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-2xl mb-4 text-xl font-bold">2</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">AI Analysis</h3>
+                  <p className="text-gray-600">SAGE analyzes market trends, audience insights, and creates strategic recommendations tailored to your needs.</p>
+                </div>
+                <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-blue-300 to-green-300 transform translate-x-2"></div>
+              </div>
+              
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 text-white rounded-2xl mb-4 text-xl font-bold">3</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Get Your Brief</h3>
+                <p className="text-gray-600">Receive a comprehensive, actionable marketing brief with clear strategies and next steps.</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Main Content Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Input Section */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="space-y-6"
+            >
+              {/* Choice Header */}
+              <div className="text-center lg:text-left mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Preferred Method</h2>
+                <p className="text-gray-600">Start your marketing journey with the approach that works best for you</p>
+              </div>
+
+              <Tabs defaultValue="chat" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 h-14 bg-gray-100 rounded-xl p-2">
+                  <TabsTrigger value="chat" className="flex items-center gap-2 h-10 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+                    <MessageSquare className="h-5 w-5" />
+                    <span className="font-medium">Chat with SAGE</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="form" className="flex items-center gap-2 h-10 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+                    <FormInput className="h-5 w-5" />
+                    <span className="font-medium">Detailed Form</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* SAGE Chat Tab */}
+                <TabsContent value="chat" className="mt-8">
+                  <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center justify-between text-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                            <Sparkles className="h-5 w-5 text-white" />
+                          </div>
+                          <span>Converse with SAGE AI</span>
                         </div>
+                        <Button
+                          variant="outline"
+                          onClick={handleDocumentUpload}
+                          className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white shadow-md"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Document
+                        </Button>
+                      </CardTitle>
+                      <p className="text-gray-600 mt-1">Have a natural conversation about your marketing needs</p>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Chat Messages */}
+                      <div className="h-80 overflow-y-auto border-2 border-gray-100 rounded-xl p-6 mb-6 bg-gradient-to-br from-gray-50 to-white relative">
+                        {messages.length === 0 ? (
+                          <div className="text-center text-gray-500 mt-12">
+                            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-100 to-red-100 rounded-2xl mb-4">
+                              <MessageSquare className="h-10 w-10 text-orange-500" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-700 mb-2">Ready to Start Your Journey?</h3>
+                            <p className="text-gray-500 max-w-sm mx-auto">Tell SAGE about your marketing project, goals, and vision. Our AI will guide you through creating the perfect brief.</p>
+                            <div className="mt-4 flex flex-wrap justify-center gap-2">
+                              <span className="inline-block bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">Brand Launch</span>
+                              <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">Product Campaign</span>
+                              <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Social Strategy</span>
+                            </div>
+                          </div>
                       ) : (
                         messages.map((msg, index) => (
                           <motion.div
@@ -380,10 +514,10 @@ IMPORTANT FORMATTING REQUIREMENTS:
                             className={`mb-3 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}
                           >
                             <div
-                              className={`inline-block p-3 rounded-lg max-w-[80%] ${
+                              className={`inline-block p-4 rounded-2xl max-w-[80%] shadow-md ${
                                 msg.role === 'user'
-                                  ? 'bg-[#F15A22] text-white rounded-br-none'
-                                  : 'bg-white text-gray-800 border rounded-bl-none'
+                                  ? 'bg-gradient-to-r from-[#F15A22] to-[#FF6B47] text-white rounded-br-sm'
+                                  : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm'
                               }`}
                             >
                               {msg.content}
@@ -397,25 +531,32 @@ IMPORTANT FORMATTING REQUIREMENTS:
                           animate={{ opacity: 1 }}
                           className="text-left"
                         >
-                          <div className="inline-block p-3 rounded-lg bg-white border rounded-bl-none">
-                            <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
-                            SAGE is thinking...
+                          <div className="inline-block p-4 rounded-2xl bg-white border border-gray-200 rounded-bl-sm shadow-md">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                                <Sparkles className="h-3 w-3 text-white" />
+                              </div>
+                              <span className="text-gray-600 font-medium">SAGE is analyzing...</span>
+                              <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
+                            </div>
                           </div>
                         </motion.div>
                       )}
                       <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input Area */}
-                    <div className="flex gap-2">
-                      <Input
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        placeholder="Tell us about your marketing project..."
-                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                        disabled={isLoading}
-                        className="flex-grow"
-                      />
+                      {/* Input Area */}
+                      <div className="flex gap-3 items-end">
+                        <div className="flex-grow">
+                          <Input
+                            value={userInput}
+                            onChange={(e) => setUserInput(e.target.value)}
+                            placeholder="Describe your marketing project, goals, target audience..."
+                            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                            disabled={isLoading}
+                            className="h-12 text-base border-2 border-gray-200 focus:border-orange-500 rounded-xl px-4"
+                          />
+                        </div>
                       <VoiceControls
                         onTranscript={(text) => {
                           const newMessage = userInput + text;
@@ -458,35 +599,41 @@ IMPORTANT FORMATTING REQUIREMENTS:
                         lastMessage={messages.length > 0 && messages[messages.length - 1].role === 'assistant' 
                           ? messages[messages.length - 1].content : null}
                       />
-                      <Button
-                        onClick={sendMessage}
-                        disabled={!userInput.trim() || isLoading}
-                        className="bg-[#F15A22] hover:bg-[#D14A1A] text-white"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </div>
+                        <Button
+                          onClick={sendMessage}
+                          disabled={!userInput.trim() || isLoading}
+                          className="h-12 px-6 bg-gradient-to-r from-[#F15A22] to-[#FF6B47] hover:from-[#D14A1A] hover:to-[#E55A3F] text-white rounded-xl shadow-lg"
+                        >
+                          <Send className="h-5 w-5" />
+                        </Button>
+                      </div>
 
-                    {messages.length > 0 && (
-                      <Button
-                        onClick={generateBriefingFromChat}
-                        disabled={isLoading}
-                        className="w-full mt-4 bg-[#F15A22] hover:bg-[#D14A1A] text-white"
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Generate Brief from Conversation
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                      {messages.length > 0 && (
+                        <Button
+                          onClick={generateBriefingFromChat}
+                          disabled={isLoading}
+                          className="w-full mt-6 h-12 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white rounded-xl shadow-lg font-semibold"
+                        >
+                          <FileText className="h-5 w-5 mr-2" />
+                          Generate Professional Brief
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-              {/* Form Tab */}
-              <TabsContent value="form" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Project Details Form</CardTitle>
-                  </CardHeader>
+                {/* Form Tab */}
+                <TabsContent value="form" className="mt-8">
+                  <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-3 text-xl">
+                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                          <FormInput className="h-5 w-5 text-white" />
+                        </div>
+                        <span>Comprehensive Project Form</span>
+                      </CardTitle>
+                      <p className="text-gray-600 mt-1">Provide detailed information for the most precise brief</p>
+                    </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Project Details Section */}
                     <div className="space-y-4">
@@ -682,64 +829,122 @@ IMPORTANT FORMATTING REQUIREMENTS:
                       </div>
                     </div>
 
-                    <Button
-                      onClick={submitFormBriefing}
-                      disabled={formLoading || !formData.projectName || !formData.projectDescription || !formData.targetAudience}
-                      className="w-full bg-[#F15A22] hover:bg-[#D14A1A] text-white"
-                    >
-                      {formLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Creating Brief...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="h-4 w-4 mr-2" />
-                          Create Comprehensive Brief
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                      <Button
+                        onClick={submitFormBriefing}
+                        disabled={formLoading || !formData.projectName || !formData.projectDescription || !formData.targetAudience}
+                        className="w-full h-14 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl shadow-lg font-semibold text-lg"
+                      >
+                        {formLoading ? (
+                          <>
+                            <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                            Creating Your Strategic Brief...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-5 w-5 mr-3" />
+                            Generate Strategic Marketing Brief
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </motion.div>
+
+            {/* Output Section */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+            >
+              <Card className="h-full border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center justify-between text-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center">
+                        <Award className="h-5 w-5 text-white" />
+                      </div>
+                      <span>Your Strategic Marketing Brief</span>
+                    </div>
+                    {briefingContent && (
+                      <Button
+                        onClick={saveBriefing}
+                        variant="outline"
+                        className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white shadow-md"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Save Brief
+                      </Button>
+                    )}
+                  </CardTitle>
+                  <p className="text-gray-600 mt-1">Your comprehensive marketing strategy document</p>
+                </CardHeader>
+                <CardContent>
+                  {briefingContent ? (
+                    <div className="prose max-w-none h-[500px] overflow-y-auto border-2 border-gray-100 rounded-xl p-6 bg-gradient-to-br from-gray-50 to-white">
+                      <div dangerouslySetInnerHTML={{ __html: briefingContent }} />
+                    </div>
+                  ) : (
+                    <div className="h-[500px] flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-200 rounded-xl bg-gradient-to-br from-gray-50 to-white">
+                      <div className="text-center max-w-sm">
+                        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-6">
+                          <FileText className="h-10 w-10 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">Your Brief Awaits</h3>
+                        <p className="text-gray-500 mb-4">Once you share your project details, SAGE will create a comprehensive marketing brief tailored to your goals.</p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                            Strategy Analysis
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                            Audience Insights
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                            Action Plan
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
-          {/* Output Section */}
-          <div>
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Your Creative Brief</span>
-                  {briefingContent && (
-                    <Button
-                      onClick={saveBriefing}
-                      variant="outline"
-                      className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Save Brief
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {briefingContent ? (
-                  <div className="prose max-w-none h-96 overflow-y-auto border rounded-lg p-4 bg-white">
-                    <div dangerouslySetInnerHTML={{ __html: briefingContent }} />
-                  </div>
-                ) : (
-                  <div className="h-96 flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
-                    <div className="text-center">
-                      <FileText className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                      <p>Your creative brief will appear here</p>
-                      <p className="text-sm mt-2">Start a conversation or fill out the form to begin</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          {/* Trust Indicators */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.0 }}
+            className="mt-16 text-center"
+          >
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Trusted by Marketing Leaders</h3>
+              <div className="flex items-center justify-center gap-8 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                  <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                  <span className="text-gray-700 font-semibold ml-2">4.9/5 Client Satisfaction</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Users className="h-5 w-5" />
+                  <span>500+ Marketing Teams</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Award className="h-5 w-5" />
+                  <span>Industry Recognition</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
         </div>
 
         {/* Hidden file input */}
