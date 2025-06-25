@@ -916,7 +916,8 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               mask: maskFile,
               prompt: prompt.trim(),
               n: 1,
-              size: (size || "1024x1024") as any
+              size: (size || "1024x1024") as any,
+              response_format: "b64_json"
             });
 
             console.log(`${model} inpainting completed successfully`);
