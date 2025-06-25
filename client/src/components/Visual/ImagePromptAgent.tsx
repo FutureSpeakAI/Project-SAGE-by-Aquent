@@ -234,6 +234,9 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
           .replace(/&quot;/g, '"')
           .trim();
 
+        console.log('SAGE Response received:', cleanedContent);
+        console.log('Looking for prompts in response...');
+
         // Enhanced prompt extraction - look for multiple patterns
         const multipleFinalPromptRegex = /FINAL PROMPT \d+:\s*([\s\S]*?)(?=FINAL PROMPT \d+:|$)/g;
         const multipleMatches = [];
@@ -260,28 +263,53 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
             { role: "assistant", content: `${responseContent}\n\n${promptsList}\n\nClick "Use Prompt" to apply the first one, or copy any specific prompt you'd like to use.` },
           ]);
         } else {
-          // Look for various prompt patterns - prioritize longer, more detailed prompts
-          const promptPatterns = [
-            /FINAL PROMPT:?\s*([\s\S]*?)(?:\n\n|$)/i,
-            /Image Prompt:?\s*([\s\S]*?)(?:\n\n|$)/i,
-            /Here's an optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i,
-            /Optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i,
-            /"([^"]{50,})"/, // Look for any quoted text that's at least 50 characters (likely a detailed prompt)
-            /"([^"]*(?:spa|massage|professional|inclusive|serene|environment|Pride|rainbow|lighting|atmosphere|therapy|treatment|clean|modern|natural|diffused|quality|photography)[^"]*)"/, // Look for descriptive image prompts
-            /Prompt:?\s*"([^"]+)"/i,
-            /Image Prompt \d+:\s*([^"\n]*(?:"[^"]*"[^"\n]*)*)/i // Handle "Image Prompt 1: Inclusive Spa Environment" format
-          ];
+          // Enhanced prompt extraction - find the longest quoted text which is most likely the detailed prompt
+          const allQuotes = cleanedContent.match(/"([^"]*)"/g) || [];
+          console.log('Found quotes:', allQuotes);
           
           let extractedPrompt = null;
           let displayContent = cleanedContent;
           
-          for (const pattern of promptPatterns) {
-            const match = cleanedContent.match(pattern);
-            if (match) {
-              extractedPrompt = match[1].trim();
-              // Remove the matched prompt from display content
-              displayContent = cleanedContent.replace(pattern, '').trim();
-              break;
+          // Find the longest quoted text that looks like an image prompt
+          let longestPrompt = "";
+          for (const quote of allQuotes) {
+            const text = quote.replace(/"/g, '').trim();
+            console.log('Examining quote:', text, 'Length:', text.length);
+            
+            // Prioritize quotes that are substantial and contain visual descriptors
+            if (text.length > longestPrompt.length && text.length > 20 && 
+                (text.includes('massage') || text.includes('spa') || text.includes('therapy') ||
+                 text.includes('professional') || text.includes('room') || text.includes('studio') ||
+                 text.includes('lighting') || text.includes('atmosphere') || text.includes('clean') ||
+                 text.includes('modern') || text.includes('natural') || text.includes('wellness') ||
+                 text.includes('environment') || text.includes('space'))) {
+              longestPrompt = text;
+              console.log('New longest prompt found:', longestPrompt);
+            }
+          }
+          
+          if (longestPrompt) {
+            extractedPrompt = longestPrompt;
+            // Remove the quoted prompt from display content
+            displayContent = cleanedContent.replace(`"${longestPrompt}"`, '').trim();
+            console.log('Extracted prompt:', extractedPrompt);
+          } else {
+            // Fallback: try traditional patterns
+            const promptPatterns = [
+              /FINAL PROMPT:?\s*([\s\S]*?)(?:\n\n|$)/i,
+              /Image Prompt:?\s*([\s\S]*?)(?:\n\n|$)/i,
+              /Here's an optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i,
+              /Optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i
+            ];
+            
+            for (const pattern of promptPatterns) {
+              const match = cleanedContent.match(pattern);
+              if (match) {
+                extractedPrompt = match[1].trim();
+                displayContent = cleanedContent.replace(pattern, '').trim();
+                console.log('Extracted via pattern:', extractedPrompt);
+                break;
+              }
             }
           }
           
