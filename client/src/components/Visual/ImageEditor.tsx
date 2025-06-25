@@ -52,7 +52,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
   const [isDrawing, setIsDrawing] = useState(false);
   const [lastPoint, setLastPoint] = useState<{ x: number; y: number } | null>(null);
   const [brushSize, setBrushSize] = useState(20);
-  const [tool, setTool] = useState<"brush" | "eraser">("brush");
+  // Removed tool state - always in brush mode for inpainting
   const [zoom, setZoom] = useState(1);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [prompt, setPrompt] = useState("");
@@ -629,7 +629,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 )}
                 
                 {/* Brush preview */}
-                {activeTab === "inpaint" && tool === "brush" && imageLoadStatus === "loaded" && (
+                {activeTab === "inpaint" && imageLoadStatus === "loaded" && (
                   <div
                     className="absolute pointer-events-none border-2 border-blue-500 rounded-full opacity-50"
                     style={{
