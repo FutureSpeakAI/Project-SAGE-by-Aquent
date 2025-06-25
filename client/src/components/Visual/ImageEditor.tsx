@@ -513,7 +513,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
         <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)] min-h-0">
           {/* Left Panel - Image Comparison */}
-          <div className={`${editedImageUrl ? 'w-full' : 'w-full lg:w-[60%]'} bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0`}>
+          <div className={`${editedImageUrl ? 'w-full lg:w-[70%]' : 'w-full lg:w-[60%]'} bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <Label className="text-lg font-medium">
                 {editedImageUrl ? "Before & After" : "Original Image"}
@@ -549,7 +549,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             
             <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
               {/* Before & After Layout */}
-              <div className={`flex ${editedImageUrl ? 'flex-row gap-4' : 'flex-col'} h-full min-h-0`}>
+              <div className={`flex ${editedImageUrl ? 'flex-row gap-4' : 'flex-col'} flex-1 min-h-[400px]`}>
                 {/* Original Image Section */}
                 <div className="flex-1 flex flex-col min-h-0">
                   <Label className="text-sm font-medium mb-2 text-center">Original</Label>
@@ -651,19 +651,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {/* Edited Image Section - Only show when we have an edited image */}
                 {editedImageUrl && (
                   <div className="flex-1 flex flex-col min-h-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm font-medium">Edited</Label>
-                      <ImageDownloadMenu 
-                        imageUrl={editedImageUrl}
-                        filename="edited-image"
-                        className=""
-                      />
-                    </div>
-                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-0 overflow-hidden">
+                    <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
+                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-[300px]">
                       <img 
                         src={editedImageUrl} 
                         alt="Edited" 
-                        className="w-full h-full object-contain"
+                        className="w-auto h-auto max-w-full max-h-full object-contain"
                         onLoad={() => console.log('Edited image displayed successfully in before/after')}
                         onError={(e) => console.error('Failed to display edited image in before/after:', e)}
                       />
@@ -947,6 +940,84 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 </Button>
               </div>
               </Tabs>
+            </div>
+          )}
+
+          {/* Right Panel for Edited Image Actions */}
+          {editedImageUrl && (
+            <div className="w-full lg:w-[30%] border-t lg:border-t-0 lg:border-l bg-white dark:bg-gray-950 flex flex-col p-4">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Editing Complete</h3>
+                
+                <div className="flex gap-2">
+                  <ImageDownloadMenu 
+                    imageUrl={editedImageUrl}
+                    filename="edited-image"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Use the edited image as the new starting point
+                      if (onImageEdited) {
+                        onImageEdited(editedImageUrl);
+                      }
+                      // Reset the editing state but keep the new image as the base
+                      setEditedImageUrl(null);
+                      setImageTitle("");
+                      setMaskData(null);
+                      clearMask();
+                      setPrompt("");
+                    }}
+                    className="flex-1"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit This Image
+                  </Button>
+                </div>
+                
+                {/* Quick Save Section */}
+                <div className="p-3 border rounded-lg bg-white dark:bg-gray-800">
+                  <Label className="text-sm font-medium mb-2 block">Save to Library</Label>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Enter image title..."
+                      value={imageTitle}
+                      onChange={(e) => setImageTitle(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <Select value={selectedCampaignId?.toString() || undefined} onValueChange={(value) => setSelectedCampaignId(value ? parseInt(value) : null)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={undefined}>No campaign</SelectItem>
+                        {campaigns.map((campaign: any) => (
+                          <SelectItem key={campaign.id} value={campaign.id.toString()}>
+                            {campaign.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={() => saveImageMutation.mutate()}
+                      disabled={saveImageMutation.isPending || !imageTitle.trim()}
+                      className="w-full"
+                      size="sm"
+                    >
+                      {saveImageMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save to Library"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
