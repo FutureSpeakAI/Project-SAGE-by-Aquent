@@ -2117,12 +2117,13 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
 
       let chatReply = '';
 
-      // Execute the routed prompt using the prompt router
+      // Execute the routed prompt using the prompt router with session history
       const routedResponse = await promptRouter.executeRoutedPrompt(
         decision,
         message,
         context?.researchContext || '',
-        systemPrompt
+        systemPrompt,
+        context?.sessionHistory || []
       );
 
       chatReply = routedResponse.content;

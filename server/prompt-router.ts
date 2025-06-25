@@ -279,7 +279,8 @@ export class PromptRouter {
     decision: RoutingDecision,
     message: string,
     researchContext: string,
-    systemPrompt: string
+    systemPrompt: string,
+    sessionHistory: Array<{role: string, content: string}> = []
   ): Promise<{ content: string; actualProvider: string; actualModel: string }> {
     
     let researchResults = '';
@@ -320,7 +321,7 @@ export class PromptRouter {
     for (const provider of fallbackChain) {
       try {
         console.log(`Attempting to use ${provider.name}...`);
-        const result = await this.executeWithProvider(provider, message, enhancedSystemPrompt);
+        const result = await this.executeWithProvider(provider, message, enhancedSystemPrompt, sessionHistory);
         console.log(`Successfully used ${provider.name}`);
         return {
           content: result,
@@ -358,7 +359,8 @@ export class PromptRouter {
   private async executeWithProvider(
     provider: {name: string, model: string}, 
     message: string, 
-    systemPrompt: string
+    systemPrompt: string,
+    sessionHistory: Array<{role: string, content: string}> = []
   ): Promise<string> {
     
     switch (provider.name) {
@@ -368,19 +370,32 @@ export class PromptRouter {
           prompt: message,
           systemPrompt: systemPrompt,
           temperature: 0.7,
-          maxTokens: 2000
+          maxTokens: 2000,
+          sessionHistory: sessionHistory
         });
 
       case 'openai':
         const { default: OpenAI } = await import('openai');
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         
+        // Build messages array with session history
+        const messages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [
+          { role: 'system', content: systemPrompt }
+        ];
+        
+        // Add session history
+        sessionHistory.forEach(msg => {
+          if (msg.role === 'user' || msg.role === 'assistant') {
+            messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+          }
+        });
+        
+        // Add current message
+        messages.push({ role: 'user', content: message });
+        
         const completion = await openai.chat.completions.create({
           model: provider.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: message }
-          ],
+          messages: messages,
           temperature: 0.7,
           max_tokens: 2000
         });
@@ -393,7 +408,8 @@ export class PromptRouter {
           prompt: message,
           systemPrompt: systemPrompt,
           temperature: 0.7,
-          maxTokens: 2000
+          maxTokens: 2000,
+          sessionHistory: sessionHistory
         });
 
       default:
