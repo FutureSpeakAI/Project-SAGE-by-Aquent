@@ -46,11 +46,12 @@ export function VoiceControls({
       console.log('🎵 Playback ended callback triggered', { 
         isVoiceSessionActive, 
         isListening, 
-        isGenerating 
+        isGenerating,
+        isPlaying
       });
       
       // Automatically restart listening after SAGE finishes speaking
-      if (isVoiceSessionActive && !isListening && !isGenerating) {
+      if (isVoiceSessionActive && !isListening && !isGenerating && !isPlaying) {
         console.log('🎤 Attempting auto-reactivation of microphone...');
         setTimeout(() => {
           console.log('🎤 Executing microphone reactivation');
@@ -64,12 +65,13 @@ export function VoiceControls({
               onSendMessage();
             }
           });
-        }, 500); // Reduced delay for faster response
+        }, 1000); // Longer delay to ensure audio cleanup is complete
       } else {
         console.log('🎤 Skipping auto-reactivation:', { 
           isVoiceSessionActive, 
           isListening, 
-          isGenerating 
+          isGenerating,
+          isPlaying
         });
       }
     }

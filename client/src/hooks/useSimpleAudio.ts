@@ -55,12 +55,17 @@ export function useSimpleAudio(config: SimpleAudioConfig = {}) {
 
       // Set up event handlers
       audio.onended = () => {
-        console.log('🎵 Audio finished');
+        console.log('🎵 Audio playback ended - triggering reactivation callback');
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
-        // Trigger callback when playback ends
+        audioRef.current = null;
+        
+        // Call the end callback with a small delay to ensure state is updated
         if (config.onPlaybackEnd) {
-          config.onPlaybackEnd();
+          setTimeout(() => {
+            console.log('🎵 Executing onPlaybackEnd callback');
+            config.onPlaybackEnd();
+          }, 200);
         }
       };
 
