@@ -875,9 +875,12 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           const maskMetadata = await sharp(maskBuffer).metadata();
           console.log('Original mask dimensions:', maskMetadata.width, 'x', maskMetadata.height);
           
-          // Ensure mask matches image dimensions exactly
+          // Ensure mask matches image dimensions exactly and is properly formatted
+          // GPT-image-1 expects transparent areas (black/0) and opaque areas (white/255)
           const processedMaskBuffer = await sharp(maskBuffer)
             .resize(imageMetadata.width, imageMetadata.height, { fit: 'fill' })
+            .greyscale()
+            .threshold(128) // Convert to pure black/white
             .png()
             .toBuffer();
           console.log('Processed mask buffer size:', processedMaskBuffer.length);
@@ -924,60 +927,18 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
             console.log(`${model} inpainting completed successfully`);
 
-            // gpt-image-1 returns focused results, we need to composite back onto original
-            const editedResult = editResponse.data[0];
-            const editedImageUrl = editedResult.url || `data:image/png;base64,${editedResult.b64_json}`;
-            
-            let editedImageBase64: string;
-            if (editedImageUrl.startsWith('data:')) {
-              editedImageBase64 = editedImageUrl.split(',')[1];
-            } else {
-              editedImageBase64 = editedImageUrl;
-            }
-            
-            const editedBuffer = Buffer.from(editedImageBase64, 'base64');
-            
-            // Create mask for blending - use original processed mask as alpha channel
-            const finalComposite = await sharp(processedImageBuffer)
-              .composite([{
-                input: await sharp(editedBuffer)
-                  .resize(imageMetadata.width, imageMetadata.height, { 
-                    fit: 'cover',
-                    position: 'center'
-                  })
-                  .toBuffer(),
-                blend: 'over',
-                tile: false
-              }, {
-                input: processedMaskBuffer,
-                blend: 'dest-in'
-              }])
-              .png()
-              .toBuffer();
-
-            // Now composite this masked result over the original
-            const finalImageBuffer = await sharp(processedImageBuffer)
-              .composite([{
-                input: finalComposite,
-                blend: 'over'
-              }])
-              .png()
-              .toBuffer();
-
-            const finalImageBase64 = `data:image/png;base64,${finalImageBuffer.toString('base64')}`;
-
             const responseData = {
               success: true,
-              images: [{
-                url: finalImageBase64,
-                revised_prompt: editedResult.revised_prompt || prompt
-              }],
-              method: `${model}_inpaint_composite`
+              images: editResponse.data.map(img => ({
+                url: img.url || `data:image/png;base64,${img.b64_json}`,
+                revised_prompt: img.revised_prompt || prompt
+              })),
+              method: `${model}_inpaint`
             };
             
-            console.log('Sending composited response with', responseData.images.length, 'images');
-            console.log('Final image URL length:', responseData.images[0]?.url?.length);
-            console.log('Final image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
+            console.log('Sending response with', responseData.images.length, 'images');
+            console.log('First image URL length:', responseData.images[0]?.url?.length);
+            console.log('First image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
             
             return res.json(responseData);
           } finally {
