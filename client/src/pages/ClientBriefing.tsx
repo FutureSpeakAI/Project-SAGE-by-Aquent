@@ -354,8 +354,10 @@ IMPORTANT FORMATTING REQUIREMENTS:
               </h1>
               
               <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Experience the future of marketing strategy with SAGE. Our AI analyzes your needs, 
-                understands your audience, and creates comprehensive campaigns that deliver results.
+                Welcome to SAGE, Aquent's Strategic Adaptive Generative Engine, our next-generation marketing AI. 
+                Just tell SAGE what you need, either by having a conversation with her or filling out our briefing 
+                intake form, and she will connect our expert marketers to your campaign right away and begin 
+                collaborating with them to deliver on your needs.
               </p>
             </motion.div>
 

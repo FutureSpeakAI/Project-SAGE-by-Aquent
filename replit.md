@@ -108,9 +108,10 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Statistics showcase (99% accuracy, 5min generation, 300% ROI improvement)
   - Enhanced SAGE chat interface with gradient messaging and smart placeholders
   - Comprehensive form matching main Briefing tab structure with all professional fields
-  - Trust indicators with star ratings and client testimonials
   - Premium design with backdrop blur effects, gradient cards, and motion animations
   - Prominent "Client Brief Intake" button in header for easy client sharing
+  - Updated messaging to position SAGE as Aquent's Strategic Adaptive Generative Engine
+  - Removed trust indicators section per user preference
 
 - **June 25, 2025**: Fixed briefing system integration between SAGE chat and Content tab
   - Created unified briefings endpoint that combines chat briefs and form briefs
