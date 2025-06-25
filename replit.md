@@ -101,13 +101,15 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
-- **June 25, 2025**: Fixed transparency masking functionality in Image Editor
-  - Restored proper mask overlay positioning that was broken during image display improvements
-  - Fixed coordinate mapping between display canvas and mask canvas for accurate drawing
-  - Updated mask canvas positioning to use absolute positioning with proper scaling
-  - Fixed brush cursor alignment to match mouse position correctly
-  - Transparency masking now works correctly for inpainting operations
-  - Fixed image resolution issue in ImageLibrary - images now open at full resolution in editor
+- **June 25, 2025**: Fixed Image Editor brush cursor and upgraded client-facing brief editor
+  - FIXED: Brush cursor now properly aligned with mouse position using simplified positioning
+  - FIXED: Images from library now display at full resolution without height constraints
+  - UPGRADED: Client-facing brief editor now has rich-text capabilities matching Content tab
+  - ADDED: ReactQuill rich-text editor with formatting toolbar (headers, bold, italic, lists, etc.)
+  - ADDED: Download functionality for briefs in multiple formats (PDF, Word/RTF, HTML, TXT)
+  - ADDED: Copy to clipboard functionality for brief content
+  - ENHANCED: Professional editing interface with undo/redo capabilities
+  - Client intake page now matches user-facing editor functionality without right-click context menu
 
 - **June 25, 2025**: Fixed briefing content generation bug in Content tab
   - Resolved issue where briefs from library loaded as [object Object] instead of actual content
