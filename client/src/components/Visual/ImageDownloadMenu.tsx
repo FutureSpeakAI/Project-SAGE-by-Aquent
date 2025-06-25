@@ -28,7 +28,42 @@ export const ImageDownloadMenu: React.FC<ImageDownloadMenuProps> = ({
 
   const downloadImage = async (format: string, multiplier: string) => {
     try {
-      // Create a canvas to handle format conversion and resolution scaling
+      // SVG format requires special handling since it's vector-based
+      if (format === "svg") {
+        // For SVG, we create an embedded raster image within an SVG container
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+
+        const scale = parseFloat(multiplier);
+        const width = img.width * scale;
+        const height = img.height * scale;
+
+        // Create SVG with embedded base64 image
+        const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <image x="0" y="0" width="${width}" height="${height}" xlink:href="${imageUrl}"/>
+</svg>`;
+
+        const blob = new Blob([svgContent], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${filename}-${scale}x.svg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      // Handle raster formats (PNG, JPG, WebP)
       const img = new Image();
       img.crossOrigin = "anonymous";
       
@@ -93,7 +128,7 @@ export const ImageDownloadMenu: React.FC<ImageDownloadMenuProps> = ({
       // Fallback: direct download
       const link = document.createElement("a");
       link.href = imageUrl;
-      link.download = `${filename}.${format}`;
+      link.download = `${filename}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -129,7 +164,7 @@ export const ImageDownloadMenu: React.FC<ImageDownloadMenuProps> = ({
                 <SelectItem value="png">PNG (Lossless, Transparency)</SelectItem>
                 <SelectItem value="jpg">JPG (Smaller Size)</SelectItem>
                 <SelectItem value="webp">WebP (Modern, Efficient)</SelectItem>
-                <SelectItem value="svg">SVG (Vector, if applicable)</SelectItem>
+                <SelectItem value="svg">SVG (Scalable Vector)</SelectItem>
               </SelectContent>
             </Select>
           </div>

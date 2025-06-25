@@ -113,6 +113,7 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Fixed canvas quality: Preserves original image resolution, no downscaling
   - Better error handling for OpenAI content policy violations
   - Improved Visual tab mobile responsiveness with proper button layout and spacing
+  - Fixed SVG download functionality to properly handle vector format conversion from raster images
 
 ## Changelog
 
