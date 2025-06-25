@@ -78,8 +78,81 @@ export async function performDeepResearch(userQuery: string, researchContext: st
     
   } catch (error) {
     console.error('Research error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return `Research unavailable: ${errorMessage}. Please provide your PERPLEXITY_API_KEY for real-time research capabilities.`;
+    
+    // Robust fallback to Anthropic for comprehensive research
+    console.log('Perplexity unavailable, using Anthropic research fallback...');
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+          'content-type': 'application/json',
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 4000,
+          temperature: 0.1,
+          messages: [{
+            role: 'user',
+            content: `Conduct comprehensive research analysis for: ${researchQuery}
+
+As a strategic marketing research specialist, provide detailed analysis including:
+
+1. **Brand Positioning & Strategy**
+   - Current market position and competitive landscape
+   - Brand differentiation and unique value propositions
+   - Strategic positioning vs key competitors
+
+2. **Messaging & Communication**
+   - Core brand messaging framework and key themes
+   - Tone of voice and communication style analysis
+   - Target audience messaging adaptation
+
+3. **Market Context & Performance**
+   - Industry trends and market dynamics
+   - Consumer behavior patterns and preferences
+   - Campaign performance and strategic initiatives
+
+4. **Competitive Intelligence**
+   - Direct competitor analysis and positioning
+   - Competitive messaging and strategic gaps
+   - Market opportunity identification
+
+5. **Strategic Insights**
+   - Actionable recommendations and opportunities
+   - Risk factors and market challenges
+   - Future growth and expansion potential
+
+Provide specific examples, data points, and strategic context throughout your analysis. Focus on actionable insights that can inform campaign development and strategic decision-making.`
+          }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.content[0]?.text || "";
+        console.log('Anthropic research fallback successful');
+        return content;
+      } else {
+        throw new Error(`Anthropic fallback failed: ${response.status}`);
+      }
+    } catch (fallbackError) {
+      console.error('Research fallback error:', fallbackError);
+      
+      // Final fallback with basic structure
+      return `Research analysis for ${userQuery}:
+
+While real-time research data is currently unavailable, I can provide strategic guidance based on established marketing principles and industry knowledge.
+
+For comprehensive brand research on ${userQuery}, consider analyzing:
+- Brand positioning and competitive landscape
+- Target audience insights and messaging strategies  
+- Recent campaign performance and market trends
+- Strategic opportunities and growth potential
+
+Please ensure proper API configuration for enhanced research capabilities.`;
+    }
   }
 }
 
