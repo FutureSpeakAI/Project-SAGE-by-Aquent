@@ -101,6 +101,13 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Fixed Visual tab SAGE chat and image library issues
+  - FIXED: SAGE now responds properly in Visual tab using correct /api/chat endpoint
+  - FIXED: Image library "error loading images" resolved with enhanced database error handling
+  - ENHANCED: Prompt extraction logic now handles multiple response formats from SAGE
+  - IMPROVED: Visual tab conversation maintains context and displays "Use Prompt" button correctly
+  - ADDED: Graceful handling of Neon database "Control plane request failed" errors
+
 - **June 25, 2025**: Fixed Image Editor brush cursor and upgraded client-facing brief editor
   - FIXED: Brush cursor now properly aligned with mouse position using simplified positioning
   - FIXED: Images from library now display at full resolution without height constraints

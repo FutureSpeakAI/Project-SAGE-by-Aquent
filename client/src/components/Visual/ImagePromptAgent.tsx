@@ -234,7 +234,7 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
           .replace(/&quot;/g, '"')
           .trim();
 
-        // Check for multiple final prompts first
+        // Enhanced prompt extraction - look for multiple patterns
         const multipleFinalPromptRegex = /FINAL PROMPT \d+:\s*([\s\S]*?)(?=FINAL PROMPT \d+:|$)/g;
         const multipleMatches = [];
         let match;
@@ -260,28 +260,54 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
             { role: "assistant", content: `${responseContent}\n\n${promptsList}\n\nClick "Use Prompt" to apply the first one, or copy any specific prompt you'd like to use.` },
           ]);
         } else {
-          // Check for single final prompt
-          const singleFinalPromptRegex = /FINAL PROMPT:?\s*([\s\S]*?)(?:\n|$)/;
-          const singleMatch = cleanedContent.match(singleFinalPromptRegex);
+          // Look for various prompt patterns
+          const promptPatterns = [
+            /FINAL PROMPT:?\s*([\s\S]*?)(?:\n\n|$)/i,
+            /Image Prompt:?\s*([\s\S]*?)(?:\n\n|$)/i,
+            /Prompt:?\s*"([^"]+)"/i,
+            /Here's an optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i,
+            /Optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i,
+            /"([^"]*(?:spa|massage|professional|inclusive|serene|environment|Pride|rainbow|lighting|atmosphere)[^"]*)"/ // Look for descriptive image prompts
+          ];
           
-          if (singleMatch) {
-            const extractedPrompt = singleMatch[1].trim();
+          let extractedPrompt = null;
+          let displayContent = cleanedContent;
+          
+          for (const pattern of promptPatterns) {
+            const match = cleanedContent.match(pattern);
+            if (match) {
+              extractedPrompt = match[1].trim();
+              // Remove the matched prompt from display content
+              displayContent = cleanedContent.replace(pattern, '').trim();
+              break;
+            }
+          }
+          
+          if (extractedPrompt && extractedPrompt.length > 20) { // Ensure it's a substantial prompt
             setFinalPrompt(extractedPrompt);
             
-            // Remove the final prompt from display content
-            const displayContent = cleanedContent.replace(singleFinalPromptRegex, '').trim() || 
-              "I've prepared your optimized prompt. You can now use it to generate your image!";
-            
             setMessages((prev) => [
               ...prev,
-              { role: "assistant", content: displayContent },
+              { role: "assistant", content: displayContent || "I've prepared your optimized prompt. You can now use it to generate your image!" },
             ]);
           } else {
-            // Regular response without final prompt
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: cleanedContent },
-            ]);
+            // If no specific prompt pattern found, try to extract any quoted text that looks like a prompt
+            const quotedText = cleanedContent.match(/"([^"]{30,})"/);
+            if (quotedText) {
+              setFinalPrompt(quotedText[1]);
+              displayContent = cleanedContent.replace(quotedText[0], '').trim();
+              
+              setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: displayContent || "I've prepared your optimized prompt. You can now use it to generate your image!" },
+              ]);
+            } else {
+              // Regular response without extractable prompt
+              setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: cleanedContent },
+              ]);
+            }
           }
         }
         
@@ -484,10 +510,8 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
                         setIsTyping(true);
                         
                         generateContentMutation.mutate({
-                          model: "gpt-4o",
-                          systemPrompt: getSystemPrompt(),
                           userPrompt: newMessage,
-                          temperature: 0.7,
+                          systemPrompt: getSystemPrompt(),
                         });
                       }
                     }}
