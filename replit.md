@@ -101,6 +101,15 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Simplified client-briefing page for first-time users
+  - Reduced visual complexity and technical jargon for non-expert clients
+  - Streamlined hero section with clearer, friendlier messaging
+  - Simplified process flow from 4 detailed steps to 3 simple steps
+  - Reduced card shadows, gradients, and visual effects for cleaner appearance
+  - Smaller, more approachable UI elements (buttons, inputs, spacing)
+  - Changed technical terms to plain language ("Converse with SAGE AI" → "Chat with SAGE")
+  - Maintained all functionality while making interface more intuitive for first-time clients
+
 - **June 25, 2025**: Updated header branding to emphasize Aquent partnership
   - Changed header text from "Strategic Adaptive Generative Engine" to "Strategic Adaptive Generative Engine, powered by Aquent"
   - Reinforces Aquent's role in providing the AI-powered marketing platform

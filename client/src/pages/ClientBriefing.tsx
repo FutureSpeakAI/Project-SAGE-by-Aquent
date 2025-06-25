@@ -338,71 +338,54 @@ IMPORTANT FORMATTING REQUIREMENTS:
 
       <div className="relative z-10 p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
+          {/* Hero Section - Simplified */}
+          <div className="text-center mb-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="mb-6"
             >
-              <div className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-full text-sm font-semibold mb-4">
+              <div className="inline-flex items-center bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
                 <Sparkles className="h-4 w-4 mr-2" />
-                AI-Powered Marketing Intelligence
+                Get Your Marketing Brief in Minutes
               </div>
               
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
-                Transform Your 
-                <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent"> Vision</span>
-                <br />Into Marketing Excellence
+              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                Tell Us About Your Project
               </h1>
               
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Welcome to SAGE, Aquent's Strategic Adaptive Generative Engine, our next-generation marketing AI. 
-                Just tell SAGE what you need, either by having a conversation with her or filling out our briefing 
-                intake form, and she will connect our expert marketers to your campaign right away and begin 
-                collaborating with them to deliver on your needs.
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Share your ideas with SAGE, our AI marketing assistant, and get a professional brief 
+                that our expert team will use to create your campaign.
               </p>
             </motion.div>
-
-
           </div>
 
-          {/* Process Steps */}
+          {/* Process Steps - Simplified */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="mb-12"
+            className="mb-8"
           >
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">How SAGE Works for You</h2>
-              <p className="text-lg text-gray-600">Four steps to marketing excellence</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-2xl mb-4 text-xl font-bold">1</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Share Your Vision</h3>
-                <p className="text-gray-600">Chat with SAGE or fill our comprehensive form to describe your project, audience, and goals.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 text-orange-600 rounded-xl mb-3 text-lg font-bold">1</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Share Your Ideas</h3>
+                <p className="text-sm text-gray-600">Tell us about your project</p>
               </div>
               
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-2xl mb-4 text-xl font-bold">2</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">AI Analysis</h3>
-                <p className="text-gray-600">SAGE analyzes market trends, audience insights, and creates strategic recommendations tailored to your needs.</p>
+              <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-xl mb-3 text-lg font-bold">2</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Get Your Brief</h3>
+                <p className="text-sm text-gray-600">AI creates a marketing plan</p>
               </div>
               
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 text-white rounded-2xl mb-4 text-xl font-bold">3</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Get Your Brief</h3>
-                <p className="text-gray-600">Receive a comprehensive, actionable marketing brief with clear strategies and next steps.</p>
-              </div>
-
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-2xl mb-4 text-xl font-bold">4</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">We Create Your Campaign</h3>
-                <p className="text-gray-600">Superpowered (human!) marketers with deep expertise and experience will use cutting-edge tools to create a return on your investment.</p>
+              <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 text-green-600 rounded-xl mb-3 text-lg font-bold">3</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">We Build It</h3>
+                <p className="text-sm text-gray-600">Our team creates your campaign</p>
               </div>
             </div>
           </motion.div>
@@ -425,34 +408,34 @@ IMPORTANT FORMATTING REQUIREMENTS:
               transition={{ duration: 0.6, delay: 0.6 }}
               className={`space-y-6 ${isExpanded ? "w-full" : ""}`}
             >
-              {/* Choice Header */}
-              <div className="text-center lg:text-left mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Preferred Method</h2>
-                <p className="text-gray-600">Start your marketing journey with the approach that works best for you</p>
+              {/* Choice Header - Simplified */}
+              <div className="text-center lg:text-left mb-4">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">How would you like to start?</h2>
+                <p className="text-gray-600">Choose the option that feels most comfortable</p>
               </div>
 
               <Tabs defaultValue="chat" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-14 bg-gray-100 rounded-xl p-2">
-                  <TabsTrigger value="chat" className="flex items-center gap-2 h-10 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
-                    <MessageSquare className="h-5 w-5" />
-                    <span className="font-medium">Chat with SAGE</span>
+                <TabsList className="grid w-full grid-cols-2 h-12 bg-gray-50 rounded-lg p-1">
+                  <TabsTrigger value="chat" className="flex items-center gap-2 h-10 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all text-sm">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Chat with AI</span>
                   </TabsTrigger>
-                  <TabsTrigger value="form" className="flex items-center gap-2 h-10 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
-                    <FormInput className="h-5 w-5" />
-                    <span className="font-medium">Detailed Form</span>
+                  <TabsTrigger value="form" className="flex items-center gap-2 h-10 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all text-sm">
+                    <FormInput className="h-4 w-4" />
+                    <span>Fill Out Form</span>
                   </TabsTrigger>
                 </TabsList>
 
-                {/* SAGE Chat Tab */}
-                <TabsContent value="chat" className="mt-8">
-                  <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+                {/* SAGE Chat Tab - Simplified */}
+                <TabsContent value="chat" className="mt-6">
+                  <Card className="border border-gray-200 shadow-lg bg-white">
                     <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center justify-between text-xl">
+                      <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                            <Sparkles className="h-5 w-5 text-white" />
+                          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                            <Sparkles className="h-4 w-4 text-white" />
                           </div>
-                          <span>Converse with SAGE AI</span>
+                          <span>Chat with SAGE</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -466,29 +449,29 @@ IMPORTANT FORMATTING REQUIREMENTS:
                           <Button
                             variant="outline"
                             onClick={handleDocumentUpload}
-                            className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white shadow-md"
+                            className="text-orange-600 border-orange-200 hover:bg-orange-50"
                           >
                             <Upload className="h-4 w-4 mr-2" />
-                            Upload Document
+                            Upload Files
                           </Button>
                         </div>
                       </CardTitle>
-                      <p className="text-gray-600 mt-1">Have a natural conversation about your marketing needs</p>
+                      <p className="text-gray-600 text-sm">Describe your project in your own words</p>
                     </CardHeader>
                     <CardContent>
-                      {/* Chat Messages */}
-                      <div className={`${isExpanded ? "h-96" : "h-80"} overflow-y-auto border-2 border-gray-100 rounded-xl p-6 mb-6 bg-gradient-to-br from-gray-50 to-white relative`}>
+                      {/* Chat Messages - Simplified */}
+                      <div className={`${isExpanded ? "h-96" : "h-64"} overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 relative`}>
                         {messages.length === 0 ? (
-                          <div className="text-center text-gray-500 mt-12">
-                            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-100 to-red-100 rounded-2xl mb-4">
-                              <MessageSquare className="h-10 w-10 text-orange-500" />
+                          <div className="text-center text-gray-500 mt-8">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-xl mb-3">
+                              <MessageSquare className="h-8 w-8 text-orange-500" />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-700 mb-2">Ready to Start Your Journey?</h3>
-                            <p className="text-gray-500 max-w-sm mx-auto">Tell SAGE about your marketing project, goals, and vision. Our AI will guide you through creating the perfect brief.</p>
-                            <div className="mt-4 flex flex-wrap justify-center gap-2">
-                              <span className="inline-block bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">Brand Launch</span>
-                              <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">Product Campaign</span>
-                              <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Social Strategy</span>
+                            <h3 className="text-lg font-medium text-gray-700 mb-2">Let's get started!</h3>
+                            <p className="text-gray-500 max-w-xs mx-auto text-sm">Tell me about your project. What are you trying to promote or achieve?</p>
+                            <div className="mt-3 flex flex-wrap justify-center gap-2">
+                              <span className="inline-block bg-white text-gray-600 px-2 py-1 rounded text-xs border">New product</span>
+                              <span className="inline-block bg-white text-gray-600 px-2 py-1 rounded text-xs border">Event promotion</span>
+                              <span className="inline-block bg-white text-gray-600 px-2 py-1 rounded text-xs border">Brand awareness</span>
                             </div>
                           </div>
                       ) : (
@@ -500,10 +483,10 @@ IMPORTANT FORMATTING REQUIREMENTS:
                             className={`mb-3 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}
                           >
                             <div
-                              className={`inline-block p-4 rounded-2xl max-w-[80%] shadow-md ${
+                              className={`inline-block p-3 rounded-xl max-w-[80%] ${
                                 msg.role === 'user'
-                                  ? 'bg-gradient-to-r from-[#F15A22] to-[#FF6B47] text-white rounded-br-sm'
-                                  : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm'
+                                  ? 'bg-orange-500 text-white rounded-br-md'
+                                  : 'bg-white text-gray-800 border border-gray-200 rounded-bl-md'
                               }`}
                             >
                               {msg.content}
@@ -517,12 +500,12 @@ IMPORTANT FORMATTING REQUIREMENTS:
                           animate={{ opacity: 1 }}
                           className="text-left"
                         >
-                          <div className="inline-block p-4 rounded-2xl bg-white border border-gray-200 rounded-bl-sm shadow-md">
+                          <div className="inline-block p-3 rounded-xl bg-white border border-gray-200 rounded-bl-md">
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                              <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
                                 <Sparkles className="h-3 w-3 text-white" />
                               </div>
-                              <span className="text-gray-600 font-medium">SAGE is analyzing...</span>
+                              <span className="text-gray-600 text-sm">SAGE is thinking...</span>
                               <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
                             </div>
                           </div>
@@ -531,16 +514,16 @@ IMPORTANT FORMATTING REQUIREMENTS:
                       <div ref={messagesEndRef} />
                     </div>
 
-                      {/* Input Area */}
-                      <div className="flex gap-3 items-end">
+                      {/* Input Area - Simplified */}
+                      <div className="flex gap-2 items-end">
                         <div className="flex-grow">
                           <Input
                             value={userInput}
                             onChange={(e) => setUserInput(e.target.value)}
-                            placeholder="Describe your marketing project, goals, target audience..."
+                            placeholder="Tell me about your project..."
                             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                             disabled={isLoading}
-                            className="h-12 text-base border-2 border-gray-200 focus:border-orange-500 rounded-xl px-4"
+                            className="h-10 text-sm border border-gray-300 focus:border-orange-500 rounded-lg px-3"
                           />
                         </div>
                       <VoiceControls
@@ -588,9 +571,9 @@ IMPORTANT FORMATTING REQUIREMENTS:
                         <Button
                           onClick={sendMessage}
                           disabled={!userInput.trim() || isLoading}
-                          className="h-12 px-6 bg-gradient-to-r from-[#F15A22] to-[#FF6B47] hover:from-[#D14A1A] hover:to-[#E55A3F] text-white rounded-xl shadow-lg"
+                          className="h-10 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg"
                         >
-                          <Send className="h-5 w-5" />
+                          <Send className="h-4 w-4" />
                         </Button>
                       </div>
 
@@ -598,10 +581,10 @@ IMPORTANT FORMATTING REQUIREMENTS:
                         <Button
                           onClick={generateBriefingFromChat}
                           disabled={isLoading}
-                          className="w-full mt-6 h-12 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white rounded-xl shadow-lg font-semibold"
+                          className="w-full mt-4 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium"
                         >
-                          <FileText className="h-5 w-5 mr-2" />
-                          Generate Professional Brief
+                          <FileText className="h-4 w-4 mr-2" />
+                          Create My Brief
                         </Button>
                       )}
                     </CardContent>
