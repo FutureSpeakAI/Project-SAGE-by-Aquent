@@ -1184,20 +1184,34 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       const filteredBriefings = generatedBriefings.filter(content => content.contentType === 'briefing');
       
       // Convert brief conversations to unified format
-      const unifiedConversations = briefConversations.map(conv => ({
-        id: `chat-${conv.id}`,
-        title: conv.title || 'SAGE Chat Brief',
-        content: conv.content,
-        contentType: 'briefing' as const,
-        source: 'chat',
-        createdAt: conv.createdAt || new Date().toISOString(),
-        updatedAt: conv.updatedAt || new Date().toISOString(),
-        metadata: {
-          analysisType: conv.analysisType,
-          projectType: conv.projectType,
-          deliverables: conv.deliverables
+      const unifiedConversations = briefConversations.map(conv => {
+        // Extract content from messages if content field doesn't exist
+        let content = conv.content;
+        if (!content && conv.messages && Array.isArray(conv.messages)) {
+          // Combine all assistant messages as the briefing content
+          const assistantMessages = conv.messages
+            .filter((msg: any) => msg.role === 'assistant')
+            .map((msg: any) => msg.content)
+            .join('\n\n');
+          content = assistantMessages || 'No content available';
         }
-      }));
+        
+        return {
+          id: `chat-${conv.id}`,
+          title: conv.title || 'SAGE Chat Brief',
+          content: content || 'No content available',
+          contentType: 'briefing' as const,
+          source: 'chat',
+          createdAt: conv.createdAt || new Date().toISOString(),
+          updatedAt: conv.updatedAt || new Date().toISOString(),
+          metadata: {
+            analysisType: conv.analysisType,
+            projectType: conv.projectType,
+            deliverables: conv.deliverables,
+            messageCount: conv.messages?.length || 0
+          }
+        };
+      });
       
       // Convert generated briefings to unified format
       const unifiedGenerated = filteredBriefings.map(brief => ({
