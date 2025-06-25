@@ -652,16 +652,22 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 {editedImageUrl && (
                   <div className="flex-1 flex flex-col min-h-0">
                     <Label className="text-sm font-medium mb-2 text-center">Edited</Label>
-                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-[300px]">
+                    <div className="relative flex items-center justify-center border-2 border-blue-200 rounded bg-blue-50 flex-1 min-h-[300px]">
                       <img 
                         src={editedImageUrl} 
                         alt="Edited" 
                         className="w-auto h-auto max-w-full max-h-full object-contain"
-                        onLoad={() => console.log('Edited image displayed successfully in before/after')}
-                        onError={(e) => console.error('Failed to display edited image in before/after:', e)}
+                        onLoad={() => {
+                          console.log('Edited image displayed successfully in before/after');
+                          console.log('Edited image URL length:', editedImageUrl?.length);
+                        }}
+                        onError={(e) => {
+                          console.error('Failed to display edited image in before/after:', e);
+                          console.error('Edited image URL:', editedImageUrl?.substring(0, 100));
+                        }}
                       />
-                      <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs z-10">
-                        Edited
+                      <div className="absolute top-2 left-2 bg-green-100 text-green-800 px-2 py-1 rounded text-xs z-10 font-medium">
+                        ✓ Edited
                       </div>
                     </div>
                   </div>
@@ -695,14 +701,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             )}
 
-            {/* Action Buttons for Edited Image */}
+            {/* Action Buttons for Edited Image - Show below before/after */}
             {editedImageUrl && (
-              <div className="mt-4 flex flex-col gap-3">
-                <div className="flex gap-2">
+              <div className="mt-6 space-y-4 border-t pt-4">
+                <h3 className="text-lg font-medium text-center">Actions</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <ImageDownloadMenu 
                     imageUrl={editedImageUrl}
                     filename="edited-image"
-                    className="flex-1"
+                    className="w-full"
                   />
                   <Button
                     variant="outline"
@@ -718,7 +726,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                       clearMask();
                       setPrompt("");
                     }}
-                    className="flex-1"
+                    className="w-full"
                   >
                     <Edit className="mr-2 h-4 w-4" />
                     Edit This Image
@@ -726,9 +734,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                 </div>
                 
                 {/* Quick Save Section */}
-                <div className="p-3 border rounded-lg bg-white dark:bg-gray-800">
-                  <Label className="text-sm font-medium mb-2 block">Save to Library</Label>
-                  <div className="space-y-2">
+                <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <Label className="text-sm font-medium mb-3 block">Save to Library</Label>
+                  <div className="space-y-3">
                     <input
                       type="text"
                       placeholder="Enter image title..."
@@ -738,7 +746,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     />
                     <Select value={selectedCampaignId?.toString() || undefined} onValueChange={(value) => setSelectedCampaignId(value ? parseInt(value) : null)}>
                       <SelectTrigger className="w-full">
-                        <SelectValue />
+                        <SelectValue placeholder="Select campaign (optional)" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={undefined}>No campaign</SelectItem>
@@ -752,7 +760,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     <Button
                       onClick={() => saveImageMutation.mutate()}
                       disabled={saveImageMutation.isPending || !imageTitle.trim()}
-                      className="w-full"
+                      className="w-full bg-green-600 hover:bg-green-700"
                       size="sm"
                     >
                       {saveImageMutation.isPending ? (
@@ -766,6 +774,20 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     </Button>
                   </div>
                 </div>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEditedImageUrl(null);
+                    setImageTitle("");
+                    setMaskData(null);
+                    clearMask();
+                    setPrompt("");
+                  }}
+                  className="w-full"
+                >
+                  Start New Edit
+                </Button>
               </div>
             )}
           </div>
