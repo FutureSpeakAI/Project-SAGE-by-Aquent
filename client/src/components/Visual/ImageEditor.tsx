@@ -105,16 +105,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
   // Debug editedImageUrl state changes
   useEffect(() => {
-    console.log('=== IMAGE EDITOR STATE DEBUG ===');
     console.log('editedImageUrl state changed:', editedImageUrl ? 'HAS IMAGE' : 'NO IMAGE');
-    console.log('editedImageUrl length:', editedImageUrl?.length || 0);
-    console.log('editedImageUrl preview:', editedImageUrl?.substring(0, 50) + '...');
     if (editedImageUrl) {
-      console.log('✓ Before/after view should now be active');
-    } else {
-      console.log('× Still in editing mode');
+      console.log('Before/after view should now be active');
     }
-    console.log('================================');
   }, [editedImageUrl]);
 
   // Load and draw the original image on canvas
@@ -364,11 +358,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         // Ensure state is properly set with immediate effect
         setEditedImageUrl(newImageUrl);
         
-        // Force a re-render by updating a secondary state
-        setTimeout(() => {
-          console.log('Force re-render - editedImageUrl exists:', !!newImageUrl);
-          console.log('Component should now show before/after view');
-        }, 100);
+
         
         // Clear the mask overlay immediately after successful edit
         clearMask();
@@ -382,15 +372,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
           onImageEdited(newImageUrl);
         }
         
-        console.log('✓ Edited image URL set successfully, length:', newImageUrl?.length);
-        console.log('✓ Should trigger before/after view with editedImageUrl:', !!newImageUrl);
-        
-        // Additional debugging
-        setTimeout(() => {
-          console.log('=== POST-SET STATE CHECK ===');
-          console.log('editedImageUrl after setState:', editedImageUrl ? 'SET' : 'NOT SET');
-          console.log('Expected transition to before/after view');
-        }, 50);
+        console.log('Edited image URL set successfully, length:', newImageUrl?.length);
         
         toast({
           title: "Image edited successfully",
@@ -573,15 +555,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             </div>
             
             <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
-              {(() => {
-                console.log('RENDER CHECK: editedImageUrl exists =', !!editedImageUrl);
-                if (editedImageUrl) {
-                  console.log('RENDER CHECK: Showing before/after view');
-                } else {
-                  console.log('RENDER CHECK: Showing editing mode');
-                }
-                return editedImageUrl;
-              })() ? (
+              {editedImageUrl ? (
                 <div key="before-after-view" className="flex flex-col h-full">
                   {/* Before & After Comparison Mode */}
                   <div className="text-center mb-4 bg-green-50 p-3 rounded border-2 border-green-200">
@@ -613,12 +587,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                           className="max-w-full h-auto object-contain"
                           style={{ maxHeight: 'none' }}
                           onLoad={() => {
-                            console.log('✓ EDITED IMAGE LOADED: Successfully displayed in before/after view');
-                            console.log('✓ EDITED IMAGE URL LENGTH:', editedImageUrl?.length);
+                            console.log('Edited image loaded successfully in before/after view');
                           }}
                           onError={(e) => {
-                            console.error('✗ EDITED IMAGE ERROR: Failed to display in before/after:', e);
-                            console.error('✗ EDITED IMAGE URL PREVIEW:', editedImageUrl?.substring(0, 100));
+                            console.error('Failed to display edited image in before/after:', e);
                           }}
                         />
                       </div>
