@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, Target, TrendingUp, Clock, Award, CheckCircle } from 'lucide-react';
+import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -295,45 +295,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
               </p>
             </motion.div>
 
-            {/* Stats/Features Bar */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12"
-            >
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-xl mb-2">
-                  <Target className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">99%</div>
-                <div className="text-sm text-gray-600">Strategy Accuracy</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mb-2">
-                  <Clock className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">5 Min</div>
-                <div className="text-sm text-gray-600">Brief Generation</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-xl mb-2">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">300%</div>
-                <div className="text-sm text-gray-600">ROI Improvement</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-2">
-                  <Award className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">1000+</div>
-                <div className="text-sm text-gray-600">Successful Campaigns</div>
-              </div>
-            </motion.div>
+
           </div>
 
           {/* Process Steps */}
