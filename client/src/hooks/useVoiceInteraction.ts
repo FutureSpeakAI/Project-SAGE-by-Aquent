@@ -343,7 +343,8 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
       }
       
       if (finalTranscript && onTranscriptCompleteRef.current) {
-        onTranscriptCompleteRef.current(finalTranscript);
+        // Add voice context indicator to help SAGE understand this is a voice interaction
+        onTranscriptCompleteRef.current(`[VOICE] ${finalTranscript}`);
         setIsListening(false);
       }
     };

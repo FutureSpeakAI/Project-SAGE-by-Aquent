@@ -57,7 +57,8 @@ export function VoiceControls({
           startListening((transcript) => {
             console.log('🎤 Auto-reactivated microphone received transcript:', transcript);
             if (onTranscript) {
-              onTranscript(transcript, true);
+              // Add voice context indicator to help SAGE understand this is a voice interaction
+              onTranscript(`[VOICE] ${transcript}`, true);
             }
             if (onSendMessage) {
               onSendMessage();

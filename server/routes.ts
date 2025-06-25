@@ -2160,7 +2160,7 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
 
       console.log(`TTS request: ${text.length} characters`);
 
-      // Clean text and enhance for Boston accent and natural expression
+      // Clean text for natural speech without accent modifications
       const processedText = text
         .replace(/\*\*(.*?)\*\*/g, '$1')
         .replace(/\*(.*?)\*/g, '$1')
@@ -2168,17 +2168,6 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
         .replace(/#{1,6}\s/g, '')
         .replace(/\n+/g, ' ')
-        // Boston accent enhancements
-        .replace(/\bar\b/g, 'ah')  // Boston 'r' dropping
-        .replace(/\ber\b/g, 'ah')  // Boston 'er' sound
-        .replace(/park/gi, 'pahk')  // Classic Boston pronunciation
-        .replace(/car/gi, 'cah')    // Classic Boston pronunciation
-        .replace(/\bfor\b/gi, 'fah') // Boston 'or' sound
-        .replace(/Harvard/gi, 'Hahvahd') // Classic Boston university
-        .replace(/idea/gi, 'idear')  // Boston intrusive 'r'
-        .replace(/pizza/gi, 'peetza') // Boston vowel sound
-        .replace(/water/gi, 'watah') // Boston 'r' dropping
-        .replace(/order/gi, 'ohdah') // Boston 'r' dropping
         // Add natural pauses and emphasis
         .replace(/\./g, '... ')  // Longer pauses for natural flow
         .replace(/!/g, '! ')     // Emphasis pauses
