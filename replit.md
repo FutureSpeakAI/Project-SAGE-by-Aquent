@@ -110,7 +110,7 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Updated voice configuration throughout all components for consistency
   - Added automatic microphone reactivation after SAGE finishes speaking
   - Increased emotional inflection (style: 1.0) for more natural delivery
-  - Adjusted voice settings for friendlier tone (stability: 0.5, similarity: 0.8)
+  - Adjusted voice settings for empathetic tone (stability: 0.4, similarity: 0.85)
   - Enhanced speaking rate (1.2x playback) for more engaging delivery
   - IMPORTANT: SAGE responds in professional marketing language (no dialect/slang), but voice pronunciation has Boston accent
 
