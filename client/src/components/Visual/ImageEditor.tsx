@@ -359,6 +359,12 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         // Ensure state is properly set with immediate effect
         setEditedImageUrl(newImageUrl);
         
+        // Force a re-render by updating a secondary state
+        setTimeout(() => {
+          console.log('Force re-render - editedImageUrl exists:', !!newImageUrl);
+          console.log('Component should now show before/after view');
+        }, 100);
+        
         // Clear the mask overlay immediately after successful edit
         clearMask();
         
@@ -372,6 +378,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         }
         
         console.log('Edited image URL set successfully, length:', newImageUrl?.length);
+        console.log('Should trigger before/after view with editedImageUrl:', !!newImageUrl);
         
         toast({
           title: "Image edited successfully",
@@ -554,7 +561,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             </div>
             
             <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
-              {editedImageUrl ? (
+              {(() => {
+                console.log('Rendering check - editedImageUrl exists:', !!editedImageUrl);
+                console.log('editedImageUrl value preview:', editedImageUrl?.substring(0, 50));
+                return editedImageUrl;
+              })() ? (
                 <>
                   {/* Before & After Comparison Mode */}
                   <div className="text-center mb-4">
