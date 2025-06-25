@@ -2148,7 +2148,7 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
   app.post("/api/text-to-speech", async (req: Request, res: Response) => {
     try {
       // Use ElevenLabs voice selection
-      const { text, voiceId = 'b5RPB35vTODb3BEmR3Fc' } = req.body; // Updated voice selection
+      const { text, voiceId = 'j3QcmAr55TvFW5CDB0Q3' } = req.body; // Updated voice selection
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: 'Text is required' });
