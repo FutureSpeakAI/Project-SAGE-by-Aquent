@@ -80,7 +80,11 @@ const TabContent = ({
   handleSaveImage,
   handlePromptFromAgent,
   handleCreateVariations,
-  clearVisualTab
+  clearVisualTab,
+  selectedUploadedImage,
+  updateVisualState,
+  setEditingImageUrl,
+  setIsImageEditorOpen
 }: {
   model: string;
   setModel: (model: string) => void;
@@ -106,6 +110,10 @@ const TabContent = ({
   handlePromptFromAgent: (prompt: string) => void;
   handleCreateVariations: (imageUrl: string) => void;
   clearVisualTab: () => void;
+  selectedUploadedImage: string | null;
+  updateVisualState: (updates: any) => void;
+  setEditingImageUrl: (url: string) => void;
+  setIsImageEditorOpen: (open: boolean) => void;
 }) => {
   const { toast } = useToast();
   
@@ -1093,6 +1101,10 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
         handlePromptFromAgent={handlePromptFromAgent}
         handleCreateVariations={handleCreateVariations}
         clearVisualTab={clearVisualTab}
+        selectedUploadedImage={selectedUploadedImage}
+        updateVisualState={updateVisualState}
+        setEditingImageUrl={setEditingImageUrl}
+        setIsImageEditorOpen={setIsImageEditorOpen}
       />
       
       {/* Image Editor Dialog */}
