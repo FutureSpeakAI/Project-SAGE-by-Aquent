@@ -10,12 +10,13 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Copy, ArrowUpRight } from "lucide-react";
+import { Loader2, ImagePlus, Save, Library, Trash2, Download, BrainCircuit, MessageSquareText, Copy, ArrowUpRight, Upload, Edit3 } from "lucide-react";
 import { pageTransition } from "@/App";
 import { ContentType } from "@shared/schema";
 import { ImagePromptAgent } from "./ImagePromptAgent";
 import { ImageProcessor } from "./ImageProcessor";
 import { ImageEditor } from "./ImageEditor";
+import { ImageUploader } from "./ImageUploader";
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorFallback } from "../ErrorFallback";
 import { ModelSelector } from "@/components/ui/ModelSelector";
@@ -122,7 +123,11 @@ const TabContent = ({
         <TabsList className="mb-2 sm:mb-0">
           <TabsTrigger value="standard" className="flex items-center">
             <ImagePlus className="mr-2 h-4 w-4" />
-            Standard Mode
+            Generate
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="flex items-center">
+            <Upload className="mr-2 h-4 w-4" />
+            Upload & Edit
           </TabsTrigger>
           <TabsTrigger value="assistant" className="flex items-center">
             <BrainCircuit className="mr-2 h-4 w-4" />
@@ -390,6 +395,120 @@ const TabContent = ({
         </div>
       </TabsContent>
       
+      {/* Upload & Edit Content */}
+      <TabsContent value="upload">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left column - Upload */}
+          <div className="space-y-6">
+            <Card className="p-6 shadow-md">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Upload className="h-5 w-5 text-blue-500" />
+                  <h3 className="text-lg font-semibold">Upload Image for AI Editing</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Upload an image to use our AI-powered editing features like inpainting, object removal, background changes, and more.
+                </p>
+                
+                <ImageUploader
+                  onImagesChange={(images) => {
+                    updateVisualState({ uploadedImages: images });
+                    if (images.length > 0) {
+                      updateVisualState({ selectedUploadedImage: images[0].base64 });
+                    }
+                  }}
+                  maxImages={1}
+                />
+              </div>
+            </Card>
+          </div>
+          
+          {/* Right column - Preview and Actions */}
+          <div className="space-y-6">
+            <Card className="p-6 shadow-md">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <Edit3 className="h-5 w-5 text-green-500 mr-2" />
+                AI Editing Tools
+              </h3>
+              
+              {visualState.selectedUploadedImage ? (
+                <div className="space-y-4">
+                  {/* Image Preview */}
+                  <div className="relative">
+                    <img
+                      src={visualState.selectedUploadedImage}
+                      alt="Uploaded image"
+                      className="w-full h-64 object-cover rounded-lg border"
+                    />
+                  </div>
+                  
+                  {/* Editing Actions */}
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => {
+                        setEditingImageUrl(visualState.selectedUploadedImage || '');
+                        setIsImageEditorOpen(true);
+                      }}
+                      className="w-full bg-blue-500 hover:bg-blue-600"
+                    >
+                      <Edit3 className="mr-2 h-4 w-4" />
+                      Open in Image Editor
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsProcessingDialogOpen(true);
+                      }}
+                      className="w-full"
+                    >
+                      <ArrowUpRight className="mr-2 h-4 w-4" />
+                      AI Processing Tools
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (visualState.selectedUploadedImage) {
+                          const a = document.createElement("a");
+                          a.href = visualState.selectedUploadedImage;
+                          a.download = `processed_image_${new Date().getTime()}.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                        }
+                      }}
+                      className="w-full"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Image
+                    </Button>
+                  </div>
+                  
+                  {/* Available AI Features */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Available AI Features:</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• Inpainting - Remove or replace objects</li>
+                      <li>• Background removal/replacement</li>
+                      <li>• Style transfer and artistic effects</li>
+                      <li>• Quality enhancement and upscaling</li>
+                      <li>• Color correction and filters</li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center p-8 text-gray-500">
+                  <Upload className="mx-auto h-12 w-12 opacity-20" />
+                  <p className="mt-2">Upload an image to start editing</p>
+                  <p className="text-sm mt-1">Use our AI-powered tools to enhance, modify, or transform your images</p>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      </TabsContent>
+      
       {/* Prompt Assistant Content */}
       <TabsContent value="assistant">
         <ImagePromptAgent onApplyPrompt={handlePromptFromAgent} model={model} />
@@ -400,7 +519,7 @@ const TabContent = ({
     <ImageProcessor 
       open={isProcessingDialogOpen}
       onOpenChange={setIsProcessingDialogOpen}
-      imageUrl={generatedImageUrl || ''}
+      imageUrl={generatedImageUrl || visualState.selectedUploadedImage || ''}
     />
   </motion.div>
   );

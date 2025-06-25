@@ -10,6 +10,8 @@ interface VisualTabState {
   background: string;
   isProcessingDialogOpen: boolean;
   variationPrompt: string | null;
+  uploadedImages: { file: File; base64: string }[];
+  selectedUploadedImage: string | null;
 }
 
 // Briefing Tab State
@@ -69,6 +71,8 @@ const defaultVisualState: VisualTabState = {
   background: 'auto',
   isProcessingDialogOpen: false,
   variationPrompt: null,
+  uploadedImages: [],
+  selectedUploadedImage: null,
 };
 
 const defaultBriefingState: BriefingTabState = {
