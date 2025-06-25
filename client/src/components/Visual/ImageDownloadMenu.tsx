@@ -197,22 +197,6 @@ export const ImageDownloadMenu: React.FC<ImageDownloadMenuProps> = ({
             Download {selectedFormat.toUpperCase()} ({resolutionMultiplier}×)
           </Button>
         </div>
-
-        <DropdownMenuSeparator />
-        
-        {/* Quick Actions */}
-        <div className="p-2">
-          <DropdownMenuLabel className="text-xs text-gray-500">Quick Downloads</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => downloadImage("png", "1")}>
-            PNG - Standard (1024px)
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => downloadImage("jpg", "2")}>
-            JPG - High Res (2048px)
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => downloadImage("webp", "1.5")}>
-            WebP - Enhanced (1536px)
-          </DropdownMenuItem>
-        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
