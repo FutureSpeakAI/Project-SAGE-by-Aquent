@@ -909,10 +909,9 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               name: maskFile.name
             });
             
-            const actualModel = model === "gpt-image-1" ? "dall-e-2" : model;
-            console.log('Calling OpenAI API with model:', actualModel, '(requested:', model, ')');
+            console.log('Calling OpenAI API with model:', model);
             const editResponse = await openai.images.edit({
-              model: actualModel,
+              model: model,
               image: imageFile,
               mask: maskFile,
               prompt: prompt.trim(),
@@ -920,7 +919,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
               size: (size || "1024x1024") as any
             });
 
-            console.log(`${actualModel} inpainting completed successfully`);
+            console.log(`${model} inpainting completed successfully`);
 
             const responseData = {
               success: true,
