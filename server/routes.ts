@@ -2131,7 +2131,7 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
           voice_settings: {
             stability: 0.6,
             similarity_boost: 0.75,
-            style: 0.96,
+            style: 1.0,
             use_speaker_boost: true
           },
           output_format: "mp3_22050_32"
