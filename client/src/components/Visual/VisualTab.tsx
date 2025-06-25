@@ -339,7 +339,7 @@ const TabContent = ({
                           onClick={() => setIsProcessingDialogOpen(true)}
                         >
                           <ArrowUpRight className="mr-2 h-4 w-4" />
-                          Upscale/Convert
+                          Convert
                         </Button>
                       </div>
                     </div>
