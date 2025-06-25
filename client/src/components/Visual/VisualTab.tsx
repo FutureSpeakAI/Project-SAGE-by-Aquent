@@ -295,7 +295,7 @@ const TabContent = ({
                         <img 
                           src={generatedImageUrl} 
                           alt="Generated" 
-                          className="mx-auto max-h-[500px] max-w-full object-contain rounded-md border" 
+                          className="mx-auto max-w-full w-auto h-auto object-contain rounded-md border" 
                           onError={(e) => {
                             console.error("Error loading image:", e);
                             const target = e.target as HTMLImageElement;
