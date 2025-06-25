@@ -28,18 +28,32 @@ export default function ClientBriefing() {
   const [isLoading, setIsLoading] = useState(false);
   const [briefingContent, setBriefingContent] = useState('');
   
-  // Form State
+  // Form State - Match the comprehensive briefing form
   const [formData, setFormData] = useState({
+    // Project Details
     projectName: '',
-    company: '',
-    industry: '',
+    projectDescription: '',
+    projectBackground: '',
+    
+    // Audience & Objectives
     targetAudience: '',
     objectives: '',
+    keyMessages: '',
+    
+    // Content Parameters
+    contentType: 'Blog Post',
+    contentTones: ['Professional'],
+    contentLength: 'Medium (500-1000 words)',
+    
+    // Deliverables & Timeline
     deliverables: '',
     timeline: '',
-    budget: '',
-    brandGuidelines: '',
-    additionalInfo: ''
+    
+    // Additional Information
+    additionalInfo: '',
+    
+    // Reference Images
+    referenceImages: []
   });
   const [formLoading, setFormLoading] = useState(false);
   
@@ -147,18 +161,47 @@ export default function ClientBriefing() {
         body: JSON.stringify({
           model: 'gpt-4o',
           systemPrompt: "Create a comprehensive creative briefing document from the provided form data. Structure it professionally with HTML formatting including proper headings, paragraphs, and lists. Make it actionable for content creators.",
-          userPrompt: `Create a detailed creative brief using this information:
-          
-Project: ${formData.projectName}
-Company: ${formData.company}
-Industry: ${formData.industry}
+          userPrompt: `Create a comprehensive creative brief using this information:
+
+PROJECT DETAILS:
+Project Name: ${formData.projectName}
+Project Description: ${formData.projectDescription}
+Background/Context: ${formData.projectBackground}
+
+AUDIENCE & OBJECTIVES:
 Target Audience: ${formData.targetAudience}
 Objectives: ${formData.objectives}
+Key Messages: ${formData.keyMessages}
+
+CONTENT PARAMETERS:
+Content Type: ${formData.contentType}
+Tone/Voice: ${formData.contentTones.join(', ')}
+Length: ${formData.contentLength}
+
+DELIVERABLES & TIMELINE:
 Deliverables: ${formData.deliverables}
 Timeline: ${formData.timeline}
-Budget: ${formData.budget}
-Brand Guidelines: ${formData.brandGuidelines}
-Additional Information: ${formData.additionalInfo}`,
+
+ADDITIONAL INFORMATION:
+${formData.additionalInfo}
+
+The brief should follow this structure:
+1. Project Overview (detailed description, context, and background)
+2. Objectives (specific, measurable goals)
+3. Target Audience (detailed persona descriptions)
+4. Key Messages (primary communication points)
+5. Deliverables (detailed specifications)
+6. Content Creation Guidelines (voice, tone, and specific terminology)
+7. Timeline (schedule with milestones)
+8. Content Creation Instructions (specific, actionable instructions)
+
+IMPORTANT FORMATTING REQUIREMENTS:
+- Use proper HTML formatting with h1, h2, p, ul/li, ol/li tags
+- Make the final section titled "Content Creation Instructions" extremely specific and actionable
+- Use imperative voice in the instructions section (e.g., "Create a blog post that...")
+- Format content to be visually organized and professional
+- Do NOT include any markdown, code blocks, or commentary
+- Ensure all lists use proper HTML list tags, not plain text bullets or numbers`,
           temperature: 0.7
         })
       });
@@ -444,96 +487,204 @@ Additional Information: ${formData.additionalInfo}`,
                   <CardHeader>
                     <CardTitle>Project Details Form</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <CardContent className="space-y-6">
+                    {/* Project Details Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Project Details</h3>
+                      
                       <div>
-                        <Label htmlFor="projectName">Project Name</Label>
+                        <Label htmlFor="projectName">Project Name *</Label>
                         <Input
                           id="projectName"
                           value={formData.projectName}
                           onChange={(e) => setFormData(prev => ({ ...prev, projectName: e.target.value }))}
-                          placeholder="Enter project name"
+                          placeholder="Enter your project name"
+                          required
                         />
                       </div>
+
                       <div>
-                        <Label htmlFor="company">Company</Label>
-                        <Input
-                          id="company"
-                          value={formData.company}
-                          onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                          placeholder="Company name"
+                        <Label htmlFor="projectDescription">Project Description *</Label>
+                        <Textarea
+                          id="projectDescription"
+                          value={formData.projectDescription}
+                          onChange={(e) => setFormData(prev => ({ ...prev, projectDescription: e.target.value }))}
+                          placeholder="Provide a detailed description of your project..."
+                          rows={3}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="projectBackground">Project Background</Label>
+                        <Textarea
+                          id="projectBackground"
+                          value={formData.projectBackground}
+                          onChange={(e) => setFormData(prev => ({ ...prev, projectBackground: e.target.value }))}
+                          placeholder="Any relevant background information or context..."
+                          rows={2}
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Audience & Objectives Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Audience & Objectives</h3>
+                      
                       <div>
-                        <Label htmlFor="industry">Industry</Label>
-                        <Input
-                          id="industry"
-                          value={formData.industry}
-                          onChange={(e) => setFormData(prev => ({ ...prev, industry: e.target.value }))}
-                          placeholder="e.g., Healthcare, Technology"
+                        <Label htmlFor="targetAudience">Target Audience *</Label>
+                        <Textarea
+                          id="targetAudience"
+                          value={formData.targetAudience}
+                          onChange={(e) => setFormData(prev => ({ ...prev, targetAudience: e.target.value }))}
+                          placeholder="Describe your target audience (demographics, interests, pain points)..."
+                          rows={3}
+                          required
                         />
                       </div>
+
                       <div>
-                        <Label htmlFor="timeline">Timeline</Label>
+                        <Label htmlFor="objectives">Project Objectives</Label>
+                        <Textarea
+                          id="objectives"
+                          value={formData.objectives}
+                          onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
+                          placeholder="What specific goals are you trying to achieve?"
+                          rows={3}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="keyMessages">Key Messages</Label>
+                        <Textarea
+                          id="keyMessages"
+                          value={formData.keyMessages}
+                          onChange={(e) => setFormData(prev => ({ ...prev, keyMessages: e.target.value }))}
+                          placeholder="What are the main points you want to communicate?"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Content Parameters Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Content Parameters</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="contentType">Content Type</Label>
+                          <select
+                            id="contentType"
+                            value={formData.contentType}
+                            onChange={(e) => setFormData(prev => ({ ...prev, contentType: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F15A22]"
+                          >
+                            <option value="Blog Post">Blog Post</option>
+                            <option value="Social Media Post">Social Media Post</option>
+                            <option value="Email">Email</option>
+                            <option value="Newsletter">Newsletter</option>
+                            <option value="Website Content">Website Content</option>
+                            <option value="White Paper">White Paper</option>
+                            <option value="Case Study">Case Study</option>
+                            <option value="Product Description">Product Description</option>
+                            <option value="Press Release">Press Release</option>
+                            <option value="Video Script">Video Script</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="contentLength">Content Length</Label>
+                          <select
+                            id="contentLength"
+                            value={formData.contentLength}
+                            onChange={(e) => setFormData(prev => ({ ...prev, contentLength: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F15A22]"
+                          >
+                            <option value="Very Short (< 250 words)">Very Short (&lt; 250 words)</option>
+                            <option value="Short (250-500 words)">Short (250-500 words)</option>
+                            <option value="Medium (500-1000 words)">Medium (500-1000 words)</option>
+                            <option value="Long (1000-2000 words)">Long (1000-2000 words)</option>
+                            <option value="Very Long (2000+ words)">Very Long (2000+ words)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>Content Tone</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                          {['Professional', 'Conversational', 'Formal', 'Casual', 'Humorous', 'Technical', 'Persuasive', 'Inspirational', 'Educational', 'Authoritative'].map(tone => (
+                            <label key={tone} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={formData.contentTones.includes(tone)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      contentTones: [...prev.contentTones, tone]
+                                    }));
+                                  } else {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      contentTones: prev.contentTones.filter(t => t !== tone)
+                                    }));
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-[#F15A22] focus:ring-[#F15A22]"
+                              />
+                              <span className="text-sm">{tone}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Deliverables & Timeline Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Deliverables & Timeline</h3>
+                      
+                      <div>
+                        <Label htmlFor="deliverables">Specific Deliverables</Label>
+                        <Textarea
+                          id="deliverables"
+                          value={formData.deliverables}
+                          onChange={(e) => setFormData(prev => ({ ...prev, deliverables: e.target.value }))}
+                          placeholder="List specific deliverables (e.g., 3 social media posts, 1 blog article, email campaign)..."
+                          rows={3}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="timeline">Timeline & Deadlines</Label>
                         <Input
                           id="timeline"
                           value={formData.timeline}
                           onChange={(e) => setFormData(prev => ({ ...prev, timeline: e.target.value }))}
-                          placeholder="e.g., 4 weeks"
+                          placeholder="e.g., 4 weeks, by March 15th, etc."
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="targetAudience">Target Audience</Label>
-                      <Textarea
-                        id="targetAudience"
-                        value={formData.targetAudience}
-                        onChange={(e) => setFormData(prev => ({ ...prev, targetAudience: e.target.value }))}
-                        placeholder="Describe your target audience..."
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="objectives">Project Objectives</Label>
-                      <Textarea
-                        id="objectives"
-                        value={formData.objectives}
-                        onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
-                        placeholder="What are you trying to achieve?"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="deliverables">Deliverables Needed</Label>
-                      <Textarea
-                        id="deliverables"
-                        value={formData.deliverables}
-                        onChange={(e) => setFormData(prev => ({ ...prev, deliverables: e.target.value }))}
-                        placeholder="e.g., 3 social media posts, 1 blog article, email campaign"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="additionalInfo">Additional Information</Label>
-                      <Textarea
-                        id="additionalInfo"
-                        value={formData.additionalInfo}
-                        onChange={(e) => setFormData(prev => ({ ...prev, additionalInfo: e.target.value }))}
-                        placeholder="Any other details we should know..."
-                        rows={3}
-                      />
+                    {/* Additional Information Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Additional Information</h3>
+                      
+                      <div>
+                        <Label htmlFor="additionalInfo">Additional Details</Label>
+                        <Textarea
+                          id="additionalInfo"
+                          value={formData.additionalInfo}
+                          onChange={(e) => setFormData(prev => ({ ...prev, additionalInfo: e.target.value }))}
+                          placeholder="Any other important details, brand guidelines, constraints, or special requirements..."
+                          rows={3}
+                        />
+                      </div>
                     </div>
 
                     <Button
                       onClick={submitFormBriefing}
-                      disabled={formLoading || !formData.projectName}
+                      disabled={formLoading || !formData.projectName || !formData.projectDescription || !formData.targetAudience}
                       className="w-full bg-[#F15A22] hover:bg-[#D14A1A] text-white"
                     >
                       {formLoading ? (
@@ -544,7 +695,7 @@ Additional Information: ${formData.additionalInfo}`,
                       ) : (
                         <>
                           <FileText className="h-4 w-4 mr-2" />
-                          Create Brief from Form
+                          Create Comprehensive Brief
                         </>
                       )}
                     </Button>
