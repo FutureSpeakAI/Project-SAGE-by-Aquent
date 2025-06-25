@@ -47,11 +47,11 @@ export function BriefingLibrary({
   const [selectedBriefing, setSelectedBriefing] = useState<GeneratedContent | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   
-  // Fetch briefing content
+  // Fetch unified briefing content (both chat and form briefs)
   const { data: briefings = [], isLoading } = useQuery({
-    queryKey: ['/api/generated-contents', ContentType.BRIEFING],
+    queryKey: ['/api/unified-briefings'],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/generated-contents?contentType=${ContentType.BRIEFING}`);
+      const response = await apiRequest('GET', `/api/unified-briefings`);
       const data = await response.json();
       return data as GeneratedContent[];
     },

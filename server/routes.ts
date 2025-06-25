@@ -1175,6 +1175,53 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
     }
   });
 
+  // Unified briefing endpoint - combines brief-conversations and generated-contents briefings
+  app.get("/api/unified-briefings", async (req: Request, res: Response) => {
+    try {
+      // Get both types of briefings
+      const briefConversations = await storage.getBriefConversations();
+      const generatedBriefings = await storage.getGeneratedContents();
+      const filteredBriefings = generatedBriefings.filter(content => content.contentType === 'briefing');
+      
+      // Convert brief conversations to unified format
+      const unifiedConversations = briefConversations.map(conv => ({
+        id: `chat-${conv.id}`,
+        title: conv.title || 'SAGE Chat Brief',
+        content: conv.content,
+        contentType: 'briefing' as const,
+        source: 'chat',
+        createdAt: conv.createdAt || new Date().toISOString(),
+        updatedAt: conv.updatedAt || new Date().toISOString(),
+        metadata: {
+          analysisType: conv.analysisType,
+          projectType: conv.projectType,
+          deliverables: conv.deliverables
+        }
+      }));
+      
+      // Convert generated briefings to unified format
+      const unifiedGenerated = filteredBriefings.map(brief => ({
+        id: `generated-${brief.id}`,
+        title: brief.title,
+        content: brief.content,
+        contentType: 'briefing' as const,
+        source: 'form',
+        createdAt: brief.createdAt,
+        updatedAt: brief.updatedAt,
+        metadata: brief.metadata
+      }));
+      
+      // Combine and sort by most recent
+      const allBriefings = [...unifiedConversations, ...unifiedGenerated]
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      
+      res.json(allBriefings);
+    } catch (error: any) {
+      console.error('Failed to fetch unified briefings:', error);
+      res.status(500).json({ error: "Failed to fetch unified briefings" });
+    }
+  });
+
   app.get("/api/brief-conversations/:id", async (req: Request, res: Response) => {
     try {
       const conversation = await storage.getBriefConversation(parseInt(req.params.id));

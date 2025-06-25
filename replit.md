@@ -101,6 +101,13 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Fixed briefing system integration between SAGE chat and Content tab
+  - Created unified briefings endpoint that combines chat briefs and form briefs
+  - SAGE-created briefs now appear in Content tab briefing library
+  - Updated BriefingLibrary component to use unified data source
+  - Resolved issue where chat briefs were stored separately from content library
+  - All briefings now accessible across both Briefing and Content tabs
+
 - **June 25, 2025**: Fixed before/after image comparison display in Image Editor
   - Removed container overflow constraints that were cutting off full images
   - Made comparison view full-width for better side-by-side viewing
