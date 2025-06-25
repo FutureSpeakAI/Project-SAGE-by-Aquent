@@ -593,7 +593,8 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   style={{
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
-                    display: imageLoadStatus === "error" ? 'none' : 'block'
+                    display: imageLoadStatus === "error" ? 'none' : 'block',
+                    imageRendering: 'pixelated' // Prevents browser scaling artifacts
                   }}
                 />
                 

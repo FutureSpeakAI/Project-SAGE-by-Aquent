@@ -110,6 +110,8 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Confirmed: gpt-image-1 returns complete scenes with only masked areas edited
   - Successful inpainting demonstrated with medical office scene transformation
   - UI enhancement: Right panel (tabs) hidden when displaying before/after results
+  - Fixed canvas quality: Preserves original image resolution, no downscaling
+  - Better error handling for OpenAI content policy violations
 
 ## Changelog
 
