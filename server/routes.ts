@@ -2093,7 +2093,7 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
 
       console.log(`TTS request: ${text.length} characters`);
 
-      // Clean text for better speech synthesis
+      // Clean text and enhance for Boston accent and natural expression
       const processedText = text
         .replace(/\*\*(.*?)\*\*/g, '$1')
         .replace(/\*(.*?)\*/g, '$1')
@@ -2101,6 +2101,21 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
         .replace(/#{1,6}\s/g, '')
         .replace(/\n+/g, ' ')
+        // Boston accent enhancements
+        .replace(/\bar\b/g, 'ah')  // Boston 'r' dropping
+        .replace(/\ber\b/g, 'ah')  // Boston 'er' sound
+        .replace(/park/gi, 'pahk')  // Classic Boston pronunciation
+        .replace(/car/gi, 'cah')    // Classic Boston pronunciation
+        .replace(/\bfor\b/gi, 'fah') // Boston 'or' sound
+        .replace(/Harvard/gi, 'Hahvahd') // Classic Boston university
+        .replace(/idea/gi, 'idear')  // Boston intrusive 'r'
+        .replace(/pizza/gi, 'peetza') // Boston vowel sound
+        .replace(/water/gi, 'watah') // Boston 'r' dropping
+        .replace(/order/gi, 'ohdah') // Boston 'r' dropping
+        // Add natural pauses and emphasis
+        .replace(/\./g, '... ')  // Longer pauses for natural flow
+        .replace(/!/g, '! ')     // Emphasis pauses
+        .replace(/\?/g, '? ')    // Question pauses
         .trim();
 
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -2114,9 +2129,9 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
           text: processedText,
           model_id: 'eleven_turbo_v2',
           voice_settings: {
-            stability: 0.8,
-            similarity_boost: 0.9,
-            style: 0.4,
+            stability: 0.6,
+            similarity_boost: 0.75,
+            style: 0.8,
             use_speaker_boost: true
           },
           output_format: "mp3_22050_32"
