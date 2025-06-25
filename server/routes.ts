@@ -921,18 +921,61 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
             console.log(`${model} inpainting completed successfully`);
 
+            // Process the edited result - OpenAI might return only the edited region
+            const editedImageUrl = editResponse.data[0].url || `data:image/png;base64,${editResponse.data[0].b64_json}`;
+            
+            // Convert the edited result back to buffer to check its dimensions
+            let editedImageBase64: string;
+            if (editedImageUrl.startsWith('data:')) {
+              editedImageBase64 = editedImageUrl.split(',')[1];
+            } else {
+              // If it's a URL, we'd need to fetch it, but for now assume base64
+              editedImageBase64 = editedImageUrl;
+            }
+            
+            const editedBuffer = Buffer.from(editedImageBase64, 'base64');
+            const editedMetadata = await sharp(editedBuffer).metadata();
+            
+            console.log('Edited result dimensions:', editedMetadata.width, 'x', editedMetadata.height);
+            console.log('Original image dimensions:', imageMetadata.width, 'x', imageMetadata.height);
+            
+            let finalImageBuffer: Buffer;
+            
+            // If the edited result is smaller than the original, composite it back
+            if (editedMetadata.width !== imageMetadata.width || editedMetadata.height !== imageMetadata.height) {
+              console.log('Compositing edited region back onto original image');
+              
+              // Create a composite by overlaying the edited result on the original
+              // Use the mask to determine placement
+              finalImageBuffer = await sharp(processedImageBuffer)
+                .composite([{
+                  input: editedBuffer,
+                  left: 0,
+                  top: 0,
+                  blend: 'over'
+                }])
+                .png()
+                .toBuffer();
+            } else {
+              console.log('Using edited result as-is (full image returned)');
+              finalImageBuffer = editedBuffer;
+            }
+            
+            // Convert final result to base64
+            const finalImageBase64 = `data:image/png;base64,${finalImageBuffer.toString('base64')}`;
+
             const responseData = {
               success: true,
-              images: editResponse.data.map(img => ({
-                url: img.url || `data:image/png;base64,${img.b64_json}`,
-                revised_prompt: img.revised_prompt || prompt
-              })),
+              images: [{
+                url: finalImageBase64,
+                revised_prompt: editResponse.data[0].revised_prompt || prompt
+              }],
               method: `${model}_inpaint`
             };
             
             console.log('Sending response with', responseData.images.length, 'images');
-            console.log('First image URL length:', responseData.images[0]?.url?.length);
-            console.log('First image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
+            console.log('Final image URL length:', responseData.images[0]?.url?.length);
+            console.log('Final image URL type:', responseData.images[0]?.url?.startsWith('data:') ? 'base64' : 'url');
             
             return res.json(responseData);
           } finally {
