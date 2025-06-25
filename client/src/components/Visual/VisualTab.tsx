@@ -934,6 +934,8 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
   // Handle when image editing is complete
   const handleImageEdited = (newImageUrl: string) => {
     setGeneratedImageUrl(newImageUrl);
+    // Update the editing image URL so "Edit This Image" uses the new result
+    setEditingImageUrl(newImageUrl);
     toast({
       title: "Image edited successfully",
       description: "Your edited image is now ready to save or download.",

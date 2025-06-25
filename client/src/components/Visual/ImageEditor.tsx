@@ -714,14 +714,21 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <Button
                     variant="outline"
                     onClick={() => {
+                      // Use the edited image as the new starting point
+                      if (onImageEdited) {
+                        onImageEdited(editedImageUrl);
+                      }
+                      // Reset the editing state but keep the new image as the base
                       setEditedImageUrl(null);
                       setImageTitle("");
                       setMaskData(null);
                       clearMask();
+                      setPrompt("");
                     }}
                     className="flex-1"
                   >
-                    Start New Edit
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit This Image
                   </Button>
                 </div>
                 
