@@ -305,7 +305,7 @@ const TabContent = ({
                       </div>
                       
                       {/* Mobile-friendly grid layout for buttons */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -333,6 +333,21 @@ const TabContent = ({
                         >
                           <Download className="mr-2 h-4 w-4" />
                           Download
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-orange-500 border-orange-200 hover:bg-orange-50 w-full"
+                          onClick={() => {
+                            if (generatedImageUrl) {
+                              setEditingImageUrl(generatedImageUrl);
+                              setIsImageEditorOpen(true);
+                            }
+                          }}
+                        >
+                          <Edit3 className="mr-2 h-4 w-4" />
+                          Edit
                         </Button>
 
                         <Button

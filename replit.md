@@ -101,6 +101,13 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Added "Edit Image" button to generated image interface
+  - New Edit button appears alongside Delete, Download, Variations, and Convert buttons
+  - Users can now directly edit generated images without additional navigation
+  - Opens the Image Editor with inpainting, background removal, and style transfer tools
+  - Updated button grid from 4 to 5 columns to accommodate the new Edit action
+  - Uses orange color scheme (text-orange-500) to distinguish from other actions
+
 - **June 25, 2025**: Image upload functionality added to Visual tab
   - Added new "Upload & Edit" tab alongside existing Generate and SAGE modes
   - Users can now upload images directly for AI-powered editing without campaigns
