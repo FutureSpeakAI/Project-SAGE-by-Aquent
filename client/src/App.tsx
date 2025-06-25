@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import CampaignPage from "@/pages/CampaignPage";
+import ClientBriefing from "@/pages/ClientBriefing";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from 'react-error-boundary';
@@ -35,6 +36,7 @@ function Router() {
     <AnimatePresence mode="wait">
       <Switch key={location}>
         <Route path="/" component={Home} />
+        <Route path="/client-briefing" component={ClientBriefing} />
         <Route path="/campaigns" component={CampaignPage} />
         <Route component={NotFound} />
       </Switch>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import VoiceControls from '@/components/VoiceControls';
+import { VoiceControls } from '@/components/ui/VoiceControls';
 
 const pageTransition = {
   hidden: { opacity: 0, y: 20 },

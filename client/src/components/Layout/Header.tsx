@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Library, Database } from "lucide-react";
+import { Library, Database, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SageLogo } from "@/components/ui/SageLogo";
 
@@ -33,6 +33,18 @@ export function Header({ onOpenSavedContentLibrary, onOpenDataMigration, onOpenA
           
           {/* Right side buttons */}
           <div className="flex space-x-2 md:space-x-3">
+            {/* Client Briefing Link - Prominent for users to share with clients */}
+            <Button 
+              variant="default"
+              size="sm" 
+              onClick={() => window.open('/client-briefing', '_blank')}
+              className="bg-gradient-to-r from-[#F15A22] to-[#FF7F50] text-white hover:from-[#D14A1A] hover:to-[#FF6347] shadow-lg border-0 font-semibold"
+            >
+              <FileText className="h-4 w-4 mr-1 flex-shrink-0" />
+              {!isMobile && <span>Client Brief Intake</span>}
+              {isMobile && <span>Brief</span>}
+            </Button>
+            
             {/* Saved Content Library button */}
             {onOpenSavedContentLibrary && (
               <Button 
