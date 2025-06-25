@@ -2080,8 +2080,8 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
   // Text-to-speech endpoint
   app.post("/api/text-to-speech", async (req: Request, res: Response) => {
     try {
-      // Use Rachel voice for professional American tone 
-      const { text, voiceId = 'jsCqWAovK2LkecY7zXl4' } = req.body; // Rachel voice - professional American
+      // Use Adam voice for strong Northeastern American accent
+      const { text, voiceId = 'pNInz6obpgDQGcFmaJgB' } = req.body; // Adam voice - strong American accent
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: 'Text is required' });
@@ -2114,9 +2114,9 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
           text: processedText,
           model_id: 'eleven_turbo_v2',
           voice_settings: {
-            stability: 0.75,
-            similarity_boost: 0.85,
-            style: 0.3,
+            stability: 0.7,
+            similarity_boost: 0.8,
+            style: 0.5,
             use_speaker_boost: true
           },
           output_format: "mp3_22050_32"

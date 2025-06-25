@@ -34,7 +34,7 @@ export function useSimpleAudio(config: SimpleAudioConfig = {}) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
-          voiceId: config.voiceId || 'jsCqWAovK2LkecY7zXl4'
+          voiceId: config.voiceId || 'pNInz6obpgDQGcFmaJgB'
         }),
       });
 
