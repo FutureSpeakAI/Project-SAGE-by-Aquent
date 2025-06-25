@@ -84,18 +84,29 @@ Focus on specific examples, data points, and strategic context. Provide actionab
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
+      throw new Error(`Anthropic research API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json() as any;
-    const researchContent = data.choices?.[0]?.message?.content || "No research data available";
-    const citations = data.citations || [];
+    const data = await response.json();
+    const researchContent = data.content?.[0]?.text || "";
     
-    // Format research with citations
-    let formattedResearch = researchContent;
-    if (citations.length > 0) {
-      formattedResearch += "\n\nSources: " + citations.slice(0, 5).join(", ");
+    if (!researchContent) {
+      throw new Error('No research content received from Anthropic');
     }
+
+    // Format the research with better structure
+    const formattedResearch = `# Research Analysis: ${userQuery}
+
+${researchContent}
+
+---
+*Research completed using advanced AI analysis to provide strategic context for campaign development and brand positioning decisions.*`;
+
+    console.log('Research completed successfully:', {
+      provider: 'Anthropic',
+      query: userQuery,
+      contentLength: formattedResearch.length
+    });
     
     return formattedResearch;
     
@@ -128,12 +139,12 @@ Provide detailed strategic analysis including brand positioning, competitive lan
       });
 
       if (response.ok) {
-        const data = await response.json();
-        const content = data.choices[0]?.message?.content || "";
+        const openaiData = await response.json();
+        const openaiContent = openaiData.choices[0]?.message?.content || "";
         console.log('OpenAI research fallback successful');
         return `# Research Analysis: ${userQuery}
 
-${content}
+${openaiContent}
 
 ---
 *Research completed using AI analysis to provide strategic context for campaign development.*`;
