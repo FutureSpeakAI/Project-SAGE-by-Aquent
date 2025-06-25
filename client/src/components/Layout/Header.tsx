@@ -27,7 +27,7 @@ export function Header({ onOpenSavedContentLibrary, onOpenDataMigration, onOpenA
               <h1 className="text-2xl font-bold text-white">
                 S<span className="text-[#F15A22]">A</span>GE
               </h1>
-              <p className="text-gray-300 text-xs">Strategic Adaptive Generative Engine</p>
+              <p className="text-gray-300 text-xs">Strategic Adaptive Generative Engine, powered by Aquent</p>
             </div>
           </div>
           
