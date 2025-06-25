@@ -119,6 +119,9 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Maintains all functionality: SAGE chat, comprehensive form, and brief generation
   - Added route to App.tsx for proper navigation handling
   - Removed statistics showcase section (99% accuracy, 5min generation, 300% ROI, 1000+ campaigns) per user preference
+  - Added expandable chat window feature (maximize/minimize button) for better conversation flow
+  - Fixed voice interaction issues with improved microphone reactivation after SAGE speech playback
+  - Enhanced voice recognition state management for continuous conversations
 
 - **June 25, 2025**: Fixed briefing system integration between SAGE chat and Content tab
   - Created unified briefings endpoint that combines chat briefs and form briefs

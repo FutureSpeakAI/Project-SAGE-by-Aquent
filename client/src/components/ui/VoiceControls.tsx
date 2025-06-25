@@ -44,8 +44,18 @@ export function VoiceControls({
     playbackRate: 1.2,
     onPlaybackEnd: () => {
       // Automatically restart listening after SAGE finishes speaking
-      if (!isListening && !isGenerating) {
-        setTimeout(() => startListening(), 500); // Small delay for natural flow
+      if (isVoiceSessionActive && !isListening && !isGenerating) {
+        setTimeout(() => {
+          console.log('Auto-reactivating microphone after speech playback');
+          startListening((transcript) => {
+            if (onTranscript) {
+              onTranscript(transcript, true);
+            }
+            if (onSendMessage) {
+              onSendMessage();
+            }
+          });
+        }, 1000); // Longer delay for better reliability
       }
     }
   });
@@ -91,12 +101,14 @@ export function VoiceControls({
     } else {
       setIsVoiceSessionActive(true);
       onVoiceStateChange?.(true);
+      console.log('Starting new voice session...');
       startListening((transcript) => {
+        console.log('Voice transcript received:', transcript);
         if (onTranscript) {
           onTranscript(transcript, true);
         }
         if (onSendMessage) {
-          onSendMessage();
+          setTimeout(() => onSendMessage(), 100); // Small delay to ensure transcript is processed
         }
       });
     }
