@@ -1196,10 +1196,23 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           content = assistantMessages || 'No content available';
         }
         
+        // Ensure content is always a string
+        if (typeof content !== 'string') {
+          if (content && typeof content === 'object') {
+            try {
+              content = JSON.stringify(content, null, 2);
+            } catch (e) {
+              content = String(content);
+            }
+          } else {
+            content = String(content || 'No content available');
+          }
+        }
+        
         return {
           id: `chat-${conv.id}`,
           title: conv.title || 'SAGE Chat Brief',
-          content: content || 'No content available',
+          content: content,
           contentType: 'briefing' as const,
           source: 'chat',
           createdAt: conv.createdAt || new Date().toISOString(),
@@ -1214,16 +1227,32 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       });
       
       // Convert generated briefings to unified format
-      const unifiedGenerated = filteredBriefings.map(brief => ({
-        id: `generated-${brief.id}`,
-        title: brief.title,
-        content: brief.content,
-        contentType: 'briefing' as const,
-        source: 'form',
-        createdAt: brief.createdAt,
-        updatedAt: brief.updatedAt,
-        metadata: brief.metadata
-      }));
+      const unifiedGenerated = filteredBriefings.map(brief => {
+        // Ensure content is always a string
+        let content = brief.content;
+        if (typeof content !== 'string') {
+          if (content && typeof content === 'object') {
+            try {
+              content = JSON.stringify(content, null, 2);
+            } catch (e) {
+              content = String(content);
+            }
+          } else {
+            content = String(content || 'No content available');
+          }
+        }
+        
+        return {
+          id: `generated-${brief.id}`,
+          title: brief.title,
+          content: content,
+          contentType: 'briefing' as const,
+          source: 'form',
+          createdAt: brief.createdAt,
+          updatedAt: brief.updatedAt,
+          metadata: brief.metadata
+        };
+      });
       
       // Combine and sort by most recent
       const allBriefings = [...unifiedConversations, ...unifiedGenerated]

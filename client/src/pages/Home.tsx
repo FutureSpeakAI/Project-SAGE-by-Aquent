@@ -251,7 +251,20 @@ export default function Home() {
   };
   
   // Helper function to convert HTML to plain text
-  const convertHtmlToPlainText = (html: string): string => {
+  const convertHtmlToPlainText = (html: string | any): string => {
+    // Ensure we have a string to work with
+    if (typeof html !== 'string') {
+      if (html === null || html === undefined) {
+        return '';
+      }
+      // Try to convert to string
+      try {
+        html = String(html);
+      } catch (e) {
+        console.error('Failed to convert content to string:', e);
+        return '';
+      }
+    }
     // First, remove any CSS/style content completely
     let cleanedHtml = html
       // Remove any <style> tags and their contents
@@ -332,8 +345,29 @@ export default function Home() {
   };
 
   const handleSelectBriefing = (content: GeneratedContent) => {
+    // Ensure we have valid content - handle both string and object cases
+    let briefContent = '';
+    
+    if (typeof content.content === 'string') {
+      briefContent = content.content;
+    } else if (typeof content.content === 'object' && content.content !== null) {
+      // If content is an object, try to stringify it properly
+      try {
+        briefContent = JSON.stringify(content.content, null, 2);
+      } catch (e) {
+        briefContent = String(content.content);
+      }
+    } else {
+      briefContent = String(content.content || '');
+    }
+    
+    // Debug logging to help identify the issue
+    console.log('handleSelectBriefing - content type:', typeof content.content);
+    console.log('handleSelectBriefing - briefContent length:', briefContent.length);
+    console.log('handleSelectBriefing - briefContent preview:', briefContent.substring(0, 200));
+    
     // Convert HTML content to plain text for better usage in the content prompt
-    const plainTextContent = convertHtmlToPlainText(content.content);
+    const plainTextContent = convertHtmlToPlainText(briefContent);
     
     // Add a clear instruction prefix to ensure the AI doesn't just repeat the briefing
     const enhancedPrompt = `CREATIVE BRIEF (FOLLOW THESE INSTRUCTIONS TO CREATE CONTENT):\n\n${plainTextContent}\n\nBased on the creative brief above, create the actual deliverable content. Do not restate or summarize the brief. Produce only the final content as specified in the brief.`;

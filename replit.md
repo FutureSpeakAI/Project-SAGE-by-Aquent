@@ -101,6 +101,13 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Fixed briefing content generation bug in Content tab
+  - Resolved issue where briefs from library loaded as [object Object] instead of actual content
+  - Added proper type checking and string conversion in handleSelectBriefing function
+  - Enhanced unified briefings API endpoint to ensure content is always returned as string
+  - Added debug logging to help identify data type issues in briefing selection
+  - Content generation now works correctly with library-selected briefs
+
 - **June 25, 2025**: Fixed Image Editor to display full generated images at 100% size
   - Removed max-width and max-height constraints that were cutting off images
   - Increased dialog size to 98% of viewport for maximum viewing area
