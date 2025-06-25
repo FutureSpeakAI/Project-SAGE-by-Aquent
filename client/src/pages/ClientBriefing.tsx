@@ -945,7 +945,6 @@ IMPORTANT FORMATTING REQUIREMENTS:
             </div>
           </motion.div>
         </div>
-        </div>
 
         {/* Hidden file input */}
         <input
