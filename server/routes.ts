@@ -1011,6 +1011,15 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
     } catch (error: any) {
       console.error('Image editing error:', error);
       
+      // Handle OpenAI content policy violations
+      if (error.code === 'moderation_blocked' || error.type === 'image_generation_user_error') {
+        return res.status(400).json({ 
+          error: 'Content policy violation: Your edit request was blocked by OpenAI\'s safety system. Please try a different prompt that avoids demographic transformations or sensitive content.',
+          details: error.message,
+          type: 'content_policy_violation'
+        });
+      }
+      
       if (error.status === 400) {
         return res.status(400).json({ 
           error: 'Invalid request. Please check your image format and prompt.',

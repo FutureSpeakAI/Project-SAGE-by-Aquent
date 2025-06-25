@@ -379,10 +379,21 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         });
       }
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      console.error('Image editing error:', error);
+      
+      let title = "Image editing failed";
+      let description = error.message;
+      
+      // Handle content policy violations with specific messaging
+      if (error.message?.includes('Content policy violation') || error.message?.includes('safety system')) {
+        title = "Content Policy Violation";
+        description = "Your edit request was blocked by OpenAI's content policies. Please try a different prompt that doesn't involve demographic transformations or sensitive content.";
+      }
+      
       toast({
-        title: "Image editing failed",
-        description: error.message,
+        title,
+        description,
         variant: "destructive",
       });
     },
