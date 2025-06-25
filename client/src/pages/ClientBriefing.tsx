@@ -373,11 +373,11 @@ IMPORTANT FORMATTING REQUIREMENTS:
             className="mb-12"
           >
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">How SAGE Creates Your Marketing Brief</h2>
-              <p className="text-lg text-gray-600">Three simple steps to marketing excellence</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">How SAGE Works for You</h2>
+              <p className="text-lg text-gray-600">Four steps to marketing excellence</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-2xl mb-4 text-xl font-bold">1</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Share Your Vision</h3>
@@ -394,6 +394,12 @@ IMPORTANT FORMATTING REQUIREMENTS:
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 text-white rounded-2xl mb-4 text-xl font-bold">3</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Get Your Brief</h3>
                 <p className="text-gray-600">Receive a comprehensive, actionable marketing brief with clear strategies and next steps.</p>
+              </div>
+
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-2xl mb-4 text-xl font-bold">4</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">We Create Your Campaign</h3>
+                <p className="text-gray-600">Superpowered (human!) marketers with deep expertise and experience will use cutting-edge tools to create a return on your investment.</p>
               </div>
             </div>
           </motion.div>
