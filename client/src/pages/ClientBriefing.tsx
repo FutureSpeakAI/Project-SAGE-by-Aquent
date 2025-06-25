@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, CheckCircle } from 'lucide-react';
+import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, CheckCircle, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
