@@ -910,14 +910,16 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             });
             
             console.log('Calling OpenAI API with model:', model);
+            // Enhance prompt to encourage full scene preservation
+            const enhancedPrompt = `${prompt.trim()}. Preserve the entire original scene and background, only modify the masked area while keeping all other elements exactly as they are in the original image.`;
+            
             const editResponse = await openai.images.edit({
               model: model,
               image: imageFile,
               mask: maskFile,
-              prompt: prompt.trim(),
+              prompt: enhancedPrompt,
               n: 1,
-              size: (size || "1024x1024") as any,
-              response_format: "b64_json"
+              size: (size || "1024x1024") as any
             });
 
             console.log(`${model} inpainting completed successfully`);
