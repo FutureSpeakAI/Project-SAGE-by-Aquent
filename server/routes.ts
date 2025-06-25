@@ -875,12 +875,13 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           const maskMetadata = await sharp(maskBuffer).metadata();
           console.log('Original mask dimensions:', maskMetadata.width, 'x', maskMetadata.height);
           
-          // Ensure mask matches image dimensions exactly and is properly formatted
-          // GPT-image-1 expects transparent areas (black/0) and opaque areas (white/255)
+          // Test mask inversion - gpt-image-1 might expect opposite polarity from DALL-E
+          // Try inverted mask: black = edit areas, white = preserve areas
           const processedMaskBuffer = await sharp(maskBuffer)
             .resize(imageMetadata.width, imageMetadata.height, { fit: 'fill' })
             .greyscale()
             .threshold(128) // Convert to pure black/white
+            .negate() // INVERT: Try black for edit areas, white for preserve areas
             .png()
             .toBuffer();
           console.log('Processed mask buffer size:', processedMaskBuffer.length);
@@ -913,20 +914,26 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
             });
             
             console.log('Calling OpenAI API with model:', model);
-            // Critical: gpt-image-1 needs explicit instructions to preserve the full scene context
-            const enhancedPrompt = `In this medical office scene with a doctor and patient, ${prompt.trim()}. Keep the doctor, medical equipment, office background, and all other elements exactly the same. Only change the patient figure in the marked area.`;
-            console.log('Scene-aware prompt:', enhancedPrompt.substring(0, 100) + '...');
             console.log('Image dimensions:', imageMetadata.width, 'x', imageMetadata.height);
             console.log('Mask dimensions after processing:', processedMaskBuffer.length, 'bytes');
+            console.log('TESTING: Using INVERTED mask (black=edit, white=preserve) for gpt-image-1');
             
-            const editResponse = await openai.images.edit({
+            // Test if gpt-image-1 has different parameter requirements for full scene inpainting
+            const editParams: any = {
               model: model,
               image: imageFile,
               mask: maskFile,
-              prompt: enhancedPrompt,
+              prompt: prompt.trim(),
               n: 1,
               size: (size || "1024x1024") as any
-            });
+            };
+            
+            // Research: Try adding parameters that might influence gpt-image-1 behavior
+            // Some models may have undocumented parameters for scene preservation
+            console.log('Testing gpt-image-1 with standard parameters...');
+            console.log('Edit parameters:', Object.keys(editParams));
+            
+            const editResponse = await openai.images.edit(editParams);
 
             console.log(`${model} inpainting completed successfully`);
 
