@@ -260,14 +260,16 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
             { role: "assistant", content: `${responseContent}\n\n${promptsList}\n\nClick "Use Prompt" to apply the first one, or copy any specific prompt you'd like to use.` },
           ]);
         } else {
-          // Look for various prompt patterns
+          // Look for various prompt patterns - prioritize longer, more detailed prompts
           const promptPatterns = [
             /FINAL PROMPT:?\s*([\s\S]*?)(?:\n\n|$)/i,
             /Image Prompt:?\s*([\s\S]*?)(?:\n\n|$)/i,
-            /Prompt:?\s*"([^"]+)"/i,
             /Here's an optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i,
             /Optimized prompt:\s*([\s\S]*?)(?:\n\n|$)/i,
-            /"([^"]*(?:spa|massage|professional|inclusive|serene|environment|Pride|rainbow|lighting|atmosphere)[^"]*)"/ // Look for descriptive image prompts
+            /"([^"]{50,})"/, // Look for any quoted text that's at least 50 characters (likely a detailed prompt)
+            /"([^"]*(?:spa|massage|professional|inclusive|serene|environment|Pride|rainbow|lighting|atmosphere|therapy|treatment|clean|modern|natural|diffused|quality|photography)[^"]*)"/, // Look for descriptive image prompts
+            /Prompt:?\s*"([^"]+)"/i,
+            /Image Prompt \d+:\s*([^"\n]*(?:"[^"]*"[^"\n]*)*)/i // Handle "Image Prompt 1: Inclusive Spa Environment" format
           ];
           
           let extractedPrompt = null;
@@ -291,11 +293,39 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
               { role: "assistant", content: displayContent || "I've prepared your optimized prompt. You can now use it to generate your image!" },
             ]);
           } else {
-            // If no specific prompt pattern found, try to extract any quoted text that looks like a prompt
-            const quotedText = cleanedContent.match(/"([^"]{30,})"/);
-            if (quotedText) {
-              setFinalPrompt(quotedText[1]);
-              displayContent = cleanedContent.replace(quotedText[0], '').trim();
+            // Enhanced fallback: Look for the longest quoted text or descriptive paragraph
+            const quotedTexts = cleanedContent.match(/"([^"]+)"/g);
+            let bestPrompt = "";
+            
+            if (quotedTexts) {
+              // Find the longest quoted text (most likely to be the detailed prompt)
+              for (const quote of quotedTexts) {
+                const text = quote.replace(/"/g, '');
+                if (text.length > bestPrompt.length && text.length > 30) {
+                  bestPrompt = text;
+                }
+              }
+            }
+            
+            // If no good quoted text, look for descriptive paragraphs about the image
+            if (!bestPrompt) {
+              const paragraphs = cleanedContent.split('\n\n');
+              for (const paragraph of paragraphs) {
+                // Look for paragraphs that describe visual elements
+                if (paragraph.length > 50 && 
+                    (paragraph.includes('massage') || paragraph.includes('spa') || 
+                     paragraph.includes('therapy') || paragraph.includes('professional') ||
+                     paragraph.includes('lighting') || paragraph.includes('atmosphere') ||
+                     paragraph.includes('environment') || paragraph.includes('room'))) {
+                  bestPrompt = paragraph.trim();
+                  break;
+                }
+              }
+            }
+            
+            if (bestPrompt) {
+              setFinalPrompt(bestPrompt);
+              displayContent = cleanedContent.replace(bestPrompt, '').replace(/"/g, '').trim();
               
               setMessages((prev) => [
                 ...prev,
