@@ -101,6 +101,13 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Fixed before/after image comparison display in Image Editor
+  - Removed container overflow constraints that were cutting off full images
+  - Made comparison view full-width for better side-by-side viewing
+  - Added synchronized zoom controls that work on both original and edited images
+  - Increased container heights and improved scrolling for full image visibility
+  - Fixed image truncation issues preventing complete before/after comparison
+
 - **June 25, 2025**: Fixed image quality preservation in Image Editor
   - Removed automatic image resizing that was causing pixelation
   - Images now display at original resolution for maximum quality

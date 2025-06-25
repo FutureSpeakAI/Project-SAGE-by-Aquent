@@ -507,7 +507,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
         <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)] min-h-0">
           {/* Left Panel - Image Comparison */}
-          <div className={`${editedImageUrl ? 'w-full lg:w-[70%]' : 'w-full lg:w-[60%]'} bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0`}>
+          <div className={`${editedImageUrl ? 'w-full' : 'w-full lg:w-[60%]'} bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <Label className="text-lg font-medium">
                 {editedImageUrl ? "Before & After" : "Original Image"}
@@ -541,7 +541,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
               </div>
             </div>
             
-            <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
+            <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 p-4" style={{ overflow: 'visible' }}>
               {editedImageUrl ? (
                 <div key="before-after-view" className="flex flex-col h-full">
                   {/* Before & After Comparison Mode */}
@@ -550,29 +550,41 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     <p className="text-sm text-gray-600">Compare your original and edited images</p>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row gap-4 flex-1 min-h-[400px]">
+                  <div className="flex flex-col sm:flex-row gap-4 flex-1 min-h-[500px]" style={{ height: 'auto', overflow: 'visible' }}>
                     {/* Original Image */}
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col min-w-0">
                       <Label className="text-sm font-medium mb-2 text-center bg-gray-100 py-1 rounded">Original</Label>
-                      <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 overflow-auto p-2">
+                      <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 p-2" style={{ minHeight: '400px', height: 'auto', overflow: 'auto' }}>
                         <img 
                           src={imageUrl} 
                           alt="Original" 
-                          className="max-w-full h-auto object-contain"
-                          style={{ maxHeight: 'none' }}
+                          className="w-auto h-auto object-contain"
+                          style={{ 
+                            transform: `scale(${zoom})`,
+                            transformOrigin: 'center',
+                            maxHeight: 'none',
+                            maxWidth: 'none',
+                            display: 'block'
+                          }}
                         />
                       </div>
                     </div>
                     
                     {/* Edited Image */}
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col min-w-0">
                       <Label className="text-sm font-medium mb-2 text-center bg-green-100 py-1 rounded text-green-800">✓ Edited</Label>
-                      <div className="relative flex items-center justify-center border-2 border-green-200 rounded bg-green-50 flex-1 overflow-auto p-2">
+                      <div className="relative flex items-center justify-center border-2 border-green-200 rounded bg-green-50 p-2" style={{ minHeight: '400px', height: 'auto', overflow: 'auto' }}>
                         <img 
                           src={editedImageUrl} 
                           alt="Edited" 
-                          className="max-w-full h-auto object-contain"
-                          style={{ maxHeight: 'none' }}
+                          className="w-auto h-auto object-contain"
+                          style={{ 
+                            transform: `scale(${zoom})`,
+                            transformOrigin: 'center',
+                            maxHeight: 'none',
+                            maxWidth: 'none',
+                            display: 'block'
+                          }}
                           onLoad={() => {
                             console.log('Edited image loaded successfully in before/after view');
                           }}
