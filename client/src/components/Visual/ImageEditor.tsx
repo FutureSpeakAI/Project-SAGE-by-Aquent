@@ -573,10 +573,18 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             </div>
             
             <div className="flex-1 flex flex-col gap-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-4">
-              {editedImageUrl ? (
-                <>
+              {(() => {
+                console.log('RENDER CHECK: editedImageUrl exists =', !!editedImageUrl);
+                if (editedImageUrl) {
+                  console.log('RENDER CHECK: Showing before/after view');
+                } else {
+                  console.log('RENDER CHECK: Showing editing mode');
+                }
+                return editedImageUrl;
+              })() ? (
+                <div key="before-after-view" className="flex flex-col h-full">
                   {/* Before & After Comparison Mode */}
-                  <div className="text-center mb-4">
+                  <div className="text-center mb-4 bg-green-50 p-3 rounded border-2 border-green-200">
                     <h3 className="text-lg font-semibold text-green-600">✓ Edit Complete</h3>
                     <p className="text-sm text-gray-600">Compare your original and edited images</p>
                   </div>
@@ -605,18 +613,18 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                           className="max-w-full h-auto object-contain"
                           style={{ maxHeight: 'none' }}
                           onLoad={() => {
-                            console.log('Edited image displayed successfully in before/after');
-                            console.log('Edited image URL length:', editedImageUrl?.length);
+                            console.log('✓ EDITED IMAGE LOADED: Successfully displayed in before/after view');
+                            console.log('✓ EDITED IMAGE URL LENGTH:', editedImageUrl?.length);
                           }}
                           onError={(e) => {
-                            console.error('Failed to display edited image in before/after:', e);
-                            console.error('Edited image URL:', editedImageUrl?.substring(0, 100));
+                            console.error('✗ EDITED IMAGE ERROR: Failed to display in before/after:', e);
+                            console.error('✗ EDITED IMAGE URL PREVIEW:', editedImageUrl?.substring(0, 100));
                           }}
                         />
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="flex flex-col flex-1 min-h-[400px]">
                   <div className="flex-1 flex flex-col min-h-0">
