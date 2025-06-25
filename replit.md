@@ -101,6 +101,12 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Fixed transparency masking functionality in Image Editor
+  - Restored proper mask overlay positioning that was broken during image display improvements
+  - Fixed coordinate mapping between display canvas and mask canvas for accurate drawing
+  - Updated mask canvas positioning to use absolute positioning with proper scaling
+  - Transparency masking now works correctly for inpainting operations
+
 - **June 25, 2025**: Fixed briefing content generation bug in Content tab
   - Resolved issue where briefs from library loaded as [object Object] instead of actual content
   - Added proper type checking and string conversion in handleSelectBriefing function

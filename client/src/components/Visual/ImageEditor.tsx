@@ -217,14 +217,19 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     
     setIsDrawing(true);
     const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) return;
+    const mainCanvas = canvasRef.current;
+    if (!maskCanvas || !mainCanvas) return;
     
     const rect = maskCanvas.getBoundingClientRect();
-    // Scale coordinates from display size to canvas size
-    const scaleX = maskCanvas.width / rect.width;
-    const scaleY = maskCanvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    const mainRect = mainCanvas.getBoundingClientRect();
+    
+    // Calculate scale factors based on the main canvas dimensions and current zoom
+    const scaleX = maskCanvas.width / (mainRect.width / zoom);
+    const scaleY = maskCanvas.height / (mainRect.height / zoom);
+    
+    // Calculate position relative to the mask canvas
+    const x = (e.clientX - rect.left) * scaleX / zoom;
+    const y = (e.clientY - rect.top) * scaleY / zoom;
     
     setLastPoint({ x, y });
     
@@ -235,11 +240,11 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     ctx.globalCompositeOperation = "source-over";
     ctx.strokeStyle = "rgba(255, 100, 100, 1.0)";
     ctx.fillStyle = "rgba(255, 100, 100, 1.0)";
-    ctx.lineWidth = brushSize * scaleX;
+    ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.arc(x, y, (brushSize * scaleX) / 2, 0, 2 * Math.PI);
+    ctx.arc(x, y, brushSize / 2, 0, 2 * Math.PI);
     ctx.fill();
   };
 
@@ -247,14 +252,19 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     if (!isDrawing || !lastPoint || activeTab !== "inpaint") return;
     
     const maskCanvas = maskCanvasRef.current;
-    if (!maskCanvas) return;
+    const mainCanvas = canvasRef.current;
+    if (!maskCanvas || !mainCanvas) return;
     
     const rect = maskCanvas.getBoundingClientRect();
-    // Scale coordinates from display size to canvas size
-    const scaleX = maskCanvas.width / rect.width;
-    const scaleY = maskCanvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    const mainRect = mainCanvas.getBoundingClientRect();
+    
+    // Calculate scale factors based on the main canvas dimensions and current zoom
+    const scaleX = maskCanvas.width / (mainRect.width / zoom);
+    const scaleY = maskCanvas.height / (mainRect.height / zoom);
+    
+    // Calculate position relative to the mask canvas
+    const x = (e.clientX - rect.left) * scaleX / zoom;
+    const y = (e.clientY - rect.top) * scaleY / zoom;
     
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
@@ -262,7 +272,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
     // Draw with red for visibility (will be converted to white for API)
     ctx.globalCompositeOperation = "source-over";
     ctx.strokeStyle = "rgba(255, 100, 100, 1.0)";
-    ctx.lineWidth = brushSize * scaleX;
+    ctx.lineWidth = brushSize;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -664,14 +674,16 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     ref={maskCanvasRef}
                     style={{
                       position: "absolute",
-                      top: '50%',
-                      left: '50%',
-                      transform: `translate(-50%, -50%) scale(${zoom})`,
-                      transformOrigin: 'center',
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
                       zIndex: 2,
                       cursor: "crosshair",
                       opacity: 0.3,
-                      pointerEvents: "auto"
+                      pointerEvents: "auto",
+                      transform: `scale(${zoom})`,
+                      transformOrigin: 'center'
                     }}
                     onMouseDown={startDrawing}
                     onMouseMove={(e) => {
