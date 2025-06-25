@@ -431,12 +431,12 @@ const TabContent = ({
                 AI Editing Tools
               </h3>
               
-              {visualState.selectedUploadedImage ? (
+              {selectedUploadedImage ? (
                 <div className="space-y-4">
                   {/* Image Preview */}
                   <div className="relative">
                     <img
-                      src={visualState.selectedUploadedImage}
+                      src={selectedUploadedImage}
                       alt="Uploaded image"
                       className="w-full h-64 object-cover rounded-lg border"
                     />
@@ -446,7 +446,7 @@ const TabContent = ({
                   <div className="space-y-3">
                     <Button
                       onClick={() => {
-                        setEditingImageUrl(visualState.selectedUploadedImage || '');
+                        setEditingImageUrl(selectedUploadedImage || '');
                         setIsImageEditorOpen(true);
                       }}
                       className="w-full bg-blue-500 hover:bg-blue-600"
@@ -469,9 +469,9 @@ const TabContent = ({
                     <Button
                       variant="outline"
                       onClick={() => {
-                        if (visualState.selectedUploadedImage) {
+                        if (selectedUploadedImage) {
                           const a = document.createElement("a");
-                          a.href = visualState.selectedUploadedImage;
+                          a.href = selectedUploadedImage;
                           a.download = `processed_image_${new Date().getTime()}.png`;
                           document.body.appendChild(a);
                           a.click();
@@ -519,7 +519,7 @@ const TabContent = ({
     <ImageProcessor 
       open={isProcessingDialogOpen}
       onOpenChange={setIsProcessingDialogOpen}
-      imageUrl={generatedImageUrl || visualState.selectedUploadedImage || ''}
+      imageUrl={generatedImageUrl || selectedUploadedImage || ''}
     />
   </motion.div>
   );
@@ -552,7 +552,9 @@ export function VisualTab({ model, setModel, onOpenImageLibrary, variationPrompt
     size,
     quality,
     background,
-    isProcessingDialogOpen
+    isProcessingDialogOpen,
+    uploadedImages,
+    selectedUploadedImage
   } = visualState;
   
   // Create a mutation to handle image generation with improved stability
