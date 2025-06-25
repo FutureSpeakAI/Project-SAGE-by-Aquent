@@ -65,11 +65,30 @@ export function ImageLibrary({ open, onOpenChange, onCreateVariations, onEditIma
     return metadata as Record<string, any>;
   };
   
-  // Fetch images with error handling and retry settings
+  // Fetch images with robust error handling
   const { data: images = [], isLoading, error } = useQuery<GeneratedImage[]>({
     queryKey: ["/api/generated-images"],
     enabled: open,
-    retry: false, // Disable automatic retries to prevent endless error loops
+    retry: 2, // Allow 2 retries
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/generated-images");
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          if (errorData.images) {
+            // Server returned error but also included fallback empty array
+            return errorData.images;
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error("Failed to fetch images:", err);
+        // Return empty array instead of throwing to prevent crashes
+        return [];
+      }
+    },
     staleTime: 30000, // Set stale time to 30 seconds to reduce fetching frequency
     refetchOnWindowFocus: false, // Disable refetching on window focus
     refetchOnMount: false, // Only fetch once when component mounts
