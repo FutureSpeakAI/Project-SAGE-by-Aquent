@@ -40,7 +40,7 @@ export function VoiceControls({
   });
 
   const { isPlaying, isGenerating, playText, stopAudio } = useSimpleAudio({
-    voiceId: 'b5RPB35vTODb3BEmR3Fc',
+    voiceId: 'RPdRfxxQOaNxn1LtRQqm',
     playbackRate: 1.2,
     onPlaybackEnd: () => {
       console.log('🎵 Playback ended callback triggered', { 
