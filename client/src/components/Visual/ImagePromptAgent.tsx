@@ -441,7 +441,7 @@ IMPORTANT: Acknowledge receipt of the briefing and provide specific prompts base
     // Send the analysis prompt to AI with proper error handling
     generateContentMutation.mutate({
       userPrompt: analysisPrompt,
-      systemPrompt: "You are SAGE, a British marketing specialist. Analyze creative briefs and identify visual content needs. Be conversational and helpful.",
+      systemPrompt: getSystemPrompt(),
     });
     
     // Switch to conversation tab
