@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { VoiceControls } from '@/components/ui/VoiceControls';
+import { EditableBriefingOutput } from '@/components/Briefing/EditableBriefingOutput';
 
 const pageTransition = {
   hidden: { opacity: 0, y: 20 },
@@ -405,11 +406,16 @@ IMPORTANT FORMATTING REQUIREMENTS:
           </motion.div>
 
           {/* Main Content Section */}
-          <div className={`transition-all duration-500 ${
-            isExpanded 
-              ? "fixed inset-4 z-50 bg-white rounded-2xl shadow-2xl p-6 overflow-y-auto" 
-              : "grid grid-cols-1 lg:grid-cols-2 gap-12"
-          }`}>
+          {isExpanded ? (
+            <EditableBriefingOutput
+              briefingContent={briefingContent}
+              isExpanded={true}
+              onToggleExpanded={() => setIsExpanded(false)}
+              onSave={saveBriefing}
+              title={formData.projectName || "Strategic Marketing Brief"}
+            />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Input Section */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -837,63 +843,17 @@ IMPORTANT FORMATTING REQUIREMENTS:
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
               >
-              <Card className="h-full border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center justify-between text-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center">
-                        <Award className="h-5 w-5 text-white" />
-                      </div>
-                      <span>Your Strategic Marketing Brief</span>
-                    </div>
-                    {briefingContent && (
-                      <Button
-                        onClick={saveBriefing}
-                        variant="outline"
-                        className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white shadow-md"
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Save Brief
-                      </Button>
-                    )}
-                  </CardTitle>
-                  <p className="text-gray-600 mt-1">Your comprehensive marketing strategy document</p>
-                </CardHeader>
-                <CardContent>
-                  {briefingContent ? (
-                    <div className="prose max-w-none h-[500px] overflow-y-auto border-2 border-gray-100 rounded-xl p-6 bg-gradient-to-br from-gray-50 to-white">
-                      <div dangerouslySetInnerHTML={{ __html: briefingContent }} />
-                    </div>
-                  ) : (
-                    <div className="h-[500px] flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-200 rounded-xl bg-gradient-to-br from-gray-50 to-white">
-                      <div className="text-center max-w-sm">
-                        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-6">
-                          <FileText className="h-10 w-10 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">Your Brief Awaits</h3>
-                        <p className="text-gray-500 mb-4">Once you share your project details, SAGE will create a comprehensive marketing brief tailored to your goals.</p>
-                        <div className="flex flex-wrap justify-center gap-2">
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            Strategy Analysis
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            Audience Insights
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            Action Plan
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                <EditableBriefingOutput
+                  briefingContent={briefingContent}
+                  isExpanded={false}
+                  onToggleExpanded={() => {}}
+                  onSave={saveBriefing}
+                  title={formData.projectName || "Strategic Marketing Brief"}
+                />
               </motion.div>
             )}
           </div>
+          )}
 
 
         </div>
