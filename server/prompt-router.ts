@@ -215,15 +215,20 @@ export class PromptRouter {
   }
 
   private shouldUseReasoning(message: string, researchContext: string): boolean {
+    // Always use reasoning when research context is provided
+    if (researchContext && researchContext.trim().length > 0) {
+      return true;
+    }
+    
     const reasoningIndicators = [
       'comprehensive', 'detailed', 'deep research', 'complete analysis',
       'compare', 'versus', 'competitive analysis', 'strategy',
-      'why did', 'what made', 'driving', 'insights into'
+      'why did', 'what made', 'driving', 'insights into',
+      'market research', 'competitor analysis', 'brand analysis'
     ];
     
     return reasoningIndicators.some(indicator => 
-      message.toLowerCase().includes(indicator) || 
-      researchContext.toLowerCase().includes(indicator)
+      message.toLowerCase().includes(indicator)
     );
   }
 

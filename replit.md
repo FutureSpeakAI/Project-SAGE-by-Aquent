@@ -101,6 +101,14 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: CRITICAL FIX - Deep Research system operational
+  - Fixed Deep Research activation and UI state management issues
+  - Updated prompt router to always use reasoning when research context is provided
+  - Added proper research context cleanup with close button for "Research Active" badge
+  - Enhanced research detection to include market research, competitor analysis, and brand analysis
+  - Research engine now properly uses Anthropic as primary provider with OpenAI fallback
+  - Deep Research mode now properly triggers comprehensive analysis and insights
+
 - **June 25, 2025**: CRITICAL FIX - SAGE chat context handling restored
   - Fixed conversation memory loss where SAGE was forgetting previous messages
   - Updated prompt router to properly pass sessionHistory to AI providers

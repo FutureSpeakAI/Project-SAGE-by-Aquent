@@ -320,6 +320,12 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
     setMessages(prev => [...prev, contextMessage]);
     setShowResearchOptions(false);
     
+    // Enable reasoning for research requests
+    setRouterConfig(prev => ({
+      ...prev,
+      forceReasoning: true
+    }));
+    
     // Clear input and focus for user's project details
     setInputMessage("");
   };
@@ -793,9 +799,25 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                       Deep Research
                     </Button>
                     {activeResearchContext && (
-                      <Badge variant="secondary" className="text-xs flex-shrink-0">
-                        Research Active
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          Research Active
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setActiveResearchContext(null);
+                            setRouterConfig(prev => ({
+                              ...prev,
+                              forceReasoning: false
+                            }));
+                          }}
+                          className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                        >
+                          ✕
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
