@@ -591,145 +591,120 @@ IMPORTANT FORMATTING REQUIREMENTS:
                   </Card>
                 </TabsContent>
 
-                {/* Form Tab */}
-                <TabsContent value="form" className="mt-8">
-                  <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+                {/* Form Tab - Simplified */}
+                <TabsContent value="form" className="mt-6">
+                  <Card className="border border-gray-200 shadow-lg bg-white">
                     <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center gap-3 text-xl">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                          <FormInput className="h-5 w-5 text-white" />
+                      <CardTitle className="flex items-center gap-3 text-lg">
+                        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                          <FormInput className="h-4 w-4 text-white" />
                         </div>
-                        <span>Comprehensive Project Form</span>
+                        <span>Project Details Form</span>
                       </CardTitle>
-                      <p className="text-gray-600 mt-1">Provide detailed information for the most precise brief</p>
+                      <p className="text-gray-600 text-sm">Fill out the details about your project</p>
                     </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Project Details Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Project Details</h3>
+                  <CardContent className="space-y-4">
+                    {/* Project Details Section - Simplified */}
+                    <div className="space-y-3">
+                      <h3 className="text-base font-semibold text-gray-900">Tell us about your project</h3>
                       
                       <div>
-                        <Label htmlFor="projectName">Project Name *</Label>
+                        <Label htmlFor="projectName" className="text-sm font-medium">Project Name *</Label>
                         <Input
                           id="projectName"
                           value={formData.projectName}
                           onChange={(e) => setFormData(prev => ({ ...prev, projectName: e.target.value }))}
-                          placeholder="Enter your project name"
+                          placeholder="What are you working on?"
                           required
+                          className="mt-1"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="projectDescription">Project Description *</Label>
+                        <Label htmlFor="projectDescription" className="text-sm font-medium">What do you want to promote? *</Label>
                         <Textarea
                           id="projectDescription"
                           value={formData.projectDescription}
                           onChange={(e) => setFormData(prev => ({ ...prev, projectDescription: e.target.value }))}
-                          placeholder="Provide a detailed description of your project..."
+                          placeholder="Describe what you're promoting and why..."
                           rows={3}
                           required
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="projectBackground">Project Background</Label>
-                        <Textarea
-                          id="projectBackground"
-                          value={formData.projectBackground}
-                          onChange={(e) => setFormData(prev => ({ ...prev, projectBackground: e.target.value }))}
-                          placeholder="Any relevant background information or context..."
-                          rows={2}
+                          className="mt-1"
                         />
                       </div>
                     </div>
 
-                    {/* Audience & Objectives Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Audience & Objectives</h3>
+                    {/* Audience & Goals Section - Simplified */}
+                    <div className="space-y-3">
+                      <h3 className="text-base font-semibold text-gray-900">Who is this for?</h3>
                       
                       <div>
-                        <Label htmlFor="targetAudience">Target Audience *</Label>
+                        <Label htmlFor="targetAudience" className="text-sm font-medium">Target Audience *</Label>
                         <Textarea
                           id="targetAudience"
                           value={formData.targetAudience}
                           onChange={(e) => setFormData(prev => ({ ...prev, targetAudience: e.target.value }))}
-                          placeholder="Describe your target audience (demographics, interests, pain points)..."
-                          rows={3}
+                          placeholder="Who are you trying to reach? (age, interests, etc.)"
+                          rows={2}
                           required
+                          className="mt-1"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="objectives">Project Objectives</Label>
+                        <Label htmlFor="objectives" className="text-sm font-medium">What do you want to achieve?</Label>
                         <Textarea
                           id="objectives"
                           value={formData.objectives}
                           onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
-                          placeholder="What specific goals are you trying to achieve?"
-                          rows={3}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="keyMessages">Key Messages</Label>
-                        <Textarea
-                          id="keyMessages"
-                          value={formData.keyMessages}
-                          onChange={(e) => setFormData(prev => ({ ...prev, keyMessages: e.target.value }))}
-                          placeholder="What are the main points you want to communicate?"
+                          placeholder="What's your main goal? (sales, awareness, signups, etc.)"
                           rows={2}
+                          className="mt-1"
                         />
                       </div>
                     </div>
 
-                    {/* Content Parameters Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Content Parameters</h3>
+                    {/* Content Preferences - Simplified */}
+                    <div className="space-y-3">
+                      <h3 className="text-base font-semibold text-gray-900">Content preferences</h3>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <Label htmlFor="contentType">Content Type</Label>
+                          <Label htmlFor="contentType" className="text-sm font-medium">What type of content?</Label>
                           <select
                             id="contentType"
                             value={formData.contentType}
                             onChange={(e) => setFormData(prev => ({ ...prev, contentType: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F15A22]"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 mt-1"
                           >
-                            <option value="Blog Post">Blog Post</option>
                             <option value="Social Media Post">Social Media Post</option>
+                            <option value="Blog Post">Blog Post</option>
                             <option value="Email">Email</option>
-                            <option value="Newsletter">Newsletter</option>
                             <option value="Website Content">Website Content</option>
-                            <option value="White Paper">White Paper</option>
-                            <option value="Case Study">Case Study</option>
                             <option value="Product Description">Product Description</option>
-                            <option value="Press Release">Press Release</option>
-                            <option value="Video Script">Video Script</option>
                             <option value="Other">Other</option>
                           </select>
                         </div>
 
                         <div>
-                          <Label htmlFor="contentLength">Content Length</Label>
+                          <Label htmlFor="contentLength" className="text-sm font-medium">How much content?</Label>
                           <select
                             id="contentLength"
                             value={formData.contentLength}
                             onChange={(e) => setFormData(prev => ({ ...prev, contentLength: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F15A22]"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 mt-1"
                           >
-                            <option value="Very Short (< 250 words)">Very Short (&lt; 250 words)</option>
-                            <option value="Short (250-500 words)">Short (250-500 words)</option>
-                            <option value="Medium (500-1000 words)">Medium (500-1000 words)</option>
-                            <option value="Long (1000-2000 words)">Long (1000-2000 words)</option>
-                            <option value="Very Long (2000+ words)">Very Long (2000+ words)</option>
+                            <option value="Short (250-500 words)">Short</option>
+                            <option value="Medium (500-1000 words)">Medium</option>
+                            <option value="Long (1000-2000 words)">Long</option>
                           </select>
                         </div>
                       </div>
 
                       <div>
-                        <Label>Content Tone</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                          {['Professional', 'Conversational', 'Formal', 'Casual', 'Humorous', 'Technical', 'Persuasive', 'Inspirational', 'Educational', 'Authoritative'].map(tone => (
+                        <Label className="text-sm font-medium">What tone works best?</Label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {['Professional', 'Conversational', 'Friendly', 'Persuasive'].map(tone => (
                             <label key={tone} className="flex items-center space-x-2">
                               <input
                                 type="checkbox"
@@ -747,7 +722,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
                                     }));
                                   }
                                 }}
-                                className="rounded border-gray-300 text-[#F15A22] focus:ring-[#F15A22]"
+                                className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                               />
                               <span className="text-sm">{tone}</span>
                             </label>
@@ -756,44 +731,30 @@ IMPORTANT FORMATTING REQUIREMENTS:
                       </div>
                     </div>
 
-                    {/* Deliverables & Timeline Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Deliverables & Timeline</h3>
+                    {/* Timeline & Additional Info - Simplified */}
+                    <div className="space-y-3">
+                      <h3 className="text-base font-semibold text-gray-900">Timeline and extras</h3>
                       
                       <div>
-                        <Label htmlFor="deliverables">Specific Deliverables</Label>
-                        <Textarea
-                          id="deliverables"
-                          value={formData.deliverables}
-                          onChange={(e) => setFormData(prev => ({ ...prev, deliverables: e.target.value }))}
-                          placeholder="List specific deliverables (e.g., 3 social media posts, 1 blog article, email campaign)..."
-                          rows={3}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="timeline">Timeline & Deadlines</Label>
+                        <Label htmlFor="timeline" className="text-sm font-medium">When do you need this?</Label>
                         <Input
                           id="timeline"
                           value={formData.timeline}
                           onChange={(e) => setFormData(prev => ({ ...prev, timeline: e.target.value }))}
-                          placeholder="e.g., 4 weeks, by March 15th, etc."
+                          placeholder="e.g., 2 weeks, by end of month, ASAP"
+                          className="mt-1"
                         />
                       </div>
-                    </div>
 
-                    {/* Additional Information Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Additional Information</h3>
-                      
                       <div>
-                        <Label htmlFor="additionalInfo">Additional Details</Label>
+                        <Label htmlFor="additionalInfo" className="text-sm font-medium">Anything else we should know?</Label>
                         <Textarea
                           id="additionalInfo"
                           value={formData.additionalInfo}
                           onChange={(e) => setFormData(prev => ({ ...prev, additionalInfo: e.target.value }))}
-                          placeholder="Any other important details, brand guidelines, constraints, or special requirements..."
-                          rows={3}
+                          placeholder="Brand guidelines, special requirements, important details..."
+                          rows={2}
+                          className="mt-1"
                         />
                       </div>
                     </div>
@@ -801,17 +762,17 @@ IMPORTANT FORMATTING REQUIREMENTS:
                       <Button
                         onClick={submitFormBriefing}
                         disabled={formLoading || !formData.projectName || !formData.projectDescription || !formData.targetAudience}
-                        className="w-full h-14 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl shadow-lg font-semibold text-lg"
+                        className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium"
                       >
                         {formLoading ? (
                           <>
-                            <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-                            Creating Your Strategic Brief...
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Creating your brief...
                           </>
                         ) : (
                           <>
-                            <FileText className="h-5 w-5 mr-3" />
-                            Generate Strategic Marketing Brief
+                            <FileText className="h-4 w-4 mr-2" />
+                            Create My Brief
                           </>
                         )}
                       </Button>
