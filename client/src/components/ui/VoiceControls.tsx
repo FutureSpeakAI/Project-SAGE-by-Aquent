@@ -43,11 +43,19 @@ export function VoiceControls({
     voiceId: 'b5RPB35vTODb3BEmR3Fc',
     playbackRate: 1.2,
     onPlaybackEnd: () => {
+      console.log('🎵 Playback ended callback triggered', { 
+        isVoiceSessionActive, 
+        isListening, 
+        isGenerating 
+      });
+      
       // Automatically restart listening after SAGE finishes speaking
       if (isVoiceSessionActive && !isListening && !isGenerating) {
+        console.log('🎤 Attempting auto-reactivation of microphone...');
         setTimeout(() => {
-          console.log('Auto-reactivating microphone after speech playback');
+          console.log('🎤 Executing microphone reactivation');
           startListening((transcript) => {
+            console.log('🎤 Auto-reactivated microphone received transcript:', transcript);
             if (onTranscript) {
               onTranscript(transcript, true);
             }
@@ -55,7 +63,13 @@ export function VoiceControls({
               onSendMessage();
             }
           });
-        }, 1000); // Longer delay for better reliability
+        }, 500); // Reduced delay for faster response
+      } else {
+        console.log('🎤 Skipping auto-reactivation:', { 
+          isVoiceSessionActive, 
+          isListening, 
+          isGenerating 
+        });
       }
     }
   });

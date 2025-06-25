@@ -304,11 +304,22 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
 
   // Start listening for speech input
   const startListening = useCallback((onResult: (transcript: string) => void) => {
+    console.log('🎤 startListening called with callback');
     onTranscriptCompleteRef.current = onResult;
     
     if (isIntelligentMode) {
       startIntelligentListening();
       return;
+    }
+
+    // Stop any existing recognition first
+    if (recognitionRef.current && isListening) {
+      try {
+        recognitionRef.current.stop();
+        console.log('🎤 Stopped existing recognition');
+      } catch (e) {
+        console.log('🎤 No existing recognition to stop');
+      }
     }
 
     if (!recognitionRef.current) {
