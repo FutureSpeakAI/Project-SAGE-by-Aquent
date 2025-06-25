@@ -422,7 +422,11 @@ const TabContent = ({
                   onImagesChange={(images) => {
                     updateVisualState({ uploadedImages: images });
                     if (images.length > 0) {
-                      updateVisualState({ selectedUploadedImage: images[0].base64 });
+                      const imageUrl = images[0].base64;
+                      updateVisualState({ selectedUploadedImage: imageUrl });
+                      // Automatically open Image Editor when image is uploaded
+                      setEditingImageUrl(imageUrl);
+                      setIsImageEditorOpen(true);
                     } else {
                       updateVisualState({ selectedUploadedImage: null });
                     }
