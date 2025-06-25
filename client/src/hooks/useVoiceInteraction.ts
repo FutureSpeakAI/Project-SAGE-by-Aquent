@@ -331,8 +331,8 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         }
       }
       
-      if (finalTranscript) {
-        onResult(finalTranscript);
+      if (finalTranscript && onTranscriptCompleteRef.current) {
+        onTranscriptCompleteRef.current(finalTranscript);
         setIsListening(false);
       }
     };
