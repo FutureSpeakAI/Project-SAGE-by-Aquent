@@ -377,23 +377,16 @@ IMPORTANT FORMATTING REQUIREMENTS:
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="relative">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-2xl mb-4 text-xl font-bold">1</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Share Your Vision</h3>
-                  <p className="text-gray-600">Chat with SAGE or fill our comprehensive form to describe your project, audience, and goals.</p>
-                </div>
-                {/* Connector line */}
-                <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-orange-300 to-blue-300 transform translate-x-2"></div>
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-2xl mb-4 text-xl font-bold">1</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Share Your Vision</h3>
+                <p className="text-gray-600">Chat with SAGE or fill our comprehensive form to describe your project, audience, and goals.</p>
               </div>
               
-              <div className="relative">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-2xl mb-4 text-xl font-bold">2</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">AI Analysis</h3>
-                  <p className="text-gray-600">SAGE analyzes market trends, audience insights, and creates strategic recommendations tailored to your needs.</p>
-                </div>
-                <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-blue-300 to-green-300 transform translate-x-2"></div>
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-2xl mb-4 text-xl font-bold">2</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">AI Analysis</h3>
+                <p className="text-gray-600">SAGE analyzes market trends, audience insights, and creates strategic recommendations tailored to your needs.</p>
               </div>
               
               <div className="text-center">
