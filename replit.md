@@ -101,6 +101,12 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
+- **June 25, 2025**: Fixed client-briefing page auto-scroll behavior
+  - Client-briefing page now loads at the top instead of auto-scrolling to bottom
+  - Updated scroll behavior to only trigger when messages are actually present
+  - Applied same fix to client_intake page for consistent user experience
+  - Users can now properly view hero section and process visualization on page load
+
 - **June 25, 2025**: CRITICAL FIX - Deep Research system operational
   - Fixed Deep Research activation and UI state management issues
   - Updated prompt router to always use reasoning when research context is provided
