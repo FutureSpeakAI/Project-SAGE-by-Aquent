@@ -52,17 +52,19 @@ export class EmergencyFallback {
   static detectContentType(prompt: string): 'social_posts' | 'brief' | 'brief_execution' | 'general' {
     const lowerPrompt = prompt.toLowerCase();
     
-    // Detect if this is executing deliverables from an existing brief
-    const isBriefExecution = (lowerPrompt.includes('nike') && lowerPrompt.includes('volkswagen')) ||
-                            lowerPrompt.includes('beetle shoe') ||
-                            lowerPrompt.includes('angle 1:') ||
+    // Detect if this is executing deliverables from an existing brief (dynamic detection)
+    const isBriefExecution = lowerPrompt.includes('angle 1:') ||
                             lowerPrompt.includes('angle 2:') ||
                             lowerPrompt.includes('angle 3:') ||
                             lowerPrompt.includes('product images') ||
                             (lowerPrompt.includes('brief') && 
                              (lowerPrompt.includes('deliverables') || 
                               lowerPrompt.includes('execute') ||
-                              lowerPrompt.includes('create blog')));
+                              lowerPrompt.includes('create blog'))) ||
+                            (lowerPrompt.includes('campaign') && 
+                             (lowerPrompt.includes('content') ||
+                              lowerPrompt.includes('blog post') ||
+                              lowerPrompt.includes('image prompts')));
     
     if (isBriefExecution) return 'brief_execution';
     
@@ -91,12 +93,17 @@ export class EmergencyFallback {
                                  userPrompt.toLowerCase().includes('angle 3') ||
                                  userPrompt.toLowerCase().includes('product images');
 
+    // Extract campaign/product details from the prompt dynamically
+    const extractedBrand = this.extractBrandFromPrompt(userPrompt);
+    const extractedProduct = this.extractProductFromPrompt(userPrompt);
+    const extractedCampaign = this.extractCampaignFromPrompt(userPrompt);
+
     if (hasVisualRequirements) {
       return `
-<h1>Nike x Volkswagen Beetle Shoe: Limited Edition Launch</h1>
+<h1>${extractedBrand} ${extractedProduct}: ${extractedCampaign}</h1>
 
-<h2>Step Into Retro-Future Style</h2>
-<p>The Nike x Volkswagen Beetle Shoe represents the perfect fusion of automotive heritage and athletic innovation. This limited-edition collaboration captures the iconic spirit of the classic VW Beetle while delivering Nike's cutting-edge comfort technology.</p>
+<h2>Campaign Content</h2>
+<p>Experience the innovative partnership with ${extractedProduct}. This campaign represents the perfect fusion of brand heritage and innovation, delivering cutting-edge performance and style.</p>
 
 <h2>Design Heritage Meets Modern Performance</h2>
 <p>Inspired by the Beetle's timeless curves and vibrant color palette, each shoe features retro design elements including signature pastel blue and racing green colorways. The comfort technology ensures all-day wearability whether you're exploring the city or making a statement at social gatherings.</p>
