@@ -388,7 +388,7 @@ export function useVoiceInteraction(config: VoiceInteractionConfig = {}) {
         },
         body: JSON.stringify({
           text,
-          voiceId: config.voiceId || 'CyHwTRKhXEYuSd7CbMwI' // Updated voice selection
+          voiceId: config.voiceId || 'b5RPB35vTODb3BEmR3Fc' // Updated voice selection
         }),
       });
 
