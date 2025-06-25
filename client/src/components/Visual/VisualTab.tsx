@@ -415,6 +415,8 @@ const TabContent = ({
                     updateVisualState({ uploadedImages: images });
                     if (images.length > 0) {
                       updateVisualState({ selectedUploadedImage: images[0].base64 });
+                    } else {
+                      updateVisualState({ selectedUploadedImage: null });
                     }
                   }}
                   maxImages={1}

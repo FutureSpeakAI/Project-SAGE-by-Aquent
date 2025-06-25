@@ -115,6 +115,25 @@ export function TabPersistenceProvider({ children }: { children: ReactNode }) {
 
   // Load from localStorage on mount
   useEffect(() => {
+    // Force clear old incompatible localStorage data
+    const stored = localStorage.getItem('sage-tab-persistence');
+    if (stored) {
+      try {
+        const parsedState = JSON.parse(stored);
+        // If visual state doesn't have new fields, clear localStorage
+        if (!parsedState.visual?.hasOwnProperty('uploadedImages')) {
+          console.log('Clearing outdated localStorage data');
+          localStorage.removeItem('sage-tab-persistence');
+          setTabState(defaultTabState);
+          return;
+        }
+      } catch (error) {
+        console.log('Clearing corrupted localStorage data');
+        localStorage.removeItem('sage-tab-persistence');
+        setTabState(defaultTabState);
+        return;
+      }
+    }
     loadFromStorage();
   }, []);
 
@@ -195,11 +214,20 @@ export function TabPersistenceProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem('sage-tab-persistence');
       if (stored) {
         const parsedState = JSON.parse(stored);
+        
+        // Check if visual state has the new fields, if not, reset visual tab
+        const visualState = parsedState.visual || {};
+        if (!visualState.hasOwnProperty('uploadedImages') || !visualState.hasOwnProperty('selectedUploadedImage')) {
+          console.log('Resetting visual tab due to missing new fields');
+          visualState.uploadedImages = [];
+          visualState.selectedUploadedImage = null;
+        }
+        
         setTabState(prev => ({
           ...defaultTabState,
           ...parsedState,
-          // Ensure all nested objects exist
-          visual: { ...defaultVisualState, ...parsedState.visual },
+          // Ensure all nested objects exist with proper defaults
+          visual: { ...defaultVisualState, ...visualState },
           briefing: { ...defaultBriefingState, ...parsedState.briefing },
           content: { ...defaultContentState, ...parsedState.content },
           freePrompt: { ...defaultFreePromptState, ...parsedState.freePrompt },
