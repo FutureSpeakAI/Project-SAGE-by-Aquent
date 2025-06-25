@@ -105,7 +105,7 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Simplified voice interface to single "Voice" button (removed speaker and brain icons)
   - Updated SAGE to professional marketer personality with Boston-accented voice
   - Fixed missing /api/chat endpoint that was causing "Error getting response from agent"
-  - Added text-to-speech endpoint with ElevenLabs voice library selection (Voice ID: co1DmUePVu3j1G6yCS55)
+  - Added text-to-speech endpoint with ElevenLabs voice selection (Voice ID: Hybl6rg76ZOcgqZqN5WN)
   - Ensured prompt router integration (not bypassing routing logic)
   - Updated voice configuration throughout all components for consistency
   - IMPORTANT: SAGE responds in professional marketing language (no dialect/slang), but voice pronunciation has Boston accent
