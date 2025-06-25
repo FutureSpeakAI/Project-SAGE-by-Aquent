@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, CheckCircle } from 'lucide-react';
+import { MessageSquare, FormInput, Mic, Send, Upload, FileText, Loader2, Sparkles, CheckCircle, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,6 +49,7 @@ export default function ClientIntake() {
   });
 
   const [formLoading, setFormLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -332,13 +333,17 @@ IMPORTANT FORMATTING REQUIREMENTS:
           </motion.div>
 
           {/* Main Content Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className={`transition-all duration-500 ${
+            isExpanded 
+              ? "fixed inset-4 z-50 bg-white rounded-2xl shadow-2xl p-6 overflow-y-auto" 
+              : "grid grid-cols-1 lg:grid-cols-2 gap-12"
+          }`}>
             {/* Input Section */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="space-y-6"
+              className={`space-y-6 ${isExpanded ? "w-full" : ""}`}
             >
               {/* Choice Header */}
               <div className="text-center lg:text-left mb-6">
@@ -369,20 +374,30 @@ IMPORTANT FORMATTING REQUIREMENTS:
                           </div>
                           <span>Converse with SAGE AI</span>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={handleDocumentUpload}
-                          className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white shadow-md"
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Document
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="text-gray-600 border-gray-300 hover:bg-gray-100"
+                          >
+                            {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={handleDocumentUpload}
+                            className="text-[#F15A22] border-[#F15A22] hover:bg-[#F15A22] hover:text-white shadow-md"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Document
+                          </Button>
+                        </div>
                       </CardTitle>
                       <p className="text-gray-600 mt-1">Have a natural conversation about your marketing needs</p>
                     </CardHeader>
                     <CardContent>
                       {/* Chat Messages */}
-                      <div className="h-80 overflow-y-auto border-2 border-gray-100 rounded-xl p-6 mb-6 bg-gradient-to-br from-gray-50 to-white relative">
+                      <div className={`${isExpanded ? "h-96" : "h-80"} overflow-y-auto border-2 border-gray-100 rounded-xl p-6 mb-6 bg-gradient-to-br from-gray-50 to-white relative`}>
                         {messages.length === 0 ? (
                           <div className="text-center text-gray-500 mt-12">
                             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-100 to-red-100 rounded-2xl mb-4">
@@ -720,11 +735,12 @@ IMPORTANT FORMATTING REQUIREMENTS:
             </motion.div>
 
             {/* Output Section */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-            >
+            {!isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+              >
               <Card className="h-full border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center justify-between text-xl">
@@ -779,7 +795,8 @@ IMPORTANT FORMATTING REQUIREMENTS:
                   )}
                 </CardContent>
               </Card>
-            </motion.div>
+              </motion.div>
+            )}
           </div>
         </div>
 
