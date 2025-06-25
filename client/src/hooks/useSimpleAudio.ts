@@ -49,7 +49,7 @@ export function useSimpleAudio(config: SimpleAudioConfig = {}) {
       // Create and configure audio
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
-      audio.playbackRate = config.playbackRate || 1.33;
+      audio.playbackRate = config.playbackRate || 1.2;
       
       audioRef.current = audio;
 

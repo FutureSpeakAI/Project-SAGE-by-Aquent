@@ -41,7 +41,7 @@ export function VoiceControls({
 
   const { isPlaying, isGenerating, playText, stopAudio } = useSimpleAudio({
     voiceId: 'm1Edok6RLyT2Hz3OljNi',
-    playbackRate: 1.1,
+    playbackRate: 1.2,
     onPlaybackEnd: () => {
       // Automatically restart listening after SAGE finishes speaking
       if (!isListening && !isGenerating) {
