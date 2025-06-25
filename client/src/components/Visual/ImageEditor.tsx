@@ -494,7 +494,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0 sm:max-w-[95vw]">
+      <DialogContent className="max-w-[98vw] max-h-[98vh] overflow-hidden p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center">
             <Edit className="mr-2 h-5 w-5" />
@@ -505,9 +505,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)] min-h-0">
+        <div className="flex flex-col lg:flex-row h-[calc(98vh-120px)] min-h-0">
           {/* Left Panel - Image Comparison */}
-          <div className={`${editedImageUrl ? 'w-full' : 'w-full lg:w-[60%]'} bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0`}>
+          <div className={`${editedImageUrl ? 'w-full' : 'w-full lg:w-[60%]'} bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col overflow-auto`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <Label className="text-lg font-medium">
                 {editedImageUrl ? "Before & After" : "Original Image"}
@@ -597,10 +597,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col flex-1 min-h-[400px]">
-                  <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex flex-col w-full">
+                  <div className="flex flex-col">
                     <Label className="text-sm font-medium mb-2 text-center">Original</Label>
-                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 flex-1 min-h-0">
+                    <div className="relative flex items-center justify-center border border-gray-200 rounded bg-gray-50 overflow-auto" style={{ minHeight: '600px' }}>
                 {/* Loading state overlay */}
                 {imageLoadStatus === "loading" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded">
@@ -631,22 +631,28 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   <img 
                     src={imageUrl}
                     alt="Original image"
-                    className="max-w-[600px] max-h-[600px] object-contain border border-gray-200 rounded"
+                    className="border border-gray-200 rounded"
                     style={{
                       transform: `scale(${zoom})`,
-                      transformOrigin: 'center'
+                      transformOrigin: 'center',
+                      maxWidth: 'none',
+                      maxHeight: 'none',
+                      width: 'auto',
+                      height: 'auto'
                     }}
                   />
                 )}
                 
                 <canvas
                   ref={canvasRef}
-                  className="border border-gray-200 dark:border-gray-700 rounded shadow-lg max-w-full max-h-full"
+                  className="border border-gray-200 dark:border-gray-700 rounded shadow-lg"
                   style={{
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
                     display: imageLoadStatus === "error" ? 'none' : 'block',
                     imageRendering: 'crisp-edges', // Ensures sharp pixel rendering
+                    maxWidth: 'none',
+                    maxHeight: 'none',
                     width: 'auto',
                     height: 'auto'
                   }}
@@ -658,10 +664,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     ref={maskCanvasRef}
                     style={{
                       position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
+                      top: '50%',
+                      left: '50%',
+                      transform: `translate(-50%, -50%) scale(${zoom})`,
+                      transformOrigin: 'center',
                       zIndex: 2,
                       cursor: "crosshair",
                       opacity: 0.3,
