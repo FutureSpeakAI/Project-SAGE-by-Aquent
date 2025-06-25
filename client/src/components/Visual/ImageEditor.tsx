@@ -501,7 +501,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
 
         <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)] min-h-0">
           {/* Left Panel - Image Comparison */}
-          <div className="w-full lg:w-[60%] bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0">
+          <div className={`${editedImageUrl ? 'w-full' : 'w-full lg:w-[60%]'} bg-gray-50 dark:bg-gray-900 p-4 lg:p-6 flex flex-col min-h-0`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <Label className="text-lg font-medium">
                 {editedImageUrl ? "Before & After" : "Original Image"}
@@ -758,9 +758,10 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
             )}
           </div>
 
-          {/* Right Panel - Controls */}
-          <div className="w-full lg:w-[40%] border-t lg:border-t-0 lg:border-l bg-white dark:bg-gray-950 flex flex-col">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+          {/* Right Panel - Controls (hidden when showing before/after results) */}
+          {!editedImageUrl && (
+            <div className="w-full lg:w-[40%] border-t lg:border-t-0 lg:border-l bg-white dark:bg-gray-950 flex flex-col">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
               <TabsList className="grid w-full grid-cols-3 m-2 sm:m-4 mb-2">
                 <TabsTrigger value="inpaint" className="text-xs sm:text-sm">Inpaint</TabsTrigger>
                 <TabsTrigger value="outpaint" className="text-xs sm:text-sm">Outpaint</TabsTrigger>
@@ -926,8 +927,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   Close
                 </Button>
               </div>
-            </Tabs>
-          </div>
+              </Tabs>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
