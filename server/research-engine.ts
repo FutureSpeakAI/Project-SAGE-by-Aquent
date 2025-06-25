@@ -34,28 +34,51 @@ export async function performDeepResearch(userQuery: string, researchContext: st
       researchQuery = `Research comprehensive insights about: ${userQuery}. ${researchContext}`;
     }
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    // Use Anthropic as primary research provider with comprehensive prompting
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json'
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'content-type': 'application/json',
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: "llama-3.1-sonar-small-128k-online",
-        messages: [
-          {
-            role: "system",
-            content: "You are a research specialist. Provide comprehensive, factual research with current data, specific examples, and actionable insights. Include sources and current information. Focus on real companies, actual data points, and specific examples rather than general advice."
-          },
-          {
-            role: "user",
-            content: researchQuery
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.2,
-        search_recency_filter: "month",
-        return_citations: true
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        temperature: 0.1,
+        messages: [{
+          role: 'user',
+          content: `As a strategic marketing research specialist, conduct comprehensive analysis for: ${researchQuery}
+
+Provide detailed research including:
+
+**Brand Positioning & Strategy**
+- Current market position and competitive landscape
+- Brand differentiation and unique value propositions
+- Strategic positioning versus key competitors
+
+**Messaging & Communication Analysis**
+- Core brand messaging framework and key themes
+- Tone of voice and communication style analysis
+- Target audience messaging adaptation strategies
+
+**Market Context & Performance**
+- Industry trends and market dynamics
+- Consumer behavior patterns and preferences
+- Recent campaign performance and strategic initiatives
+
+**Competitive Intelligence**
+- Direct competitor analysis and positioning
+- Competitive messaging strategies and market gaps
+- Emerging threats and market opportunities
+
+**Strategic Insights & Recommendations**
+- Actionable recommendations for campaign development
+- Risk factors and market challenges to consider
+- Future growth opportunities and expansion potential
+
+Focus on specific examples, data points, and strategic context. Provide actionable insights that can inform marketing strategy and campaign development decisions.`
+        }]
       })
     });
 
@@ -77,81 +100,49 @@ export async function performDeepResearch(userQuery: string, researchContext: st
     return formattedResearch;
     
   } catch (error) {
-    console.error('Research error:', error);
+    console.error('Primary research error:', error);
     
-    // Robust fallback to Anthropic for comprehensive research
-    console.log('Perplexity unavailable, using Anthropic research fallback...');
+    // Fallback to OpenAI for research
+    console.log('Anthropic unavailable, using OpenAI research fallback...');
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-          'content-type': 'application/json',
-          'anthropic-version': '2023-06-01'
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 4000,
-          temperature: 0.1,
+          model: 'gpt-4o',
           messages: [{
+            role: 'system',
+            content: 'You are a strategic marketing research specialist. Provide comprehensive brand analysis with specific examples, competitive intelligence, and actionable insights for campaign development.'
+          }, {
             role: 'user',
             content: `Conduct comprehensive research analysis for: ${researchQuery}
 
-As a strategic marketing research specialist, provide detailed analysis including:
-
-1. **Brand Positioning & Strategy**
-   - Current market position and competitive landscape
-   - Brand differentiation and unique value propositions
-   - Strategic positioning vs key competitors
-
-2. **Messaging & Communication**
-   - Core brand messaging framework and key themes
-   - Tone of voice and communication style analysis
-   - Target audience messaging adaptation
-
-3. **Market Context & Performance**
-   - Industry trends and market dynamics
-   - Consumer behavior patterns and preferences
-   - Campaign performance and strategic initiatives
-
-4. **Competitive Intelligence**
-   - Direct competitor analysis and positioning
-   - Competitive messaging and strategic gaps
-   - Market opportunity identification
-
-5. **Strategic Insights**
-   - Actionable recommendations and opportunities
-   - Risk factors and market challenges
-   - Future growth and expansion potential
-
-Provide specific examples, data points, and strategic context throughout your analysis. Focus on actionable insights that can inform campaign development and strategic decision-making.`
-          }]
+Provide detailed strategic analysis including brand positioning, competitive landscape, messaging frameworks, market dynamics, and actionable recommendations. Focus on specific examples and strategic context that can inform marketing campaign development.`
+          }],
+          max_tokens: 3000,
+          temperature: 0.2
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        const content = data.content[0]?.text || "";
-        console.log('Anthropic research fallback successful');
-        return content;
+        const content = data.choices[0]?.message?.content || "";
+        console.log('OpenAI research fallback successful');
+        return `# Research Analysis: ${userQuery}
+
+${content}
+
+---
+*Research completed using AI analysis to provide strategic context for campaign development.*`;
       } else {
-        throw new Error(`Anthropic fallback failed: ${response.status}`);
+        throw new Error(`OpenAI fallback failed: ${response.status}`);
       }
     } catch (fallbackError) {
       console.error('Research fallback error:', fallbackError);
-      
-      // Final fallback with basic structure
-      return `Research analysis for ${userQuery}:
-
-While real-time research data is currently unavailable, I can provide strategic guidance based on established marketing principles and industry knowledge.
-
-For comprehensive brand research on ${userQuery}, consider analyzing:
-- Brand positioning and competitive landscape
-- Target audience insights and messaging strategies  
-- Recent campaign performance and market trends
-- Strategic opportunities and growth potential
-
-Please ensure proper API configuration for enhanced research capabilities.`;
+      throw new Error('Research services temporarily unavailable');
     }
   }
 }

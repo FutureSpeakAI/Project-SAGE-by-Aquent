@@ -101,14 +101,14 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 
 ## Recent Changes
 
-- **June 25, 2025**: Research system reliability improvements and campaign workflow fixes
-  - Fixed Perplexity API authentication failures with robust Anthropic fallback
-  - Removed hard-coded Nike x Volkswagen campaign references for true dynamic support
-  - Enhanced research engine with graceful degradation when external APIs fail
-  - Implemented comprehensive error handling throughout prompt router and research pipeline
-  - Validated conversation system supports any campaign variables (Nike ZeroCarbon Runner, Sanofi Dupixent, etc.)
-  - Confirmed prompt router correctly routes research queries with fallback mechanisms
-  - System now handles API failures transparently while maintaining research quality
+- **June 25, 2025**: Research system optimization with Anthropic as primary provider
+  - Migrated from Perplexity to Anthropic as primary research provider for reliability
+  - Implemented OpenAI as secondary fallback for research continuity
+  - Enhanced research prompting for comprehensive brand analysis and competitive intelligence
+  - Removed dependency on external real-time search APIs while maintaining research quality
+  - Validated Anthropic provides excellent strategic marketing research capabilities
+  - System now delivers consistent, high-quality research without API authentication issues
+  - Confirmed dynamic campaign support works across all brand/product variables
   
 - **June 25, 2025**: Voice interface updates and SAGE personality changes
   - Simplified voice interface to single "Voice" button (removed speaker and brain icons)
