@@ -142,27 +142,13 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         console.log("Image loaded successfully:", img.width, "x", img.height);
         setImageLoadStatus("loaded");
         
-        // Use high quality rendering with proper aspect ratio
-        const maxSize = 1024; // Standard DALL-E size for quality
-        let canvasWidth = img.width;
-        let canvasHeight = img.height;
+        // Preserve original image resolution for maximum quality
+        const canvasWidth = img.width;
+        const canvasHeight = img.height;
         
-        // Scale down only if necessary, maintaining aspect ratio
-        if (canvasWidth > maxSize || canvasHeight > maxSize) {
-          const scale = Math.min(maxSize / canvasWidth, maxSize / canvasHeight);
-          canvasWidth = canvasWidth * scale;
-          canvasHeight = canvasHeight * scale;
-        }
+        console.log("Preserving original image dimensions:", canvasWidth, "x", canvasHeight);
         
-        // Ensure minimum size for editing
-        const minSize = 512;
-        if (canvasWidth < minSize || canvasHeight < minSize) {
-          const scale = minSize / Math.min(canvasWidth, canvasHeight);
-          canvasWidth *= scale;
-          canvasHeight *= scale;
-        }
-        
-        // Set canvas size to maintain quality
+        // Set canvas to exact original size to maintain quality
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
         
@@ -187,8 +173,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Draw image at full canvas size for crisp quality
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Draw image with maximum quality settings
+        ctx.imageSmoothingEnabled = false; // Disable smoothing to preserve sharp pixels
+        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
         
         console.log("Image drawn successfully at full quality:", canvas.width, "x", canvas.height);
       };
@@ -647,7 +634,9 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     transform: `scale(${zoom})`,
                     transformOrigin: 'center',
                     display: imageLoadStatus === "error" ? 'none' : 'block',
-                    imageRendering: 'pixelated' // Prevents browser scaling artifacts
+                    imageRendering: 'crisp-edges', // Ensures sharp pixel rendering
+                    width: 'auto',
+                    height: 'auto'
                   }}
                 />
                 
