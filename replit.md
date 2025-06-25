@@ -113,6 +113,12 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
   - Updated messaging to position SAGE as Aquent's Strategic Adaptive Generative Engine
   - Removed trust indicators section per user preference
 
+- **June 25, 2025**: Added dedicated client intake route at /client_intake
+  - Created new ClientIntake component with identical premium design
+  - Client intake form now accessible at the requested URL structure
+  - Maintains all functionality: SAGE chat, comprehensive form, and brief generation
+  - Added route to App.tsx for proper navigation handling
+
 - **June 25, 2025**: Fixed briefing system integration between SAGE chat and Content tab
   - Created unified briefings endpoint that combines chat briefs and form briefs
   - SAGE-created briefs now appear in Content tab briefing library

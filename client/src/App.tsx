@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import CampaignPage from "@/pages/CampaignPage";
 import ClientBriefing from "@/pages/ClientBriefing";
+import ClientIntake from "@/pages/ClientIntake";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from 'react-error-boundary';
@@ -37,6 +38,7 @@ function Router() {
       <Switch key={location}>
         <Route path="/" component={Home} />
         <Route path="/client-briefing" component={ClientBriefing} />
+        <Route path="/client_intake" component={ClientIntake} />
         <Route path="/campaigns" component={CampaignPage} />
         <Route component={NotFound} />
       </Switch>
