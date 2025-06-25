@@ -681,12 +681,7 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                     }}
                     onMouseDown={startDrawing}
                     onMouseMove={(e) => {
-                      // Update mouse position for brush preview relative to mask canvas
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setMousePos({
-                        x: e.clientX - rect.left,
-                        y: e.clientY - rect.top
-                      });
+                      // Draw function handles its own coordinate calculation
                       draw(e);
                     }}
                     onMouseUp={stopDrawing}
@@ -694,16 +689,18 @@ export function ImageEditor({ open, onOpenChange, imageUrl, imageId, onImageEdit
                   />
                 )}
                 
-                {/* Brush preview */}
-                {activeTab === "inpaint" && imageLoadStatus === "loaded" && (
+                {/* Brush preview - positioned relative to the image container */}
+                {activeTab === "inpaint" && imageLoadStatus === "loaded" && mousePos.x > 0 && mousePos.y > 0 && (
                   <div
-                    className="absolute pointer-events-none border-2 border-blue-500 rounded-full opacity-50"
+                    className="absolute pointer-events-none border-2 border-blue-500 rounded-full opacity-70"
                     style={{
-                      width: `${brushSize * zoom}px`,
-                      height: `${brushSize * zoom}px`,
-                      left: `${mousePos.x - (brushSize * zoom) / 2}px`,
-                      top: `${mousePos.y - (brushSize * zoom) / 2}px`,
-                      zIndex: 3
+                      position: 'absolute',
+                      width: `${brushSize}px`,
+                      height: `${brushSize}px`,
+                      left: `${mousePos.x - brushSize / 2}px`,
+                      top: `${mousePos.y - brushSize / 2}px`,
+                      zIndex: 10,
+                      backgroundColor: 'rgba(59, 130, 246, 0.2)'
                     }}
                   />
                 )}
