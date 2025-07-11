@@ -1,205 +1,156 @@
-# GPT-4o Prompt: SAGE Platform User Flow Diagram
+# SAGE User Flow Analysis & GPT-4o Diagram Prompt
 
-Create a comprehensive user flow diagram for SAGE (Strategic Adaptive Generative Engine), an AI-powered marketing content creation platform. Use the same visual style and layout structure as the attached reference image but follow proper user flow methodology to map actual user journeys.
+## User Flow Analysis (Internal Planning)
 
-## Step 1: Define the Users and Their Goals
+### Step 1: Define Users and Goals
 
-### Primary Users:
-**Marketing Professionals**
+**Marketing Professionals (Primary Users)**
 - Demographics: Marketing managers, creative directors, agency professionals
-- Tech skills: Intermediate to advanced digital marketing experience
-- Goals: Create comprehensive marketing campaigns from brief to final deliverables
+- Tech skills: Intermediate to advanced
+- Goals: Complete campaign development, quick content generation, asset management
 
-**External Clients** 
-- Demographics: Business owners, marketing coordinators from client companies
-- Tech skills: Basic to intermediate, prefer simplified interfaces
-- Goals: Submit marketing briefs and collaborate on campaign development
+**External Clients (Secondary Users)**  
+- Demographics: Business owners, marketing coordinators
+- Tech skills: Basic to intermediate
+- Goals: Submit marketing briefs, collaborate on campaign development
 
-### User Goals by Journey Type:
-1. **Complete Campaign Development**: Research → Strategy → Content → Visuals → Delivery
-2. **Quick Content Generation**: Brief input → Immediate content output
-3. **Brief Submission & Collaboration**: Client brief creation → Internal team handoff
-4. **Asset Management**: Upload → Edit → Organize → Export content and visuals
+### Step 2: Entry Points Identified
 
-## Step 2: Identify Entry Points
+1. **Main Platform** (/) - Marketing professionals, authenticated access
+2. **Client Briefing Portal** (/client-briefing) - External clients, premium experience
+3. **Client Intake Portal** (/client_intake) - External clients, simplified experience
+4. **Direct Tab Access** - Returning users with session context
 
-### Entry Point A: Main Platform Dashboard
-- **Trigger**: Marketing professional logs into SAGE platform
-- **Starting point**: Home dashboard with 5-tab navigation
-- **User state**: Authenticated, ready to start campaign work
+### Step 3: Core User Journeys Mapped
 
-### Entry Point B: Client Briefing Portal
-- **Trigger**: External client receives link to /client-briefing
-- **Starting point**: Premium client-facing briefing portal
-- **User state**: First-time or returning client, needs to submit brief
+**Journey A: Complete Campaign Development**
+Entry → SAGE Tab (research) → Campaign Tab (planning) → Research execution → Briefing Tab (strategic brief) → Content Tab (copy creation) → Visual Tab (asset creation) → Export/delivery
 
-### Entry Point C: Client Intake Portal  
-- **Trigger**: Client directed to /client_intake for simplified submission
-- **Starting point**: Streamlined intake form interface
-- **User state**: New client, minimal technical experience expected
+**Journey B: Quick Content Generation**
+Entry → Content Tab → Brief selection/creation → Content generation → Export
 
-### Entry Point D: Deep Link Campaign Access
-- **Trigger**: User returns to continue existing campaign work
-- **Starting point**: Specific tab based on current campaign stage
-- **User state**: Returning user with session context preserved
+**Journey C: Client Brief Submission**
+Entry → Client portal → Method selection (chat vs form) → Brief development → Review/submission
 
-## Step 3: Map Out the User Journey Steps
+**Journey D: Visual Asset Creation**
+Entry → Visual Tab → Method selection (SAGE chat/direct/upload) → Generation/editing → Export
 
-### Journey 1: Complete Campaign Development (Marketing Professional)
-**Entry Point**: Main Platform Dashboard
+### Step 4: Key Decision Points
 
-**Step 1**: SAGE Tab - Initial Research & Discovery
-- User initiates conversation with SAGE AI
-- Defines project scope, brand, audience, objectives
-- **Available actions**: Voice interaction, persona selection, research mode activation
-- **User provides**: Project details, brand information, target audience
+- Content creation method (brief-based vs direct)
+- Research scope (full vs targeted vs skip)
+- Visual generation approach (guided vs manual vs upload)
+- Client brief method (conversational vs structured)
+- AI provider selection (automatic vs manual)
 
-**Step 2**: Campaign Tab - Workflow Planning  
-- User reviews 6-stage campaign workflow
-- Selects research capabilities (competitor analysis, market research, persona research)
-- **Available actions**: Research planning, capability selection
-- **User provides**: Research priorities, timeline preferences
+### Step 5: Success Endpoints
 
-**Step 3**: Research Execution (SAGE Tab)
-- Deep research mode activation
-- AI conducts comprehensive market/competitor analysis  
-- **Available actions**: Follow-up questions, research refinement
-- **User provides**: Research direction, specific focus areas
+- Complete campaign package delivery
+- Individual asset creation and export
+- Client brief handoff to marketing team
+- Library storage for future use
 
-**Step 4**: Briefing Tab - Strategic Brief Creation
-- Upload supporting documents (PDFs, DOCX, reference materials)
-- Generate comprehensive strategic brief from research
-- **Available actions**: Document upload, brief editing, library storage
-- **User provides**: Brand guidelines, campaign constraints
+---
 
-**Step 5**: Content Tab - Content Generation
-- Select brief from library for content generation
-- Generate headlines, copy, social media content
-- **Available actions**: Content editing, variations, export options
-- **User provides**: Content preferences, channel specifications
+# GPT-4o Prompt: Create SAGE User Flow Diagram
 
-**Step 6**: Visual Tab - Asset Creation
-- SAGE interprets brief for visual requirements
-- Generate campaign imagery and graphics
-- **Available actions**: Image editing, style variations, format conversion
-- **User provides**: Visual style preferences, format requirements
+Create a comprehensive user flow diagram for SAGE (Strategic Adaptive Generative Engine), an AI-powered marketing content creation platform. Use the same visual style and architecture as the attached reference image.
 
-**Step 7**: Final Review & Export
-- Review complete campaign package
-- Export deliverables in required formats
-- **Available actions**: Download, share, archive campaign
-- **User receives**: Complete campaign deliverable package
+## Platform Overview
+SAGE is a 5-tab marketing platform with smart AI routing, voice interaction, and complete briefing-to-deliverable workflows. It serves both internal marketing teams and external clients through different interfaces.
 
-### Journey 2: Quick Content Generation (Marketing Professional)
-**Entry Point**: Main Platform Dashboard → Content Tab
+## User Flow Structure to Visualize
 
-**Step 1**: Content Tab Entry
-- Direct navigation to content generation
-- **Available actions**: New content creation, brief selection
-- **User provides**: Content type selection
+### Entry Points (Top Level)
+Show 4 main entry paths:
+1. **Main Platform Dashboard** (Marketing professionals) → 5-tab interface
+2. **Client Briefing Portal** (/client-briefing) → Premium client experience  
+3. **Client Intake Portal** (/client_intake) → Simplified client interface
+4. **Direct Tab Access** → Session-based continuation
 
-**Step 2**: Brief Selection or Creation
-- Choose existing brief from library OR create new brief
-- **Available actions**: Library search, quick brief form
-- **User provides**: Brief details or selection
+### Core Platform Tabs (Second Level)
+Display the 5 main functional areas:
 
-**Step 3**: Content Generation
-- AI generates requested content using selected brief
-- **Available actions**: Regenerate, edit, save variations
-- **User provides**: Content refinement requests
+**SAGE Tab** - Primary AI conversation interface
+- Voice interaction capabilities
+- Smart AI provider routing (OpenAI → Anthropic → Gemini → Perplexity)
+- Research mode activation
+- Context and persona management
 
-**Step 4**: Content Finalization
-- Edit and export final content
-- **Available actions**: Rich text editing, format export
-- **User receives**: Final content deliverable
+**Campaign Tab** - Guided workflow orchestration
+- 6-stage campaign progression
+- Research capability selection
+- Progress tracking and stage management
+- Cross-tab integration guidance
 
-### Journey 3: Client Brief Submission
-**Entry Point**: Client Briefing Portal (/client-briefing)
+**Briefing Tab** - Document processing and brief management
+- Multi-format file upload (PDF, DOCX, TXT)
+- Briefing library storage and search
+- Form-based brief creation
+- Reference image integration
 
-**Step 1**: Client Portal Landing
-- Hero section with value proposition
-- Process visualization (3-4 step journey)
-- **Available actions**: Start chat with SAGE, fill form, view process
+**Content Tab** - Content generation and management
+- Brief-to-content conversion
+- Content library with search/filter
+- Rich text editing and export
+- Multiple format outputs
 
-**Step 2**: Brief Creation Method Selection
-- Choose between SAGE chat conversation OR structured form
-- **Available actions**: Chat interface, form interface
-- **Decision point**: Conversational vs. structured input preference
+**Visual Tab** - AI image generation and editing
+- SAGE-guided visual creation
+- Upload and edit workflows
+- Image editor tools (inpainting, background removal)
+- Visual asset library
 
-**Step 3A**: SAGE Chat Brief Development
-- Natural conversation with SAGE to develop brief
-- **Available actions**: Voice interaction, follow-up questions
-- **User provides**: Campaign details through conversation
+### Backend Infrastructure (Third Level)
+Show the technical foundation:
 
-**Step 3B**: Form-Based Brief Creation  
-- Complete structured briefing form
-- **Available actions**: Form completion, file uploads
-- **User provides**: Structured campaign information
+**AI Provider Layer**
+- OpenAI APIs (GPT-4o, GPT-4o Mini, GPT-Image-1)
+- Anthropic APIs (Claude Sonnet models)
+- Gemini APIs (1.5 Pro, 1.5 Flash)
+- Smart routing and fallback logic
 
-**Step 4**: Brief Review & Submission
-- Review generated brief with editing capabilities
-- **Available actions**: Edit, format, submit to marketing team
-- **User provides**: Final approval and submission
+**Processing Layer**
+- File processing engines (PDF, DOCX extraction)
+- Image processing pipeline
+- Voice processing (Web Audio API)
+- Content generation pipeline
 
-## Step 4: Include Decision Points
+**Data Layer**
+- PostgreSQL database (Neon-hosted)
+- Session management
+- File storage
+- Library management
 
-### Decision Point 1: Content Creation Method (Content Tab)
-- **Choice A**: Use existing brief from library → Brief selection interface
-- **Choice B**: Create new brief → Quick brief creation form  
-- **Choice C**: Generate without brief → Direct content prompting
+### Key User Flows to Highlight
 
-### Decision Point 2: Research Scope (Campaign Tab)
-- **Choice A**: Full research suite → All capabilities selected
-- **Choice B**: Targeted research → Specific capabilities only
-- **Choice C**: Skip research → Direct to brief creation
+**Flow 1: Complete Campaign Development**
+Entry → SAGE research → Campaign planning → Briefing creation → Content generation → Visual assets → Final delivery
 
-### Decision Point 3: Visual Generation Method (Visual Tab)
-- **Choice A**: SAGE-guided creation → AI conversation for requirements
-- **Choice B**: Direct generation → Manual prompt input
-- **Choice C**: Upload & edit → Existing image modification
+**Flow 2: Quick Content Generation**  
+Entry → Content tab → Brief selection → Generation → Export
 
-### Decision Point 4: Client Brief Method (Client Portal)
-- **Choice A**: Conversational → SAGE chat interface
-- **Choice B**: Structured → Form-based input
-- **Choice C**: Hybrid → Combination of both methods
+**Flow 3: Client Brief Submission**
+Client entry → Method selection → Brief development → Submission to team
 
-### Decision Point 5: AI Provider Selection (All Tabs)
-- **Automatic routing** (default) → Smart provider selection
-- **Manual override** → User selects specific AI provider
-- **Fallback handling** → Alternative provider on failure
+**Flow 4: Visual Asset Creation**
+Entry → Visual tab → Creation method → Generation/editing → Export
 
-## Step 5: Determine Endpoints
+### Decision Points to Show
+- Research scope selection (full/targeted/skip)
+- Content method (brief-based/direct)  
+- Visual approach (guided/manual/upload)
+- Client input method (chat/form)
+- AI provider routing (automatic/manual)
 
-### Endpoint A: Complete Campaign Package
-- **Success state**: User has comprehensive campaign deliverables
-- **Components**: Strategic brief, content assets, visual materials
-- **Actions available**: Download, share, archive, start new campaign
+### Visual Requirements
+- Use the same architectural diagram style as the reference image
+- Include clear entry points, process flows, and endpoints
+- Show decision diamonds at choice points
+- Use connecting arrows to show user journey progression
+- Display system integration points and data flows
+- Include cross-tab navigation paths
+- Use consistent color coding for different module types
+- Label all components with their primary functions
 
-### Endpoint B: Individual Asset Creation
-- **Success state**: User has specific content or visual asset
-- **Components**: Single deliverable (copy, image, brief)
-- **Actions available**: Export, save to library, create variations
-
-### Endpoint C: Client Brief Handoff
-- **Success state**: Client brief successfully submitted to marketing team
-- **Components**: Professional brief document with all requirements
-- **Actions available**: Track progress, provide additional input
-
-### Endpoint D: Library Storage
-- **Success state**: Assets saved for future use and organization
-- **Components**: Searchable, categorized content and visual libraries
-- **Actions available**: Search, filter, reuse in new campaigns
-
-## Visual Flow Diagram Requirements
-
-Create the diagram showing:
-- All entry points clearly marked
-- Decision diamonds at choice points
-- Process rectangles for each step
-- Endpoint indicators for successful completion
-- Flow arrows showing user journey progression
-- System integration points (APIs, databases)
-- Cross-tab navigation paths
-- Error handling and fallback routes
-
-Use the same architectural style as the reference image with proper user flow notation including start/end points, process steps, decision diamonds, and directional flow arrows.
+Create this as a professional user flow diagram that clearly shows how users navigate through SAGE's ecosystem, make decisions, and achieve their goals across all interfaces and workflows.
