@@ -24,6 +24,7 @@ import { generateBreathEaseEmails } from "./healthcare-content-generator";
 import { simpleCampaignStorage, type SimpleCampaign } from "./simple-campaign-storage";
 import { pool } from "./db";
 import { parseBriefingDeliverables, matchDeliverablesWithAssets } from "./briefing-parser";
+import { learningRouter } from "./learning-routes";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -2263,6 +2264,9 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  // Learning Engine API Routes
+  app.use('/api/learning', learningRouter);
 
   return server;
 }

@@ -1,10 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { db } from './db';
+import { db, pool } from './db';
 import { sql } from 'drizzle-orm';
 import multer from 'multer';
 import path from 'path';
+import { initializeLearningEngine } from '../shared/learning-engine';
 
 const app = express();
 // Increase JSON payload size limit to 50MB to handle base64 encoded images
@@ -140,6 +141,17 @@ async function initializeDatabase() {
   const dbInitialized = await initializeDatabase();
   if (!dbInitialized) {
     log('WARNING: Database initialization failed. Application may have limited functionality.');
+  }
+
+  // Initialize learning engine with pool connection
+  if (pool && dbInitialized) {
+    try {
+      const learningEngine = initializeLearningEngine(pool);
+      await learningEngine.initialize();
+      log('Learning engine initialized successfully');
+    } catch (error) {
+      log(`Learning engine initialization failed: ${error}`);
+    }
   }
 
   const server = await registerRoutes(app);
