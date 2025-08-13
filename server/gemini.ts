@@ -91,12 +91,27 @@ export const generateImage = async (request: GeminiGenerateImageRequest): Promis
 
 export const GEMINI_MODELS = {
   chat: [
-    'gemini-1.5-pro-002',
-    'gemini-1.5-flash-002',
-    'gemini-1.0-pro'
+    'gemini-2.0-flash',  // Latest production model (Dec 2024)
+    'gemini-2.0-flash-lite',  // Cost-optimized variant
+    'gemini-1.5-pro-002',  // Fallback for complex tasks
+    'gemini-1.5-flash-002',  // Previous fast model
+    'gemini-1.0-pro'  // Legacy support
   ],
   image: [
     'imagen-3.0-generate-001',
     'imagen-3.0-fast-generate-001'
   ]
+};
+
+// Helper function to select best model based on context
+export const selectGeminiModel = (isComplex: boolean = false, preferSpeed: boolean = true): string => {
+  if (process.env.GEMINI_ONLY_MODE === 'true') {
+    // In Gemini-only mode, use the best available models
+    if (isComplex) {
+      return 'gemini-2.0-flash';  // 2.0 Flash is superior to 1.5 Pro now
+    }
+    return preferSpeed ? 'gemini-2.0-flash-lite' : 'gemini-2.0-flash';
+  }
+  // Default fallback
+  return 'gemini-1.5-flash-002';
 };

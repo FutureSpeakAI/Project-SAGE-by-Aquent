@@ -6,6 +6,15 @@ import { sql } from 'drizzle-orm';
 import multer from 'multer';
 import path from 'path';
 import { initializeLearningEngine } from '../shared/learning-engine';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
+
+// Log Gemini-only mode status on startup
+if (process.env.GEMINI_ONLY_MODE === 'true') {
+  console.log('🚀 GEMINI-ONLY MODE ENABLED - All AI requests will be routed to Google Gemini');
+}
 
 const app = express();
 // Increase JSON payload size limit to 50MB to handle base64 encoded images

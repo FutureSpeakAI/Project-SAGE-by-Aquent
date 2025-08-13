@@ -143,6 +143,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('[Content Generation] Processing request:', userPrompt.substring(0, 100) + '...');
 
+      // GEMINI-ONLY MODE: Intercept and route all requests to Gemini
+      if (process.env.GEMINI_ONLY_MODE === 'true') {
+        console.log('[Content Generation] GEMINI-ONLY MODE active - routing to Gemini 2.0');
+        
+        try {
+          // Determine complexity for model selection
+          const isComplex = userPrompt.length > 200 || 
+                           userPrompt.toLowerCase().includes('comprehensive') ||
+                           userPrompt.toLowerCase().includes('detailed') ||
+                           userPrompt.toLowerCase().includes('analyze') ||
+                           userPrompt.toLowerCase().includes('strategy');
+          
+          const geminiModel = GeminiAPI.selectGeminiModel(isComplex, true);
+          console.log(`[Gemini-Only] Using model: ${geminiModel}`);
+          
+          const geminiContent = await GeminiAPI.generateContent({
+            model: geminiModel,
+            prompt: userPrompt,
+            systemPrompt: systemPrompt || 'You are a helpful AI assistant. Provide clear, comprehensive responses.',
+            temperature,
+            maxTokens,
+            sessionHistory
+          });
+          
+          return res.json({
+            content: geminiContent,
+            provider: 'gemini',
+            model: geminiModel,
+            routed: true,
+            geminiOnly: true,
+            note: 'Generated using Gemini-only mode (vendor compliance)'
+          });
+        } catch (geminiError: any) {
+          console.error('[Gemini-Only] Error:', geminiError);
+          return res.status(500).json({
+            error: 'Content generation failed',
+            details: geminiError.message,
+            provider: 'gemini',
+            geminiOnly: true
+          });
+        }
+      }
+
       // Check for L'Oréal brief before routing to any provider
       if (detectLorealBrief(userPrompt)) {
         console.log('[Content Generation] L\'Oréal brief detected, generating specialized content');
@@ -305,6 +348,43 @@ Important: Generate comprehensive, well-structured content that directly address
       console.log('[Content Generation] Processing briefing-based content generation');
       console.log('[Content Generation] User prompt length:', userPrompt.length);
       console.log('[Content Generation] System prompt received:', systemPrompt ? 'Yes' : 'No');
+
+      // GEMINI-ONLY MODE: Intercept and route all requests to Gemini
+      if (process.env.GEMINI_ONLY_MODE === 'true') {
+        console.log('[Generate] GEMINI-ONLY MODE active - routing to Gemini 2.0');
+        
+        try {
+          const isComplex = userPrompt.length > 200 || 
+                           userPrompt.toLowerCase().includes('comprehensive') ||
+                           userPrompt.toLowerCase().includes('detailed') ||
+                           userPrompt.toLowerCase().includes('analyze') ||
+                           userPrompt.toLowerCase().includes('brief');
+          
+          const geminiModel = GeminiAPI.selectGeminiModel(isComplex, true);
+          console.log(`[Gemini-Only] Using model: ${geminiModel} for /api/generate`);
+          
+          const result = await GeminiAPI.generateContent({
+            model: geminiModel,
+            prompt: userPrompt,
+            systemPrompt: systemPrompt || 'You are a professional content creator. Create comprehensive, detailed content exactly as specified.',
+            temperature: temperature || 0.7,
+            maxTokens: 3000
+          });
+          
+          return res.json({
+            content: result,
+            provider: 'gemini',
+            model: geminiModel
+          });
+        } catch (geminiError: any) {
+          console.error('[Gemini-Only] Error in /api/generate:', geminiError);
+          return res.status(500).json({
+            error: 'Content generation failed',
+            details: geminiError.message,
+            provider: 'gemini'
+          });
+        }
+      }
 
       // Parse deliverables from the briefing content
       const extractDeliverables = (briefContent: string): { type: string, count: number }[] => {
@@ -633,6 +713,41 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       
       if (!actualPrompt) {
         return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      // GEMINI-ONLY MODE: Intercept and route all requests to Gemini
+      if (process.env.GEMINI_ONLY_MODE === 'true') {
+        console.log('[Generate Content] GEMINI-ONLY MODE active - routing to Gemini 2.0');
+        
+        try {
+          const isComplex = actualPrompt.length > 200 || 
+                           actualPrompt.toLowerCase().includes('comprehensive') ||
+                           actualPrompt.toLowerCase().includes('analyze');
+          
+          const geminiModel = GeminiAPI.selectGeminiModel(isComplex, true);
+          console.log(`[Gemini-Only] Using model: ${geminiModel}`);
+          
+          const result = await GeminiAPI.generateContent({
+            model: geminiModel,
+            prompt: actualPrompt,
+            systemPrompt: systemPrompt || 'You are a helpful AI assistant.',
+            temperature: temperature || 0.7,
+            maxTokens: maxTokens || 3000
+          });
+          
+          return res.json({
+            content: result,
+            provider: 'gemini',
+            model: geminiModel
+          });
+        } catch (geminiError: any) {
+          console.error('[Gemini-Only] Error in generate-content:', geminiError);
+          return res.status(500).json({
+            error: 'Content generation failed',
+            details: geminiError.message,
+            provider: 'gemini'
+          });
+        }
       }
 
       let result;
