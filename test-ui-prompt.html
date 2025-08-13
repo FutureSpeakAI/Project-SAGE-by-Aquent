@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Content Generation UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #FF6600;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .instructions {
+            background: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #0066cc;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        .instructions ol {
+            margin-bottom: 0;
+        }
+        .instructions li {
+            margin: 8px 0;
+        }
+        .code {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Content Generation UI Debug Test</h1>
+        
+        <div class="instructions">
+            <h3>How to Test the Issue:</h3>
+            <ol>
+                <li>Open your SAGE application in a browser</li>
+                <li>Press <strong>F12</strong> to open Developer Console</li>
+                <li>Click on the <strong>Console</strong> tab</li>
+                <li>Navigate to the <strong>Content</strong> tab in your app</li>
+                <li>Type this exact text in the textarea: <br>
+                    <div class="code">write a letter from Santa Clause to Donald Trump</div>
+                </li>
+                <li>Click the <strong>Generate Content</strong> button</li>
+                <li>Check the console for these debug messages</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">Expected Console Output:</div>
+            <div class="code">
+                [Home] userPrompt changed to: write a letter from Santa Clause to Donald Trump<br>
+                [Home] userPrompt length: 48<br>
+                [UserPromptPanel] Generate button clicked<br>
+                [UserPromptPanel] Current userPrompt: write a letter from Santa Clause to Donald Trump<br>
+                [UserPromptPanel] userPrompt length: 48<br>
+                [Debug] handleGenerate called with:<br>
+                - customPrompt: undefined<br>
+                - userPrompt state: write a letter from Santa Clause to Donald Trump<br>
+                - promptToUse: write a letter from Santa Clause to Donald Trump<br>
+                - promptToUse length: 48
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">If You See This Instead (The Bug):</div>
+            <div class="code">
+                [UserPromptPanel] Current userPrompt: Generate content<br>
+                [UserPromptPanel] userPrompt length: 16<br>
+                - promptToUse: Generate content<br>
+                - promptToUse length: 16
+            </div>
+            <p>This would indicate the state is being overwritten somewhere.</p>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">What to Report Back:</div>
+            <ul>
+                <li>Copy the console output you see</li>
+                <li>Note if the Santa letter was generated correctly or not</li>
+                <li>Check if anything happened between typing and clicking (like a popup or dialog)</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">Quick Backend Test (Optional):</div>
+            <p>You can also test the backend directly by running this in a terminal:</p>
+            <div class="code">
+                curl -X POST http://localhost:5000/api/generate \<br>
+                &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                &nbsp;&nbsp;-d '{"userPrompt": "write a letter from Santa Clause to Donald Trump", "systemPrompt": "You are a helpful assistant.", "model": "gpt-4o-mini", "temperature": 0.7}'
+            </div>
+            <p>This should generate the Santa letter correctly, proving the backend works.</p>
+        </div>
+    </div>
+</body>
+</html>

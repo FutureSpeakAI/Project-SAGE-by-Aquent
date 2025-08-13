@@ -67,6 +67,12 @@ export default function Home() {
   const [userPrompt, setUserPrompt] = useState("");
   const [generatedContent, setGeneratedContent] = useState("");
   
+  // Debug: Log when userPrompt changes
+  useEffect(() => {
+    console.log('[Home] userPrompt changed to:', userPrompt);
+    console.log('[Home] userPrompt length:', userPrompt.length);
+  }, [userPrompt]);
+  
   const { toast } = useToast();
 
   // Create a mutation to handle generation
@@ -99,6 +105,13 @@ export default function Home() {
   const handleGenerate = (customPrompt?: string, customSystemPrompt?: string) => {
     const promptToUse = String(customPrompt || userPrompt || '');
     const systemPromptToUse = customSystemPrompt || systemPrompt;
+    
+    // Debug logging to identify the issue
+    console.log('[Debug] handleGenerate called with:');
+    console.log('- customPrompt:', customPrompt);
+    console.log('- userPrompt state:', userPrompt);
+    console.log('- promptToUse:', promptToUse);
+    console.log('- promptToUse length:', promptToUse.length);
     
     if (!promptToUse || !promptToUse.trim()) {
       toast({

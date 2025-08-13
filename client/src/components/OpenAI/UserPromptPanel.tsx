@@ -57,7 +57,12 @@ export function UserPromptPanel({
       
       <CardFooter className="flex justify-end p-4 pt-0">
         <Button 
-          onClick={onGenerate} 
+          onClick={() => {
+            console.log('[UserPromptPanel] Generate button clicked');
+            console.log('[UserPromptPanel] Current userPrompt:', userPrompt);
+            console.log('[UserPromptPanel] userPrompt length:', userPrompt.length);
+            onGenerate();
+          }} 
           disabled={!userPrompt.trim() || isGenerating}
           className="bg-white text-[#FF6600] hover:bg-[#FF6600] hover:text-white border border-[#FF6600]"
         >
