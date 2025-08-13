@@ -6,6 +6,10 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (August 13, 2025)
+- **Gemini-Only Mode**: Successfully implemented and verified vendor compliance mode that routes all AI requests through Google services (Gemini 2.0 for text, Imagen 3 for images). Controlled via `GEMINI_ONLY_MODE=true` environment variable.
+- **Content Tab Bug Fix**: Resolved issue where Content tab was sending placeholder text instead of user prompts. System now correctly processes user input for content generation.
+
 ## System Architecture
 
 ### Frontend Architecture

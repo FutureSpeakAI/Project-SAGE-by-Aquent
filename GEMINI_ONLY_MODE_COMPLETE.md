@@ -72,7 +72,7 @@ GEMINI_ONLY_MODE=false
 
 ## UI Interface Compatibility
 
-All user interfaces tested and working:
+All user interfaces tested and working (verified by user):
 - ✅ Editor prompts and generation
 - ✅ Right-click menu actions (expand, summarize, rewrite)
 - ✅ Tab persistence and context
