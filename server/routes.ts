@@ -346,9 +346,17 @@ Important: Generate comprehensive, well-structured content that directly address
   // Content generation endpoint for briefing workflow
   app.post("/api/generate", async (req: Request, res: Response) => {
     try {
+      // Log the raw request body first
+      console.log('[Content Generation] RAW REQUEST BODY:', JSON.stringify(req.body));
+      
       const { model: requestModel, systemPrompt = '', userPrompt, temperature } = req.body;
       
-      if (!userPrompt) {
+      // Log extracted values
+      console.log('[Content Generation] Extracted userPrompt:', userPrompt);
+      console.log('[Content Generation] UserPrompt type:', typeof userPrompt);
+      
+      if (!userPrompt || userPrompt === '') {
+        console.log('[Content Generation] ERROR: User prompt is empty or missing');
         return res.status(400).json({ error: 'User prompt is required' });
       }
 
