@@ -26,6 +26,12 @@ import { simpleCampaignStorage, type SimpleCampaign } from "./simple-campaign-st
 import { pool } from "./db";
 import { parseBriefingDeliverables, matchDeliverablesWithAssets } from "./briefing-parser";
 import { learningRouter } from "./learning-routes";
+import { 
+  initializePinecone, 
+  checkPineconeStatus, 
+  chatWithPinecone,
+  type PineconeMessage 
+} from "./services/pinecone";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -2480,6 +2486,58 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
     } catch (error) {
       console.error('TTS error:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Pinecone API Routes
+  app.get('/api/pinecone/status', async (_req: Request, res: Response) => {
+    try {
+      const status = await checkPineconeStatus();
+      res.json(status);
+    } catch (error) {
+      console.error('[Pinecone] Status check error:', error);
+      res.status(500).json({ 
+        configured: false,
+        connected: false,
+        error: 'Failed to check Pinecone status' 
+      });
+    }
+  });
+
+  app.post('/api/pinecone/chat', async (req: Request, res: Response) => {
+    try {
+      const { messages, stream = false } = req.body;
+      
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: 'Messages array is required' });
+      }
+      
+      console.log('[Pinecone] Chat request with', messages.length, 'messages');
+      
+      // Format messages for Pinecone
+      const pineconeMessages: PineconeMessage[] = messages.map((msg: any) => ({
+        role: msg.role || 'user',
+        content: msg.content
+      }));
+      
+      // Chat with Pinecone Assistant
+      const response = await chatWithPinecone(pineconeMessages, stream);
+      
+      // Format response with sources
+      res.json({
+        content: response.content,
+        sources: response.sources,
+        provider: 'pinecone',
+        model: 'pinecone-helper',
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error: any) {
+      console.error('[Pinecone] Chat error:', error);
+      res.status(500).json({ 
+        error: 'Failed to chat with Pinecone',
+        details: error.message 
+      });
     }
   });
 

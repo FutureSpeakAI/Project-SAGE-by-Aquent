@@ -157,7 +157,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
       name: "RAG Search",
       description: "Search knowledge base for relevant context",
       icon: Search,
-      enabled: false // Will enable when Pinecone is configured
+      enabled: false // Will be enabled when Pinecone is configured
     },
     {
       id: "n8n_workflows",
@@ -190,32 +190,118 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
   
   // Voice conversation state
   const [isVoiceConversationActive, setIsVoiceConversationActive] = useState(false);
+  
+  // Pinecone status state
+  const [pineconeStatus, setPineconeStatus] = useState<{
+    configured: boolean;
+    connected: boolean;
+    assistantName?: string;
+  }>({
+    configured: false,
+    connected: false
+  });
+
+  // Check Pinecone status on component mount
+  useEffect(() => {
+    const checkPineconeStatus = async () => {
+      try {
+        const response = await fetch('/api/pinecone/status');
+        if (response.ok) {
+          const status = await response.json();
+          setPineconeStatus(status);
+          
+          // Enable RAG Search if Pinecone is configured
+          if (status.configured && status.connected) {
+            setAgentCapabilities(prev => prev.map(cap => 
+              cap.id === 'rag_search' 
+                ? { ...cap, enabled: false } // Start disabled but available
+                : cap
+            ));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check Pinecone status:', error);
+      }
+    };
+    
+    checkPineconeStatus();
+  }, []);
 
   // Chat mutation for sending messages
   const chatMutation = useMutation({
     mutationFn: async (data: { message: string; context?: any }) => {
-      // Use a simpler chat endpoint that's more reliable
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: data.message,
-          model,
-          temperature: temperature[0],
-          systemPrompt: getSystemPrompt(),
-          conversationHistory: messages.slice(-5), // Include recent context
-          context: data.context // Pass the full context including research context
-        })
-      });
+      // Check if RAG Search is enabled
+      const ragEnabled = agentCapabilities.find(cap => cap.id === 'rag_search')?.enabled;
       
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`API Error: ${response.status} - ${errorData}`);
+      if (ragEnabled && pineconeStatus.connected) {
+        // Use Pinecone Assistant for RAG-enhanced responses
+        console.log('[SAGE] Using Pinecone RAG for response');
+        
+        // Build conversation history for Pinecone
+        const pineconeMessages = [
+          ...messages.slice(-5).map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          { role: 'user' as const, content: data.message }
+        ];
+        
+        const response = await fetch('/api/pinecone/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: pineconeMessages,
+            stream: false
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Pinecone API Error: ${response.status} - ${errorData}`);
+        }
+        
+        const result = await response.json();
+        
+        // Format response with sources if available
+        let formattedContent = result.content;
+        if (result.sources && result.sources.length > 0) {
+          formattedContent += '\n\n**Sources:**\n';
+          result.sources.forEach((source: any, idx: number) => {
+            formattedContent += `${idx + 1}. ${source.title || 'Document'}: ${source.text.substring(0, 100)}...\n`;
+          });
+        }
+        
+        return { 
+          content: formattedContent,
+          sources: result.sources,
+          provider: 'pinecone'
+        };
+      } else {
+        // Use regular chat endpoint
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: data.message,
+            model,
+            temperature: temperature[0],
+            systemPrompt: getSystemPrompt(),
+            conversationHistory: messages.slice(-5),
+            context: data.context
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorData}`);
+        }
+        
+        return response.json();
       }
-      
-      return response.json();
     },
     onSuccess: (data) => {
       const assistantMessage: ChatMessage = {
@@ -987,12 +1073,25 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                           <Switch
                             checked={capability.enabled}
                             onCheckedChange={() => toggleCapability(capability.id)}
-                            disabled={capability.id === 'rag_search' || capability.id === 'n8n_workflows'}
+                            disabled={
+                              (capability.id === 'rag_search' && !pineconeStatus.connected) || 
+                              capability.id === 'n8n_workflows'
+                            }
                             className="flex-shrink-0"
                           />
                         </div>
                         <p className="text-xs text-gray-500 truncate">{capability.description}</p>
-                        {(capability.id === 'rag_search' || capability.id === 'n8n_workflows') && (
+                        {capability.id === 'rag_search' && !pineconeStatus.connected && (
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {pineconeStatus.configured ? 'Connecting...' : 'Requires Setup'}
+                          </Badge>
+                        )}
+                        {capability.id === 'rag_search' && pineconeStatus.connected && (
+                          <Badge variant="secondary" className="text-xs mt-1">
+                            Connected
+                          </Badge>
+                        )}
+                        {capability.id === 'n8n_workflows' && (
                           <Badge variant="outline" className="text-xs mt-1">
                             Requires Setup
                           </Badge>

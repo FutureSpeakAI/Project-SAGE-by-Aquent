@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import multer from 'multer';
 import path from 'path';
 import { initializeLearningEngine } from '../shared/learning-engine';
+import { initializePinecone } from './services/pinecone';
 import * as dotenv from 'dotenv';
 
 // Load environment variables from .env file
@@ -161,6 +162,22 @@ async function initializeDatabase() {
     } catch (error) {
       log(`Learning engine initialization failed: ${error}`);
     }
+  }
+
+  // Initialize Pinecone Assistant if API key is available
+  if (process.env.PINECONE_API_KEY) {
+    try {
+      const pineconeInitialized = await initializePinecone();
+      if (pineconeInitialized) {
+        log('Pinecone Assistant initialized successfully');
+      } else {
+        log('Pinecone Assistant initialization failed');
+      }
+    } catch (error) {
+      log(`Pinecone initialization error: ${error}`);
+    }
+  } else {
+    log('Pinecone API key not found - RAG search will be disabled');
   }
 
   const server = await registerRoutes(app);
