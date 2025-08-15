@@ -48,6 +48,7 @@ import { SavedPersona } from "@/lib/types";
 import { ModelSelector } from "@/components/ui/ModelSelector";
 import { PromptRouterControls, PromptRouterConfig } from "@/components/ui/PromptRouterControls";
 import { useSessionContext } from "@/hooks/useSessionContext";
+import ReactMarkdown from 'react-markdown';
 
 interface FreePromptTabProps {
   model: string;
@@ -270,9 +271,14 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         if (result.sources && result.sources.length > 0) {
           formattedContent += '\n\n**Sources:**\n';
           result.sources.forEach((source: any, idx: number) => {
-            // Display file name and any additional info
+            // Display file name as a clickable link if URL is available
             const sourceText = source.text || '';
-            formattedContent += `${idx + 1}. **${source.title}**`;
+            if (source.url) {
+              // Create a markdown link that will open in a new tab
+              formattedContent += `${idx + 1}. [**${source.title}**](${source.url})`;
+            } else {
+              formattedContent += `${idx + 1}. **${source.title}**`;
+            }
             if (sourceText && sourceText !== 'Referenced in response') {
               formattedContent += ` - ${sourceText}`;
             }
@@ -802,7 +808,31 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                             ? 'bg-[#F15A22] text-white'
                             : 'bg-gray-100 text-gray-900'
                         }`}>
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <div className="text-sm">
+                            {message.role === 'user' ? (
+                              <p className="whitespace-pre-wrap">{message.content}</p>
+                            ) : (
+                              <ReactMarkdown 
+                                className="prose prose-sm max-w-none dark:prose-invert"
+                                components={{
+                                  a: ({ href, children }) => (
+                                    <a 
+                                      href={href} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline font-medium"
+                                    >
+                                      {children}
+                                    </a>
+                                  ),
+                                  p: ({ children }) => <p className="mb-2">{children}</p>,
+                                  strong: ({ children }) => <strong className="font-bold">{children}</strong>
+                                }}
+                              >
+                                {message.content}
+                              </ReactMarkdown>
+                            )}
+                          </div>
                           <p className="text-xs opacity-70 mt-1">
                             {message.timestamp.toLocaleTimeString()}
                           </p>
