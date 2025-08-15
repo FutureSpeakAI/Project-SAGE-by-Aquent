@@ -6,9 +6,10 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (August 13, 2025)
-- **Gemini-Only Mode**: Successfully implemented and verified vendor compliance mode that routes all AI requests through Google services (Gemini 2.0 for text, Imagen 3 for images). Controlled via `GEMINI_ONLY_MODE=true` environment variable.
-- **Content Tab Bug Fix**: Resolved issue where Content tab was sending placeholder text instead of user prompts. System now correctly processes user input for content generation.
+## Recent Changes (August 15, 2025)
+- **Pinecone RAG Integration**: Successfully integrated Pinecone Assistant ("pinecone-helper") with SAGE's RAG Search toggle. The system now queries the Pinecone knowledge base when RAG Search is enabled, displaying responses with proper source citations including file names and page references.
+- **Gemini-Only Mode** (August 13): Successfully implemented and verified vendor compliance mode that routes all AI requests through Google services (Gemini 2.0 for text, Imagen 3 for images). Controlled via `GEMINI_ONLY_MODE=true` environment variable.
+- **Content Tab Bug Fix** (August 13): Resolved issue where Content tab was sending placeholder text instead of user prompts. System now correctly processes user input for content generation.
 
 ## System Architecture
 
@@ -46,6 +47,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Third-Party Services
 - **Neon Database**: PostgreSQL hosting.
+- **Pinecone**: Vector database with Assistant API for RAG (Retrieval-Augmented Generation) capabilities.
 - **File Processing Libraries**: `pdf-parse`, `mammoth`.
 - **Speech Services**: Web Speech API for transcription, ElevenLabs for text-to-speech.
 - **Audio Processing**: Web Audio API for voice detection.

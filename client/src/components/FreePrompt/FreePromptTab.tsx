@@ -269,7 +269,13 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         if (result.sources && result.sources.length > 0) {
           formattedContent += '\n\n**Sources:**\n';
           result.sources.forEach((source: any, idx: number) => {
-            formattedContent += `${idx + 1}. ${source.title || 'Document'}: ${source.text.substring(0, 100)}...\n`;
+            // Display file name and any additional info
+            const sourceText = source.text || '';
+            formattedContent += `${idx + 1}. **${source.title}**`;
+            if (sourceText && sourceText !== 'Referenced in response') {
+              formattedContent += ` - ${sourceText}`;
+            }
+            formattedContent += '\n';
           });
         }
         

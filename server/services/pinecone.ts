@@ -144,11 +144,34 @@ export async function chatWithPinecone(
     // Format citations/sources if available
     let sources: any[] = [];
     if (chatResponse.citations && chatResponse.citations.length > 0) {
-      sources = chatResponse.citations.map((citation: any) => ({
-        title: citation.references?.[0]?.title || 'Document',
-        text: citation.references?.[0]?.text || '',
-        metadata: citation.references?.[0]?.metadata || {}
-      }));
+      console.log('[Pinecone] Citations found:', chatResponse.citations.length);
+      sources = chatResponse.citations.map((citation: any, idx: number) => {
+        // Citations have references array with file information
+        const reference = citation.references?.[0];
+        if (reference?.file) {
+          const fileName = reference.file.name || 'Unknown document';
+          const pages = reference.pages?.length > 0 ? 
+            ` (pages ${reference.pages.join(', ')})` : '';
+          
+          return {
+            title: fileName,
+            text: `Referenced at character position ${citation.position}${pages}`,
+            url: reference.file.signedUrl,
+            metadata: {
+              fileId: reference.file.id,
+              position: citation.position,
+              pages: reference.pages || []
+            }
+          };
+        }
+        
+        // Fallback for different citation structures
+        return {
+          title: `Source ${idx + 1}`,
+          text: `Referenced in response`,
+          metadata: citation
+        };
+      });
     }
     
     return {
