@@ -64,8 +64,17 @@ export default function Home() {
   const [temperature, setTemperature] = useLocalStorage<number>("openai-temperature", 0.7);
   
   // User input state
-  const [userPrompt, setUserPrompt] = useState("");
+  const [userPrompt, setUserPromptBase] = useState("");
   const [generatedContent, setGeneratedContent] = useState("");
+  
+  // Debug wrapper for setUserPrompt
+  const setUserPrompt = (value: string) => {
+    console.log('[HOME DEBUG] setUserPrompt called with:', value);
+    setUserPromptBase(value);
+  };
+  
+  // Log userPrompt value on every render
+  console.log('[HOME DEBUG] Current userPrompt state:', userPrompt);
   
   const { toast } = useToast();
 
