@@ -19,6 +19,7 @@ export function UserPromptPanel({
   isGenerating,
   onOpenPromptLibrary
 }: UserPromptPanelProps) {
+  console.log('[UserPromptPanel] Rendered with userPrompt:', userPrompt);
   return (
     <Card className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden min-h-[230px]">
       <CardHeader className="p-4 bg-gradient-to-r from-black to-gray-800 border-b border-gray-200">
@@ -49,7 +50,10 @@ export function UserPromptPanel({
               className="min-h-[160px] resize-vertical"
               placeholder="Type your prompt here..."
               value={userPrompt}
-              onChange={(e) => setUserPrompt(e.target.value)}
+              onChange={(e) => {
+                console.log('[UserPromptPanel] onChange called with:', e.target.value);
+                setUserPrompt(e.target.value);
+              }}
             />
           </div>
         </div>
