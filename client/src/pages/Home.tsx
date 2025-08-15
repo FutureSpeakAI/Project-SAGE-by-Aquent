@@ -101,14 +101,18 @@ export default function Home() {
   });
 
   const handleGenerate = (customPrompt?: string, customSystemPrompt?: string) => {
+    // Debug what type userPrompt is
+    console.log('[CLIENT DEBUG] handleGenerate called');
+    console.log('[CLIENT DEBUG] userPrompt type:', typeof userPrompt);
+    console.log('[CLIENT DEBUG] userPrompt value:', userPrompt);
+    console.log('[CLIENT DEBUG] customPrompt type:', typeof customPrompt);
+    console.log('[CLIENT DEBUG] customPrompt value:', customPrompt);
+    
     const promptToUse = String(customPrompt || userPrompt || '');
     const systemPromptToUse = customSystemPrompt || systemPrompt;
     
-    // Debug logging
-    console.log('[CLIENT DEBUG] handleGenerate called');
-    console.log('[CLIENT DEBUG] userPrompt:', userPrompt);
-    console.log('[CLIENT DEBUG] customPrompt:', customPrompt);
-    console.log('[CLIENT DEBUG] promptToUse:', promptToUse);
+    console.log('[CLIENT DEBUG] promptToUse type:', typeof promptToUse);
+    console.log('[CLIENT DEBUG] promptToUse value:', promptToUse);
     console.log('[CLIENT DEBUG] systemPromptToUse:', systemPromptToUse);
     
     if (!promptToUse || !promptToUse.trim()) {
@@ -121,19 +125,16 @@ export default function Home() {
       return;
     }
 
-    console.log('[CLIENT DEBUG] Sending request with:', {
+    const requestData = {
       model,
       systemPrompt: systemPromptToUse,
       userPrompt: promptToUse,
       temperature,
-    });
+    };
+    
+    console.log('[CLIENT DEBUG] Request data being sent:', JSON.stringify(requestData, null, 2));
 
-    generateMutation.mutate({
-      model,
-      systemPrompt: systemPromptToUse,
-      userPrompt: promptToUse,
-      temperature,
-    });
+    generateMutation.mutate(requestData);
   };
 
   const handleClearOutput = () => {
