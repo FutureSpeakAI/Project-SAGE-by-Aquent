@@ -72,14 +72,11 @@ export default function Home() {
   // Create a mutation to handle generation
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateRequest) => {
-      console.log('[CLIENT DEBUG] Sending POST to /api/generate with:', data);
       const response = await apiRequest("POST", "/api/generate", data);
       const result = await response.json() as GenerateResponse;
-      console.log('[CLIENT DEBUG] Response received:', result);
       return result;
     },
     onSuccess: (data) => {
-      console.log('[CLIENT DEBUG] Success - setting generated content');
       setGeneratedContent(data.content);
     },
     onError: (error: Error) => {
@@ -101,22 +98,10 @@ export default function Home() {
   });
 
   const handleGenerate = (customPrompt?: string, customSystemPrompt?: string) => {
-    // Debug what type userPrompt is
-    console.log('[CLIENT DEBUG] handleGenerate called');
-    console.log('[CLIENT DEBUG] userPrompt type:', typeof userPrompt);
-    console.log('[CLIENT DEBUG] userPrompt value:', userPrompt);
-    console.log('[CLIENT DEBUG] customPrompt type:', typeof customPrompt);
-    console.log('[CLIENT DEBUG] customPrompt value:', customPrompt);
-    
     const promptToUse = String(customPrompt || userPrompt || '');
     const systemPromptToUse = customSystemPrompt || systemPrompt;
     
-    console.log('[CLIENT DEBUG] promptToUse type:', typeof promptToUse);
-    console.log('[CLIENT DEBUG] promptToUse value:', promptToUse);
-    console.log('[CLIENT DEBUG] systemPromptToUse:', systemPromptToUse);
-    
     if (!promptToUse || !promptToUse.trim()) {
-      console.log('[CLIENT DEBUG] Empty prompt detected, showing toast');
       toast({
         title: "Empty Prompt",
         description: "Please enter a prompt to generate content.",
@@ -125,16 +110,12 @@ export default function Home() {
       return;
     }
 
-    const requestData = {
+    generateMutation.mutate({
       model,
       systemPrompt: systemPromptToUse,
       userPrompt: promptToUse,
       temperature,
-    };
-    
-    console.log('[CLIENT DEBUG] Request data being sent:', JSON.stringify(requestData, null, 2));
-
-    generateMutation.mutate(requestData);
+    });
   };
 
   const handleClearOutput = () => {
