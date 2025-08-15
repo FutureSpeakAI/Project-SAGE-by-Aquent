@@ -72,10 +72,14 @@ export default function Home() {
   // Create a mutation to handle generation
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateRequest) => {
+      console.log('[CLIENT DEBUG] Sending POST to /api/generate with:', data);
       const response = await apiRequest("POST", "/api/generate", data);
-      return response.json() as Promise<GenerateResponse>;
+      const result = await response.json() as GenerateResponse;
+      console.log('[CLIENT DEBUG] Response received:', result);
+      return result;
     },
     onSuccess: (data) => {
+      console.log('[CLIENT DEBUG] Success - setting generated content');
       setGeneratedContent(data.content);
     },
     onError: (error: Error) => {
@@ -100,7 +104,15 @@ export default function Home() {
     const promptToUse = String(customPrompt || userPrompt || '');
     const systemPromptToUse = customSystemPrompt || systemPrompt;
     
+    // Debug logging
+    console.log('[CLIENT DEBUG] handleGenerate called');
+    console.log('[CLIENT DEBUG] userPrompt:', userPrompt);
+    console.log('[CLIENT DEBUG] customPrompt:', customPrompt);
+    console.log('[CLIENT DEBUG] promptToUse:', promptToUse);
+    console.log('[CLIENT DEBUG] systemPromptToUse:', systemPromptToUse);
+    
     if (!promptToUse || !promptToUse.trim()) {
+      console.log('[CLIENT DEBUG] Empty prompt detected, showing toast');
       toast({
         title: "Empty Prompt",
         description: "Please enter a prompt to generate content.",
@@ -108,6 +120,13 @@ export default function Home() {
       });
       return;
     }
+
+    console.log('[CLIENT DEBUG] Sending request with:', {
+      model,
+      systemPrompt: systemPromptToUse,
+      userPrompt: promptToUse,
+      temperature,
+    });
 
     generateMutation.mutate({
       model,
