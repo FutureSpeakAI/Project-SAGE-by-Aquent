@@ -143,68 +143,77 @@ export async function chatWithPinecone(
     
     // Format citations/sources if available
     let sources: any[] = [];
-    const citationPositions: { position: number; index: number }[] = [];
+    const uniqueSourcesMap = new Map<string, any>();
+    const citationPositions: { position: number; sourceKey: string }[] = [];
     
     if (chatResponse.citations && chatResponse.citations.length > 0) {
       console.log('[Pinecone] Citations found:', chatResponse.citations.length);
       
-      // First, collect all citations with their positions
-      chatResponse.citations.forEach((citation: any, idx: number) => {
+      // First pass: collect all unique sources and track citation positions
+      chatResponse.citations.forEach((citation: any) => {
         const reference = citation.references?.[0];
         if (reference?.file) {
           const fileName = reference.file.name || 'Unknown document';
           const pages = reference.pages?.length > 0 ? 
-            ` (pages ${reference.pages.join(', ')})` : '';
+            reference.pages.join(', ') : '';
           
-          sources.push({
-            title: fileName,
-            text: pages ? pages.substring(2, pages.length - 1) : '', // Remove leading space and parentheses
-            url: reference.file.signedUrl,
-            metadata: {
-              fileId: reference.file.id,
-              position: citation.position,
-              pages: reference.pages || []
-            }
-          });
+          // Create a unique key for this source (file + pages)
+          const sourceKey = `${fileName}${pages ? '-pages-' + pages : ''}`;
           
-          // Store position for later insertion of superscripts
+          // Add to unique sources map if not already present
+          if (!uniqueSourcesMap.has(sourceKey)) {
+            uniqueSourcesMap.set(sourceKey, {
+              title: fileName,
+              text: pages ? `pages ${pages}` : '',
+              url: reference.file.signedUrl,
+              metadata: {
+                fileId: reference.file.id,
+                pages: reference.pages || []
+              }
+            });
+          }
+          
+          // Store position with source key for later insertion
           if (citation.position !== undefined) {
             citationPositions.push({
               position: citation.position,
-              index: idx + 1
+              sourceKey: sourceKey
             });
           }
-        } else {
-          // Fallback for different citation structures
-          sources.push({
-            title: `Source ${idx + 1}`,
-            text: `Referenced in response`,
-            metadata: citation
-          });
         }
       });
       
+      // Convert unique sources map to array and assign numbers
+      const sourceKeyToNumber = new Map<string, number>();
+      let sourceNumber = 1;
+      uniqueSourcesMap.forEach((source, key) => {
+        sources.push(source);
+        sourceKeyToNumber.set(key, sourceNumber++);
+      });
+      
       // Sort positions in reverse order to insert from end to beginning
-      // This prevents position shifts when inserting
       citationPositions.sort((a, b) => b.position - a.position);
       
-      // Insert superscript markers into the content
-      citationPositions.forEach(({ position, index }) => {
-        // Insert at the nearest word boundary after the position
-        let insertPos = position;
-        
-        // Find the end of the current word/sentence
-        while (insertPos < content.length && 
-               content[insertPos] !== ' ' && 
-               content[insertPos] !== '.' && 
-               content[insertPos] !== ',' &&
-               content[insertPos] !== '\n') {
-          insertPos++;
-        }
-        
-        // Insert superscript marker
-        if (insertPos <= content.length) {
-          content = content.slice(0, insertPos) + `^[${index}]` + content.slice(insertPos);
+      // Insert superscript markers with correct source numbers
+      citationPositions.forEach(({ position, sourceKey }) => {
+        const sourceNum = sourceKeyToNumber.get(sourceKey);
+        if (sourceNum) {
+          // Insert at the nearest word boundary after the position
+          let insertPos = position;
+          
+          // Find the end of the current word/sentence
+          while (insertPos < content.length && 
+                 content[insertPos] !== ' ' && 
+                 content[insertPos] !== '.' && 
+                 content[insertPos] !== ',' &&
+                 content[insertPos] !== '\n') {
+            insertPos++;
+          }
+          
+          // Insert superscript marker with correct source number
+          if (insertPos <= content.length) {
+            content = content.slice(0, insertPos) + `^[${sourceNum}]` + content.slice(insertPos);
+          }
         }
       });
     }
