@@ -2506,7 +2506,7 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
 
   app.post('/api/pinecone/chat', async (req: Request, res: Response) => {
     try {
-      const { messages, stream = false } = req.body;
+      const { messages } = req.body;
       
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: 'Messages array is required' });
@@ -2520,8 +2520,8 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
         content: msg.content
       }));
       
-      // Chat with Pinecone Assistant
-      const response = await chatWithPinecone(pineconeMessages, stream);
+      // Chat with Pinecone Assistant (stream parameter removed as SDK doesn't support it)
+      const response = await chatWithPinecone(pineconeMessages);
       
       // Format response with sources
       res.json({

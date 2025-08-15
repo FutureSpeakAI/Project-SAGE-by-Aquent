@@ -1,6 +1,9 @@
+import { Pinecone } from '@pinecone-database/pinecone';
+
 // Initialize Pinecone Assistant
+let pinecone: Pinecone | null = null;
+let assistant: any = null;
 let isInitialized = false;
-const PINECONE_HOST = 'https://prod-1-data.ke.pinecone.io';
 const ASSISTANT_NAME = 'pinecone-helper';
 
 export interface PineconeMessage {
@@ -30,25 +33,20 @@ export async function initializePinecone(): Promise<boolean> {
       return false;
     }
 
-    // Test the connection with a simple request
+    // Initialize Pinecone client with API key
+    pinecone = new Pinecone({
+      apiKey: apiKey
+    });
+    
+    // Get the assistant instance
     try {
-      const testResponse = await fetch(`${PINECONE_HOST}/assistant/info`, {
-        method: 'GET',
-        headers: {
-          'Api-Key': apiKey,
-          'X-Pinecone-Assistant': ASSISTANT_NAME
-        }
-      });
-      
-      // If we get any response (even 404), the API key is valid
+      assistant = pinecone.Assistant(ASSISTANT_NAME);
       isInitialized = true;
       console.log('[Pinecone] Successfully initialized Pinecone Assistant');
       return true;
-    } catch (testError) {
-      // Network error or invalid endpoint
-      isInitialized = true; // Still mark as initialized to try chat endpoint
-      console.log('[Pinecone] Initialized Pinecone Assistant (connection will be tested on first chat)');
-      return true;
+    } catch (error) {
+      console.error('[Pinecone] Failed to get assistant:', error);
+      return false;
     }
   } catch (error) {
     console.error('[Pinecone] Failed to initialize:', error);
@@ -120,14 +118,11 @@ function parseResponse(response: any): PineconeResponse {
  * Chat with Pinecone Assistant
  */
 export async function chatWithPinecone(
-  messages: PineconeMessage[],
-  stream: boolean = false
+  messages: PineconeMessage[]
 ): Promise<PineconeResponse> {
   try {
-    const apiKey = process.env.PINECONE_API_KEY;
-    
-    if (!apiKey) {
-      throw new Error('Pinecone API key not configured');
+    if (!isInitialized || !assistant) {
+      throw new Error('Pinecone not initialized');
     }
 
     console.log('[Pinecone] Sending chat request with', messages.length, 'messages');
@@ -135,31 +130,31 @@ export async function chatWithPinecone(
     // Format messages for Pinecone Assistant API
     const formattedMessages = formatMessages(messages);
     
-    // Make direct API call to Pinecone Assistant
-    const response = await fetch(`${PINECONE_HOST}/assistant/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Api-Key': apiKey,
-        'X-Pinecone-Assistant': ASSISTANT_NAME
-      },
-      body: JSON.stringify({
-        messages: formattedMessages,
-        stream: stream,
-        assistant: ASSISTANT_NAME
-      })
+    // Use the Pinecone SDK chat method
+    // Note: Pinecone SDK doesn't support stream parameter in chat method
+    const chatResponse = await assistant.chat({
+      messages: formattedMessages
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Pinecone] API error:', response.status, errorText);
-      throw new Error(`Pinecone API error: ${response.status} - ${errorText}`);
-    }
-    
-    const data = await response.json();
     console.log('[Pinecone] Received response');
     
-    return parseResponse(data);
+    // Extract content and sources from response
+    const content = chatResponse.message?.content || '';
+    
+    // Format citations/sources if available
+    let sources: any[] = [];
+    if (chatResponse.citations && chatResponse.citations.length > 0) {
+      sources = chatResponse.citations.map((citation: any) => ({
+        title: citation.references?.[0]?.title || 'Document',
+        text: citation.references?.[0]?.text || '',
+        metadata: citation.references?.[0]?.metadata || {}
+      }));
+    }
+    
+    return {
+      content,
+      sources: sources.length > 0 ? sources : undefined
+    };
   } catch (error) {
     console.error('[Pinecone] Chat error:', error);
     throw error;
