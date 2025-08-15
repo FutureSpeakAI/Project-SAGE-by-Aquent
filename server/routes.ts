@@ -452,8 +452,13 @@ Important: Generate comprehensive, well-structured content that directly address
       // Enhanced system prompt that prioritizes client's instructions
       let enhancedSystemPrompt = systemPrompt;
       
+      // Only apply briefing-specific system prompt if this is actually a briefing
+      const isBriefingContent = (userPrompt.includes('CREATIVE BRIEF') || userPrompt.includes('MARKETING BRIEF')) && userPrompt.length > 800;
+      
       if (!systemPrompt || systemPrompt.trim().length === 0) {
-        enhancedSystemPrompt = `You are a professional healthcare content creator. Create comprehensive, detailed content exactly as specified in the brief.
+        if (isBriefingContent) {
+          // Apply briefing-specific system prompt only for actual briefs
+          enhancedSystemPrompt = `You are a professional healthcare content creator. Create comprehensive, detailed content exactly as specified in the brief.
 
 REQUIREMENTS:
 - Generate ALL requested deliverables (emails, posts, articles, etc.)
@@ -462,6 +467,10 @@ REQUIREMENTS:
 - Each deliverable must be complete and publication-ready
 - Focus on clinical efficacy, patient outcomes, and healthcare provider value
 - DO NOT summarize the brief - create the actual content requested`;
+        } else {
+          // For regular content generation, use a simple, neutral system prompt
+          enhancedSystemPrompt = `You are a helpful AI assistant. Follow the user's instructions exactly and generate the content they request.`;
+        }
       }
 
       // Add specific deliverable guidance if detected
@@ -495,8 +504,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
         requestModel
       };
 
-      // Simplified briefing detection - only for actual formal briefs
-      const isBriefingContent = (userPrompt.includes('CREATIVE BRIEF') || userPrompt.includes('MARKETING BRIEF')) && userPrompt.length > 800;
+      // isBriefingContent is already defined above - no need to redefine
       
       let generatedContent: string = '';
       let usedProvider: string = 'anthropic';
