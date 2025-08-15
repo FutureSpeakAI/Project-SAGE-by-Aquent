@@ -143,13 +143,12 @@ export async function chatWithPinecone(
     
     // Format citations/sources if available
     let sources: any[] = [];
-    const uniqueSourcesMap = new Map<string, any>();
-    const citationPositions: { position: number; sourceKey: string }[] = [];
+    const citationPositions: { position: number; source: any; pages: string }[] = [];
     
     if (chatResponse.citations && chatResponse.citations.length > 0) {
       console.log('[Pinecone] Citations found:', chatResponse.citations.length);
       
-      // First pass: collect all unique sources and track citation positions
+      // First pass: collect all citations with their positions
       chatResponse.citations.forEach((citation: any) => {
         const reference = citation.references?.[0];
         if (reference?.file) {
@@ -157,46 +156,55 @@ export async function chatWithPinecone(
           const pages = reference.pages?.length > 0 ? 
             reference.pages.join(', ') : '';
           
-          // Create a unique key for this source (file + pages)
-          const sourceKey = `${fileName}${pages ? '-pages-' + pages : ''}`;
+          const sourceData = {
+            title: fileName,
+            text: pages ? `pages ${pages}` : '',
+            url: reference.file.signedUrl,
+            metadata: {
+              fileId: reference.file.id,
+              pages: reference.pages || []
+            }
+          };
           
-          // Add to unique sources map if not already present
-          if (!uniqueSourcesMap.has(sourceKey)) {
-            uniqueSourcesMap.set(sourceKey, {
-              title: fileName,
-              text: pages ? `pages ${pages}` : '',
-              url: reference.file.signedUrl,
-              metadata: {
-                fileId: reference.file.id,
-                pages: reference.pages || []
-              }
-            });
-          }
-          
-          // Store position with source key for later insertion
+          // Store citation with position
           if (citation.position !== undefined) {
             citationPositions.push({
               position: citation.position,
-              sourceKey: sourceKey
+              source: sourceData,
+              pages: pages
             });
           }
         }
       });
       
-      // Convert unique sources map to array and assign numbers
-      const sourceKeyToNumber = new Map<string, number>();
+      // Sort citations by position to maintain document flow
+      citationPositions.sort((a, b) => a.position - b.position);
+      
+      // Build unique sources list and map
+      const uniqueSourcesMap = new Map<string, { source: any; number: number }>();
       let sourceNumber = 1;
-      uniqueSourcesMap.forEach((source, key) => {
-        sources.push(source);
-        sourceKeyToNumber.set(key, sourceNumber++);
+      
+      citationPositions.forEach(({ source, pages }) => {
+        // Create unique key for this source
+        const sourceKey = `${source.title}${pages ? '-pages-' + pages : ''}`;
+        
+        // Add to unique sources if not already present
+        if (!uniqueSourcesMap.has(sourceKey)) {
+          uniqueSourcesMap.set(sourceKey, {
+            source: source,
+            number: sourceNumber++
+          });
+          sources.push(source);
+        }
       });
       
-      // Sort positions in reverse order to insert from end to beginning
-      citationPositions.sort((a, b) => b.position - a.position);
+      // Now insert superscripts in reverse order to avoid position shifts
+      const sortedForInsertion = [...citationPositions].reverse();
       
-      // Insert superscript markers with correct source numbers
-      citationPositions.forEach(({ position, sourceKey }) => {
-        const sourceNum = sourceKeyToNumber.get(sourceKey);
+      sortedForInsertion.forEach(({ position, source, pages }) => {
+        const sourceKey = `${source.title}${pages ? '-pages-' + pages : ''}`;
+        const sourceNum = uniqueSourcesMap.get(sourceKey)?.number;
+        
         if (sourceNum) {
           // Insert at the nearest word boundary after the position
           let insertPos = position;
