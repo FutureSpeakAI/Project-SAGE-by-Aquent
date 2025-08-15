@@ -354,7 +354,9 @@ Important: Generate comprehensive, well-structured content that directly address
 
       console.log('[Content Generation] Processing briefing-based content generation');
       console.log('[Content Generation] User prompt length:', userPrompt.length);
+      console.log('[Content Generation] User prompt preview:', userPrompt.substring(0, 200));
       console.log('[Content Generation] System prompt received:', systemPrompt ? 'Yes' : 'No');
+      console.log('[Content Generation] System prompt preview:', systemPrompt ? systemPrompt.substring(0, 200) : 'None');
 
       // GEMINI-ONLY MODE: Intercept and route all requests to Gemini
       if (process.env.GEMINI_ONLY_MODE === 'true') {
