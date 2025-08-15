@@ -825,11 +825,47 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                                         {children}
                                       </a>
                                     ),
-                                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                    p: ({ children }) => {
+                                      // Process children to replace citation markers with superscripts
+                                      const processedChildren = Array.isArray(children) 
+                                        ? children.map((child, index) => {
+                                            if (typeof child === 'string') {
+                                              // Replace ^[n] with superscript
+                                              const parts = child.split(/\^\[(\d+)\]/g);
+                                              return parts.map((part, i) => {
+                                                if (i % 2 === 1) {
+                                                  // This is a citation number
+                                                  return <sup key={`sup-${index}-${i}`} className="text-blue-600 font-semibold">[{part}]</sup>;
+                                                }
+                                                return part;
+                                              });
+                                            }
+                                            return child;
+                                          })
+                                        : children;
+                                      return <p className="mb-2 last:mb-0">{processedChildren}</p>;
+                                    },
                                     strong: ({ children }) => <strong className="font-bold">{children}</strong>,
                                     ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
                                     ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
-                                    li: ({ children }) => <li className="mb-1">{children}</li>
+                                    li: ({ children }) => {
+                                      // Also process list items for citations
+                                      const processedChildren = Array.isArray(children) 
+                                        ? children.map((child, index) => {
+                                            if (typeof child === 'string') {
+                                              const parts = child.split(/\^\[(\d+)\]/g);
+                                              return parts.map((part, i) => {
+                                                if (i % 2 === 1) {
+                                                  return <sup key={`sup-li-${index}-${i}`} className="text-blue-600 font-semibold">[{part}]</sup>;
+                                                }
+                                                return part;
+                                              });
+                                            }
+                                            return child;
+                                          })
+                                        : children;
+                                      return <li className="mb-1">{processedChildren}</li>;
+                                    }
                                   }}
                                 >
                                   {message.content}

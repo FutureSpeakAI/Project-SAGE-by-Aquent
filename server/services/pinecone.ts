@@ -139,38 +139,73 @@ export async function chatWithPinecone(
     console.log('[Pinecone] Received response');
     
     // Extract content and sources from response
-    const content = chatResponse.message?.content || '';
+    let content = chatResponse.message?.content || '';
     
     // Format citations/sources if available
     let sources: any[] = [];
+    const citationPositions: { position: number; index: number }[] = [];
+    
     if (chatResponse.citations && chatResponse.citations.length > 0) {
       console.log('[Pinecone] Citations found:', chatResponse.citations.length);
-      sources = chatResponse.citations.map((citation: any, idx: number) => {
-        // Citations have references array with file information
+      
+      // First, collect all citations with their positions
+      chatResponse.citations.forEach((citation: any, idx: number) => {
         const reference = citation.references?.[0];
         if (reference?.file) {
           const fileName = reference.file.name || 'Unknown document';
           const pages = reference.pages?.length > 0 ? 
             ` (pages ${reference.pages.join(', ')})` : '';
           
-          return {
+          sources.push({
             title: fileName,
-            text: `Referenced at character position ${citation.position}${pages}`,
+            text: pages ? pages.substring(2, pages.length - 1) : '', // Remove leading space and parentheses
             url: reference.file.signedUrl,
             metadata: {
               fileId: reference.file.id,
               position: citation.position,
               pages: reference.pages || []
             }
-          };
+          });
+          
+          // Store position for later insertion of superscripts
+          if (citation.position !== undefined) {
+            citationPositions.push({
+              position: citation.position,
+              index: idx + 1
+            });
+          }
+        } else {
+          // Fallback for different citation structures
+          sources.push({
+            title: `Source ${idx + 1}`,
+            text: `Referenced in response`,
+            metadata: citation
+          });
+        }
+      });
+      
+      // Sort positions in reverse order to insert from end to beginning
+      // This prevents position shifts when inserting
+      citationPositions.sort((a, b) => b.position - a.position);
+      
+      // Insert superscript markers into the content
+      citationPositions.forEach(({ position, index }) => {
+        // Insert at the nearest word boundary after the position
+        let insertPos = position;
+        
+        // Find the end of the current word/sentence
+        while (insertPos < content.length && 
+               content[insertPos] !== ' ' && 
+               content[insertPos] !== '.' && 
+               content[insertPos] !== ',' &&
+               content[insertPos] !== '\n') {
+          insertPos++;
         }
         
-        // Fallback for different citation structures
-        return {
-          title: `Source ${idx + 1}`,
-          text: `Referenced in response`,
-          metadata: citation
-        };
+        // Insert superscript marker
+        if (insertPos <= content.length) {
+          content = content.slice(0, insertPos) + `^[${index}]` + content.slice(insertPos);
+        }
       });
     }
     
