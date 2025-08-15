@@ -177,12 +177,8 @@ export async function chatWithPinecone(
         }
       });
       
-      // Sort citations by position to maintain document flow
-      citationPositions.sort((a, b) => a.position - b.position);
-      
-      // Build unique sources list and map
-      const uniqueSourcesMap = new Map<string, { source: any; number: number }>();
-      let sourceNumber = 1;
+      // Build unique sources map first (without numbers)
+      const uniqueSourcesMap = new Map<string, any>();
       
       citationPositions.forEach(({ source, pages }) => {
         // Create unique key for this source
@@ -190,12 +186,21 @@ export async function chatWithPinecone(
         
         // Add to unique sources if not already present
         if (!uniqueSourcesMap.has(sourceKey)) {
-          uniqueSourcesMap.set(sourceKey, {
-            source: source,
-            number: sourceNumber++
-          });
-          sources.push(source);
+          uniqueSourcesMap.set(sourceKey, source);
         }
+      });
+      
+      // Sort sources alphabetically by title for consistent ordering
+      const sortedSources = Array.from(uniqueSourcesMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]));
+      
+      // Assign numbers to sorted sources
+      const sourceKeyToNumber = new Map<string, number>();
+      let sourceNumber = 1;
+      
+      sortedSources.forEach(([key, source]) => {
+        sources.push(source);
+        sourceKeyToNumber.set(key, sourceNumber++);
       });
       
       // Now insert superscripts in reverse order to avoid position shifts
@@ -203,7 +208,7 @@ export async function chatWithPinecone(
       
       sortedForInsertion.forEach(({ position, source, pages }) => {
         const sourceKey = `${source.title}${pages ? '-pages-' + pages : ''}`;
-        const sourceNum = uniqueSourcesMap.get(sourceKey)?.number;
+        const sourceNum = sourceKeyToNumber.get(sourceKey);
         
         if (sourceNum) {
           // Insert at the nearest word boundary after the position
