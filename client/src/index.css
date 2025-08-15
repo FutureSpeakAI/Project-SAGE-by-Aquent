@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom styles for capability switches */
+@layer components {
+  /* Orange color for enabled switches */
+  .capability-switch[data-state="checked"] {
+    background-color: #ea580c !important;
+  }
+  
+  .capability-switch[data-state="checked"] span {
+    background-color: white !important;
+  }
+}
+
 /* Custom styles for ReactQuill editor */
 .ql-editor p {
   margin-bottom: 1em;

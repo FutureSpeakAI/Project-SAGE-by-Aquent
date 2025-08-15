@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1083,18 +1084,21 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                               (capability.id === 'rag_search' && !pineconeStatus.connected) || 
                               capability.id === 'n8n_workflows'
                             }
-                            className="flex-shrink-0"
+                            className="flex-shrink-0 capability-switch"
                           />
                         </div>
                         <p className="text-xs text-gray-500 truncate">{capability.description}</p>
-                        {capability.id === 'rag_search' && !pineconeStatus.connected && (
-                          <Badge variant="outline" className="text-xs mt-1">
-                            {pineconeStatus.configured ? 'Connecting...' : 'Requires Setup'}
+                        {capability.id === 'rag_search' && capability.enabled && (
+                          <Badge 
+                            variant={pineconeStatus.connected ? "secondary" : "destructive"} 
+                            className="text-xs mt-1"
+                          >
+                            {pineconeStatus.connected ? 'Connected' : 'Error'}
                           </Badge>
                         )}
-                        {capability.id === 'rag_search' && pineconeStatus.connected && (
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            Connected
+                        {capability.id === 'rag_search' && !capability.enabled && !pineconeStatus.connected && (
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {pineconeStatus.configured ? 'Ready to connect' : 'Requires Setup'}
                           </Badge>
                         )}
                         {capability.id === 'n8n_workflows' && (
