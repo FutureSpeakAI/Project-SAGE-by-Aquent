@@ -2562,5 +2562,16 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
   // Learning Engine API Routes
   app.use('/api/learning', learningRouter);
 
+  // RFP/RFI Processing Routes
+  const { 
+    processRFPDocument, 
+    generateDocxFromResponses, 
+    generatePdfFromResponses 
+  } = await import('./rfp-processor');
+  
+  app.post('/api/rfp/process', upload.single('file'), processRFPDocument);
+  app.post('/api/rfp/generate-docx', generateDocxFromResponses);
+  app.post('/api/rfp/generate-pdf', generatePdfFromResponses);
+
   return server;
 }

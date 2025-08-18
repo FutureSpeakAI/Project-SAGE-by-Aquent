@@ -6,9 +6,10 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (August 15, 2025)
-- **Content Tab Event Handler Fix**: Fixed critical bug where Content tab was sending `[object Object]` instead of user prompts. Issue was caused by onClick handler passing SyntheticBaseEvent to handleGenerate function. Solution: Changed `onClick={onGenerate}` to `onClick={() => onGenerate()}` to prevent event object from being passed as argument.
-- **Pinecone RAG Integration**: Successfully integrated Pinecone Assistant ("pinecone-helper") with SAGE's RAG Search toggle. The system now queries the Pinecone knowledge base when RAG Search is enabled, displaying responses with proper source citations including file names and page references.
+## Recent Changes (August 18, 2025)
+- **RFP Response Assistant**: Transformed Context Upload section into comprehensive RFP/RFI processing system. Features: automatic question extraction from uploaded documents (PDF/DOCX/TXT), Pinecone knowledge base search for relevant content, Gemini-powered response generation, and DOCX/PDF download capabilities. Uses Gemini-only mode for all AI operations per compliance requirements.
+- **Content Tab Event Handler Fix** (August 15): Fixed critical bug where Content tab was sending `[object Object]` instead of user prompts. Issue was caused by onClick handler passing SyntheticBaseEvent to handleGenerate function. Solution: Changed `onClick={onGenerate}` to `onClick={() => onGenerate()}` to prevent event object from being passed as argument.
+- **Pinecone RAG Integration** (August 15): Successfully integrated Pinecone Assistant ("pinecone-helper") with SAGE's RAG Search toggle. The system now queries the Pinecone knowledge base when RAG Search is enabled, displaying responses with proper source citations including file names and page references.
 - **Gemini-Only Mode** (August 13): Successfully implemented and verified vendor compliance mode that routes all AI requests through Google services (Gemini 2.0 for text, Imagen 3 for images). Controlled via `GEMINI_ONLY_MODE=true` environment variable.
 
 ## System Architecture

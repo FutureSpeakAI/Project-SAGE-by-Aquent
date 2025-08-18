@@ -46,7 +46,8 @@ import {
 } from "lucide-react";
 import { SavedPersona } from "@/lib/types";
 import { ModelSelector } from "@/components/ui/ModelSelector";
-import { PromptRouterControls, PromptRouterConfig } from "@/components/ui/PromptRouterControls";
+import { PromptRouterControls } from "@/components/ui/PromptRouterControls";
+import { type PromptRouterConfig } from "@/hooks/useGlobalRoutingConfig";
 import { useSessionContext } from "@/hooks/useSessionContext";
 import ReactMarkdown from 'react-markdown';
 
@@ -105,6 +106,11 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
     forceReasoning: undefined
   });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  // RFP Processing State
+  const [isProcessingRFP, setIsProcessingRFP] = useState(false);
+  const [rfpFilename, setRfpFilename] = useState<string>("");
+  const [rfpResponses, setRfpResponses] = useState<Array<{question: string; response: string; sources: string[]}>>([]);
 
   // Research options for deep context building
   const researchOptions: ResearchOption[] = [
@@ -420,7 +426,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
     setShowResearchOptions(false);
     
     // Enable reasoning for research requests
-    setRouterConfig(prev => ({
+    setRouterConfig((prev: PromptRouterConfig) => ({
       ...prev,
       forceReasoning: true
     }));
@@ -666,6 +672,160 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
       document.documentElement.style.overflow = '';
     };
   }, [isFullScreen]);
+
+  // RFP Upload Handler
+  const handleRFPUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingRFP(true);
+    setRfpFilename(file.name);
+    
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/rfp/process', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process RFP');
+      }
+
+      const data = await response.json();
+      
+      // Map the responses to the expected format
+      const formattedResponses = data.responses?.map((item: any) => ({
+        question: item.question,
+        response: item.generatedAnswer,
+        sources: item.pineconeSources || []
+      })) || [];
+      
+      setRfpResponses(formattedResponses);
+      
+      // Add a message to chat showing RFP processing complete
+      const rfpMessage: ChatMessage = {
+        id: Date.now().toString() + '_rfp',
+        role: 'assistant',
+        content: `✅ RFP Processing Complete!\n\nI've analyzed ${data.extractedQuestions?.length || 0} questions from "${file.name}" and generated comprehensive responses using our Pinecone knowledge base.\n\n**Next Steps:**\n• Review the responses in the chat\n• Download as DOCX or PDF using the buttons in the RFP panel\n• Edit and customize as needed for your submission`,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, rfpMessage]);
+      
+      // Add each Q&A to the chat for review
+      formattedResponses.forEach((item: any, index: number) => {
+        const qaMessage: ChatMessage = {
+          id: Date.now().toString() + '_qa_' + index,
+          role: 'assistant',
+          content: `**Question ${index + 1}:**\n${item.question}\n\n**Response:**\n${item.response}\n\n*Sources: ${item.sources.join(', ')}*`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, qaMessage]);
+      });
+      
+      toast({
+        title: "RFP processed successfully",
+        description: `Processed ${data.responses.length} questions from ${file.name}`
+      });
+    } catch (error) {
+      console.error('RFP processing error:', error);
+      toast({
+        title: "RFP processing failed",
+        description: error instanceof Error ? error.message : "Failed to process RFP document",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingRFP(false);
+      event.target.value = '';
+    }
+  };
+
+  // Download RFP as DOCX
+  const downloadRFPAsDocx = async () => {
+    try {
+      const response = await fetch('/api/rfp/generate-docx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          responses: rfpResponses,
+          title: rfpFilename.replace(/\.[^/.]+$/, '') + ' - Response'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate DOCX');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rfp_response_${Date.now()}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "DOCX downloaded",
+        description: "RFP response has been downloaded as DOCX"
+      });
+    } catch (error) {
+      console.error('DOCX generation error:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to generate DOCX document",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Download RFP as PDF
+  const downloadRFPAsPDF = async () => {
+    try {
+      const response = await fetch('/api/rfp/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          responses: rfpResponses,
+          title: rfpFilename.replace(/\.[^/.]+$/, '') + ' - Response'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rfp_response_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "PDF downloaded",
+        description: "RFP response has been downloaded as PDF"
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to generate PDF document",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Load saved sessions on component mount
   useEffect(() => {
@@ -971,7 +1131,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                           size="sm"
                           onClick={() => {
                             setActiveResearchContext(null);
-                            setRouterConfig(prev => ({
+                            setRouterConfig((prev: PromptRouterConfig) => ({
                               ...prev,
                               forceReasoning: false
                             }));
@@ -1183,23 +1343,63 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
               </CardContent>
             </Card>
 
-            {/* Context Upload */}
+            {/* RFP Response Assistant */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  Context Upload
+                  <FileText className="h-4 w-4" />
+                  RFP Response Assistant
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full justify-start text-sm h-8" disabled>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Upload Documents
-                </Button>
-                <Button variant="outline" className="w-full justify-start text-sm h-8" disabled>
-                  <Database className="h-4 w-4 mr-2" />
-                  Connect Data Source
-                </Button>
+                <input
+                  type="file"
+                  id="rfp-upload"
+                  accept=".pdf,.docx,.txt"
+                  onChange={handleRFPUpload}
+                  className="hidden"
+                />
+                <label htmlFor="rfp-upload">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-sm h-8" 
+                    disabled={isProcessingRFP}
+                    asChild
+                  >
+                    <span>
+                      <Upload className="h-4 w-4 mr-2" />
+                      {isProcessingRFP ? 'Processing...' : 'Upload RFP/RFI'}
+                    </span>
+                  </Button>
+                </label>
+                {rfpFilename && (
+                  <div className="text-xs text-gray-500 truncate">
+                    Current: {rfpFilename}
+                  </div>
+                )}
+                {rfpResponses.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="text-xs font-medium text-gray-600">
+                      {rfpResponses.length} questions processed
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-sm h-8"
+                      onClick={downloadRFPAsDocx}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download DOCX
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-sm h-8"
+                      onClick={downloadRFPAsPDF}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
