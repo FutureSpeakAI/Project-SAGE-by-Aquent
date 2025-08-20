@@ -141,17 +141,10 @@ export async function chatWithPinecone(
     const enhancedMessages = [...messages];
     if (enhancedMessages.length > 0 && enhancedMessages[enhancedMessages.length - 1].role === 'user') {
       const lastMessage = enhancedMessages[enhancedMessages.length - 1];
-      // Add context to encourage comprehensive responses like Pinecone.io
+      // Simple enhancement for Gemini - let it use its natural formatting
       lastMessage.content = `${lastMessage.content}
 
-Please provide a comprehensive and detailed response with:
-1. Executive Summary if applicable
-2. Key points and analysis
-3. Specific examples and evidence from the knowledge base
-4. All relevant citations with page numbers
-5. Any important context or considerations
-
-Be thorough and professional in your response, similar to a consulting report.`;
+Please provide a comprehensive response with relevant citations from the knowledge base.`;
     }
     
     // Format messages for Pinecone Assistant API
@@ -171,9 +164,12 @@ Be thorough and professional in your response, similar to a consulting report.`;
     let sources: any[] = [];
     let citationMap = new Map<number, any>();
     
-    // Process citations if they exist
-    if (chatResponse.citations && chatResponse.citations.length > 0) {
-      console.log('[Pinecone] Processing', chatResponse.citations.length, 'citations');
+    // Check model type to handle citations appropriately
+    const isGemini = model.toLowerCase().includes('gemini');
+    
+    // Process citations if they exist (GPT-4o style)
+    if (!isGemini && chatResponse.citations && chatResponse.citations.length > 0) {
+      console.log('[Pinecone] Processing', chatResponse.citations.length, 'citations (GPT-4o style)');
       
       // Build comprehensive sources from citations
       const uniqueSources = new Map<string, any>();
@@ -256,6 +252,70 @@ Be thorough and professional in your response, similar to a consulting report.`;
             console.log(`[Pinecone] Inserted clickable citation ${citationNumber} at position ${position}`);
           }
         }
+      }
+    } else if (isGemini) {
+      // For Gemini, parse citations from the content text
+      console.log('[Pinecone] Processing Gemini-style citations from content');
+      
+      // Extract sources from the Sources section if present
+      const sourcesMatch = content.match(/### (?:\*\*)?Sources:?(?:\*\*)?[\s\S]*$/i);
+      if (sourcesMatch) {
+        const sourcesSection = sourcesMatch[0];
+        const sourceLines = sourcesSection.split('\n').filter((line: string) => line.trim());
+        
+        // Parse each source line (format: "1. Document.pdf, pp. 1-2")
+        sourceLines.forEach((line: string, index: number) => {
+          const match = line.match(/^(\d+)\.\s+(.+?)(?:,\s*pp?\.\s*([\d-,\s]+))?$/);
+          if (match) {
+            const sourceNum = parseInt(match[1]);
+            const fileName = match[2].trim();
+            const pages = match[3] || '';
+            
+            sources.push({
+              number: sourceNum,
+              title: fileName,
+              text: pages ? `p. ${pages}` : '',
+              url: '#', // Gemini doesn't provide URLs, so use placeholder
+              metadata: {}
+            });
+          }
+        });
+        
+        console.log('[Pinecone] Extracted', sources.length, 'sources from Gemini response');
+        
+        // Replace inline superscript citations with clickable versions
+        // Gemini uses superscript Unicode characters like ¹²³
+        const superscriptPattern = /([¹²³⁴⁵⁶⁷⁸⁹⁰]+)/g;
+        content = content.replace(superscriptPattern, (match: string) => {
+          // Convert superscript to number
+          const num = match.split('').map((char: string) => {
+            const index = '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(char);
+            return index >= 0 ? index : '';
+          }).join('');
+          
+          if (num) {
+            const sourceNum = parseInt(num);
+            const source = sources.find(s => s.number === sourceNum);
+            if (source) {
+              return `[${match}](#citation-${sourceNum})`;
+            }
+          }
+          return match;
+        });
+        
+        // Also handle citation patterns like ¹'²'³
+        content = content.replace(/([¹²³⁴⁵⁶⁷⁸⁹⁰]+(?:[''](?:[¹²³⁴⁵⁶⁷⁸⁹⁰]+))+)/g, (match: string) => {
+          // Extract all numbers from the citation group
+          const numbers = match.match(/[¹²³⁴⁵⁶⁷⁸⁹⁰]+/g) || [];
+          const links = numbers.map((sup: string) => {
+            const num = sup.split('').map((char: string) => {
+              const index = '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(char);
+              return index >= 0 ? index : '';
+            }).join('');
+            return num ? `[${sup}](#citation-${num})` : sup;
+          });
+          return links.join('\'');
+        });
       }
     }
     
