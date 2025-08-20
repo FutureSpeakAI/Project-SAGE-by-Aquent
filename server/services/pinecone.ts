@@ -137,8 +137,25 @@ export async function chatWithPinecone(
 
     console.log('[Pinecone] Sending chat request with', messages.length, 'messages');
     
+    // Enhance the last user message to get more detailed responses
+    const enhancedMessages = [...messages];
+    if (enhancedMessages.length > 0 && enhancedMessages[enhancedMessages.length - 1].role === 'user') {
+      const lastMessage = enhancedMessages[enhancedMessages.length - 1];
+      // Add context to encourage comprehensive responses like Pinecone.io
+      lastMessage.content = `${lastMessage.content}
+
+Please provide a comprehensive and detailed response with:
+1. Executive Summary if applicable
+2. Key points and analysis
+3. Specific examples and evidence from the knowledge base
+4. All relevant citations with page numbers
+5. Any important context or considerations
+
+Be thorough and professional in your response, similar to a consulting report.`;
+    }
+    
     // Format messages for Pinecone Assistant API
-    const formattedMessages = formatMessages(messages);
+    const formattedMessages = formatMessages(enhancedMessages);
     
     // Use the Pinecone SDK chat method
     const chatResponse = await assistant.chat({
@@ -212,24 +229,46 @@ export async function chatWithPinecone(
           uniqueSources.set(sourceKey, source);
         }
         
-        // If citation has a position field, try to insert inline marker
-        if (citation.position !== undefined && citation.position >= 0 && citation.position <= content.length) {
-          const marker = toSuperscript(citationNumber);
-          content = content.slice(0, citation.position) + marker + content.slice(citation.position);
-          console.log(`[Pinecone] Inserted citation ${marker} at position ${citation.position}`);
+        // Store citation position for later processing
+        if (citation.position !== undefined && citation.position >= 0) {
+          citationMap.set(citation.position, citationNumber);
         }
       });
       
       sources = Array.from(uniqueSources.values()).sort((a, b) => a.number - b.number);
       console.log('[Pinecone] Built', sources.length, 'unique sources');
+      
+      // Insert clickable citation markers at the correct positions
+      // Process from end to start to maintain position accuracy
+      if (citationMap.size > 0) {
+        const positions = Array.from(citationMap.keys()).sort((a, b) => b - a);
+        
+        for (const position of positions) {
+          const citationNumber = citationMap.get(position);
+          const source = sources.find(s => s.number === citationNumber);
+          
+          if (source && position <= content.length) {
+            // Create a clickable markdown link with superscript styling
+            const marker = `[${toSuperscript(citationNumber)}](${source.url || '#'})`;
+            content = content.slice(0, position) + marker + content.slice(position);
+            console.log(`[Pinecone] Inserted clickable citation ${citationNumber} at position ${position}`);
+          }
+        }
+      }
     }
     
     // Add enhanced citation references at the end if sources exist
     if (sources.length > 0) {
-      let referencesSection = '\n\n---\n### Sources & References:\n\n';
+      let referencesSection = '\n\n---\n### 📚 Sources & References:\n\n';
       sources.forEach(source => {
         const pageInfo = source.text && source.text !== 'Full document' ? ` (${source.text})` : '';
-        referencesSection += `**[${source.number}]** ${source.title}${pageInfo}\n`;
+        
+        // Make the source title clickable if URL exists
+        if (source.url) {
+          referencesSection += `**[${source.number}]** [${source.title}](${source.url})${pageInfo}\n`;
+        } else {
+          referencesSection += `**[${source.number}]** ${source.title}${pageInfo}\n`;
+        }
         
         // Add date info if available
         if (source.metadata?.updatedOn) {
