@@ -316,11 +316,33 @@ Please provide a comprehensive response with relevant citations from the knowled
           });
           return links.join('\'');
         });
+        
+        // Clean up broken Confidence Assessment table if present
+        // Gemini sometimes produces malformed markdown tables
+        const confAssessmentStart = content.indexOf('### Confidence Assessment');
+        if (confAssessmentStart !== -1) {
+          const beforeTable = content.substring(0, confAssessmentStart);
+          const afterTableMatch = content.substring(confAssessmentStart).match(/\n\n(?![\|\-])/);
+          if (afterTableMatch) {
+            const afterTableIndex = confAssessmentStart + afterTableMatch.index!;
+            const afterTable = content.substring(afterTableIndex);
+            // Remove the broken table section
+            content = beforeTable + afterTable;
+          } else {
+            // If no clear end, just remove everything after Confidence Assessment
+            content = beforeTable;
+          }
+        }
       }
     }
     
-    // Add enhanced citation references at the end if sources exist
-    if (sources.length > 0) {
+    // Only add enhanced citation references if they're not already in the content
+    // Gemini includes its own Sources section, so we don't need to add another
+    const hasSourcesInContent = content.includes('### Sources:') || 
+                               content.includes('**Sources:**') ||
+                               content.includes('Sources:');
+    
+    if (!hasSourcesInContent && sources.length > 0) {
       let referencesSection = '\n\n---\n### 📚 Sources & References:\n\n';
       sources.forEach(source => {
         const pageInfo = source.text && source.text !== 'Full document' ? ` (${source.text})` : '';

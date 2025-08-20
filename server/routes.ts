@@ -2400,9 +2400,14 @@ Focus on identifying the specific visual deliverables (number of images, type of
             sources: pineconeResponse.sources
           });
           
-          // Format response with sources if available
+          // Don't add sources section if content already has one (Gemini includes it)
           let formattedContent = pineconeResponse.content;
-          if (pineconeResponse.sources && pineconeResponse.sources.length > 0) {
+          // Only add sources if they're not already in the content
+          const hasSourcesInContent = formattedContent.includes('### Sources:') || 
+                                      formattedContent.includes('**Sources:**') ||
+                                      formattedContent.includes('Sources:');
+          
+          if (!hasSourcesInContent && pineconeResponse.sources && pineconeResponse.sources.length > 0) {
             formattedContent += '\n\n**Sources:**\n';
             pineconeResponse.sources.forEach((source, idx) => {
               const sourceText = source.text ? ` - ${source.text}` : '';
