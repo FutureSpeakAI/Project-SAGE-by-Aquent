@@ -117,6 +117,14 @@ function parseResponse(response: any): PineconeResponse {
 }
 
 /**
+ * Helper function to convert numbers to superscript
+ */
+function toSuperscript(num: number): string {
+  const superscripts = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+  return num.toString().split('').map(digit => superscripts[parseInt(digit)]).join('');
+}
+
+/**
  * Chat with Pinecone Assistant
  */
 export async function chatWithPinecone(
@@ -142,13 +150,15 @@ export async function chatWithPinecone(
     // Extract content - preserve Pinecone's native formatting completely
     let content = chatResponse.message?.content || '';
     let sources: any[] = [];
+    let citationMap = new Map<number, any>();
     
     // Process citations if they exist
     if (chatResponse.citations && chatResponse.citations.length > 0) {
       console.log('[Pinecone] Processing', chatResponse.citations.length, 'citations');
       
-      // Build sources from citations
-      const uniqueSources = new Set<string>();
+      // Build comprehensive sources from citations
+      const uniqueSources = new Map<string, any>();
+      let citationNumber = 0;
       
       chatResponse.citations.forEach((citation: any, index: number) => {
         console.log(`[Pinecone] Processing citation ${index}:`, JSON.stringify(citation, null, 2));
@@ -157,45 +167,78 @@ export async function chatWithPinecone(
         if (citation.references && citation.references.length > 0) {
           citation.references.forEach((reference: any) => {
             if (reference.file) {
-              const fileName = reference.file.name || `Document ${index + 1}`;
-              const pages = reference.pages?.length > 0 ? 
-                `pages ${reference.pages.join(', ')}` : '';
+              citationNumber++;
+              const fileName = reference.file.name || `Document ${citationNumber}`;
+              const pages = reference.pages?.length > 0 ? reference.pages : [];
+              const pageText = pages.length > 0 ? `p. ${pages.join(', ')}` : '';
               
-              const sourceKey = `${fileName}-${pages}`;
+              // Create a rich source object
+              const source = {
+                number: citationNumber,
+                title: fileName,
+                text: pageText || 'Full document',
+                url: reference.file.signedUrl || '',
+                pages: pages,
+                metadata: {
+                  fileId: reference.file.id,
+                  createdOn: reference.file.createdOn,
+                  updatedOn: reference.file.updatedOn,
+                  status: reference.file.status,
+                  citationIndex: index
+                }
+              };
+              
+              const sourceKey = `${fileName}-${reference.file.id}`;
               if (!uniqueSources.has(sourceKey)) {
-                uniqueSources.add(sourceKey);
-                sources.push({
-                  title: fileName,
-                  text: pages || 'Full document',
-                  url: reference.file.signedUrl || '',
-                  metadata: {
-                    fileId: reference.file.id,
-                    pages: reference.pages || [],
-                    citationIndex: index
-                  }
-                });
+                uniqueSources.set(sourceKey, source);
               }
             }
           });
         } else {
           // Fallback for direct citation structure
-          const title = citation.title || citation.filename || `Source ${index + 1}`;
-          const sourceKey = `${title}-${index}`;
-          if (!uniqueSources.has(sourceKey)) {
-            uniqueSources.add(sourceKey);
-            sources.push({
-              title: title,
-              text: citation.text || citation.content || 'Referenced content',
-              metadata: {
-                citationIndex: index,
-                ...citation.metadata
-              }
-            });
-          }
+          citationNumber++;
+          const title = citation.title || citation.filename || `Source ${citationNumber}`;
+          const source = {
+            number: citationNumber,
+            title: title,
+            text: citation.text || citation.content || 'Referenced content',
+            metadata: {
+              citationIndex: index,
+              ...citation.metadata
+            }
+          };
+          
+          const sourceKey = `${title}-${citationNumber}`;
+          uniqueSources.set(sourceKey, source);
+        }
+        
+        // If citation has a position field, try to insert inline marker
+        if (citation.position !== undefined && citation.position >= 0 && citation.position <= content.length) {
+          const marker = toSuperscript(citationNumber);
+          content = content.slice(0, citation.position) + marker + content.slice(citation.position);
+          console.log(`[Pinecone] Inserted citation ${marker} at position ${citation.position}`);
         }
       });
       
+      sources = Array.from(uniqueSources.values()).sort((a, b) => a.number - b.number);
       console.log('[Pinecone] Built', sources.length, 'unique sources');
+    }
+    
+    // Add enhanced citation references at the end if sources exist
+    if (sources.length > 0) {
+      let referencesSection = '\n\n---\n### Sources & References:\n\n';
+      sources.forEach(source => {
+        const pageInfo = source.text && source.text !== 'Full document' ? ` (${source.text})` : '';
+        referencesSection += `**[${source.number}]** ${source.title}${pageInfo}\n`;
+        
+        // Add date info if available
+        if (source.metadata?.updatedOn) {
+          const date = new Date(source.metadata.updatedOn).toLocaleDateString();
+          referencesSection += `   *Last updated: ${date}*\n`;
+        }
+        referencesSection += '\n';
+      });
+      content += referencesSection;
     }
     
     // Log final result
@@ -203,7 +246,8 @@ export async function chatWithPinecone(
       contentLength: content.length,
       sourcesCount: sources.length,
       hasContent: !!content,
-      hasSources: sources.length > 0
+      hasSources: sources.length > 0,
+      hasInlineCitations: sources.length > 0
     });
     
     return {
