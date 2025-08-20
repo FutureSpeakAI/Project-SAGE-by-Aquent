@@ -242,29 +242,32 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
       const ragEnabled = agentCapabilities.find(cap => cap.id === 'rag_search')?.enabled;
 
       if (ragEnabled && pineconeStatus.connected) {
-        // Use /api/chat with RAG context to let server handle Pinecone routing
-        console.log('[SAGE] Using Pinecone RAG via /api/chat routing');
+        // Use Pinecone Assistant for RAG-enhanced responses
+        console.log('[SAGE] Using Pinecone RAG for response');
 
-        const response = await fetch('/api/chat', {
+        // Build conversation history for Pinecone
+        const pineconeMessages = [
+          ...messages.slice(-5).map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          { role: 'user' as const, content: data.message }
+        ];
+
+        const response = await fetch('/api/pinecone/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            message: data.message,
-            model,
-            temperature: temperature[0],
-            context: {
-              ...data.context,
-              ragEnabled: true,
-              usePinecone: true
-            }
+            messages: pineconeMessages,
+            stream: false
           })
         });
 
         if (!response.ok) {
           const errorData = await response.text();
-          throw new Error(`Chat API Error: ${response.status} - ${errorData}`);
+          throw new Error(`Pinecone API Error: ${response.status} - ${errorData}`);
         }
 
         const result = await response.json();
@@ -279,7 +282,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
           timestamp: result.timestamp
         };
       } else {
-        // Use regular chat endpoint without RAG
+        // Use regular chat endpoint
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: {
@@ -289,6 +292,8 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
             message: data.message,
             model,
             temperature: temperature[0],
+            systemPrompt: getSystemPrompt(),
+            conversationHistory: messages.slice(-5),
             context: data.context
           })
         });

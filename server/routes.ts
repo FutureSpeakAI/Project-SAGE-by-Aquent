@@ -2379,10 +2379,10 @@ Focus on identifying the specific visual deliverables (number of images, type of
       const usePinecone = context?.usePinecone || context?.ragEnabled;
       
       if (usePinecone) {
-        // Route to Pinecone directly without any system prompt override
-        console.log('[Chat] Routing to Pinecone Assistant - using configured agent system prompt');
+        // Route to Pinecone directly without overriding system prompt
+        console.log('[Chat] Routing to Pinecone Assistant - preserving agent system prompt');
         
-        // Build conversation history for Pinecone (no system prompt - let Pinecone use its configured prompt)
+        // Build conversation history for Pinecone
         const pineconeMessages: PineconeMessage[] = [
           ...((context?.sessionHistory || []).slice(-5).map((msg: any) => ({
             role: msg.role,
@@ -2394,12 +2394,20 @@ Focus on identifying the specific visual deliverables (number of images, type of
         try {
           const pineconeResponse = await chatWithPinecone(pineconeMessages);
           
-          // Return response without modifying the content - let Pinecone's system prompt handle formatting
+          // Format response with sources if available
+          let formattedContent = pineconeResponse.content;
+          if (pineconeResponse.sources && pineconeResponse.sources.length > 0) {
+            formattedContent += '\n\n**Sources:**\n';
+            pineconeResponse.sources.forEach((source, idx) => {
+              formattedContent += `${idx + 1}. ${source.title || 'Document'}\n`;
+            });
+          }
+          
           return res.json({
-            content: pineconeResponse.content,
+            content: formattedContent,
             sources: pineconeResponse.sources,
             provider: 'pinecone',
-            model: 'pinecone-assistant',
+            model: 'pinecone-helper',
             timestamp: new Date().toISOString()
           });
         } catch (pineconeError: any) {
