@@ -1,12 +1,10 @@
+
 #!/usr/bin/env node
-/**
- * Test script to examine Pinecone citation structure
- */
 
 async function testPineconeCitations() {
   const baseUrl = 'http://localhost:5000';
   
-  console.log('🔍 Testing Pinecone Citations Structure\n');
+  console.log('🔍 Testing Pinecone Citations Fix\n');
   
   try {
     // Test with a question that should return citations
@@ -19,7 +17,7 @@ async function testPineconeCitations() {
         messages: [
           {
             role: 'user',
-            content: 'Tell me about Aquent\'s major clients'
+            content: 'Provide a brief history of your company. Is your company publicly traded? If so, since when? At which stock exchange? How many years have you been in business? Describe any alliances you have with other hardware, software, or service providers.'
           }
         ]
       })
@@ -34,24 +32,23 @@ async function testPineconeCitations() {
     const chatResult = await chatResponse.json();
     console.log('✅ Response received\n');
     
-    console.log('📝 Content preview:', chatResult.content?.substring(0, 200) + '...\n');
+    console.log('📝 Content length:', chatResult.content?.length || 0);
+    console.log('📝 Content preview:', chatResult.content?.substring(0, 300) + '...\n');
     
-    console.log('📚 Sources structure:');
+    console.log('📚 Sources analysis:');
     if (chatResult.sources && chatResult.sources.length > 0) {
-      console.log('Number of sources:', chatResult.sources.length);
+      console.log('✅ Sources found:', chatResult.sources.length);
       chatResult.sources.forEach((source, idx) => {
         console.log(`\nSource ${idx + 1}:`);
         console.log('  Title:', source.title);
-        console.log('  Text preview:', source.text?.substring(0, 100) || '[No text]');
-        console.log('  Has metadata:', !!source.metadata);
+        console.log('  Text:', source.text?.substring(0, 100) + '...' || '[No text]');
+        console.log('  Has URL:', !!source.url);
+        console.log('  Metadata:', Object.keys(source.metadata || {}).join(', '));
       });
     } else {
-      console.log('No sources found in response');
+      console.log('❌ No sources found in response');
+      console.log('Response structure:', Object.keys(chatResult));
     }
-    
-    // Also print the raw JSON to see full structure
-    console.log('\n📦 Raw response JSON:');
-    console.log(JSON.stringify(chatResult, null, 2));
     
   } catch (error) {
     console.error('❌ Test failed:', error);

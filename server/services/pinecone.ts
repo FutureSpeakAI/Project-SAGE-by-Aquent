@@ -1,3 +1,4 @@
+
 import { Pinecone } from '@pinecone-database/pinecone';
 
 // Initialize Pinecone Assistant
@@ -18,6 +19,7 @@ export interface PineconeResponse {
     text: string;
     score?: number;
     metadata?: Record<string, any>;
+    url?: string;
   }>;
 }
 
@@ -131,51 +133,78 @@ export async function chatWithPinecone(
     const formattedMessages = formatMessages(messages);
     
     // Use the Pinecone SDK chat method
-    // Note: Pinecone SDK doesn't support stream parameter in chat method
     const chatResponse = await assistant.chat({
       messages: formattedMessages
     });
     
-    console.log('[Pinecone] Received response');
+    console.log('[Pinecone] Raw response received:', JSON.stringify(chatResponse, null, 2));
     
-    // Extract content and sources from response - preserve Pinecone's native formatting
+    // Extract content - preserve Pinecone's native formatting completely
     let content = chatResponse.message?.content || '';
-    
-    // Build sources list for reference, but don't modify the content
     let sources: any[] = [];
     
+    // Process citations if they exist
     if (chatResponse.citations && chatResponse.citations.length > 0) {
-      console.log('[Pinecone] Citations found:', chatResponse.citations.length);
+      console.log('[Pinecone] Processing', chatResponse.citations.length, 'citations');
       
-      // Simply collect unique sources for display, preserve original content formatting
-      const uniqueSourcesMap = new Map<string, any>();
+      // Build sources from citations
+      const uniqueSources = new Set<string>();
       
-      chatResponse.citations.forEach((citation: any) => {
-        const reference = citation.references?.[0];
-        if (reference?.file) {
-          const fileName = reference.file.name || 'Unknown document';
-          const pages = reference.pages?.length > 0 ? 
-            reference.pages.join(', ') : '';
-          
-          const sourceKey = `${fileName}${pages ? '-pages-' + pages : ''}`;
-          
-          if (!uniqueSourcesMap.has(sourceKey)) {
-            uniqueSourcesMap.set(sourceKey, {
-              title: fileName,
-              text: pages ? `pages ${pages}` : '',
-              url: reference.file.signedUrl,
+      chatResponse.citations.forEach((citation: any, index: number) => {
+        console.log(`[Pinecone] Processing citation ${index}:`, JSON.stringify(citation, null, 2));
+        
+        // Handle different citation structures
+        if (citation.references && citation.references.length > 0) {
+          citation.references.forEach((reference: any) => {
+            if (reference.file) {
+              const fileName = reference.file.name || `Document ${index + 1}`;
+              const pages = reference.pages?.length > 0 ? 
+                `pages ${reference.pages.join(', ')}` : '';
+              
+              const sourceKey = `${fileName}-${pages}`;
+              if (!uniqueSources.has(sourceKey)) {
+                uniqueSources.add(sourceKey);
+                sources.push({
+                  title: fileName,
+                  text: pages || 'Full document',
+                  url: reference.file.signedUrl || '',
+                  metadata: {
+                    fileId: reference.file.id,
+                    pages: reference.pages || [],
+                    citationIndex: index
+                  }
+                });
+              }
+            }
+          });
+        } else {
+          // Fallback for direct citation structure
+          const title = citation.title || citation.filename || `Source ${index + 1}`;
+          const sourceKey = `${title}-${index}`;
+          if (!uniqueSources.has(sourceKey)) {
+            uniqueSources.add(sourceKey);
+            sources.push({
+              title: title,
+              text: citation.text || citation.content || 'Referenced content',
               metadata: {
-                fileId: reference.file.id,
-                pages: reference.pages || []
+                citationIndex: index,
+                ...citation.metadata
               }
             });
           }
         }
       });
       
-      // Convert to array, maintaining Pinecone's original ordering
-      sources = Array.from(uniqueSourcesMap.values());
+      console.log('[Pinecone] Built', sources.length, 'unique sources');
     }
+    
+    // Log final result
+    console.log('[Pinecone] Final response:', {
+      contentLength: content.length,
+      sourcesCount: sources.length,
+      hasContent: !!content,
+      hasSources: sources.length > 0
+    });
     
     return {
       content,

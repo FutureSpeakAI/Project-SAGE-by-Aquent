@@ -2394,12 +2394,19 @@ Focus on identifying the specific visual deliverables (number of images, type of
         try {
           const pineconeResponse = await chatWithPinecone(pineconeMessages);
           
+          console.log('[Chat] Pinecone response received:', {
+            contentLength: pineconeResponse.content?.length || 0,
+            sourcesCount: pineconeResponse.sources?.length || 0,
+            sources: pineconeResponse.sources
+          });
+          
           // Format response with sources if available
           let formattedContent = pineconeResponse.content;
           if (pineconeResponse.sources && pineconeResponse.sources.length > 0) {
             formattedContent += '\n\n**Sources:**\n';
             pineconeResponse.sources.forEach((source, idx) => {
-              formattedContent += `${idx + 1}. ${source.title || 'Document'}\n`;
+              const sourceText = source.text ? ` - ${source.text}` : '';
+              formattedContent += `${idx + 1}. ${source.title || 'Document'}${sourceText}\n`;
             });
           }
           
