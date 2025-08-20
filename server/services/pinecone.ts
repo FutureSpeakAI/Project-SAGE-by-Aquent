@@ -138,17 +138,18 @@ export async function chatWithPinecone(
     
     console.log('[Pinecone] Received response');
     
-    // Extract content and sources from response
+    // Extract content and sources from response - preserve Pinecone's native formatting
     let content = chatResponse.message?.content || '';
     
-    // Format citations/sources if available
+    // Build sources list for reference, but don't modify the content
     let sources: any[] = [];
-    const citationPositions: { position: number; source: any; pages: string }[] = [];
     
     if (chatResponse.citations && chatResponse.citations.length > 0) {
       console.log('[Pinecone] Citations found:', chatResponse.citations.length);
       
-      // First pass: collect all citations with their positions
+      // Simply collect unique sources for display, preserve original content formatting
+      const uniqueSourcesMap = new Map<string, any>();
+      
       chatResponse.citations.forEach((citation: any) => {
         const reference = citation.references?.[0];
         if (reference?.file) {
@@ -156,79 +157,24 @@ export async function chatWithPinecone(
           const pages = reference.pages?.length > 0 ? 
             reference.pages.join(', ') : '';
           
-          const sourceData = {
-            title: fileName,
-            text: pages ? `pages ${pages}` : '',
-            url: reference.file.signedUrl,
-            metadata: {
-              fileId: reference.file.id,
-              pages: reference.pages || []
-            }
-          };
+          const sourceKey = `${fileName}${pages ? '-pages-' + pages : ''}`;
           
-          // Store citation with position
-          if (citation.position !== undefined) {
-            citationPositions.push({
-              position: citation.position,
-              source: sourceData,
-              pages: pages
+          if (!uniqueSourcesMap.has(sourceKey)) {
+            uniqueSourcesMap.set(sourceKey, {
+              title: fileName,
+              text: pages ? `pages ${pages}` : '',
+              url: reference.file.signedUrl,
+              metadata: {
+                fileId: reference.file.id,
+                pages: reference.pages || []
+              }
             });
           }
         }
       });
       
-      // Build unique sources map first (without numbers)
-      const uniqueSourcesMap = new Map<string, any>();
-      
-      citationPositions.forEach(({ source, pages }) => {
-        // Create unique key for this source
-        const sourceKey = `${source.title}${pages ? '-pages-' + pages : ''}`;
-        
-        // Add to unique sources if not already present
-        if (!uniqueSourcesMap.has(sourceKey)) {
-          uniqueSourcesMap.set(sourceKey, source);
-        }
-      });
-      
-      // Sort sources alphabetically by title for consistent ordering
-      const sortedSources = Array.from(uniqueSourcesMap.entries())
-        .sort((a, b) => a[0].localeCompare(b[0]));
-      
-      // Assign numbers to sorted sources
-      const sourceKeyToNumber = new Map<string, number>();
-      let sourceNumber = 1;
-      
-      sortedSources.forEach(([key, source]) => {
-        sources.push(source);
-        sourceKeyToNumber.set(key, sourceNumber++);
-      });
-      
-      // Now insert superscripts in reverse order to avoid position shifts
-      const sortedForInsertion = [...citationPositions].reverse();
-      
-      sortedForInsertion.forEach(({ position, source, pages }) => {
-        const sourceKey = `${source.title}${pages ? '-pages-' + pages : ''}`;
-        const sourceNum = sourceKeyToNumber.get(sourceKey);
-        
-        if (sourceNum) {
-          // Insert at the nearest word boundary after the position
-          let insertPos = position;
-          
-          // Find the end of the current word/sentence
-          while (insertPos < content.length && 
-                 content[insertPos] !== ' ' && 
-                 content[insertPos] !== '.' && 
-                 content[insertPos] !== ',' &&
-                 content[insertPos] !== '\n') {
-            insertPos++;
-          }
-          
-          // Insert superscript marker with correct source number
-          if (insertPos <= content.length) {
-            content = content.slice(0, insertPos) + `^[${sourceNum}]` + content.slice(insertPos);
-          }
-        }
-      });
+      // Convert to array, maintaining Pinecone's original ordering
+      sources = Array.from(uniqueSourcesMap.values());
     }
     
     return {
