@@ -283,39 +283,76 @@ Please provide a comprehensive response with relevant citations from the knowled
         
         console.log('[Pinecone] Extracted', sources.length, 'sources from Gemini response');
         
-        // Replace inline superscript citations with clickable versions
-        // Gemini uses superscript Unicode characters like ¹²³
-        const superscriptPattern = /([¹²³⁴⁵⁶⁷⁸⁹⁰]+)/g;
-        content = content.replace(superscriptPattern, (match: string) => {
-          // Convert superscript to number
-          const num = match.split('').map((char: string) => {
-            const index = '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(char);
-            return index >= 0 ? index : '';
-          }).join('');
-          
-          if (num) {
-            const sourceNum = parseInt(num);
-            const source = sources.find(s => s.number === sourceNum);
-            if (source) {
-              return `[${match}](#citation-${sourceNum})`;
-            }
-          }
-          return match;
-        });
+        // For Gemini responses, check if we have any real URLs
+        const hasRealUrls = sources.some(s => s.url && s.url !== '#');
         
-        // Also handle citation patterns like ¹'²'³
-        content = content.replace(/([¹²³⁴⁵⁶⁷⁸⁹⁰]+(?:[''](?:[¹²³⁴⁵⁶⁷⁸⁹⁰]+))+)/g, (match: string) => {
-          // Extract all numbers from the citation group
-          const numbers = match.match(/[¹²³⁴⁵⁶⁷⁸⁹⁰]+/g) || [];
-          const links = numbers.map((sup: string) => {
-            const num = sup.split('').map((char: string) => {
+        if (!hasRealUrls) {
+          // No real URLs available, leave citations as plain superscript text
+          console.log('[Pinecone] Gemini citations will remain as superscript text (no URLs available)');
+        } else {
+          // We have real URLs, make citations clickable
+          console.log('[Pinecone] Making citations clickable with available URLs');
+          
+          // Replace inline superscript citations with clickable versions
+          const superscriptPattern = /([¹²³⁴⁵⁶⁷⁸⁹⁰]+)/g;
+          content = content.replace(superscriptPattern, (match: string) => {
+            // Convert superscript to number
+            const num = match.split('').map((char: string) => {
               const index = '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(char);
               return index >= 0 ? index : '';
             }).join('');
-            return num ? `[${sup}](#citation-${num})` : sup;
+            
+            if (num) {
+              const sourceNum = parseInt(num);
+              const source = sources.find(s => s.number === sourceNum);
+              if (source && source.url && source.url !== '#') {
+                // Only make clickable if we have a real URL
+                return `[${match}](${source.url})`;
+              }
+            }
+            return match;
           });
-          return links.join('\'');
-        });
+          
+          // Also handle citation patterns like ¹'²'³
+          content = content.replace(/([¹²³⁴⁵⁶⁷⁸⁹⁰]+(?:[''](?:[¹²³⁴⁵⁶⁷⁸⁹⁰]+))+)/g, (match: string) => {
+            // Extract all numbers from the citation group
+            const numbers = match.match(/[¹²³⁴⁵⁶⁷⁸⁹⁰]+/g) || [];
+            const processedParts: string[] = [];
+            let lastIndex = 0;
+            
+            numbers.forEach((sup: string) => {
+              const supIndex = match.indexOf(sup, lastIndex);
+              if (supIndex > lastIndex) {
+                processedParts.push(match.substring(lastIndex, supIndex));
+              }
+              
+              const num = sup.split('').map((char: string) => {
+                const index = '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(char);
+                return index >= 0 ? index : '';
+              }).join('');
+              
+              if (num) {
+                const sourceNum = parseInt(num);
+                const source = sources.find(s => s.number === sourceNum);
+                if (source && source.url && source.url !== '#') {
+                  processedParts.push(`[${sup}](${source.url})`);
+                } else {
+                  processedParts.push(sup);
+                }
+              } else {
+                processedParts.push(sup);
+              }
+              
+              lastIndex = supIndex + sup.length;
+            });
+            
+            if (lastIndex < match.length) {
+              processedParts.push(match.substring(lastIndex));
+            }
+            
+            return processedParts.join('');
+          });
+        }
         
         // Clean up broken Confidence Assessment table if present
         // Gemini sometimes produces malformed markdown tables
