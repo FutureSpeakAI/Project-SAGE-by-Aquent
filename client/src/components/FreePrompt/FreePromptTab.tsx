@@ -106,7 +106,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
     forceReasoning: undefined
   });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  
+
   // RFP Processing State
   const [isProcessingRFP, setIsProcessingRFP] = useState(false);
   const [rfpFilename, setRfpFilename] = useState<string>("");
@@ -195,10 +195,10 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [saveSessionName, setSaveSessionName] = useState("");
   const [savedSessions, setSavedSessions] = useState<any[]>([]);
-  
+
   // Voice conversation state
   const [isVoiceConversationActive, setIsVoiceConversationActive] = useState(false);
-  
+
   // Pinecone status state
   const [pineconeStatus, setPineconeStatus] = useState<{
     configured: boolean;
@@ -217,12 +217,12 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         if (response.ok) {
           const status = await response.json();
           setPineconeStatus(status);
-          
+
           // Enable RAG Search if Pinecone is configured
           if (status.configured && status.connected) {
             setAgentCapabilities(prev => prev.map(cap => 
               cap.id === 'rag_search' 
-                ? { ...cap, enabled: false } // Start disabled but available
+                ? { ...cap, enabled: true } // Start enabled and ready
                 : cap
             ));
           }
@@ -231,7 +231,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         console.error('Failed to check Pinecone status:', error);
       }
     };
-    
+
     checkPineconeStatus();
   }, []);
 
@@ -240,11 +240,11 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
     mutationFn: async (data: { message: string; context?: any }) => {
       // Check if RAG Search is enabled
       const ragEnabled = agentCapabilities.find(cap => cap.id === 'rag_search')?.enabled;
-      
+
       if (ragEnabled && pineconeStatus.connected) {
         // Use Pinecone Assistant for RAG-enhanced responses
         console.log('[SAGE] Using Pinecone RAG for response');
-        
+
         // Build conversation history for Pinecone
         const pineconeMessages = [
           ...messages.slice(-5).map(msg => ({
@@ -253,7 +253,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
           })),
           { role: 'user' as const, content: data.message }
         ];
-        
+
         const response = await fetch('/api/pinecone/chat', {
           method: 'POST',
           headers: {
@@ -264,38 +264,22 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
             stream: false
           })
         });
-        
+
         if (!response.ok) {
           const errorData = await response.text();
           throw new Error(`Pinecone API Error: ${response.status} - ${errorData}`);
         }
-        
+
         const result = await response.json();
-        
-        // Format response with sources if available
-        let formattedContent = result.content;
-        if (result.sources && result.sources.length > 0) {
-          formattedContent += '\n\n**Sources:**\n';
-          result.sources.forEach((source: any, idx: number) => {
-            // Display file name as a clickable link if URL is available
-            const sourceText = source.text || '';
-            if (source.url) {
-              // Create a markdown link that will open in a new tab
-              formattedContent += `${idx + 1}. [**${source.title}**](${source.url})`;
-            } else {
-              formattedContent += `${idx + 1}. **${source.title}**`;
-            }
-            if (sourceText && sourceText !== 'Referenced in response') {
-              formattedContent += ` - ${sourceText}`;
-            }
-            formattedContent += '\n';
-          });
-        }
-        
-        return { 
-          content: formattedContent,
+
+        console.log(`[SAGE] Response from ${result.provider}: ${result.content?.substring(0, 100)}...`);
+
+        return {
+          content: result.content,
+          provider: result.provider,
+          model: result.model,
           sources: result.sources,
-          provider: 'pinecone'
+          timestamp: result.timestamp
         };
       } else {
         // Use regular chat endpoint
@@ -313,13 +297,23 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
             context: data.context
           })
         });
-        
+
         if (!response.ok) {
           const errorData = await response.text();
           throw new Error(`API Error: ${response.status} - ${errorData}`);
         }
-        
-        return response.json();
+
+        const result = await response.json();
+
+        console.log(`[SAGE] Response from ${result.provider}: ${result.content?.substring(0, 100)}...`);
+
+        return {
+          content: result.content,
+          provider: result.provider,
+          model: result.model,
+          sources: result.sources,
+          timestamp: result.timestamp
+        };
       }
     },
     onSuccess: (data) => {
@@ -329,7 +323,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         content: data.content || data.text || 'No response received',
         timestamp: new Date(),
         context: {
-          ragSources: [], // Will populate when RAG is active
+          ragSources: data.sources,
           n8nWorkflow: undefined, // Will populate when N8N is active
           contextUsed: getActiveCapabilities()
         }
@@ -351,19 +345,27 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
   const getSystemPrompt = () => {
     const selectedPersonaData = personas.find(p => p.id === selectedPersona);
     const basePrompt = selectedPersonaData?.description || "You are a helpful AI assistant.";
-    
+
     const capabilities = getActiveCapabilities();
     let systemAddons = "";
-    
+
     if (capabilities.includes("context_memory")) {
       systemAddons += "\n\nYou have access to conversation history and should reference previous context when relevant.";
     }
-    
+
     if (capabilities.includes("cross_module")) {
       systemAddons += "\n\nYou can learn from user interactions across different application modules to provide more personalized assistance.";
     }
 
-    return basePrompt + systemAddons;
+    // Only include system prompt if RAG is NOT enabled or Pinecone is not connected
+    const ragEnabled = agentCapabilities.find(cap => cap.id === 'rag_search')?.enabled;
+    if (!ragEnabled || !pineconeStatus.connected) {
+      return basePrompt + systemAddons;
+    } else {
+      // If RAG is enabled and Pinecone is connected, the system prompt is handled by Pinecone's configuration
+      // For now, we return an empty string to avoid overriding Pinecone's system prompt
+      return ""; 
+    }
   };
 
   const getActiveCapabilities = () => {
@@ -386,7 +388,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
 
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
-    
+
     chatMutation.mutate({ 
       message: inputMessage,
       context: {
@@ -403,14 +405,14 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         campaignContext: getPromptContext()
       }
     });
-    
+
     setInputMessage("");
   };
 
   const handleResearchRequest = (researchOption: ResearchOption) => {
     // Store the research context for enhanced responses
     setActiveResearchContext(researchOption.prompt);
-    
+
     // Show user they've activated research mode
     const contextMessage: ChatMessage = {
       id: Date.now().toString() + '_system',
@@ -424,13 +426,13 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
 
     setMessages(prev => [...prev, contextMessage]);
     setShowResearchOptions(false);
-    
+
     // Enable reasoning for research requests
     setRouterConfig((prev: PromptRouterConfig) => ({
       ...prev,
       forceReasoning: true
     }));
-    
+
     // Clear input and focus for user's project details
     setInputMessage("");
   };
@@ -450,6 +452,26 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
           : cap
       )
     );
+
+    // Special handling for RAG Search toggle
+    if (capabilityId === 'rag_search') {
+      const newEnabledState = !agentCapabilities.find(cap => cap.id === capabilityId)?.enabled;
+      if (newEnabledState && !pineconeStatus.connected) {
+        toast({
+          title: "Pinecone Not Connected",
+          description: "RAG Search requires a connected Pinecone instance. Please configure and connect it first.",
+          variant: "destructive"
+        });
+        // Revert the switch if Pinecone is not connected
+        setAgentCapabilities(prev => 
+          prev.map(cap => 
+            cap.id === capabilityId 
+              ? { ...cap, enabled: !newEnabledState }
+              : cap
+          )
+        );
+      }
+    }
   };
 
   // Session management functions
@@ -483,7 +505,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         },
         body: JSON.stringify(sessionData)
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Save session error:', errorText);
@@ -538,7 +560,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
     setMessages(loadedMessages);
     setSessionName(session.name);
     setShowLoadDialog(false);
-    
+
     toast({
       title: "Session loaded",
       description: `Loaded session "${session.name}"`
@@ -550,16 +572,16 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
       const response = await fetch(`/api/chat-sessions/${sessionId}`, {
         method: 'DELETE'
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete session');
       }
-      
+
       toast({
         title: "Session deleted",
         description: "Session has been deleted successfully"
       });
-      
+
       loadSavedSessions();
     } catch (error) {
       toast({
@@ -680,7 +702,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
 
     setIsProcessingRFP(true);
     setRfpFilename(file.name);
-    
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -695,16 +717,16 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
       }
 
       const data = await response.json();
-      
+
       // Map the responses to the expected format
       const formattedResponses = data.responses?.map((item: any) => ({
         question: item.question,
         response: item.generatedAnswer,
         sources: item.pineconeSources || []
       })) || [];
-      
+
       setRfpResponses(formattedResponses);
-      
+
       // Add a message to chat showing RFP processing complete
       const rfpMessage: ChatMessage = {
         id: Date.now().toString() + '_rfp',
@@ -712,9 +734,9 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         content: `✅ RFP Processing Complete!\n\nI've analyzed ${data.extractedQuestions?.length || 0} questions from "${file.name}" and generated comprehensive responses using our Pinecone knowledge base.\n\n**Next Steps:**\n• Review the responses in the chat\n• Download as DOCX or PDF using the buttons in the RFP panel\n• Edit and customize as needed for your submission`,
         timestamp: new Date()
       };
-      
+
       setMessages(prev => [...prev, rfpMessage]);
-      
+
       // Add each Q&A to the chat for review
       formattedResponses.forEach((item: any, index: number) => {
         const qaMessage: ChatMessage = {
@@ -725,7 +747,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
         };
         setMessages(prev => [...prev, qaMessage]);
       });
-      
+
       toast({
         title: "RFP processed successfully",
         description: `Processed ${data.responses.length} questions from ${file.name}`
@@ -926,7 +948,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
               placeholder="Name this conversation..."
             />
           </CardHeader>
-          
+
           <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
             {/* Messages Area */}
             <ScrollArea className="flex-1 px-6 max-h-full" ref={scrollAreaRef}>
@@ -1151,7 +1173,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                       const newMessage = inputMessage + text;
                       console.log('New combined message:', newMessage);
                       setInputMessage(newMessage);
-                      
+
                       // Auto-send immediately using the combined message
                       if (newMessage.trim()) {
                         console.log('Auto-sending voice message...');
@@ -1161,10 +1183,10 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                           content: newMessage,
                           timestamp: new Date()
                         };
-                        
+
                         setMessages(prev => [...prev, userMessage]);
                         setIsTyping(true);
-                        
+
                         chatMutation.mutate({ 
                           message: newMessage,
                           context: {
@@ -1175,7 +1197,7 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                             isVoiceConversation: isVoiceConversationActive
                           }
                         });
-                        
+
                         setInputMessage("");
                       }
                     }}
@@ -1217,12 +1239,49 @@ export function FreePromptTab({ model, setModel, personas, isFullScreen = false,
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="text-sm text-gray-500 text-center py-4">
-                  No saved conversations yet. Start chatting to create your first conversation.
-                </div>
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  New Conversation
+                {savedSessions.length === 0 ? (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    No saved conversations yet. Start chatting to create your first conversation.
+                  </div>
+                ) : (
+                  <ScrollArea className="h-56">
+                    <div className="space-y-2 pr-2">
+                      {savedSessions.map((session) => (
+                        <div
+                          key={session.id}
+                          className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                          onClick={() => loadSession(session)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm">{session.name}</h4>
+                              <p className="text-xs text-gray-500">
+                                {session.messages?.length || 0} messages • {new Date(session.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteSession(session.id);
+                              }}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+                <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => {
+                  setSaveSessionName(sessionName);
+                  setShowSaveDialog(true);
+                }}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Current
                 </Button>
               </CardContent>
             </Card>

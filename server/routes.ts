@@ -2375,6 +2375,47 @@ Focus on identifying the specific visual deliverables (number of images, type of
 
       console.log(`[Chat] Processing message with model preference: ${model || 'auto'}`);
 
+      // Check if Pinecone is being used via context
+      const usePinecone = context?.usePinecone || context?.ragEnabled;
+      
+      if (usePinecone) {
+        // Route to Pinecone directly without overriding system prompt
+        console.log('[Chat] Routing to Pinecone Assistant - preserving agent system prompt');
+        
+        // Build conversation history for Pinecone
+        const pineconeMessages: PineconeMessage[] = [
+          ...((context?.sessionHistory || []).slice(-5).map((msg: any) => ({
+            role: msg.role,
+            content: msg.content
+          }))),
+          { role: 'user' as const, content: message }
+        ];
+        
+        try {
+          const pineconeResponse = await chatWithPinecone(pineconeMessages);
+          
+          // Format response with sources if available
+          let formattedContent = pineconeResponse.content;
+          if (pineconeResponse.sources && pineconeResponse.sources.length > 0) {
+            formattedContent += '\n\n**Sources:**\n';
+            pineconeResponse.sources.forEach((source, idx) => {
+              formattedContent += `${idx + 1}. ${source.title || 'Document'}\n`;
+            });
+          }
+          
+          return res.json({
+            content: formattedContent,
+            sources: pineconeResponse.sources,
+            provider: 'pinecone',
+            model: 'pinecone-helper',
+            timestamp: new Date().toISOString()
+          });
+        } catch (pineconeError: any) {
+          console.error('[Chat] Pinecone routing failed:', pineconeError);
+          // Fall through to regular SAGE routing
+        }
+      }
+
       // Extract router configuration from context or use defaults
       const routerConfig: PromptRouterConfig = {
         enabled: true,
