@@ -157,9 +157,11 @@ Be thorough and professional in your response, similar to a consulting report.`;
     // Format messages for Pinecone Assistant API
     const formattedMessages = formatMessages(enhancedMessages);
     
-    // Use the Pinecone SDK chat method
+    // Use the Pinecone SDK chat method with Gemini 2.5 Pro model
+    const model = process.env.PINECONE_MODEL || 'gemini-2.5-pro';
     const chatResponse = await assistant.chat({
-      messages: formattedMessages
+      messages: formattedMessages,
+      model: model
     });
     
     console.log('[Pinecone] Raw response received:', JSON.stringify(chatResponse, null, 2));
