@@ -66,8 +66,8 @@ export function isPineconeConfigured(): boolean {
  */
 function formatMessages(messages: PineconeMessage[]): any[] {
   return messages.map(msg => ({
-    content: msg.content,
-    role: msg.role
+    role: msg.role,
+    content: msg.content
   }));
 }
 
