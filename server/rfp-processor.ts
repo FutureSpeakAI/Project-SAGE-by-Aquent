@@ -164,7 +164,7 @@ export async function processRFPDocument(req: Request, res: Response) {
 
     try {
       // Extract text from the uploaded file
-      const fileExt = path.extname(req.file.originalname).toLowerCase().substring(1);
+      const fileExt = path.extname(req.file.originalname).toLowerCase();
       const extractedText = await extractTextFromFile(req.file.buffer, fileExt);
       
       if (!extractedText || extractedText.trim().length === 0) {
