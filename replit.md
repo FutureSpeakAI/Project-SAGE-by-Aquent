@@ -40,6 +40,26 @@ Preferred communication style: Simple, everyday language.
 - **Neon Database**: Cloud-hosted PostgreSQL instance.
 - **Schema**: Supports conversations, content library, briefings, and user sessions, with a unified briefings endpoint combining chat and form-generated briefs.
 
+## Product Roadmap
+
+### RFP/RFI Response Engine (September 2025)
+**MVP Phase (Immediate)**
+- New "RFP Response" tab in main navigation
+- Upload interface for RFP documents (PDF/DOCX/TXT)
+- Automatic question/requirement extraction
+- AI-powered response generation using Pinecone RAG + Gemini
+- DOCX/PDF export of complete responses
+- Simple chat assistant for RFP guidance
+
+**Future Enhancements (Planned)**
+- RFP Response Library with categorization
+- Multi-source RAG (past responses, case studies, compliance docs)
+- Collaborative response features
+- Win/loss tracking and analytics
+- Template management system
+- Workflow orchestration (intake → analysis → generation → review → submission)
+- Integration with Content and Visual tabs for supporting materials
+
 ## External Dependencies
 
 ### AI Providers

@@ -24,6 +24,7 @@ import { VisualTab } from "@/components/Visual/VisualTab";
 import { ImageLibrary } from "@/components/Visual/ImageLibrary";
 import { FreePromptTab } from "@/components/FreePrompt/FreePromptTab";
 import CampaignPage from "@/pages/CampaignPage";
+import { RFPResponseTab } from "@/components/RFP/RFPResponseTab";
 import { DatabaseStatusAlert } from "@/components/ui/DatabaseStatus";
 import { DataMigrationDialog } from "@/components/ui/DataMigrationDialog";
 import { AppTab } from "@/App";
@@ -537,6 +538,8 @@ export default function Home() {
                 />
               ) : activeTab === AppTab.CAMPAIGN ? (
                 <CampaignPage key="campaign-tab" />
+              ) : activeTab === AppTab.RFP_RESPONSE ? (
+                <RFPResponseTab key="rfp-response-tab" />
               ) : (
                 <BriefingTab
                   key="briefing-tab"

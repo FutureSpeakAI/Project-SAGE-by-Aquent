@@ -20,7 +20,8 @@ export enum AppTab {
   BRIEFING = "briefing",
   CONTENT = "content",
   VISUAL = "visual",
-  CAMPAIGN = "campaign"
+  CAMPAIGN = "campaign",
+  RFP_RESPONSE = "rfp-response"
 }
 
 // Page transition animations
