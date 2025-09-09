@@ -2448,11 +2448,12 @@ Focus on identifying the specific visual deliverables (number of images, type of
       }
 
       // Extract router configuration from context or use defaults
-      const routerConfig: PromptRouterConfig = {
-        enabled: true,
+      const routerConfig = {
+        enabled: true as boolean,
+        userPrompt: message,
         manualProvider: context?.manualProvider,
         manualModel: model,
-        forceReasoning: context?.forceReasoning
+        forceReasoning: context?.forceReasoning || false
       };
 
       // Use prompt router for all chat requests
