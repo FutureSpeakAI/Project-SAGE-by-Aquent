@@ -2058,6 +2058,9 @@ Focus on identifying the specific visual deliverables (number of images, type of
 
   app.post("/api/campaigns", async (req: Request, res: Response) => {
     try {
+      if (!pool) {
+        return res.status(500).json({ error: "Database connection not available" });
+      }
       const result = await pool.query(`
         INSERT INTO campaigns (
           name, description, status, start_date, end_date, budget,
@@ -2191,6 +2194,9 @@ Focus on identifying the specific visual deliverables (number of images, type of
   app.get("/api/campaigns", async (_req: Request, res: Response) => {
     try {
       console.log("Fetching campaigns from database...");
+      if (!pool) {
+        return res.status(500).json({ error: "Database connection not available" });
+      }
       const result = await pool.query(`
         SELECT * FROM campaigns ORDER BY created_at DESC
       `);
@@ -2230,6 +2236,10 @@ Focus on identifying the specific visual deliverables (number of images, type of
     try {
       const campaignId = parseInt(req.params.id);
       
+      if (!pool) {
+        return res.status(500).json({ error: "Database connection not available" });
+      }
+      
       // Get campaign
       const campaignResult = await pool.query(`
         SELECT * FROM campaigns WHERE id = $1
@@ -2262,6 +2272,9 @@ Focus on identifying the specific visual deliverables (number of images, type of
       
       // Get briefings associated with this campaign
       let briefings = [];
+      if (!pool) {
+        return res.status(500).json({ error: "Database connection not available" });
+      }
       const briefingResult = await pool.query(`
         SELECT * FROM generated_contents 
         WHERE content_type = 'briefing' 
@@ -2273,6 +2286,9 @@ Focus on identifying the specific visual deliverables (number of images, type of
       // Get linked content
       let content = [];
       if (campaign.linkedContent && campaign.linkedContent.length > 0) {
+        if (!pool) {
+          return res.status(500).json({ error: "Database connection not available" });
+        }
         const contentResult = await pool.query(`
           SELECT * FROM generated_contents WHERE id = ANY($1)
         `, [campaign.linkedContent]);
@@ -2282,6 +2298,9 @@ Focus on identifying the specific visual deliverables (number of images, type of
       // Get linked projects
       let projects = [];
       if (campaign.linkedProjects && campaign.linkedProjects.length > 0) {
+        if (!pool) {
+          return res.status(500).json({ error: "Database connection not available" });
+        }
         const projectsResult = await pool.query(`
           SELECT * FROM image_projects WHERE id = ANY($1)
         `, [campaign.linkedProjects]);
