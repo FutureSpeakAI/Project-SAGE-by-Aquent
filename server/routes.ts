@@ -1429,7 +1429,7 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
       // Convert brief conversations to unified format
       const unifiedConversations = briefConversations.map(conv => {
         // Extract content from messages if content field doesn't exist
-        let content = conv.content;
+        let content = (conv as any).content;
         if (!content && conv.messages && Array.isArray(conv.messages)) {
           // Combine all assistant messages as the briefing content
           const assistantMessages = conv.messages
@@ -1461,9 +1461,9 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
           createdAt: conv.createdAt || new Date().toISOString(),
           updatedAt: conv.updatedAt || new Date().toISOString(),
           metadata: {
-            analysisType: conv.analysisType,
-            projectType: conv.projectType,
-            deliverables: conv.deliverables,
+            analysisType: (conv as any).analysisType,
+            projectType: (conv as any).projectType,
+            deliverables: (conv as any).deliverables,
             messageCount: conv.messages?.length || 0
           }
         };
