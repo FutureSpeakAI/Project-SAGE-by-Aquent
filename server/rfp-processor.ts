@@ -182,8 +182,12 @@ export async function processRFPDocument(req: Request, res: Response) {
       }
 
       // Process each question
+      console.log(`[RFP] Processing ${questions.length} questions from ${req.file.originalname}`);
       const responses = [];
-      for (const question of questions) {
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i];
+        console.log(`[RFP] Processing question ${i + 1}/${questions.length}: ${question.substring(0, 50)}...`);
+        
         // Search Pinecone for relevant content
         const sources = await searchPineconeForQuestion(question);
         
@@ -196,9 +200,13 @@ export async function processRFPDocument(req: Request, res: Response) {
           generatedAnswer: answer
         });
         
+        console.log(`[RFP] Completed question ${i + 1}/${questions.length}`);
+        
         // Add a small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500));
       }
+      
+      console.log(`[RFP] All questions processed. Sending response...`);
 
       // Prepare the response
       const rfpResponse: RFPResponse = {

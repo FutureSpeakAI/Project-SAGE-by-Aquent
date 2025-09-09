@@ -93,17 +93,26 @@ export function RFPResponseTab() {
     formData.append('file', selectedFile);
 
     try {
+      console.log('Starting RFP processing for file:', selectedFile.name);
+      
+      // Note: This may take several minutes for documents with many questions
       const response = await fetch('/api/rfp/process', {
         method: 'POST',
         body: formData,
+        // No timeout - let it complete
       });
+
+      console.log('Response received:', response.status, response.statusText);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response:', errorData);
         throw new Error(errorData.error || 'Failed to process RFP');
       }
 
       const data = await response.json();
+      console.log('RFP Response data:', data);
+      
       setRfpResponse(data);
       
       toast({
@@ -111,6 +120,7 @@ export function RFPResponseTab() {
         description: `Extracted ${data.extractedQuestions.length} questions and generated responses.`,
       });
     } catch (err) {
+      console.error('RFP processing error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to process RFP';
       setError(errorMessage);
       toast({
@@ -300,7 +310,7 @@ export function RFPResponseTab() {
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing RFP...
+                  Processing RFP... This may take 1-2 minutes
                 </>
               ) : (
                 <>
