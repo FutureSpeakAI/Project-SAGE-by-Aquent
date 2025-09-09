@@ -1182,10 +1182,10 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
             const responseData = {
               success: true,
-              images: editResponse.data.map(img => ({
+              images: editResponse.data?.map(img => ({
                 url: img.url || `data:image/png;base64,${img.b64_json}`,
                 revised_prompt: img.revised_prompt || prompt
-              })),
+              })) || [],
               method: `${model}_inpaint`
             };
             
@@ -1229,10 +1229,10 @@ FOCUS: Create ALL requested deliverables. For multiple items, number them clearl
 
             const responseData = {
               success: true,
-              images: editResponse.data.map(img => ({
+              images: editResponse.data?.map(img => ({
                 url: img.url || `data:image/png;base64,${img.b64_json}`,
                 revised_prompt: img.revised_prompt || prompt
-              })),
+              })) || [],
               method: `${model}_edit`
             };
             
