@@ -128,7 +128,7 @@ export function RFPResponseTab() {
     if (!rfpResponse) return;
 
     try {
-      const response = await fetch('/api/rfp/download/docx', {
+      const response = await fetch('/api/rfp/generate-docx', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ export function RFPResponseTab() {
     if (!rfpResponse) return;
 
     try {
-      const response = await fetch('/api/rfp/download/pdf', {
+      const response = await fetch('/api/rfp/generate-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
