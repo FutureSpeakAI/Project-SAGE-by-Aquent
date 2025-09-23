@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { extractTextFromFile } from './brief-processing';
 import { chatWithPinecone } from './services/pinecone';
-import { generateContent } from './gemini';
+// Removed Gemini import - using only Pinecone responses
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 
@@ -93,13 +93,12 @@ function extractQuestions(text: string): string[] {
   return uniqueQuestions;
 }
 
-// Search Pinecone for relevant content
-async function searchPineconeForQuestion(question: string): Promise<{ sources: string[], error?: string }> {
+// Get response from Pinecone for a question
+async function getPineconeResponse(question: string): Promise<{ content: string, sources: string[], error?: string }> {
   try {
-    // Use Pinecone Assistant to search for relevant content
-    const searchQuery = `Find relevant information for: ${question}`;
+    // Use Pinecone Assistant to get response
     const response = await chatWithPinecone([
-      { role: 'user', content: searchQuery }
+      { role: 'user', content: question }
     ]);
     
     // Extract sources from the response
@@ -112,62 +111,27 @@ async function searchPineconeForQuestion(question: string): Promise<{ sources: s
       });
     }
     
-    return { sources };
-  } catch (error) {
-    console.error('Pinecone search error:', error);
-    // Return empty sources with error flag
+    // Return Pinecone's actual content - DO NOT MODIFY
     return { 
+      content: response.content || 'No response from Pinecone',
+      sources 
+    };
+  } catch (error) {
+    console.error('Pinecone error:', error);
+    // Return error response
+    return { 
+      content: 'Unable to retrieve response from knowledge base',
       sources: [], 
-      error: error instanceof Error ? error.message : 'Pinecone search failed' 
+      error: error instanceof Error ? error.message : 'Pinecone failed' 
     };
   }
 }
 
-// Generate response for a question using matched content
-async function generateResponseForQuestion(
-  question: string, 
-  sources: string[],
-  useFallback: boolean = false
-): Promise<string> {
-  try {
-    const systemPrompt = `You are an expert proposal writer for Aquent, a leading creative and marketing staffing company. 
-Generate a professional, comprehensive response to the following RFP/RFI question.
-${useFallback ? 'Note: Knowledge base search was unavailable for this question, so provide a general but professional response based on Aquent\'s typical capabilities.' : 'Use the provided source documents as reference, but ensure the response is coherent and well-structured.'}
-Maintain Aquent's professional voice and highlight relevant capabilities.`;
-
-    const userPrompt = useFallback 
-      ? `Question: ${question}
-
-Since the knowledge base is temporarily unavailable, please generate a professional response that:
-1. Directly addresses the question
-2. Highlights typical staffing and creative agency capabilities
-3. Mentions common industry best practices
-4. Maintains a confident, professional tone
-5. Is structured and easy to read
-6. Notes that specific details can be provided upon request`
-      : `Question: ${question}
-
-Available source references: ${sources.length > 0 ? sources.join(', ') : 'General Aquent knowledge base'}
-
-Generate a detailed, professional response that:
-1. Directly addresses the question
-2. Highlights Aquent's relevant experience and capabilities
-3. Provides specific examples where applicable
-4. Maintains a confident, professional tone
-5. Is structured and easy to read`;
-
-    const response = await generateContent({
-      model: 'gemini-2.0-flash',
-      prompt: userPrompt,
-      systemPrompt: systemPrompt,
-      temperature: 0.7
-    });
-    
-    return response;
-  } catch (error) {
-    console.error('Response generation error:', error);
-    return `[Error generating response for: ${question}]`;
-  }
+// This function is no longer needed - we use Pinecone's response directly
+// Keeping stub for backward compatibility if needed
+function formatPineconeResponse(content: string, sources: string[]): string {
+  // Simply return Pinecone's content as-is - DO NOT MODIFY
+  return content;
 }
 
 // Process uploaded RFP document
@@ -204,38 +168,30 @@ export async function processRFPDocument(req: Request, res: Response) {
         console.log(`[RFP] Processing question ${i + 1}/${questions.length}: ${question.substring(0, 50)}...`);
         
         try {
-          // Search Pinecone for relevant content
-          const pineconeResult = await searchPineconeForQuestion(question);
+          // Get response from Pinecone - using ONLY Pinecone's output
+          const pineconeResult = await getPineconeResponse(question);
           
-          // Check if Pinecone failed and use fallback if needed
-          const useFallback = pineconeResult.error !== undefined;
-          if (useFallback) {
-            console.log(`[RFP] Pinecone unavailable for question ${i + 1}, using Gemini fallback`);
+          if (pineconeResult.error) {
+            console.log(`[RFP] Pinecone error for question ${i + 1}: ${pineconeResult.error}`);
           }
           
-          // Generate response (with fallback if Pinecone failed)
-          const answer = await generateResponseForQuestion(
-            question, 
-            pineconeResult.sources, 
-            useFallback
-          );
-          
+          // Use Pinecone's response directly - DO NOT MODIFY OR REGENERATE
           responses.push({
             question,
             pineconeSources: pineconeResult.sources,
-            generatedAnswer: answer,
-            usedFallback: useFallback
+            generatedAnswer: pineconeResult.content, // Use Pinecone's actual content
+            pineconeError: pineconeResult.error
           });
           
           console.log(`[RFP] Completed question ${i + 1}/${questions.length}`);
         } catch (error) {
           console.error(`[RFP] Failed to process question ${i + 1}: ${error}`);
-          // Add a basic response even if processing failed
+          // Add error response
           responses.push({
             question,
             pineconeSources: [],
-            generatedAnswer: `[Unable to generate response for this question. Please contact support.]`,
-            usedFallback: true
+            generatedAnswer: `Error retrieving response from knowledge base.`,
+            pineconeError: error instanceof Error ? error.message : 'Unknown error'
           });
         }
         
