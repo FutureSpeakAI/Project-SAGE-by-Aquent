@@ -4,9 +4,9 @@
  * Tests the complete RFP processing workflow
  */
 
-const fs = require('fs');
-const path = require('path');
-const FormData = require('form-data');
+import fs from 'fs';
+import path from 'path';
+import FormData from 'form-data';
 
 // Configuration
 const BASE_URL = process.env.API_URL || 'http://localhost:5000';
