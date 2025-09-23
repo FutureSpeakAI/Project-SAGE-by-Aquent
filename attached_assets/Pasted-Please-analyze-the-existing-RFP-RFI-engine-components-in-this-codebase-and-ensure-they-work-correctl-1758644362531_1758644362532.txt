@@ -1,0 +1,55 @@
+Please analyze the existing RFP/RFI engine components in this codebase and ensure they work correctly end-to-end. Based on the chat history, the system is "production-ready" but hasn't been tested yet.
+
+Your tasks:
+
+Component Analysis: Examine these key files:
+
+server/rfp-processor.ts - Main processing logic
+client/src/components/RFP/RFPResponseTab.tsx - Dedicated UI
+client/src/components/FreePrompt/FreePromptTab.tsx - Integrated RFP widget
+server/routes.ts - API endpoints (/api/rfp/process, /api/rfp/generate-docx, /api/rfp/generate-pdf)
+test-rfp-system.js - Test suite
+Test Execution: Run the existing test suite:
+
+node test-rfp-system.js
+Analyze any failures and document what's working vs. broken.
+
+End-to-End Validation: Test the complete workflow:
+
+Upload PDF/DOCX/TXT files through the UI
+Question extraction from documents
+AI response generation using Pinecone + Gemini
+DOCX and PDF export functionality
+Error handling and user feedback
+Integration Testing: Verify:
+
+Pinecone knowledge base integration for responses
+File format support (PDF, DOCX, TXT)
+Document generation (both DOCX and PDF)
+UI responsiveness and progress indicators
+Error states and user messaging
+Fix Issues: Address any problems found:
+
+File upload/processing errors
+Question extraction accuracy
+AI response quality and formatting
+Export document generation
+UI/UX issues or broken functionality
+Performance Testing: Ensure:
+
+Large document handling (up to 20MB)
+Multiple question processing efficiency
+Reasonable response times
+Proper timeout handling
+Expected Deliverables:
+
+Status report of current functionality
+List of bugs/issues found and fixed
+Verification that all three main features work:
+Document upload and question extraction
+AI-powered response generation
+Professional document export (DOCX/PDF)
+Confirmation that both UI interfaces (dedicated tab + integrated widget) function properly
+Testing Data: Use the existing test-rfp.txt file or create realistic RFP scenarios to validate the system thoroughly.
+
+Focus on making this a working, production-ready feature that users can rely on for actual RFP/RFI response generation.
