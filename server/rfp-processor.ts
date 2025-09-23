@@ -94,7 +94,7 @@ function extractQuestions(text: string): string[] {
 }
 
 // Search Pinecone for relevant content
-async function searchPineconeForQuestion(question: string): Promise<string[]> {
+async function searchPineconeForQuestion(question: string): Promise<{ sources: string[], error?: string }> {
   try {
     // Use Pinecone Assistant to search for relevant content
     const searchQuery = `Find relevant information for: ${question}`;
@@ -112,27 +112,42 @@ async function searchPineconeForQuestion(question: string): Promise<string[]> {
       });
     }
     
-    return sources;
+    return { sources };
   } catch (error) {
     console.error('Pinecone search error:', error);
-    return [];
+    // Return empty sources with error flag
+    return { 
+      sources: [], 
+      error: error instanceof Error ? error.message : 'Pinecone search failed' 
+    };
   }
 }
 
 // Generate response for a question using matched content
 async function generateResponseForQuestion(
   question: string, 
-  sources: string[]
+  sources: string[],
+  useFallback: boolean = false
 ): Promise<string> {
   try {
-    const systemPrompt = `You are an expert proposal writer for Aquent. 
+    const systemPrompt = `You are an expert proposal writer for Aquent, a leading creative and marketing staffing company. 
 Generate a professional, comprehensive response to the following RFP/RFI question.
-Use the provided source documents as reference, but ensure the response is coherent and well-structured.
+${useFallback ? 'Note: Knowledge base search was unavailable for this question, so provide a general but professional response based on Aquent\'s typical capabilities.' : 'Use the provided source documents as reference, but ensure the response is coherent and well-structured.'}
 Maintain Aquent's professional voice and highlight relevant capabilities.`;
 
-    const userPrompt = `Question: ${question}
+    const userPrompt = useFallback 
+      ? `Question: ${question}
 
-Available source references: ${sources.join(', ')}
+Since the knowledge base is temporarily unavailable, please generate a professional response that:
+1. Directly addresses the question
+2. Highlights typical staffing and creative agency capabilities
+3. Mentions common industry best practices
+4. Maintains a confident, professional tone
+5. Is structured and easy to read
+6. Notes that specific details can be provided upon request`
+      : `Question: ${question}
+
+Available source references: ${sources.length > 0 ? sources.join(', ') : 'General Aquent knowledge base'}
 
 Generate a detailed, professional response that:
 1. Directly addresses the question
@@ -188,19 +203,41 @@ export async function processRFPDocument(req: Request, res: Response) {
         const question = questions[i];
         console.log(`[RFP] Processing question ${i + 1}/${questions.length}: ${question.substring(0, 50)}...`);
         
-        // Search Pinecone for relevant content
-        const sources = await searchPineconeForQuestion(question);
-        
-        // Generate response
-        const answer = await generateResponseForQuestion(question, sources);
-        
-        responses.push({
-          question,
-          pineconeSources: sources,
-          generatedAnswer: answer
-        });
-        
-        console.log(`[RFP] Completed question ${i + 1}/${questions.length}`);
+        try {
+          // Search Pinecone for relevant content
+          const pineconeResult = await searchPineconeForQuestion(question);
+          
+          // Check if Pinecone failed and use fallback if needed
+          const useFallback = pineconeResult.error !== undefined;
+          if (useFallback) {
+            console.log(`[RFP] Pinecone unavailable for question ${i + 1}, using Gemini fallback`);
+          }
+          
+          // Generate response (with fallback if Pinecone failed)
+          const answer = await generateResponseForQuestion(
+            question, 
+            pineconeResult.sources, 
+            useFallback
+          );
+          
+          responses.push({
+            question,
+            pineconeSources: pineconeResult.sources,
+            generatedAnswer: answer,
+            usedFallback: useFallback
+          });
+          
+          console.log(`[RFP] Completed question ${i + 1}/${questions.length}`);
+        } catch (error) {
+          console.error(`[RFP] Failed to process question ${i + 1}: ${error}`);
+          // Add a basic response even if processing failed
+          responses.push({
+            question,
+            pineconeSources: [],
+            generatedAnswer: `[Unable to generate response for this question. Please contact support.]`,
+            usedFallback: true
+          });
+        }
         
         // Add a small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500));
