@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { extractTextFromFile } from './brief-processing';
-import { chatWithPinecone } from './services/pinecone';
+import { chatWithPinecone, chatWithPineconeRaw } from './services/pinecone';
 // Removed Gemini import - using only Pinecone responses
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
@@ -103,26 +103,36 @@ ${questions.map((q, i) => `QUESTION ${i + 1}: ${q}`).join('\n\n')}
 
 Please structure your response with clear sections for each question, using "ANSWER TO QUESTION X:" as headers.`;
     
-    console.log(`[Pinecone] Sending batch request with ${questions.length} questions`);
+    console.log(`[RFP] Sending batch request with ${questions.length} questions`);
     
-    // Send all questions to Pinecone in a single request
-    const response = await chatWithPinecone([
+    // Use the RAW Pinecone function to get exact response without processing
+    const rawResponse = await chatWithPineconeRaw([
       { role: 'user', content: batchPrompt }
     ]);
     
-    // Extract sources from the response
+    console.log(`[RFP] Received raw Pinecone response`);
+    
+    // Extract the raw content directly from Pinecone's response
+    // This is the EXACT content without any modification
+    const content = rawResponse.message?.content || 'No response from Pinecone';
+    
+    // Extract sources if available (for backward compatibility)
     const sources: string[] = [];
-    if (response.sources) {
-      response.sources.forEach((source: any) => {
-        if (source.title) {
-          sources.push(source.title);
+    if (rawResponse.citations) {
+      rawResponse.citations.forEach((citation: any) => {
+        if (citation.references) {
+          citation.references.forEach((ref: any) => {
+            if (ref.file?.name) {
+              sources.push(ref.file.name);
+            }
+          });
         }
       });
     }
     
-    // Return Pinecone's actual content - DO NOT MODIFY
+    // Return the EXACT content from Pinecone without any processing
     return { 
-      content: response.content || 'No response from Pinecone',
+      content,
       sources 
     };
   } catch (error) {

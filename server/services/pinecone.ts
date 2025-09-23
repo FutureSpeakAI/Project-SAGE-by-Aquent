@@ -421,6 +421,40 @@ Please provide a comprehensive response with relevant citations from the knowled
 }
 
 /**
+ * Chat with Pinecone Assistant - Raw version for RFP processing
+ * Returns the exact response from Pinecone without any citation processing
+ */
+export async function chatWithPineconeRaw(
+  messages: PineconeMessage[]
+): Promise<any> {
+  try {
+    if (!isInitialized || !assistant) {
+      throw new Error('Pinecone not initialized');
+    }
+
+    console.log('[Pinecone RAW] Sending chat request with', messages.length, 'messages');
+    
+    // Format messages for Pinecone Assistant API
+    const formattedMessages = formatMessages(messages);
+    
+    // Use the Pinecone SDK chat method
+    const model = process.env.PINECONE_MODEL || 'gemini-2.5-pro';
+    const chatResponse = await assistant.chat({
+      messages: formattedMessages,
+      model: model
+    });
+    
+    console.log('[Pinecone RAW] Received response');
+    
+    // Return the EXACT raw response without any processing
+    return chatResponse;
+  } catch (error) {
+    console.error('[Pinecone RAW] Chat error:', error);
+    throw error;
+  }
+}
+
+/**
  * Upload a file to Pinecone Assistant
  * Note: File upload may require a different API endpoint or SDK
  */
