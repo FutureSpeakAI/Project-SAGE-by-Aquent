@@ -40,16 +40,38 @@ export interface RFPResponse {
 // Extract questions from text
 function extractQuestions(text: string): string[] {
   const questions: string[] = [];
-  const lines = text.split('\n');
+  
+  // First, clean up excessive spacing in the text
+  // This handles cases where every character is separated by spaces
+  let cleanedText = text;
+  
+  // Check if text has excessive spacing (more than 40% spaces between letters)
+  const letterSpacePattern = /([a-zA-Z])\s+([a-zA-Z])/g;
+  const matches = cleanedText.match(letterSpacePattern);
+  if (matches && matches.length > 10) {
+    // Remove spaces between individual letters within words
+    cleanedText = cleanedText.replace(/\b([A-Z])\s+([a-z])\s+/g, '$1$2');
+    cleanedText = cleanedText.replace(/([a-zA-Z])\s+([a-zA-Z])/g, (match, p1, p2) => {
+      // Keep space only if it looks like a word boundary
+      if (p1.match(/[a-z]/) && p2.match(/[A-Z]/)) {
+        return p1 + ' ' + p2; // Likely word boundary
+      }
+      return p1 + p2; // Same word, remove space
+    });
+    // Clean up remaining excessive spaces
+    cleanedText = cleanedText.replace(/\s{2,}/g, ' ').trim();
+  }
+  
+  const lines = cleanedText.split('\n');
   
   // Pattern 1: Direct questions (ending with ?)
-  const directQuestions = text.match(/[^.!?]*\?/g) || [];
+  const directQuestions = cleanedText.match(/[^.!?]*\?/g) || [];
   questions.push(...directQuestions.map(q => q.trim()));
   
   // Pattern 2: Numbered items that look like requirements
   const numberedPattern = /^\s*\d+[\.)]\s*(.+)$/gm;
   let match;
-  while ((match = numberedPattern.exec(text)) !== null) {
+  while ((match = numberedPattern.exec(cleanedText)) !== null) {
     const item = match[1].trim();
     // Check if it looks like a requirement or question
     if (item.length > 20 && (
@@ -71,7 +93,7 @@ function extractQuestions(text: string): string[] {
   
   // Pattern 3: Bullet points with requirement keywords
   const bulletPattern = /^\s*[•·\-\*]\s*(.+)$/gm;
-  while ((match = bulletPattern.exec(text)) !== null) {
+  while ((match = bulletPattern.exec(cleanedText)) !== null) {
     const item = match[1].trim();
     if (item.length > 20 && (
       item.toLowerCase().includes('experience') ||
@@ -188,7 +210,7 @@ export async function processRFPDocument(req: Request, res: Response) {
         
         // Split the response by question headers
         const answerPattern = /ANSWER TO QUESTION (\d+):\s*([\s\S]*?)(?=ANSWER TO QUESTION \d+:|$)/gi;
-        const matches = [...fullContent.matchAll(answerPattern)];
+        const matches = Array.from(fullContent.matchAll(answerPattern));
         
         if (matches.length > 0) {
           // We found structured answers
@@ -276,34 +298,112 @@ export async function generateDocxFromResponses(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid responses data' });
     }
 
-    // For now, generate a rich text format (RTF) document as an alternative
-    // (Proper DOCX generation would require a valid DOCX template file)
-    let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}';
-    rtfContent += '\\f0\\fs24 ';
-    rtfContent += '{\\b\\fs32 AQUENT RFP RESPONSE}\\par\\par\n';
-    rtfContent += 'Original Document: ' + (uploadedFile || 'Unknown') + '\\par\n';
-    rtfContent += 'Generated: ' + new Date().toLocaleDateString() + '\\par\n';
-    rtfContent += '\\par\\line\\par\n';
+    // Create a simple DOCX template programmatically
+    const templateContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:pPr><w:jc w:val="center"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="44"/></w:rPr><w:t>AQUENT RFP RESPONSE</w:t></w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p>
+      <w:r><w:rPr><w:b/></w:rPr><w:t>Original Document: </w:t></w:r>
+      <w:r><w:t>{uploadedFile}</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:rPr><w:b/></w:rPr><w:t>Generated: </w:t></w:r>
+      <w:r><w:t>{generatedDate}</w:t></w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    {#questions}
+    <w:p>
+      <w:r><w:rPr><w:b/><w:sz w:val="28"/></w:rPr><w:t>QUESTION {questionNumber}:</w:t></w:r>
+    </w:p>
+    <w:p><w:r><w:t>{question}</w:t></w:r></w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p>
+      <w:r><w:rPr><w:b/><w:sz w:val="28"/></w:rPr><w:t>RESPONSE:</w:t></w:r>
+    </w:p>
+    <w:p><w:r><w:t>{answer}</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:i/><w:sz w:val="20"/></w:rPr><w:t>Sources: {sources}</w:t></w:r></w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    {/questions}
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p>
+      <w:pPr><w:jc w:val="center"/></w:pPr>
+      <w:r><w:rPr><w:i/><w:sz w:val="20"/></w:rPr>
+        <w:t>This response was generated using Aquent's knowledge base and AI assistance.</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:pPr><w:jc w:val="center"/></w:pPr>
+      <w:r><w:rPr><w:i/><w:sz w:val="20"/></w:rPr>
+        <w:t>Please review and customize before submission.</w:t>
+      </w:r>
+    </w:p>
+  </w:body>
+</w:document>`;
+
+    // Create minimal DOCX file structure
+    const zip = new PizZip();
     
-    // Add each response
-    responses.forEach((r: any, index: number) => {
-      rtfContent += '{\\b QUESTION ' + (index + 1) + ':}\\par\n';
-      rtfContent += r.question + '\\par\\par\n';
-      rtfContent += '{\\b RESPONSE:}\\par\n';
-      rtfContent += r.generatedAnswer + '\\par\\par\n';
-      rtfContent += '{\\i Sources: ' + (r.pineconeSources?.join(', ') || 'General knowledge') + '}\\par\n';
-      rtfContent += '\\line\\par\n';
+    // Add required DOCX structure
+    zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+    
+    zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+    
+    zip.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+</Relationships>`);
+    
+    zip.file('word/document.xml', templateContent);
+    
+    // Initialize docxtemplater with the zip
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      parser: (tag: string) => {
+        return {
+          get: (scope: any) => {
+            if (tag === 'uploadedFile') return uploadedFile || 'Unknown';
+            if (tag === 'generatedDate') return new Date().toLocaleDateString();
+            return scope[tag];
+          }
+        };
+      }
     });
     
-    rtfContent += '\\par\n';
-    rtfContent += '{\\i This response was generated using Aquent\\\'s knowledge base and AI assistance.\\par\n';
-    rtfContent += 'Please review and customize before submission.}\\par\n';
-    rtfContent += '}';
-
-    // Send as RTF file (which can be opened in Word)
-    res.setHeader('Content-Type', 'application/rtf');
-    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.rtf"`);
-    res.send(rtfContent);
+    // Prepare data for template
+    const data = {
+      uploadedFile: uploadedFile || 'Unknown',
+      generatedDate: new Date().toLocaleDateString(),
+      questions: responses.map((r: any, index: number) => ({
+        questionNumber: index + 1,
+        question: r.question || '',
+        answer: r.generatedAnswer || '',
+        sources: r.pineconeSources?.join(', ') || 'General knowledge'
+      }))
+    };
+    
+    // Render the document
+    doc.render(data);
+    
+    // Generate the DOCX buffer
+    const docxBuffer = doc.getZip().generate({ type: 'nodebuffer' });
+    
+    // Send the DOCX file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.docx"`);
+    res.send(docxBuffer);
     
   } catch (error) {
     console.error('DOCX generation error:', error);
@@ -323,31 +423,130 @@ export async function generatePdfFromResponses(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid responses data' });
     }
 
-    // For now, generate a simple text-based PDF alternative
-    // (Proper PDF generation would require fixing the pdfmake import issues)
-    let textContent = 'AQUENT RFP RESPONSE\n';
-    textContent += '===================\n\n';
-    textContent += `Original Document: ${uploadedFile || 'Unknown'}\n`;
-    textContent += `Generated: ${new Date().toLocaleDateString()}\n`;
-    textContent += '\n----------------------------------------\n\n';
+    // Use pdfmake to generate a proper PDF
+    const PdfPrinter = require('pdfmake');
+    const fonts = {
+      Roboto: {
+        normal: Buffer.from(''),
+        bold: Buffer.from(''),
+        italics: Buffer.from(''),
+        bolditalics: Buffer.from('')
+      }
+    };
+    
+    const printer = new PdfPrinter(fonts);
+    
+    // Build document content
+    const content: any[] = [
+      {
+        text: 'AQUENT RFP RESPONSE',
+        style: 'header',
+        alignment: 'center'
+      },
+      {
+        text: '\n'
+      },
+      {
+        text: [
+          { text: 'Original Document: ', bold: true },
+          { text: uploadedFile || 'Unknown' }
+        ]
+      },
+      {
+        text: [
+          { text: 'Generated: ', bold: true },
+          { text: new Date().toLocaleDateString() }
+        ]
+      },
+      {
+        text: '\n\n'
+      }
+    ];
     
     // Add each response
     responses.forEach((r: any, index: number) => {
-      textContent += `QUESTION ${index + 1}:\n`;
-      textContent += `${r.question}\n\n`;
-      textContent += `RESPONSE:\n`;
-      textContent += `${r.generatedAnswer}\n\n`;
-      textContent += `Sources: ${r.pineconeSources?.join(', ') || 'General knowledge'}\n`;
-      textContent += '\n----------------------------------------\n\n';
+      content.push({
+        text: `QUESTION ${index + 1}:`,
+        style: 'subheader',
+        margin: [0, 10, 0, 5]
+      });
+      content.push({
+        text: r.question,
+        margin: [0, 0, 0, 10]
+      });
+      content.push({
+        text: 'RESPONSE:',
+        style: 'subheader',
+        margin: [0, 5, 0, 5]
+      });
+      content.push({
+        text: r.generatedAnswer,
+        margin: [0, 0, 0, 10]
+      });
+      if (r.pineconeSources && r.pineconeSources.length > 0) {
+        content.push({
+          text: [
+            { text: 'Sources: ', italics: true },
+            { text: r.pineconeSources.join(', '), italics: true }
+          ],
+          fontSize: 10,
+          color: '#666',
+          margin: [0, 0, 0, 15]
+        });
+      }
+      content.push({
+        canvas: [
+          {
+            type: 'line',
+            x1: 0, y1: 0,
+            x2: 515, y2: 0,
+            lineWidth: 0.5,
+            lineColor: '#cccccc'
+          }
+        ],
+        margin: [0, 10, 0, 10]
+      });
     });
     
-    textContent += '\nThis response was generated using Aquent\'s knowledge base and AI assistance.\n';
-    textContent += 'Please review and customize before submission.\n';
-
-    // Send as plain text file (PDF generation needs to be fixed separately)
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.txt"`);
-    res.send(textContent);
+    content.push({
+      text: '\n\nThis response was generated using Aquent\'s knowledge base and AI assistance.\nPlease review and customize before submission.',
+      italics: true,
+      fontSize: 10,
+      color: '#666',
+      alignment: 'center'
+    });
+    
+    const docDefinition = {
+      content: content,
+      styles: {
+        header: {
+          fontSize: 22,
+          bold: true,
+          margin: [0, 0, 0, 10]
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true
+        }
+      },
+      defaultStyle: {
+        fontSize: 12,
+        lineHeight: 1.5
+      }
+    };
+    
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    const chunks: Buffer[] = [];
+    
+    pdfDoc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    pdfDoc.on('end', () => {
+      const pdfBuffer = Buffer.concat(chunks);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.pdf"`);
+      res.send(pdfBuffer);
+    });
+    
+    pdfDoc.end();
     
   } catch (error) {
     console.error('PDF generation error:', error);
