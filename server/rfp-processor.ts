@@ -93,12 +93,21 @@ function extractQuestions(text: string): string[] {
   return uniqueQuestions;
 }
 
-// Get response from Pinecone for a question
-async function getPineconeResponse(question: string): Promise<{ content: string, sources: string[], error?: string }> {
+// Get responses from Pinecone for all questions in a single query
+async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: string[], error?: string }> {
   try {
-    // Use Pinecone Assistant to get response
+    // Format all questions into a single comprehensive prompt
+    const batchPrompt = `Please provide comprehensive responses to the following RFP/RFI questions. For each question, provide a detailed answer based on the knowledge base.
+
+${questions.map((q, i) => `QUESTION ${i + 1}: ${q}`).join('\n\n')}
+
+Please structure your response with clear sections for each question, using "ANSWER TO QUESTION X:" as headers.`;
+    
+    console.log(`[Pinecone] Sending batch request with ${questions.length} questions`);
+    
+    // Send all questions to Pinecone in a single request
     const response = await chatWithPinecone([
-      { role: 'user', content: question }
+      { role: 'user', content: batchPrompt }
     ]);
     
     // Extract sources from the response
@@ -117,10 +126,10 @@ async function getPineconeResponse(question: string): Promise<{ content: string,
       sources 
     };
   } catch (error) {
-    console.error('Pinecone error:', error);
+    console.error('Pinecone batch error:', error);
     // Return error response
     return { 
-      content: 'Unable to retrieve response from knowledge base',
+      content: 'Unable to retrieve responses from knowledge base',
       sources: [], 
       error: error instanceof Error ? error.message : 'Pinecone failed' 
     };
@@ -160,46 +169,78 @@ export async function processRFPDocument(req: Request, res: Response) {
         });
       }
 
-      // Process each question
-      console.log(`[RFP] Processing ${questions.length} questions from ${req.file.originalname}`);
-      const responses = [];
-      for (let i = 0; i < questions.length; i++) {
-        const question = questions[i];
-        console.log(`[RFP] Processing question ${i + 1}/${questions.length}: ${question.substring(0, 50)}...`);
+      // Process all questions in a single batch
+      console.log(`[RFP] Processing ${questions.length} questions from ${req.file.originalname} in a single batch`);
+      
+      let responses = [];
+      
+      try {
+        // Send ALL questions to Pinecone in a single query for speed
+        const pineconeResult = await getPineconeBatchResponse(questions);
         
-        try {
-          // Get response from Pinecone - using ONLY Pinecone's output
-          const pineconeResult = await getPineconeResponse(question);
-          
-          if (pineconeResult.error) {
-            console.log(`[RFP] Pinecone error for question ${i + 1}: ${pineconeResult.error}`);
+        if (pineconeResult.error) {
+          console.log(`[RFP] Pinecone batch error: ${pineconeResult.error}`);
+        }
+        
+        // Parse the batch response to extract individual answers
+        const fullContent = pineconeResult.content;
+        const allSources = pineconeResult.sources;
+        
+        // Split the response by question headers
+        const answerPattern = /ANSWER TO QUESTION (\d+):\s*([\s\S]*?)(?=ANSWER TO QUESTION \d+:|$)/gi;
+        const matches = [...fullContent.matchAll(answerPattern)];
+        
+        if (matches.length > 0) {
+          // We found structured answers
+          for (let i = 0; i < questions.length; i++) {
+            const match = matches.find(m => parseInt(m[1]) === i + 1);
+            if (match) {
+              responses.push({
+                question: questions[i],
+                pineconeSources: allSources,
+                generatedAnswer: match[2].trim()
+              });
+            } else {
+              // No match found for this question number
+              responses.push({
+                question: questions[i],
+                pineconeSources: allSources,
+                generatedAnswer: `Answer not found in batch response for question ${i + 1}`
+              });
+            }
           }
-          
-          // Use Pinecone's response directly - DO NOT MODIFY OR REGENERATE
-          responses.push({
-            question,
-            pineconeSources: pineconeResult.sources,
-            generatedAnswer: pineconeResult.content, // Use Pinecone's actual content
-            pineconeError: pineconeResult.error
-          });
-          
-          console.log(`[RFP] Completed question ${i + 1}/${questions.length}`);
-        } catch (error) {
-          console.error(`[RFP] Failed to process question ${i + 1}: ${error}`);
-          // Add error response
+        } else {
+          // Fallback: If Pinecone didn't structure the response as expected,
+          // return the full content for all questions
+          console.log('[RFP] Pinecone response not structured as expected, using full content');
+          for (const question of questions) {
+            responses.push({
+              question,
+              pineconeSources: allSources,
+              generatedAnswer: fullContent // Use the entire response
+            });
+            // Only use full content for first question, rest get a note
+            if (responses.length === 1) continue;
+            responses[responses.length - 1].generatedAnswer = 'See response to Question 1 for combined answer';
+          }
+        }
+        
+        console.log(`[RFP] Successfully processed batch response with ${responses.length} answers`);
+        
+      } catch (error) {
+        console.error('[RFP] Failed to process batch:', error);
+        // Fallback: create error responses for all questions
+        for (const question of questions) {
           responses.push({
             question,
             pineconeSources: [],
-            generatedAnswer: `Error retrieving response from knowledge base.`,
+            generatedAnswer: 'Error processing batch request to knowledge base',
             pineconeError: error instanceof Error ? error.message : 'Unknown error'
           });
         }
-        
-        // Add a small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
-      console.log(`[RFP] All questions processed. Sending response...`);
+      console.log(`[RFP] Batch processing completed. Sending response...`);
 
       // Prepare the response
       const rfpResponse: RFPResponse = {
