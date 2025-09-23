@@ -2637,12 +2637,13 @@ You are helpful, knowledgeable, and maintain continuity across conversations. Ke
 
   // RFP/RFI Processing Routes
   const { 
+    upload: rfpUpload,
     processRFPDocument, 
     generateDocxFromResponses, 
     generatePdfFromResponses 
   } = await import('./rfp-processor');
   
-  app.post('/api/rfp/process', upload.single('file'), processRFPDocument);
+  app.post('/api/rfp/process', rfpUpload.single('file'), processRFPDocument);
   app.post('/api/rfp/generate-docx', generateDocxFromResponses);
   app.post('/api/rfp/generate-pdf', generatePdfFromResponses);
 

@@ -9,7 +9,7 @@ import Docxtemplater from 'docxtemplater';
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
-const upload = multer({
+export const upload = multer({
   storage: storage,
   limits: {
     fileSize: 20 * 1024 * 1024 // 20MB limit
@@ -23,7 +23,7 @@ const upload = multer({
       cb(new Error('Invalid file type. Only PDF, DOCX, and TXT files are allowed.'));
     }
   }
-}).single('file');
+});
 
 // Interface for RFP processing results
 export interface RFPResponse {
