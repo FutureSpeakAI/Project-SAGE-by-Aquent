@@ -242,57 +242,35 @@ export async function generateDocxFromResponses(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid responses data' });
     }
 
-    // Create a simple DOCX template
-    const templateContent = `
-      AQUENT RFP RESPONSE
-      
-      Original Document: {uploadedFile}
-      Generated: {date}
-      
-      {#responses}
-      ─────────────────────────────────────
-      
-      QUESTION {index}: {question}
-      
-      RESPONSE:
-      {generatedAnswer}
-      
-      Sources: {pineconeSources}
-      
-      {/responses}
-      
-      ─────────────────────────────────────
-      
-      This response was generated using Aquent's knowledge base and AI assistance.
-      Please review and customize before submission.
-    `;
-
-    // Create document data
-    const docData = {
-      uploadedFile: uploadedFile || 'Unknown',
-      date: new Date().toLocaleDateString(),
-      responses: responses.map((r: any, index: number) => ({
-        index: index + 1,
-        question: r.question,
-        generatedAnswer: r.generatedAnswer,
-        pineconeSources: r.pineconeSources.join(', ') || 'General knowledge'
-      }))
-    };
-
-    // Generate DOCX
-    const zip = new PizZip(Buffer.from(templateContent));
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true
+    // For now, generate a rich text format (RTF) document as an alternative
+    // (Proper DOCX generation would require a valid DOCX template file)
+    let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}';
+    rtfContent += '\\f0\\fs24 ';
+    rtfContent += '{\\b\\fs32 AQUENT RFP RESPONSE}\\par\\par\n';
+    rtfContent += 'Original Document: ' + (uploadedFile || 'Unknown') + '\\par\n';
+    rtfContent += 'Generated: ' + new Date().toLocaleDateString() + '\\par\n';
+    rtfContent += '\\par\\line\\par\n';
+    
+    // Add each response
+    responses.forEach((r: any, index: number) => {
+      rtfContent += '{\\b QUESTION ' + (index + 1) + ':}\\par\n';
+      rtfContent += r.question + '\\par\\par\n';
+      rtfContent += '{\\b RESPONSE:}\\par\n';
+      rtfContent += r.generatedAnswer + '\\par\\par\n';
+      rtfContent += '{\\i Sources: ' + (r.pineconeSources?.join(', ') || 'General knowledge') + '}\\par\n';
+      rtfContent += '\\line\\par\n';
     });
     
-    doc.render(docData);
-    const buffer = doc.getZip().generate({ type: 'nodebuffer' });
+    rtfContent += '\\par\n';
+    rtfContent += '{\\i This response was generated using Aquent\\\'s knowledge base and AI assistance.\\par\n';
+    rtfContent += 'Please review and customize before submission.}\\par\n';
+    rtfContent += '}';
 
-    // Send the file
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.docx"`);
-    res.send(buffer);
+    // Send as RTF file (which can be opened in Word)
+    res.setHeader('Content-Type', 'application/rtf');
+    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.rtf"`);
+    res.send(rtfContent);
+    
   } catch (error) {
     console.error('DOCX generation error:', error);
     res.status(500).json({ 
@@ -311,109 +289,32 @@ export async function generatePdfFromResponses(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid responses data' });
     }
 
-    // Build PDF content
-    const content: any[] = [
-      { text: 'AQUENT RFP RESPONSE', style: 'header', alignment: 'center' },
-      { text: '\n' },
-      { text: `Original Document: ${uploadedFile || 'Unknown'}`, style: 'subheader' },
-      { text: `Generated: ${new Date().toLocaleDateString()}`, style: 'subheader' },
-      { text: '\n\n' }
-    ];
-
+    // For now, generate a simple text-based PDF alternative
+    // (Proper PDF generation would require fixing the pdfmake import issues)
+    let textContent = 'AQUENT RFP RESPONSE\n';
+    textContent += '===================\n\n';
+    textContent += `Original Document: ${uploadedFile || 'Unknown'}\n`;
+    textContent += `Generated: ${new Date().toLocaleDateString()}\n`;
+    textContent += '\n----------------------------------------\n\n';
+    
     // Add each response
     responses.forEach((r: any, index: number) => {
-      content.push(
-        { text: `Question ${index + 1}:`, style: 'questionHeader' },
-        { text: r.question, style: 'question', margin: [0, 5, 0, 10] },
-        { text: 'Response:', style: 'responseHeader' },
-        { text: r.generatedAnswer, style: 'response', margin: [0, 5, 0, 10] },
-        { 
-          text: `Sources: ${r.pineconeSources.join(', ') || 'General knowledge'}`, 
-          style: 'sources',
-          margin: [0, 5, 0, 20]
-        }
-      );
+      textContent += `QUESTION ${index + 1}:\n`;
+      textContent += `${r.question}\n\n`;
+      textContent += `RESPONSE:\n`;
+      textContent += `${r.generatedAnswer}\n\n`;
+      textContent += `Sources: ${r.pineconeSources?.join(', ') || 'General knowledge'}\n`;
+      textContent += '\n----------------------------------------\n\n';
     });
-
-    // Add footer
-    content.push(
-      { text: '\n\n' },
-      { 
-        text: 'This response was generated using Aquent\'s knowledge base and AI assistance. Please review and customize before submission.',
-        style: 'footer',
-        alignment: 'center'
-      }
-    );
-
-    // Define document
-    const documentDefinition = {
-      content,
-      styles: {
-        header: {
-          fontSize: 20,
-          bold: true,
-          color: '#F15A22'
-        },
-        subheader: {
-          fontSize: 12,
-          color: '#666666'
-        },
-        questionHeader: {
-          fontSize: 14,
-          bold: true,
-          color: '#F15A22'
-        },
-        question: {
-          fontSize: 12,
-          italics: true,
-          color: '#333333'
-        },
-        responseHeader: {
-          fontSize: 12,
-          bold: true,
-          margin: [0, 10, 0, 5]
-        },
-        response: {
-          fontSize: 11,
-          alignment: 'justify',
-          lineHeight: 1.5
-        },
-        sources: {
-          fontSize: 9,
-          color: '#666666',
-          italics: true
-        },
-        footer: {
-          fontSize: 9,
-          color: '#999999',
-          italics: true
-        }
-      },
-      defaultStyle: {
-        font: 'Roboto'
-      }
-    };
-
-    // Generate PDF
-    const pdfMakePrinter = require('pdfmake');
-    const fonts = {
-      Roboto: {
-        normal: 'node_modules/pdfmake/build/vfs_fonts.js',
-        bold: 'node_modules/pdfmake/build/vfs_fonts.js',
-        italics: 'node_modules/pdfmake/build/vfs_fonts.js',
-        bolditalics: 'node_modules/pdfmake/build/vfs_fonts.js'
-      }
-    };
     
-    const printer = new pdfMakePrinter(fonts);
-    const pdfDoc = printer.createPdfKitDocument(documentDefinition);
+    textContent += '\nThis response was generated using Aquent\'s knowledge base and AI assistance.\n';
+    textContent += 'Please review and customize before submission.\n';
+
+    // Send as plain text file (PDF generation needs to be fixed separately)
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.txt"`);
+    res.send(textContent);
     
-    // Stream the PDF
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.pdf"`);
-    
-    pdfDoc.pipe(res);
-    pdfDoc.end();
   } catch (error) {
     console.error('PDF generation error:', error);
     res.status(500).json({ 
