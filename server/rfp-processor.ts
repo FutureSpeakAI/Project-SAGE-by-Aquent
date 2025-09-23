@@ -188,7 +188,7 @@ export async function processRFPDocument(req: Request, res: Response) {
         
         // Split the response by question headers
         const answerPattern = /ANSWER TO QUESTION (\d+):\s*([\s\S]*?)(?=ANSWER TO QUESTION \d+:|$)/gi;
-        const matches = [...fullContent.matchAll(answerPattern)];
+        const matches = Array.from(fullContent.matchAll(answerPattern));
         
         if (matches.length > 0) {
           // We found structured answers
