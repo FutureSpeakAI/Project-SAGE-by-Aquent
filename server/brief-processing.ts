@@ -109,131 +109,48 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
       // For text files, convert buffer to string and clean up spacing
       let text = fileBuffer.toString('utf8');
       
-      // Clean up excessive character spacing that may exist in source text
-      // This handles extreme cases where EVERY character is separated by spaces
+      // Check if text has character-level spacing (like "w o r d s   l i k e   t h i s")
+      // This pattern detects single characters separated by spaces
+      const characterSpacingPattern = /\b(\w)\s+(\w)\s+(\w)/g;
+      const matches = text.match(characterSpacingPattern) || [];
       
-      // First, check if this is the extreme spacing case (more than 50% of characters are spaces)
-      const spaceRatio = (text.match(/\s/g) || []).length / text.length;
-
-      
-      if (spaceRatio > 0.4) {
-        // Extreme spacing case - comprehensive text reconstruction
-        // Step 1: Start with clean text
-        let cleanText = text.replace(/\s+/g, '');
+      // If we find many instances of character-level spacing, fix it
+      if (matches.length > 5) {
+        // Fix character-level spacing by removing spaces between single characters
+        // but preserve multiple spaces between words
+        text = text.replace(/(\b\w)(\s+)(\w)(\s+)(\w\b)/g, (match) => {
+          // Check if this looks like spaced-out letters (single chars with spaces)
+          const parts = match.split(/\s+/);
+          if (parts.every(p => p.length === 1)) {
+            // Join single characters without spaces
+            return parts.join('');
+          }
+          return match;
+        });
         
-        // Step 2: Multi-phase reconstruction approach
-        let result = cleanText;
-        
-        // Phase 1: Basic boundary detection
-        result = result
-          .replace(/([a-z])([A-Z])/g, '$1 $2')
-          .replace(/([a-zA-Z])([0-9])/g, '$1 $2')
-          .replace(/([0-9])([a-zA-Z])/g, '$1 $2')
-          .replace(/([a-zA-Z])([:\(\)\[\].,;!?–—●•\*])/g, '$1 $2')
-          .replace(/([:\(\)\[\].,;!?–—●•\*])([a-zA-Z])/g, '$1 $2');
-        
-        // Phase 2: Targeted fixes for observed patterns in this specific document
-        const fixes = [
-          ['Anewtreatmentdesignedtohelp', 'A new treatment designed to help'],
-          ['COPDpatientslivelonger', 'COPD patients live longer'],
-          ['breatheeasier', 'breathe easier'],
-          ['andexperiencefewersymptoms', 'and experience fewer symptoms'],
-          ['Educatehealthcareproviders', 'Educate healthcare providers'],
-          ['anoveltreatmentfor', 'a novel treatment for'],
-          ['COPDthatoffersmeasurableimprovementsinpatientqualityoflife', 'COPD that offers measurable improvements in patient quality of life'],
-          ['symptomcontrol', 'symptom control'],
-          ['long-termhealthoutcomes', 'long-term health outcomes'],
-          ['Thegoalistobuildawarenessandinterest', 'The goal is to build awareness and interest'],
-          ['driveclinicalconsideration', 'drive clinical consideration'],
-          ['andprompt', 'and prompt'],
-          ['HCPstoengagewithasalesrep', 'HCPs to engage with a sales rep'],
-          ['requestmoreinformation', 'request more information'],
-          ['orreviewthelatestclinicaldata', 'or review the latest clinical data'],
-          ['PhysicianAssistantswhotreatpatientswithmoderatetosevere', 'Physician Assistants who treat patients with moderate to severe'],
-          ['BreathEaseisabreakthroughin', 'Breath Ease is a breakthrough in'],
-          ['COPDcare', 'COPD care'],
-          ['helpingyourpatientsbreatheeasier', 'helping your patients breathe easier'],
-          ['livelonger', 'live longer'],
-          ['anddomore', 'and do more'],
-          ['Clinicallyproventoreduceexacerbationsandimprovedailyfunctioning', 'Clinically proven to reduce exacerbations and improve daily functioning'],
-          ['Toneof', 'Tone of'],
-          ['Friendlyandconfident', 'Friendly and confident'],
-          ['Respectfullyeducational', 'Respectfully educational'],
-          ['notpromotional', 'not promotional'],
-          ['Conversationalbutgroundedinclinicalcredibility', 'Conversational but grounded in clinical credibility'],
-          ['Empathetictopatientneedsandproviderpriorities', 'Empathetic to patient needs and provider priorities'],
-          ['triggeredHCPemails', 'triggered HCP emails'],
-          ['max300wordseach', 'max 300 words each'],
-          ['Eachemailtoinclude', 'Each email to include'],
-          ['Aheadlinethatcapturesattention', 'A headline that captures attention'],
-          ['Briefclinicalbenefitmessaging', 'Brief clinical benefit messaging'],
-          ['supportingstatorquoteifrelevant', 'supporting stat or quote if relevant'],
-          ['Clearandcompellingcalltoaction', 'Clear and compelling call to action'],
-          ['Requestavisit', 'Request a visit'],
-          ['Viewthedata', 'View the data'],
-          ['DownloadtheHCPguide', 'Download the HCP guide'],
-          ['Seethedatathat', 'See the data that'],
-          ['schanging', 's changing'],
-          ['COPDcare', 'COPD care'],
-          ['Let', 'Let'],
-          ['stalk', 's talk'],
-          ['requestavisitfromyour', 'request a visit from your'],
-          ['BreathEaserep', 'Breath Ease rep'],
-          ['Getthelatest', 'Get the latest'],
-          ['COPDtreatmentinsights', 'COPD treatment insights'],
-          ['deliveredtoyourinbox', 'delivered to your inbox'],
-          ['FirstDraftDue', 'First Draft Due'],
-          ['WeeksfromToday', 'Weeks from Today'],
-          ['FinalEmailsDelivered', 'Final Emails Delivered'],
-          ['OneMonthfromToday', 'One Month from Today'],
-          ['SuccessMetrics', 'Success Metrics'],
-          ['Openrateandclick', 'Open rate and click'],
-          ['throughrate', 'through rate'],
-          ['Increaseinrepmeetingrequests', 'Increase in rep meeting requests'],
-          ['Engagementwitheducationalassets', 'Engagement with educational assets'],
-          ['datasheets', 'data sheets'],
-          ['guides', 'guides']
-        ];
-        
-        // Apply all fixes
-        for (const [pattern, replacement] of fixes) {
-          result = result.replace(new RegExp(pattern, 'g'), replacement);
-        }
-        
-        // Phase 3: Minimal additional processing to avoid breaking valid words
-        // Only apply very specific fixes that we know are safe
-        result = result
-          // Only separate obvious compound issues, not embedded words
-          .replace(/([a-z])and([A-Z])/g, '$1 and $2')
-          .replace(/([a-z])the([A-Z])/g, '$1 the $2')
-          .replace(/([a-z])for([A-Z])/g, '$1 for $2')
-          .replace(/([a-z])with([A-Z])/g, '$1 with $2')
-          .replace(/([a-z])from([A-Z])/g, '$1 from $2');
-        
-        // Phase 4: Final cleanup and formatting
-        result = result
-          .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3$4')
-          .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\b/g, '$1$2$3')
-          .replace(/\b([A-Z])\s+([A-Z])\b/g, '$1$2')
-          .replace(/\s{2,}/g, ' ')
-          .replace(/\s+([:\(\)\[\].,;!?])/g, '$1')
-          .replace(/([:\(\)\[\].,;!?])\s{2,}/g, '$1 ')
-          .trim();
-        
-        text = result;
-      } else {
-        // Regular spacing cleanup for less severe cases
-        text = text
-          .replace(/([a-zA-Z])\s+([a-zA-Z])\s+([a-zA-Z])(\s+[a-zA-Z])*/g, (match) => {
-            return match.replace(/\s+/g, '');
-          })
-          .replace(/([a-z])([A-Z])/g, '$1 $2')
-          .replace(/\s{2,}/g, ' ')
-          .replace(/\n\s+/g, '\n')
-          .replace(/\s+\n/g, '\n')
-          .trim();
+        // More aggressive: fix patterns like "w o r d" anywhere in text
+        text = text.replace(/\b(\w(\s+\w)+)\b/g, (match) => {
+          const chars = match.split(/\s+/);
+          // If all parts are single characters, join them
+          if (chars.every(c => c.length === 1)) {
+            return chars.join('');
+          }
+          return match;
+        });
       }
       
+      
+      // Clean up any remaining excessive spacing
+      // Normalize multiple spaces to single space
+      text = text
+        .replace(/\s{2,}/g, ' ')       // Multiple spaces to single space
+        .replace(/\n\s+/g, '\n')        // Remove leading spaces after newlines
+        .replace(/\s+\n/g, '\n')        // Remove trailing spaces before newlines
+        .replace(/\n{3,}/g, '\n\n')     // Multiple newlines to double newline
+        .trim();
+      
+      // For RFPs, we typically don't need the specific fixes array since
+      // they were for a specific COPD document. Just return the cleaned text.
       return text;
     } else if (fileExt === '.pdf') {
       // Extract text from PDF using pdf2json
