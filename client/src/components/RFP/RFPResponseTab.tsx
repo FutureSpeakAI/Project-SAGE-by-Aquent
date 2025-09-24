@@ -360,9 +360,65 @@ export function RFPResponseTab() {
                           <Separator />
                           <div>
                             <p className="text-sm text-gray-600 mb-2">Response:</p>
-                            <p className="text-gray-700 whitespace-pre-wrap">
-                              {item.generatedAnswer}
-                            </p>
+                            <div className="prose prose-sm max-w-none text-gray-700">
+                              <ReactMarkdown 
+                                components={{
+                                  a: ({ href, children }) => (
+                                    <a 
+                                      href={href} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline font-medium"
+                                    >
+                                      {children}
+                                    </a>
+                                  ),
+                                  p: ({ children }) => {
+                                    // Process children to replace citation markers with superscripts
+                                    const processedChildren = Array.isArray(children) 
+                                      ? children.map((child, index) => {
+                                          if (typeof child === 'string') {
+                                            // Replace ^[n] with superscript
+                                            const parts = child.split(/\^\[(\d+)\]/g);
+                                            return parts.map((part, i) => {
+                                              if (i % 2 === 1) {
+                                                // This is a citation number
+                                                return <sup key={`sup-${index}-${i}`} className="text-blue-600 font-semibold">[{part}]</sup>;
+                                              }
+                                              return part;
+                                            });
+                                          }
+                                          return child;
+                                        })
+                                      : children;
+                                    return <p className="mb-2 last:mb-0">{processedChildren}</p>;
+                                  },
+                                  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                  ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                                  li: ({ children }) => {
+                                    // Also process list items for citations
+                                    const processedChildren = Array.isArray(children) 
+                                      ? children.map((child, index) => {
+                                          if (typeof child === 'string') {
+                                            const parts = child.split(/\^\[(\d+)\]/g);
+                                            return parts.map((part, i) => {
+                                              if (i % 2 === 1) {
+                                                return <sup key={`sup-li-${index}-${i}`} className="text-blue-600 font-semibold">[{part}]</sup>;
+                                              }
+                                              return part;
+                                            });
+                                          }
+                                          return child;
+                                        })
+                                      : children;
+                                    return <li className="mb-1">{processedChildren}</li>;
+                                  }
+                                }}
+                              >
+                                {item.generatedAnswer}
+                              </ReactMarkdown>
+                            </div>
                           </div>
                           {item.pineconeSources.length > 0 && (
                             <div className="pt-2">
