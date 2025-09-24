@@ -106,65 +106,12 @@ export async function extractContentFromFile(fileBuffer: Buffer, fileExt: string
 export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): Promise<string> {
   try {
     if (fileExt === '.txt') {
-      // For text files, convert buffer to string and clean up spacing
+      // For text files, simply convert buffer to string and do minimal cleanup
       let text = fileBuffer.toString('utf8');
       
-      // Fix character-level spacing (like "w o r d s   l i k e   t h i s")
-      // This is more conservative to avoid joining legitimate words
-      
-      // Step 1: Detect if the text has character-level spacing issues
-      // Look for patterns that truly indicate character-level spacing
-      // Example: "w o r d" or "t h i s   i s   a   t e s t"
-      
-      // Match sequences of at least 3 single letters separated by consistent spacing
-      const spacedWordPattern = /\b[a-zA-Z](\s{1,2}[a-zA-Z]){2,}\b/g;
-      const spacedWordMatches = text.match(spacedWordPattern) || [];
-      
-      // Also match 2-letter spaced sequences for common words like "i s", "a t", "i n"
-      const twoLetterPattern = /\b[a-zA-Z]\s{1,2}[a-zA-Z]\b/g;
-      const twoLetterMatches = text.match(twoLetterPattern) || [];
-      
-      // Check for normal multi-character words
-      const normalWordMatches = text.match(/\b[a-zA-Z]{3,}\b/g) || [];
-      
-      // If we have many spaced letter sequences and few normal words, likely spacing issue
-      if (spacedWordMatches.length > 5 && spacedWordMatches.length > normalWordMatches.length * 0.5) {
-        console.log('[Text Extract] Detected character-level spacing issue, fixing...');
-        console.log(`Found ${spacedWordMatches.length} spaced sequences and ${normalWordMatches.length} normal words`);
-        
-        // Step 2: Fix character-level spacing more conservatively
-        // First fix longer spaced sequences (3+ letters)
-        text = text.replace(spacedWordPattern, (match) => {
-          // Remove spaces between single letters
-          const joined = match.replace(/\s+/g, '');
-          
-          // Basic check: if the joined result is 2-20 characters, likely a word
-          if (joined.length >= 2 && joined.length <= 20) {
-            console.log(`[Text Extract] Fixing spaced word: "${match}" -> "${joined}"`);
-            return joined;
-          }
-          
-          return match; // Don't change if it doesn't look like a word
-        });
-        
-        // Then fix 2-letter sequences if they form common words
-        const commonTwoLetterWords = ['is', 'at', 'in', 'on', 'to', 'it', 'as', 'or', 'if', 'an', 'be', 'we', 'he', 'me', 'up', 'so', 'no', 'my', 'by', 'do', 'go'];
-        text = text.replace(twoLetterPattern, (match) => {
-          const joined = match.replace(/\s+/g, '').toLowerCase();
-          if (commonTwoLetterWords.includes(joined)) {
-            console.log(`[Text Extract] Fixing 2-letter word: "${match}" -> "${joined}"`);
-            // Preserve original case
-            const original = match.replace(/\s+/g, '');
-            return original;
-          }
-          return match;
-        });
-      }
-      
-      // Clean up any remaining excessive spacing
-      // But be careful not to remove spaces between normal words
+      // Just clean up excessive whitespace, don't try to "fix" spacing
       text = text
-        .replace(/(\s)\s+/g, '$1')     // Collapse multiple spaces to single, preserving first
+        .replace(/(\s)\s+/g, '$1')     // Collapse multiple spaces to single
         .replace(/\n\s+/g, '\n')        // Remove leading spaces after newlines
         .replace(/\s+\n/g, '\n')        // Remove trailing spaces before newlines
         .replace(/\n{3,}/g, '\n\n')     // Multiple newlines to double newline
@@ -223,16 +170,8 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
                           lineText = itemText.trim();
                           currentLineY = textItem.y;
                         } else {
-                          // Same line - check if items are adjacent
-                          const nextItem = sortedTexts[i + 1];
-                          const isAdjacent = !nextItem || 
-                            Math.abs(nextItem.x - (textItem.x + (textItem.w || 0))) < 0.5;
-                          
-                          if (isAdjacent) {
-                            lineText += itemText.trim();
-                          } else {
-                            lineText += ' ' + itemText.trim();
-                          }
+                          // Same line - always add a space between text items
+                          lineText += ' ' + itemText.trim();
                         }
                       }
                     }
@@ -250,29 +189,7 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
               });
             }
             
-            // Check for character-level spacing in PDF text
-            const charSpacingMatches = text.match(/\b\w\s{1,2}\w\b/g) || [];
-            const wordMatches = text.match(/\b\w{2,}\b/g) || [];
-            
-            // If PDF has character-level spacing issues, fix them first
-            if (charSpacingMatches.length > wordMatches.length * 0.3) {
-              console.log('[PDF Extract] Detected character-level spacing issue, fixing...');
-              
-              // Fix character-level spacing
-              const lines = text.split('\n');
-              const fixedLines = lines.map(line => {
-                return line.replace(/\b(\w(?:\s{1,2}\w)+)\b/g, (match) => {
-                  const parts = match.split(/\s+/);
-                  if (parts.length >= 2 && parts.every(p => p.length === 1)) {
-                    return parts.join('');
-                  }
-                  return match;
-                });
-              });
-              text = fixedLines.join('\n');
-            }
-            
-            // Clean up remaining PDF extraction artifacts more carefully
+            // Just clean up excessive whitespace from PDF extraction
             text = text
               .replace(/(\s)\s+/g, '$1')      // Collapse multiple spaces, preserving first
               .replace(/\n\s+/g, '\n')         // Remove leading spaces after newlines
