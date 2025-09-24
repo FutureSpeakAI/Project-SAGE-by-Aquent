@@ -110,35 +110,38 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
       let text = fileBuffer.toString('utf8');
       
       // Fix character-level spacing (like "w o r d s   l i k e   t h i s")
-      // This is more comprehensive than before
+      // This is more conservative to avoid joining legitimate words
       
       // Step 1: Detect if the text has character-level spacing issues
-      // Count sequences of single characters separated by 1-2 spaces
-      const charSpacingMatches = text.match(/\b\w\s{1,2}\w\b/g) || [];
-      const wordMatches = text.match(/\b\w{2,}\b/g) || [];
+      // Look for patterns that truly indicate character-level spacing
+      // Example: "w o r d" or "t h i s   i s   a   t e s t"
       
-      // If we have many single char sequences compared to normal words, likely spacing issue
-      if (charSpacingMatches.length > wordMatches.length * 0.3) {
+      // Match sequences of at least 3 single letters separated by consistent spacing
+      const spacedWordPattern = /\b[a-zA-Z](\s{1,2}[a-zA-Z]){2,}\b/g;
+      const spacedWordMatches = text.match(spacedWordPattern) || [];
+      
+      // Also check for normal multi-character words
+      const normalWordMatches = text.match(/\b[a-zA-Z]{3,}\b/g) || [];
+      
+      // If we have many spaced letter sequences and few normal words, likely spacing issue
+      if (spacedWordMatches.length > 5 && spacedWordMatches.length > normalWordMatches.length * 0.5) {
         console.log('[Text Extract] Detected character-level spacing issue, fixing...');
+        console.log(`Found ${spacedWordMatches.length} spaced sequences and ${normalWordMatches.length} normal words`);
         
-        // Step 2: Fix character-level spacing more comprehensively
-        // Process line by line for better control
-        const lines = text.split('\n');
-        const fixedLines = lines.map(line => {
-          // For each line, identify and fix spaced-out words
-          // Match sequences of single characters with spaces between them
-          return line.replace(/\b(\w(?:\s{1,2}\w)+)\b/g, (match) => {
-            // Split on spaces and check if all parts are single characters
-            const parts = match.split(/\s+/);
-            if (parts.length >= 2 && parts.every(p => p.length === 1)) {
-              // This is a spaced-out word, join the characters
-              return parts.join('');
-            }
-            return match;
-          });
+        // Step 2: Fix character-level spacing more conservatively
+        // Only fix sequences that really look like spaced-out words
+        text = text.replace(spacedWordPattern, (match) => {
+          // Remove spaces between single letters
+          const joined = match.replace(/\s+/g, '');
+          
+          // Basic check: if the joined result is 2-20 characters, likely a word
+          if (joined.length >= 2 && joined.length <= 20) {
+            console.log(`[Text Extract] Fixing spaced word: "${match}" -> "${joined}"`);
+            return joined;
+          }
+          
+          return match; // Don't change if it doesn't look like a word
         });
-        
-        text = fixedLines.join('\n');
       }
       
       // Clean up any remaining excessive spacing
