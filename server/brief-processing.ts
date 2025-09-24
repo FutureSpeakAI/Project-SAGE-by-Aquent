@@ -120,7 +120,11 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
       const spacedWordPattern = /\b[a-zA-Z](\s{1,2}[a-zA-Z]){2,}\b/g;
       const spacedWordMatches = text.match(spacedWordPattern) || [];
       
-      // Also check for normal multi-character words
+      // Also match 2-letter spaced sequences for common words like "i s", "a t", "i n"
+      const twoLetterPattern = /\b[a-zA-Z]\s{1,2}[a-zA-Z]\b/g;
+      const twoLetterMatches = text.match(twoLetterPattern) || [];
+      
+      // Check for normal multi-character words
       const normalWordMatches = text.match(/\b[a-zA-Z]{3,}\b/g) || [];
       
       // If we have many spaced letter sequences and few normal words, likely spacing issue
@@ -129,7 +133,7 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
         console.log(`Found ${spacedWordMatches.length} spaced sequences and ${normalWordMatches.length} normal words`);
         
         // Step 2: Fix character-level spacing more conservatively
-        // Only fix sequences that really look like spaced-out words
+        // First fix longer spaced sequences (3+ letters)
         text = text.replace(spacedWordPattern, (match) => {
           // Remove spaces between single letters
           const joined = match.replace(/\s+/g, '');
@@ -141,6 +145,19 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
           }
           
           return match; // Don't change if it doesn't look like a word
+        });
+        
+        // Then fix 2-letter sequences if they form common words
+        const commonTwoLetterWords = ['is', 'at', 'in', 'on', 'to', 'it', 'as', 'or', 'if', 'an', 'be', 'we', 'he', 'me', 'up', 'so', 'no', 'my', 'by', 'do', 'go'];
+        text = text.replace(twoLetterPattern, (match) => {
+          const joined = match.replace(/\s+/g, '').toLowerCase();
+          if (commonTwoLetterWords.includes(joined)) {
+            console.log(`[Text Extract] Fixing 2-letter word: "${match}" -> "${joined}"`);
+            // Preserve original case
+            const original = match.replace(/\s+/g, '');
+            return original;
+          }
+          return match;
         });
       }
       
