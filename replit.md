@@ -6,6 +6,9 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (September 24, 2025)
+- **RFP Text Extraction AI Fix** (September 24): Implemented AI-based text cleanup for RFP question extraction. System now uses Gemini to automatically fix malformed text from PDF extraction (character-level spacing like "W h o i n y o u r" or joined words like "Whatarethecorporate"). Only affects question extraction - Pinecone responses remain completely unmodified. Includes fallback to original text if AI is unavailable.
+
 ## Recent Changes (September 23, 2025)
 - **RFP Pinecone Raw Output Fix** (September 23): Fixed interference with Pinecone responses in the RFP engine. Created a new `chatWithPineconeRaw` function that returns exact Pinecone responses without any citation processing, preserving all clickable links and formatting exactly as Pinecone provides them. The RFP processor now delivers unmodified Pinecone content including native citation formats.
 - **RFP Text Extraction Spacing Fix** (September 23): Fixed issue where RFP questions displayed with excessive character-level spacing (like "w o r d s   l i k e   t h i s"). Improved both TXT and PDF text extraction with better detection patterns that identify when single characters are separated by spaces and join them while preserving normal word boundaries. The fix handles variable spacing patterns and prevents over-aggressive space removal that was causing the issue.
