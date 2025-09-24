@@ -483,13 +483,13 @@ export async function generatePdfFromResponses(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid responses data' });
     }
 
-    // Define fonts for pdfmake
+    // Define fonts for pdfmake - use default Helvetica fonts
     const fonts = {
-      Roboto: {
-        normal: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64'),
-        bold: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64'),
-        italics: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64'),
-        bolditalics: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64')
+      Helvetica: {
+        normal: 'Helvetica',
+        bold: 'Helvetica-Bold',
+        italics: 'Helvetica-Oblique',
+        bolditalics: 'Helvetica-BoldOblique'
       }
     };
 
@@ -597,6 +597,7 @@ export async function generatePdfFromResponses(req: Request, res: Response) {
         }
       },
       defaultStyle: {
+        font: 'Helvetica',
         fontSize: 12,
         lineHeight: 1.5
       },
