@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { extractTextFromFile } from './brief-processing';
 import { chatWithPinecone, chatWithPineconeRaw } from './services/pinecone';
-// Removed Gemini import - using only Pinecone responses
+import { generateContent } from './gemini';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 
@@ -35,6 +35,48 @@ export interface RFPResponse {
     generatedAnswer: string;
   }[];
   generatedAt: Date;
+}
+
+// Clean malformed text using AI (for PDF extraction issues)
+async function cleanMalformedText(text: string): Promise<string> {
+  try {
+    // Check if text has spacing issues
+    const hasSpacingIssues = 
+      // Character-level spacing: "W h o   i n   y o u r"
+      /[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]/.test(text.substring(0, 500)) ||
+      // Words joined together: "Whatarethecorporate"
+      /[a-z]{20,}/.test(text.substring(0, 500));
+    
+    if (!hasSpacingIssues) {
+      console.log('[RFP] Text appears correctly formatted, skipping AI cleanup');
+      return text;
+    }
+    
+    console.log('[RFP] Detected malformed text, using AI to clean up spacing issues');
+    
+    // Use Gemini to fix the text
+    const cleanupPrompt = `Fix the spacing in the following text. The text has been extracted from a PDF and has incorrect spacing between letters and words. 
+    
+Please return ONLY the corrected text with proper spacing, without any explanation or additional commentary. Fix issues like:
+- Letters separated by spaces: "W h o   i n   y o u r" should become "Who in your"  
+- Words joined together: "Whatarethecorporate" should become "What are the corporate"
+
+Text to fix:
+${text}`;
+
+    const cleanedText = await generateContent({
+      model: 'gemini-2.0-flash',
+      prompt: cleanupPrompt,
+      systemPrompt: 'You are a text correction assistant. Fix spacing issues in text and return only the corrected text.'
+    });
+    
+    console.log('[RFP] AI cleanup completed successfully');
+    return cleanedText;
+    
+  } catch (error) {
+    console.error('[RFP] Failed to clean text with AI, using original:', error);
+    return text; // Fallback to original text if AI fails
+  }
 }
 
 // Extract questions from text
@@ -163,11 +205,14 @@ export async function processRFPDocument(req: Request, res: Response) {
     try {
       // Extract text from the uploaded file
       const fileExt = path.extname(req.file.originalname).toLowerCase();
-      const extractedText = await extractTextFromFile(req.file.buffer, fileExt);
+      let extractedText = await extractTextFromFile(req.file.buffer, fileExt);
       
       if (!extractedText || extractedText.trim().length === 0) {
         return res.status(400).json({ error: 'Could not extract text from the document' });
       }
+
+      // Clean up malformed text if needed (for PDF extraction issues)
+      extractedText = await cleanMalformedText(extractedText);
 
       // Extract questions/requirements
       const questions = extractQuestions(extractedText);
