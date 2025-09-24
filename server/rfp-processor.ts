@@ -6,6 +6,8 @@ import { chatWithPinecone, chatWithPineconeRaw } from './services/pinecone';
 import { generateContent } from './gemini';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import PdfPrinter from 'pdfmake';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
@@ -331,34 +333,137 @@ export async function generateDocxFromResponses(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid responses data' });
     }
 
-    // For now, generate a rich text format (RTF) document as an alternative
-    // (Proper DOCX generation would require a valid DOCX template file)
-    let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}';
-    rtfContent += '\\f0\\fs24 ';
-    rtfContent += '{\\b\\fs32 AQUENT RFP RESPONSE}\\par\\par\n';
-    rtfContent += 'Original Document: ' + (uploadedFile || 'Unknown') + '\\par\n';
-    rtfContent += 'Generated: ' + new Date().toLocaleDateString() + '\\par\n';
-    rtfContent += '\\par\\line\\par\n';
-    
-    // Add each response
-    responses.forEach((r: any, index: number) => {
-      rtfContent += '{\\b QUESTION ' + (index + 1) + ':}\\par\n';
-      rtfContent += r.question + '\\par\\par\n';
-      rtfContent += '{\\b RESPONSE:}\\par\n';
-      rtfContent += r.generatedAnswer + '\\par\\par\n';
-      rtfContent += '{\\i Sources: ' + (r.pineconeSources?.join(', ') || 'General knowledge') + '}\\par\n';
-      rtfContent += '\\line\\par\n';
+    // Create a new document with proper Word formatting
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            // Title
+            new Paragraph({
+              text: 'AQUENT RFP RESPONSE',
+              heading: HeadingLevel.TITLE,
+              alignment: AlignmentType.CENTER,
+              spacing: {
+                after: 400,
+              },
+            }),
+            // Metadata
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: 'Original Document: ',
+                  bold: true,
+                }),
+                new TextRun({
+                  text: uploadedFile || 'Unknown',
+                }),
+              ],
+              spacing: {
+                after: 200,
+              },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: 'Generated: ',
+                  bold: true,
+                }),
+                new TextRun({
+                  text: new Date().toLocaleDateString(),
+                }),
+              ],
+              spacing: {
+                after: 400,
+              },
+            }),
+            // Add responses
+            ...responses.flatMap((r: any, index: number) => [
+              // Question heading
+              new Paragraph({
+                text: `QUESTION ${index + 1}`,
+                heading: HeadingLevel.HEADING_1,
+                spacing: {
+                  before: 400,
+                  after: 200,
+                },
+              }),
+              // Question text
+              new Paragraph({
+                text: r.question,
+                spacing: {
+                  after: 200,
+                },
+              }),
+              // Response heading
+              new Paragraph({
+                text: 'RESPONSE',
+                heading: HeadingLevel.HEADING_2,
+                spacing: {
+                  before: 200,
+                  after: 200,
+                },
+              }),
+              // Response text - handle multi-line responses
+              ...r.generatedAnswer.split('\n').map((paragraph: string) => 
+                new Paragraph({
+                  text: paragraph || ' ',
+                  spacing: {
+                    after: 100,
+                  },
+                })
+              ),
+              // Sources
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: 'Sources: ',
+                    bold: true,
+                    italics: true,
+                  }),
+                  new TextRun({
+                    text: r.pineconeSources?.join(', ') || 'General knowledge',
+                    italics: true,
+                  }),
+                ],
+                spacing: {
+                  before: 200,
+                  after: 400,
+                },
+              }),
+            ]),
+            // Footer note
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: 'This response was generated using Aquent\'s knowledge base and AI assistance.',
+                  italics: true,
+                }),
+              ],
+              spacing: {
+                before: 600,
+              },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: 'Please review and customize before submission.',
+                  italics: true,
+                }),
+              ],
+            }),
+          ],
+        },
+      ],
     });
-    
-    rtfContent += '\\par\n';
-    rtfContent += '{\\i This response was generated using Aquent\\\'s knowledge base and AI assistance.\\par\n';
-    rtfContent += 'Please review and customize before submission.}\\par\n';
-    rtfContent += '}';
 
-    // Send as RTF file (which can be opened in Word)
-    res.setHeader('Content-Type', 'application/rtf');
-    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.rtf"`);
-    res.send(rtfContent);
+    // Generate the DOCX buffer
+    const buffer = await Packer.toBuffer(doc);
+
+    // Send as proper DOCX file
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.docx"`);
+    res.send(buffer);
     
   } catch (error) {
     console.error('DOCX generation error:', error);
@@ -378,31 +483,146 @@ export async function generatePdfFromResponses(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid responses data' });
     }
 
-    // For now, generate a simple text-based PDF alternative
-    // (Proper PDF generation would require fixing the pdfmake import issues)
-    let textContent = 'AQUENT RFP RESPONSE\n';
-    textContent += '===================\n\n';
-    textContent += `Original Document: ${uploadedFile || 'Unknown'}\n`;
-    textContent += `Generated: ${new Date().toLocaleDateString()}\n`;
-    textContent += '\n----------------------------------------\n\n';
-    
+    // Define fonts for pdfmake
+    const fonts = {
+      Roboto: {
+        normal: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64'),
+        bold: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64'),
+        italics: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64'),
+        bolditalics: Buffer.from('AAEAAAANAIAAAwBQRkZUTVn', 'base64')
+      }
+    };
+
+    const printer = new PdfPrinter(fonts);
+
+    // Build content array for PDF
+    const content: any[] = [
+      // Title
+      {
+        text: 'AQUENT RFP RESPONSE',
+        style: 'header',
+        alignment: 'center',
+        margin: [0, 0, 0, 20]
+      },
+      // Metadata
+      {
+        text: [
+          { text: 'Original Document: ', bold: true },
+          { text: uploadedFile || 'Unknown' }
+        ],
+        margin: [0, 0, 0, 10]
+      },
+      {
+        text: [
+          { text: 'Generated: ', bold: true },
+          { text: new Date().toLocaleDateString() }
+        ],
+        margin: [0, 0, 0, 30]
+      },
+    ];
+
     // Add each response
     responses.forEach((r: any, index: number) => {
-      textContent += `QUESTION ${index + 1}:\n`;
-      textContent += `${r.question}\n\n`;
-      textContent += `RESPONSE:\n`;
-      textContent += `${r.generatedAnswer}\n\n`;
-      textContent += `Sources: ${r.pineconeSources?.join(', ') || 'General knowledge'}\n`;
-      textContent += '\n----------------------------------------\n\n';
-    });
-    
-    textContent += '\nThis response was generated using Aquent\'s knowledge base and AI assistance.\n';
-    textContent += 'Please review and customize before submission.\n';
+      // Add page break between responses (except for the first one)
+      if (index > 0) {
+        content.push({ text: '', pageBreak: 'before' });
+      }
 
-    // Send as plain text file (PDF generation needs to be fixed separately)
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.txt"`);
-    res.send(textContent);
+      content.push(
+        // Question heading
+        {
+          text: `QUESTION ${index + 1}`,
+          style: 'subheader',
+          margin: [0, 0, 0, 10]
+        },
+        // Question text
+        {
+          text: r.question,
+          margin: [0, 0, 0, 15]
+        },
+        // Response heading
+        {
+          text: 'RESPONSE',
+          style: 'responseHeader',
+          margin: [0, 0, 0, 10]
+        },
+        // Response text - handle multi-line responses
+        {
+          text: r.generatedAnswer,
+          alignment: 'justify',
+          margin: [0, 0, 0, 15]
+        },
+        // Sources
+        {
+          text: [
+            { text: 'Sources: ', bold: true, italics: true },
+            { text: r.pineconeSources?.join(', ') || 'General knowledge', italics: true }
+          ],
+          fontSize: 10,
+          margin: [0, 0, 0, 20]
+        }
+      );
+    });
+
+    // Add footer note
+    content.push(
+      {
+        text: 'This response was generated using Aquent\'s knowledge base and AI assistance.',
+        italics: true,
+        fontSize: 10,
+        margin: [0, 30, 0, 5]
+      },
+      {
+        text: 'Please review and customize before submission.',
+        italics: true,
+        fontSize: 10
+      }
+    );
+
+    // Define PDF document structure
+    const docDefinition = {
+      content: content,
+      styles: {
+        header: {
+          fontSize: 22,
+          bold: true
+        },
+        subheader: {
+          fontSize: 16,
+          bold: true
+        },
+        responseHeader: {
+          fontSize: 14,
+          bold: true
+        }
+      },
+      defaultStyle: {
+        fontSize: 12,
+        lineHeight: 1.5
+      },
+      pageMargins: [40, 60, 40, 60] as [number, number, number, number]
+    };
+
+    // Generate PDF
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    
+    // Collect PDF data
+    const chunks: Buffer[] = [];
+    pdfDoc.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+
+    pdfDoc.on('end', () => {
+      const pdfBuffer = Buffer.concat(chunks);
+      
+      // Send as proper PDF file
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="RFP_Response_${Date.now()}.pdf"`);
+      res.send(pdfBuffer);
+    });
+
+    // Finalize PDF
+    pdfDoc.end();
     
   } catch (error) {
     console.error('PDF generation error:', error);
