@@ -1,0 +1,151 @@
+What are the corporate address, mailing address and telephone number of your company’s main offices?
+
+Response:
+
+** Aquent's headquarters and main office is located at 501 Boylston St., Third Floor, Boston, MA 02116[^1][^2]. A contact telephone number is (206) 548-2255[^1].
+
+**
+
+Q2
+Who in your sales organization will be our primary contact during the package evaluation process?
+
+Response:
+
+** Your primary contacts during the evaluation process can include[^3]:
+
+Tasha DePauw, Client Partner
+Sarah-Tyler Moore, Industry Director, Technology
+Corey O’Brien, Vice President[^1]
+**
+
+Q3
+Who in your organization can negotiate a contract with us?
+
+Response:
+
+** While the provided information does not specify a single individual responsible for contract negotiation, senior leadership such as Jeff Garner, SVP, Global Service & Delivery, would be involved in this process[^3][^4].
+
+**
+
+Q4
+Who else can the evaluation team contact within your organization?
+
+Response:
+
+** The evaluation team can also contact the following individuals within our organization[^3][^4][^5]:
+
+Creighton McEwen, Managing Director, Operations & Delivery
+Brian Shellhorn
+ST Moore
+Stephanie Greco, Director of Account Management
+Sarah Fisher, Account Director
+**
+
+Q5
+Is your company publicly traded?
+
+Response:
+
+** Aquent is not a publicly traded company[^1].
+
+**
+
+Q6
+If so, since when?
+
+Response:
+
+** This is not applicable, as Aquent is a privately held company[^1].
+
+**
+
+Q7
+At which stock exchange?
+
+Response:
+
+** This is not applicable, as Aquent is a privately held company[^1].
+
+**
+
+Q8
+How many years have you been in business?
+
+Response:
+
+** Aquent was founded in 1985 and has been in business for over 30 years[^1][^2][^6].
+
+**
+
+Q9
+How many people does your company employ in the area requested?
+
+Response:
+
+** Aquent has 2,827 employees and issued over 9,000 W-2s in the U.S. last year[^1][^4][^7]. The number of employees in a specific requested area is not available in the provided information.
+
+**
+
+Q10
+How long has your company been offering the product/solution requested?
+
+Response:
+
+** Aquent has been providing services through its digital agency division, Aquent Studios, for over 20 years[^1][^6]. Aquent Studios has 22 years of experience providing digital agency services[^1].
+
+**
+
+Q11
+Have some of the components offered as part of this solution been developed by other bidders?
+
+Response:
+
+** The provided information does not contain details regarding solution components developed by other bidders.
+
+**
+
+Q12
+Does your solution include components developed by companies which you acquired in the last two years?
+
+Response:
+
+** The provided information does not contain details regarding components from companies acquired in the last two years.
+
+**
+
+Q13
+What forums do you have in place for discussing your product uses and directions among the user community?
+
+Response:
+
+** The provided information does not mention forums for discussing product uses and directions among a user community.
+
+**
+
+Q14
+Do you have a formal training program?
+
+Response:
+
+** Yes, training is a service we provide as part of our complex implementations[^1].
+
+**
+
+Q15
+If so, how many days of training would be involved?
+
+Response:
+
+** The provided information does not specify the number of days involved in a training program.
+
+**
+
+Q16
+Can you provide the training at the client site?
+
+Response:
+
+** The provided information does not specify if training can be provided at the client site.
+
+Sources
+[^1]: MSSG Project RFI_Aquent Studios.docx [^2]: Aquent Studios Proposal and Project Plan - Northwestern University Medill Website Refresh and Development.pdf [^3]: Google _ Geo UX Research Program Pilot RFP Submission 4.18.25.docx [^4]: RESPONSE_FORM_Clarisonic_DMI_RFP_Aquent_Studios.xlsx.md [^5]: 2.19.25_-_Aquent_x_Google_P_D_RFQ_Deck.pdf.md [^6]: RESPONSE_FORM_Clarisonic_DMI_RFP_Aquent_Studios_backup.xlsx.md [^7]: Whirlpool RFI - Project X - AQUENT response 9-4-20.pdf
