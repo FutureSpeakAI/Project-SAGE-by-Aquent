@@ -43,7 +43,7 @@ export async function initializePinecone(): Promise<boolean> {
     
     // Add host if provided - this connects to the knowledge-backed assistant
     if (host) {
-      config.host = host;
+      config.controllerHostUrl = host;
       console.log('[Pinecone] Using custom host:', host);
     } else {
       console.warn('[Pinecone] No host URL provided - using default endpoint');
