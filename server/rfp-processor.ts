@@ -140,27 +140,14 @@ function extractQuestions(text: string): string[] {
 // Get responses from Pinecone for all questions in a single query
 async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: string[], error?: string }> {
   try {
-    // Enhanced batch prompt with better context building similar to chatWithPinecone()
-    const batchPrompt = `You are processing an RFP (Request for Proposal) document that requires comprehensive, detailed responses based on Aquent's knowledge base and capabilities.
-
-Please provide thorough, professional responses to the following RFP/RFI questions. For each question:
-1. Draw from all relevant information in the knowledge base
-2. Include specific details, examples, and contact information where applicable
-3. Provide comprehensive coverage of the topic, not just basic answers
-4. Include relevant citations and references from the knowledge base
-5. Ensure responses are detailed enough for a formal RFP submission
+    // Use the same enhancement that SAGE's chatWithPinecone() uses for consistency
+    const batchPrompt = `Please provide comprehensive responses to the following RFP/RFI questions. For each question, provide a detailed answer based on the knowledge base.
 
 ${questions.map((q, i) => `QUESTION ${i + 1}: ${q}`).join('\n\n')}
 
-IMPORTANT INSTRUCTIONS:
-- Provide a comprehensive response with relevant citations from the knowledge base for EACH question
-- Do NOT state "documents do not contain information" unless absolutely certain after thorough search
-- Include specific details like contact names, phone numbers, email addresses, and other concrete information from the knowledge base
-- Make responses as detailed and thorough as individual queries would be
-- Structure your response with clear sections using "ANSWER TO QUESTION X:" as headers
-- Each answer should be complete and standalone, as if it were the only question being answered
+Please structure your response with clear sections for each question, using "ANSWER TO QUESTION X:" as headers.
 
-Remember: These responses will be used in a formal RFP submission, so completeness and accuracy are critical.`;
+Please provide a comprehensive response with relevant citations from the knowledge base.`;
     
     console.log(`[RFP] Sending enhanced batch request with ${questions.length} questions`);
     
