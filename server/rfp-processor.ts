@@ -365,6 +365,17 @@ export async function processRFPDocument(req: Request, res: Response) {
       }
       
       console.log(`[RFP] Batch processing completed. Sending response...`);
+      
+      // Debug: Check what sources we're actually sending
+      if (responses.length > 0 && responses[0].pineconeSources.length > 0) {
+        console.log(`[RFP] First source structure:`, JSON.stringify(responses[0].pineconeSources[0], null, 2));
+        console.log(`[RFP] Total sources being sent:`, responses[0].pineconeSources.length);
+      }
+      
+      // Debug: Check response length
+      if (responses.length > 0) {
+        console.log(`[RFP] First answer length: ${responses[0].generatedAnswer.length} chars`);
+      }
 
       // Prepare the response
       const rfpResponse: RFPResponse = {
