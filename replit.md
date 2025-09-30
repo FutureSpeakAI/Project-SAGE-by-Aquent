@@ -8,6 +8,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (September 30, 2025)
 - **Pinecone Message Pass-Through Fix** (September 30): Fixed critical issue where SAGE was modifying user messages before sending to Pinecone. Previously, the system was prepending SAGE instructions to every user message in both the regular chat interface and the RFP processor, causing double-prompting and distorted responses. Fixed both the `chatWithPinecone` function and the RFP processor's `getPineconeBatchResponse` function. Now messages are passed directly to Pinecone without modification, allowing the Pinecone assistant to use its own configured system prompt as intended.
+- **RFP Response Parsing Fix** (September 30): Fixed RFP response parsing issue where removing all formatting instructions caused Pinecone to return unstructured responses that the parser couldn't handle, resulting in cascading duplicate answers. Added minimal formatting instructions (just response structure, no persona) to ensure proper parsing while preserving Pinecone's configured behavior.
 
 ## Recent Changes (September 24, 2025)
 - **RFP Text Extraction AI Fix** (September 24): Implemented AI-based text cleanup for RFP question extraction. System now uses Gemini to automatically fix malformed text from PDF extraction (character-level spacing like "W h o i n y o u r" or joined words like "Whatarethecorporate"). Only affects question extraction - Pinecone responses remain completely unmodified. Includes fallback to original text if AI is unavailable.
