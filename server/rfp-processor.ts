@@ -153,8 +153,8 @@ Instructions:
 - Inside the body, mark citations with superscript numeric footnotes like this: Aquent's headquarters is in Boston[^1].
 - Re-use the same number each time the same document supports multiple claims.
 - After the body, add a Sources section listing each unique source one time only, in the order of first appearance.
-• Format each entry as: [^1]: [Document Title](source_url)
-• If a source has no URL, omit the link but keep the title.
+• Format each entry as: [^1]: Document Title
+• Do not include URLs or markdown link syntax in the sources
 
 Style:
 - Executive/proposal voice
@@ -175,11 +175,21 @@ Structure your response with clear sections for each question, using "ANSWER TO 
     
     console.log(`[RFP] Received raw Pinecone response`);
     
+    // Log the structure to understand what Pinecone is returning
+    console.log('[RFP] Raw response structure:', {
+      hasMessage: !!rawResponse.message,
+      hasCitations: !!rawResponse.citations,
+      citationsCount: rawResponse.citations?.length || 0,
+      messageKeys: rawResponse.message ? Object.keys(rawResponse.message) : [],
+      firstCitation: rawResponse.citations?.[0] ? JSON.stringify(rawResponse.citations[0], null, 2) : 'none'
+    });
+    
     // Extract the raw content directly from Pinecone's response
     // This is the EXACT content without any modification
     const content = rawResponse.message?.content || 'No response from Pinecone';
     
     // Extract sources if available (for backward compatibility)
+    // Note: With the new executive prompt, sources are already in the content
     const sources: string[] = [];
     if (rawResponse.citations) {
       rawResponse.citations.forEach((citation: any) => {

@@ -154,8 +154,8 @@ Instructions:
 - Inside the body, mark citations with superscript numeric footnotes like this: Aquent's headquarters is in Boston[^1].
 - Re-use the same number each time the same document supports multiple claims.
 - After the body, add a Sources section listing each unique source one time only, in the order of first appearance.
-• Format each entry as: [^1]: [Document Title](source_url)
-• If a source has no URL, omit the link but keep the title.
+• Format each entry as: [^1]: Document Title
+• Do not include URLs or markdown link syntax in the sources
 
 Style:
 - Executive/proposal voice
