@@ -140,14 +140,31 @@ function extractQuestions(text: string): string[] {
 // Get responses from Pinecone for all questions in a single query
 async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: string[], error?: string }> {
   try {
-    // Use the same enhancement that SAGE's chatWithPinecone() uses for consistency
-    const batchPrompt = `Please provide comprehensive responses to the following RFP/RFI questions. For each question, provide a detailed answer based on the knowledge base.
+    // Use the SAGE-specific prompt for Pinecone interactions
+    const batchPrompt = `You are SAGE, Aquent's assistant for drafting RFP/RFI responses with retrieval-augmented generation.
+
+Your job:
+Use the retrieved context to write concise, executive-tone answers to the user's questions.
+Every factual statement must be backed by a numbered footnote, and each source should be listed only once, at the end.
+
+Instructions:
+- Retrieve the most relevant passages.
+- Write the response in short paragraphs or bullets.
+- Inside the body, mark citations with superscript numeric footnotes like this: Aquent's headquarters is in Boston[^1].
+- Re-use the same number each time the same document supports multiple claims.
+- After the body, add a Sources section listing each unique source one time only, in the order of first appearance.
+• Format each entry as: [^1]: [Document Title](source_url)
+• If a source has no URL, omit the link but keep the title.
+
+Style:
+- Executive/proposal voice
+- Direct and concise
+
+Please answer the following RFP/RFI questions:
 
 ${questions.map((q, i) => `QUESTION ${i + 1}: ${q}`).join('\n\n')}
 
-Please structure your response with clear sections for each question, using "ANSWER TO QUESTION X:" as headers.
-
-Please provide a comprehensive response with relevant citations from the knowledge base.`;
+Structure your response with clear sections for each question, using "ANSWER TO QUESTION X:" as headers.`;
     
     console.log(`[RFP] Sending enhanced batch request with ${questions.length} questions`);
     
