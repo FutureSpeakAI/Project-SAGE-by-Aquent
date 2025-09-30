@@ -179,6 +179,9 @@ ${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}`;
     // Extract the raw content directly from Pinecone's response
     let content = rawResponse.message?.content || 'No response from Pinecone';
     
+    // Debug: Log full response length
+    console.log(`[RFP] Full Pinecone response length: ${content.length} chars`);
+    
     // Process citations to preserve both file names and URLs
     const sources: Array<{ name: string; url?: string }> = [];
     const sourceUrls = new Map<string, string>(); // Map file names to URLs
@@ -277,7 +280,9 @@ export async function processRFPDocument(req: Request, res: Response) {
         const allSources = pineconeResult.sources;
         
         // Split the response by question headers - looking for Q1:, Q2:, etc.
-        const questionPattern = /Q(\d+):\s*([^\n]+)\n\nResponse:\n([\s\S]*?)(?=\nQ\d+:|Sources|$)/gi;
+        // Using lazy match (?) to capture content until the next question or end
+        // Important: [\s\S]*? matches any character including newlines
+        const questionPattern = /Q(\d+):\s*([^\n]+)\n\nResponse:\n([\s\S]*?)(?=\nQ\d+:|$)/gi;
         const matches = Array.from(fullContent.matchAll(questionPattern));
         
         if (matches.length > 0) {
@@ -516,6 +521,10 @@ export async function generateDocxFromResponses(req: Request, res: Response) {
                         if (typeof source === 'object' && source.name) {
                           // If URL exists and is not a placeholder, create hyperlink
                           if (source.url && source.url !== '#') {
+                            // Debug log for first source with URL
+                            if (idx === 0) {
+                              console.log(`[RFP DOCX] Creating hyperlink for: ${source.name} -> ${source.url.substring(0, 50)}...`);
+                            }
                             children.push(new ExternalHyperlink({
                               children: [
                                 new TextRun({
@@ -676,24 +685,50 @@ export async function generatePdfFromResponses(req: Request, res: Response) {
           alignment: 'justify',
           margin: [0, 0, 0, 15]
         },
-        // Sources
+        // Sources - with clickable links
         {
           text: [
             { text: 'Sources: ', bold: true, italics: true },
-            { 
-              text: r.pineconeSources && r.pineconeSources.length > 0
-                ? r.pineconeSources.map((source: any) => {
-                    // Handle both object sources and string sources
-                    if (typeof source === 'object' && source.name) {
-                      return source.name;
-                    } else if (typeof source === 'string') {
-                      return source;
+            // Create array of text/link objects for each source
+            ...(r.pineconeSources && r.pineconeSources.length > 0 
+              ? r.pineconeSources.flatMap((source: any, idx: number) => {
+                  const elements: any[] = [];
+                  
+                  // Add comma separator if not first source
+                  if (idx > 0) {
+                    elements.push({ text: ', ', italics: true });
+                  }
+                  
+                  // Check if source has URL for clickable link
+                  if (typeof source === 'object' && source.name) {
+                    if (source.url && source.url !== '#') {
+                      // Create clickable link
+                      elements.push({
+                        text: source.name,
+                        link: source.url,
+                        color: '0000FF',
+                        italics: true,
+                        decoration: 'underline'
+                      });
+                    } else {
+                      // Just text, no link
+                      elements.push({
+                        text: source.name,
+                        italics: true
+                      });
                     }
-                    return 'Unknown';
-                  }).join(', ')
-                : 'General knowledge',
-              italics: true 
-            }
+                  } else if (typeof source === 'string') {
+                    // Fallback for string sources
+                    elements.push({
+                      text: source,
+                      italics: true
+                    });
+                  }
+                  
+                  return elements;
+                })
+              : [{ text: 'General knowledge', italics: true }]
+            )
           ],
           fontSize: 10,
           margin: [0, 0, 0, 20]
