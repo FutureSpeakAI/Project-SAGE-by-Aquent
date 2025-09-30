@@ -29,22 +29,33 @@ export interface PineconeResponse {
 export async function initializePinecone(): Promise<boolean> {
   try {
     const apiKey = process.env.PINECONE_API_KEY;
+    const host = process.env.PINECONE_HOST;
     
     if (!apiKey) {
       console.error('[Pinecone] No API key found in environment variables');
       return false;
     }
 
-    // Initialize Pinecone client with API key
-    pinecone = new Pinecone({
+    // Initialize Pinecone client with API key and host
+    const config: any = {
       apiKey: apiKey
-    });
+    };
+    
+    // Add host if provided - this connects to the knowledge-backed assistant
+    if (host) {
+      config.host = host;
+      console.log('[Pinecone] Using custom host:', host);
+    } else {
+      console.warn('[Pinecone] No host URL provided - using default endpoint');
+    }
+    
+    pinecone = new Pinecone(config);
     
     // Get the assistant instance
     try {
       assistant = pinecone.Assistant(ASSISTANT_NAME);
       isInitialized = true;
-      console.log('[Pinecone] Successfully initialized Pinecone Assistant');
+      console.log('[Pinecone] Successfully initialized Pinecone Assistant:', ASSISTANT_NAME);
       return true;
     } catch (error) {
       console.error('[Pinecone] Failed to get assistant:', error);
