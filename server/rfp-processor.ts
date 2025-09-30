@@ -149,13 +149,30 @@ Your job:
 
 Requirement:
 - Keep responses short and focused. Do not overwhelm the user with too much context.
-- Format each answer with the question number and text, followed by the response
+- Answer EACH question separately with its own response
 - Use markdown footnote citations like [^1], [^2] for each source referenced
 - Include a Sources section at the end with all referenced documents
 
-Please answer the following RFP/RFI questions:
+Please answer the following RFP/RFI questions. IMPORTANT: Answer each question individually:
 
-${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}`;
+${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}
+
+Format your response as:
+
+Q1: [question text]
+
+Response:
+[answer to question 1]
+
+Q2: [question text]
+
+Response:
+[answer to question 2]
+
+(continue for all questions)
+
+Sources
+[list all sources here]`;
     
     console.log(`[RFP] Sending enhanced batch request with ${questions.length} questions`);
     
@@ -176,25 +193,71 @@ ${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}`;
     });
     
     // Extract the raw content directly from Pinecone's response
-    // This is the EXACT content without any modification
-    const content = rawResponse.message?.content || 'No response from Pinecone';
+    let content = rawResponse.message?.content || 'No response from Pinecone';
     
-    // Extract sources if available (for backward compatibility)
-    // Note: With the new executive prompt, sources are already in the content
+    // Process citations to create clickable links
     const sources: string[] = [];
-    if (rawResponse.citations) {
+    const citationMap = new Map<number, string>(); // Map position to URL
+    
+    if (rawResponse.citations && rawResponse.citations.length > 0) {
+      console.log(`[RFP] Processing ${rawResponse.citations.length} citations`);
+      
+      // Build a map of citation positions to URLs
       rawResponse.citations.forEach((citation: any) => {
         if (citation.references) {
           citation.references.forEach((ref: any) => {
-            if (ref.file?.name) {
-              sources.push(ref.file.name);
+            if (ref.file) {
+              const fileName = ref.file.name || 'Unknown';
+              const signedUrl = ref.file.signedUrl;
+              
+              // Add to sources list
+              if (!sources.includes(fileName)) {
+                sources.push(fileName);
+              }
+              
+              // Store citation position and URL for injection
+              if (citation.position !== undefined && signedUrl) {
+                citationMap.set(citation.position, signedUrl);
+              }
             }
           });
         }
       });
+      
+      // Inject clickable citations at the correct positions
+      // Process from end to start to maintain position accuracy
+      if (citationMap.size > 0) {
+        const positions = Array.from(citationMap.keys()).sort((a, b) => b - a);
+        console.log(`[RFP] Injecting ${positions.length} clickable citations`);
+        
+        for (const position of positions) {
+          const url = citationMap.get(position);
+          if (url && position <= content.length) {
+            // Find the next citation number at this position
+            const afterPosition = content.substring(position);
+            const citationMatch = afterPosition.match(/^\[?(\d+)\]?/);
+            
+            if (citationMatch) {
+              const citNum = citationMatch[1];
+              // Replace with markdown footnote link
+              const marker = `[^${citNum}]`;
+              const replaceLength = citationMatch[0].length;
+              content = content.slice(0, position) + marker + content.slice(position + replaceLength);
+            }
+          }
+        }
+      }
     }
     
-    // Return the EXACT content from Pinecone without any processing
+    // Ensure sources are listed properly at the end
+    if (sources.length > 0 && !content.includes('Sources')) {
+      content += '\n\nSources\n';
+      sources.forEach((source, i) => {
+        content += `[^${i+1}]: ${source}\n`;
+      });
+    }
+    
+    // Return the processed content with clickable citations
     return { 
       content,
       sources 
@@ -263,42 +326,76 @@ export async function processRFPDocument(req: Request, res: Response) {
         const fullContent = pineconeResult.content;
         const allSources = pineconeResult.sources;
         
-        // Split the response by question headers
-        const answerPattern = /ANSWER TO QUESTION (\d+):\s*([\s\S]*?)(?=ANSWER TO QUESTION \d+:|$)/gi;
-        const matches = Array.from(fullContent.matchAll(answerPattern));
+        // Split the response by question headers - looking for Q1:, Q2:, etc.
+        const questionPattern = /Q(\d+):\s*([^\n]+)\n\nResponse:\n([\s\S]*?)(?=\nQ\d+:|Sources|$)/gi;
+        const matches = Array.from(fullContent.matchAll(questionPattern));
         
         if (matches.length > 0) {
           // We found structured answers
+          console.log(`[RFP] Found ${matches.length} structured answers in response`);
           for (let i = 0; i < questions.length; i++) {
             const match = matches.find(m => parseInt(m[1]) === i + 1);
             if (match) {
               responses.push({
                 question: questions[i],
                 pineconeSources: allSources,
-                generatedAnswer: match[2].trim()
+                generatedAnswer: match[3].trim()
               });
             } else {
-              // No match found for this question number
-              responses.push({
-                question: questions[i],
-                pineconeSources: allSources,
-                generatedAnswer: `Answer not found in batch response for question ${i + 1}`
-              });
+              // No match found for this question number - might be in combined format
+              // Try to extract from the first answer if it contains all responses
+              if (i === 0 && matches.length === 1) {
+                responses.push({
+                  question: questions[i],
+                  pineconeSources: allSources,
+                  generatedAnswer: matches[0][3].trim()
+                });
+              } else {
+                responses.push({
+                  question: questions[i],
+                  pineconeSources: allSources,
+                  generatedAnswer: `See response to Question 1 for combined answer`
+                });
+              }
             }
           }
         } else {
           // Fallback: If Pinecone didn't structure the response as expected,
-          // return the full content for all questions
-          console.log('[RFP] Pinecone response not structured as expected, using full content');
-          for (const question of questions) {
-            responses.push({
-              question,
-              pineconeSources: allSources,
-              generatedAnswer: fullContent // Use the entire response
-            });
-            // Only use full content for first question, rest get a note
-            if (responses.length === 1) continue;
-            responses[responses.length - 1].generatedAnswer = 'See response to Question 1 for combined answer';
+          // Try alternative parsing or use full content
+          console.log('[RFP] Trying alternative parsing for unstructured response');
+          
+          // Check if all answers are in the first response
+          if (fullContent.includes('Q1:') && fullContent.includes('Q2:')) {
+            // Response has question markers but different format
+            for (let i = 0; i < questions.length; i++) {
+              const qNum = i + 1;
+              const qPattern = new RegExp(`Q${qNum}:[^\\n]*\\n+(?:Response:\\n)?([\\s\\S]*?)(?=\\nQ\\d+:|Sources|$)`, 'i');
+              const match = fullContent.match(qPattern);
+              
+              if (match) {
+                responses.push({
+                  question: questions[i],
+                  pineconeSources: allSources,
+                  generatedAnswer: match[1].trim()
+                });
+              } else {
+                responses.push({
+                  question: questions[i],
+                  pineconeSources: allSources,
+                  generatedAnswer: i === 0 ? fullContent : 'See response to Question 1 for combined answer'
+                });
+              }
+            }
+          } else {
+            // Complete fallback: return full content for first question
+            console.log('[RFP] Using fallback - returning full content');
+            for (let i = 0; i < questions.length; i++) {
+              responses.push({
+                question: questions[i],
+                pineconeSources: allSources,
+                generatedAnswer: i === 0 ? fullContent : 'See response to Question 1 for combined answer'
+              });
+            }
           }
         }
         
