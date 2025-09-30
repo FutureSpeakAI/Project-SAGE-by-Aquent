@@ -1,0 +1,41 @@
+RFP Response Quality Investigation
+
+You need to investigate why RFP batch processing produces significantly different (and inferior) results compared to individual SAGE-to-Pinecone interactions, despite both using the same Pinecone Assistant with Gemini 2.5 Pro.
+
+The Problem:
+
+Pinecone-only RFP responses: Comprehensive, detailed answers with proper contact info, specific details
+SAGE-to-Pinecone responses: Basic answers, often states "documents do not contain information"
+Both use identical model (Gemini 2.5 Pro) and knowledge base
+Key Investigation Areas:
+
+Prompt Engineering Differences:
+
+Compare the batch prompt in getPineconeBatchResponse() vs individual SAGE prompts
+The RFP system uses a restrictive prompt format requiring specific citation style [^1] and "Here are Aquent's responses:" prefix
+SAGE interactions may use more natural, less constrained prompting
+Context Building Variations:
+
+RFP uses chatWithPineconeRaw() which strips all processing
+SAGE uses chatWithPinecone() with enhanced context building
+The chatWithPinecone() function adds: "Please provide a comprehensive response with relevant citations from the knowledge base."
+Retrieval Scope Issues:
+
+Batch processing sends all 16 questions simultaneously, potentially overwhelming context
+Individual queries may allow more focused retrieval for each question
+The batch approach might be diluting the relevance matching
+Your Task:
+Identify the root cause and implement a fix that maintains batch processing speed while achieving SAGE-level response quality. Focus on:
+
+Enhancing the batch prompt without breaking the speed advantage
+Potentially using chatWithPinecone() instead of chatWithPineconeRaw() for better context
+Improving question formatting within the batch to ensure each gets proper attention
+Preserving all existing citation formatting and response structure
+Constraint:
+You MUST maintain single-batch processing for speed. Do not break RFPs into smaller batches.
+
+Files to Focus On:
+
+server/rfp-processor.ts (getPineconeBatchResponse function)
+server/services/pinecone.ts (comparing chatWithPinecone vs chatWithPineconeRaw)
+The goal is to make RFP batch responses as comprehensive and detailed as individual SAGE interactions while keeping the sub-1-minute processing time.
