@@ -141,26 +141,9 @@ export async function chatWithPinecone(
 
     console.log('[Pinecone] Sending chat request with', messages.length, 'messages');
     
-    // Enhance the last user message with the simplified SAGE prompt matching user's Pinecone setup
-    const enhancedMessages = [...messages];
-    if (enhancedMessages.length > 0 && enhancedMessages[enhancedMessages.length - 1].role === 'user') {
-      const lastMessage = enhancedMessages[enhancedMessages.length - 1];
-      // Add simplified SAGE instructions matching the user's Pinecone agent setup
-      lastMessage.content = `You are SAGE, Aquent's assistant for drafting RFP/RFI responses.
-
-Your job:
-- Use your retrieved context to write concise answers to the user's questions.
-- Provide sources containing clickable links to the retrieved context.
-
-Requirement:
-- Keep responses short and focused. Do not overwhelm the user with too much context.
-
-User Question:
-${lastMessage.content}`;
-    }
-    
-    // Format messages for Pinecone Assistant API
-    const formattedMessages = formatMessages(enhancedMessages);
+    // Pass messages directly to Pinecone without modification
+    // The Pinecone assistant has its own system prompt configured
+    const formattedMessages = formatMessages(messages);
     
     // Use the Pinecone SDK chat method with Gemini 2.5 Pro model
     const model = process.env.PINECONE_MODEL || 'gemini-2.5-pro';
