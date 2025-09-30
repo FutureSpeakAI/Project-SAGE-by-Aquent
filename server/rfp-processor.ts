@@ -33,7 +33,7 @@ export interface RFPResponse {
   extractedQuestions: string[];
   responses: {
     question: string;
-    pineconeSources: string[];
+    pineconeSources: Array<{ name: string; url?: string }>;
     generatedAnswer: string;
   }[];
   generatedAt: Date;
@@ -138,7 +138,7 @@ function extractQuestions(text: string): string[] {
 }
 
 // Get responses from Pinecone for all questions in a single query
-async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: string[], error?: string }> {
+async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: Array<{ name: string; url?: string }>, error?: string }> {
   try {
     // Send questions with minimal formatting to help with parsing
     // No persona instructions - let Pinecone use its own configured prompt
@@ -179,14 +179,14 @@ ${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}`;
     // Extract the raw content directly from Pinecone's response
     let content = rawResponse.message?.content || 'No response from Pinecone';
     
-    // Process citations to create clickable links
-    const sources: string[] = [];
-    const citationMap = new Map<number, string>(); // Map position to URL
+    // Process citations to preserve both file names and URLs
+    const sources: Array<{ name: string; url?: string }> = [];
+    const sourceUrls = new Map<string, string>(); // Map file names to URLs
     
     if (rawResponse.citations && rawResponse.citations.length > 0) {
       console.log(`[RFP] Processing ${rawResponse.citations.length} citations`);
       
-      // Build a map of citation positions to URLs
+      // Extract all unique sources with their URLs
       rawResponse.citations.forEach((citation: any) => {
         if (citation.references) {
           citation.references.forEach((ref: any) => {
@@ -194,54 +194,20 @@ ${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}`;
               const fileName = ref.file.name || 'Unknown';
               const signedUrl = ref.file.signedUrl;
               
-              // Add to sources list
-              if (!sources.includes(fileName)) {
-                sources.push(fileName);
-              }
-              
-              // Store citation position and URL for injection
-              if (citation.position !== undefined && signedUrl) {
-                citationMap.set(citation.position, signedUrl);
+              // Store URL for this file name
+              if (signedUrl && !sourceUrls.has(fileName)) {
+                sourceUrls.set(fileName, signedUrl);
+                sources.push({ name: fileName, url: signedUrl });
+              } else if (!sourceUrls.has(fileName)) {
+                sources.push({ name: fileName });
               }
             }
           });
         }
       });
-      
-      // Inject clickable citations at the correct positions
-      // Process from end to start to maintain position accuracy
-      if (citationMap.size > 0) {
-        const positions = Array.from(citationMap.keys()).sort((a, b) => b - a);
-        console.log(`[RFP] Injecting ${positions.length} clickable citations`);
-        
-        for (const position of positions) {
-          const url = citationMap.get(position);
-          if (url && position <= content.length) {
-            // Find the next citation number at this position
-            const afterPosition = content.substring(position);
-            const citationMatch = afterPosition.match(/^\[?(\d+)\]?/);
-            
-            if (citationMatch) {
-              const citNum = citationMatch[1];
-              // Replace with markdown footnote link
-              const marker = `[^${citNum}]`;
-              const replaceLength = citationMatch[0].length;
-              content = content.slice(0, position) + marker + content.slice(position + replaceLength);
-            }
-          }
-        }
-      }
     }
     
-    // Ensure sources are listed properly at the end
-    if (sources.length > 0 && !content.includes('Sources')) {
-      content += '\n\nSources\n';
-      sources.forEach((source, i) => {
-        content += `[^${i+1}]: ${source}\n`;
-      });
-    }
-    
-    // Return the processed content with clickable citations
+    // Return the content with preserved source URLs
     return { 
       content,
       sources 

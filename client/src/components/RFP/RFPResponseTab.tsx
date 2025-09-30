@@ -22,7 +22,7 @@ import {
 
 interface RFPQuestion {
   question: string;
-  pineconeSources: string[];
+  pineconeSources: Array<{ name: string; url?: string }>;
   generatedAnswer: string;
 }
 
@@ -424,7 +424,23 @@ export function RFPResponseTab() {
                           {item.pineconeSources.length > 0 && (
                             <div className="pt-2">
                               <p className="text-xs text-gray-500">
-                                Sources: {item.pineconeSources.join(', ')}
+                                Sources: {item.pineconeSources.map((source, idx) => (
+                                  <span key={idx}>
+                                    {source.url && source.url !== '#' ? (
+                                      <a 
+                                        href={source.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-800 underline"
+                                      >
+                                        {source.name}
+                                      </a>
+                                    ) : (
+                                      <span>{source.name}</span>
+                                    )}
+                                    {idx < item.pineconeSources.length - 1 && ', '}
+                                  </span>
+                                ))}
                               </p>
                             </div>
                           )}
