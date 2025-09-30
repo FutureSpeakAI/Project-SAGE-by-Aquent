@@ -7,7 +7,7 @@ import { generateContent } from './gemini';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import PdfPrinter from 'pdfmake';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ExternalHyperlink } from 'docx';
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
@@ -488,10 +488,56 @@ export async function generateDocxFromResponses(req: Request, res: Response) {
                     bold: true,
                     italics: true,
                   }),
-                  new TextRun({
-                    text: r.pineconeSources?.join(', ') || 'General knowledge',
-                    italics: true,
-                  }),
+                  // Handle source objects with potential URLs
+                  ...(r.pineconeSources && r.pineconeSources.length > 0 
+                    ? r.pineconeSources.flatMap((source: any, idx: number) => {
+                        const children: any[] = [];
+                        
+                        // Add comma separator if not the first source
+                        if (idx > 0) {
+                          children.push(new TextRun({
+                            text: ', ',
+                            italics: true,
+                          }));
+                        }
+                        
+                        // Check if source is an object with name and url
+                        if (typeof source === 'object' && source.name) {
+                          // If URL exists and is not a placeholder, create hyperlink
+                          if (source.url && source.url !== '#') {
+                            children.push(new ExternalHyperlink({
+                              children: [
+                                new TextRun({
+                                  text: source.name,
+                                  italics: true,
+                                  underline: {},
+                                  color: '0000FF',
+                                }),
+                              ],
+                              link: source.url,
+                            }));
+                          } else {
+                            // No URL, just show the name
+                            children.push(new TextRun({
+                              text: source.name,
+                              italics: true,
+                            }));
+                          }
+                        } else if (typeof source === 'string') {
+                          // Fallback for string sources (backward compatibility)
+                          children.push(new TextRun({
+                            text: source,
+                            italics: true,
+                          }));
+                        }
+                        
+                        return children;
+                      })
+                    : [new TextRun({
+                        text: 'General knowledge',
+                        italics: true,
+                      })]
+                  ),
                 ],
                 spacing: {
                   before: 200,
@@ -623,7 +669,20 @@ export async function generatePdfFromResponses(req: Request, res: Response) {
         {
           text: [
             { text: 'Sources: ', bold: true, italics: true },
-            { text: r.pineconeSources?.join(', ') || 'General knowledge', italics: true }
+            { 
+              text: r.pineconeSources && r.pineconeSources.length > 0
+                ? r.pineconeSources.map((source: any) => {
+                    // Handle both object sources and string sources
+                    if (typeof source === 'object' && source.name) {
+                      return source.name;
+                    } else if (typeof source === 'string') {
+                      return source;
+                    }
+                    return 'Unknown';
+                  }).join(', ')
+                : 'General knowledge',
+              italics: true 
+            }
           ],
           fontSize: 10,
           margin: [0, 0, 0, 20]
