@@ -1,0 +1,112 @@
+You
+
+Organization 1. What are the corporate address, mailing address and telephone number of your company’s main offices? 2. Who in your sales organization will be our primary contact during the package evaluation process? Provide their direct telephone and facsimile numbers and an address if different from the one above. 3. Who in your organization can negotiate a contract with us? Provide their name, direct telephone and facsimile numbers. 4. Who else can the evaluation team contact within your organization? Provide names, titles, and telephone numbers. Background 5. Provide a brief history of your company. 6. Is your company publicly traded? If so, since when? At which stock exchange? 7. How many years have you been in business? 8. Describe any alliances you have with other hardware, software, or service providers. Focus on how these alliances can potentially benefit or limit our options. Product and Service Mix 9. Indicate the number, to date, of the product/solutions requested, installed and significant consulting contracts. Also indicate the sales volume for the last three years. Please answer the questions where applicable. a. How many people does your company employ in the area requested? b. How long has your company been offering the product/solution requested? c. Have some of the components offered as part of this solution been developed by other bidders? Please describe. d. Does your solution include components developed by companies which you acquired in the last two years? e. What forums do you have in place for discussing your product uses and directions among the user community? f. Do you have a formal training program? If so, how many days of training would be involved? Can you provide the training at the client site? User References 10. Provide a list of your 5 largest clients where you have performed work relevant to the scope of this RFQ. VWGoA will not contact these companies until you have been notified. Please specify: • The name of the organization and who to contact when conducting the reference check. • The address and telephone of the contact. • The organization’s industry and estimated size in terms of employees. • The technical environment on which they have installed your solution. • The length of time that the solution has been in production there. • Any other information you believe is relevant to display expertise and experience.
+
+
+Pinecone
+
+Here are the answers to your questions based on the provided information.
+
+Organization
+Corporate Address, Mailing Address, and Telephone Number:
+Corporate Name: AQUENT LLC 
+[1]
+[2]
+[3]
+[4]
+[5]
+ * PO Mailing Address: 360 N Main St, Ste 470, Royal Oak, MI 48067 
+[1]
+ * "Remit to" Address: Location where payments will be sent.
+[1]
+Telephone No: 415-727-1578 
+[1]
+Primary Sales Contact:
+Patricia Price, Sales Contact: 810-241-6677 
+[1]
+ * Corey O'Brien, VP, Solution Sales: 415-609-7900, coreyobrien@aquent.com 
+[2]
+[3]
+[5]
+ * Sarah-Tyler Moore, Industry Director - Technology: stmoore@aquent.com 
+[4]
+Contract Negotiator: The provided documents list several senior-level contacts who may be ableto negotiate a contract:
+JEFF GARNER, VP, Service & Delivery: 208-861-8744, jgarner@aquent.com 
+[2]
+[3]
+[5]
+ * Corey O'Brien, Vice President - Aquent Studios 
+[6]
+ * Tom Reynolds, SVP Delivery & Ops -- Aquent Studios 
+[6]
+Other Contacts:
+STEPHANIE GRECO, Director of Account Management: 206-883-2876, sgreco@aquent.com 
+[2]
+[3]
+[5]
+ * SARAH FISHER, Account Director: 212-257-5995, sfisher@aquent.com 
+[2]
+[3]
+[5]
+ * Travis O'Neal, Dir. of Creative Operations --Aquent Studios 
+[6]
+ * Mark Gatza, Account Director - Aquent 
+[6]
+Background
+Company History: For over 30 years, Aquent has assisted corporate clients with marketing and creative services.
+[6]
+ Aquent is a global leader in marketing and creative staffing.
+[6]
+ Aquent Studios is the creative execution agency and managed service division of Aquent.
+[6]
+
+Publicly Traded Status: Aquent is the world's largest privately-held global recruiting firm focused on creative, digital, and marketing disciplines.
+[6]
+ One document indicates company ownership is "Private".
+[7]
+
+Years in Business: Aquent has been in existence for 34 years.
+[2]
+[3]
+[5]
+
+Alliances: This information is not available in the provided context.
+
+Product and Service Mix
+Product/Solution Metrics:
+a. Number of employees: Aquent has 2827 employees.
+[2]
+[3]
+ Another document lists 819 employees.
+[5]
+ Aquent Studios has over 700 employees.
+[6]
+b. Years offering solution: Aquent has been helping corporate clients for 32 years.
+[6]
+c. Components from other bidders: This information is not available in the provided context.
+d. Components from acquired companies: This information is not available in the provided context.
+e. User community forums: This information is not available in the provided context.
+f. Formal training program: The context mentions a "brand-trained flex team" but does not describe a formal training program for clients.
+[6]
+User References
+Client List: Aquent has worked with numerous large clients. A partial list includes:
+
+Microsoft 
+[6]
+ * Sephora 
+[6]
+ * Merck 
+[6]
+ * Adobe 
+[6]
+ * CVS 
+[6]
+ * Volkswagen Group of America 
+[1]
+ * L'Oréal Brands including Lancome, Armani, YSL, Kiehls, Ralph Lauren, Urban Decay, Maybelline, Garnier, Essie, Redken, and Matrix.
+[2]
+[3]
+[5]
+Specific contact information, technical environments, and other detailed data for these clients are not available in the provided documents.
+[7]
+[8]

@@ -1,0 +1,64 @@
+You
+
+Organization 1. What are the corporate address, mailing address and telephone number of your company’s main offices? 2. Who in your sales organization will be our primary contact during the package evaluation process? Provide their direct telephone and facsimile numbers and an address if different from the one above. 3. Who in your organization can negotiate a contract with us? Provide their name, direct telephone and facsimile numbers. 4. Who else can the evaluation team contact within your organization? Provide names, titles, and telephone numbers. Background 5. Provide a brief history of your company. 6. Is your company publicly traded? If so, since when? At which stock exchange? 7. How many years have you been in business? 8. Describe any alliances you have with other hardware, software, or service providers. Focus on how these alliances can potentially benefit or limit our options. Product and Service Mix 9. Indicate the number, to date, of the product/solutions requested, installed and significant consulting contracts. Also indicate the sales volume for the last three years. Please answer the questions where applicable. a. How many people does your company employ in the area requested? b. How long has your company been offering the product/solution requested? c. Have some of the components offered as part of this solution been developed by other bidders? Please describe. d. Does your solution include components developed by companies which you acquired in the last two years? e. What forums do you have in place for discussing your product uses and directions among the user community? f. Do you have a formal training program? If so, how many days of training would be involved? Can you provide the training at the client site? User References 10. Provide a list of your 5 largest clients where you have performed work relevant to the scope of this RFQ. VWGoA will not contact these companies until you have been notified. Please specify: • The name of the organization and who to contact when conducting the reference check. • The address and telephone of the contact. • The organization’s industry and estimated size in terms of employees. • The technical environment on which they have installed your solution. • The length of time that the solution has been in production there. • Any other information you believe is relevant to display expertise and experience.
+
+
+Pinecone
+
+Organization
+Corporate Address, Mailing Address, and Telephone Number
+Aquent LLC's main office is located at 501 Boylston St, 3rd Floor, Boston, Massachusetts 02116. The telephone number is not explicitly provided in the retrieved data.
+[1]
+
+Primary Contact During Package Evaluation
+The primary contact for the evaluation process is Sarah-Tyler Moore, Industry Director - Technology. Her direct email is stmoore@aquent.com. However, her direct telephone and facsimile numbers are not specified in the retrieved data.
+[2]
+
+Contract Negotiation Contact
+The individual authorized to negotiate contracts is not explicitly identified in the retrieved data. Additional clarification may be required.
+
+Additional Contacts
+Additional contacts within Aquent include:
+
+Jeff Garner, VP, Service & Delivery, reachable at jgarner@aquent.com, phone: 208-861-8744.
+Stephanie Greco, Director of Account Management, reachable at sgreco@aquent.com, phone: 206-883-2876.
+Sarah Fisher, Account Director, reachable at sfisher@aquent.com, phone: 212-257-5995.
+Corey O'Brien, VP, Solution Sales, reachable at coreyobrien@aquent.com, phone: 415-609-7900.
+[3]
+Background
+Company History
+Aquent LLC has been in business for 34 years, providing creative, digital, and marketing staffing solutions. The company is recognized as a global leader in these domains.
+[3]
+[4]
+
+Publicly Traded Status
+Aquent LLC is a privately held company and is not publicly traded.
+[4]
+
+Years in Business
+Aquent LLC has been operating for 34 years.
+[3]
+
+Alliances with Other Providers
+Specific alliances with hardware, software, or service providers are not detailed in the retrieved data. Additional information may be required.
+
+Product and Service Mix
+Product/Solution Information
+Number of Employees: Aquent employs 2,827 individuals globally.
+[3]
+Duration of Offering: The duration for which Aquent has been offering specific solutions is not explicitly mentioned.
+Components Developed by Other Bidders: This information is not available in the retrieved data.
+Acquired Components: No details are provided regarding components developed by acquired companies.
+User Forums: Information about user forums is not available.
+Training Programs: Details about formal training programs, including duration and on-site availability, are not specified.
+User References
+Largest Clients
+Aquent has provided services to several large clients, including:
+Merck: Pharmaceutical industry, 7-year relationship, services include studio services for print and digital tactics. Contact: Bernard Madden, 351 N. Sumneytown Pike, North Wales, PA 19454, email: bernard_madden@merck.com, phone: 267-305-8675.
+[5]
+Rockwell Automation: Manufacturing industry, 13-year relationship, services include full studio services (print, digital, video, mobile). Contact: Mike Brown, 1201 South Second Street, Milwaukee, WI 53204, email: mabrown2@ra.rockwell.com, phone: 414-382-2875.
+[5]
+Hewlett Packard: Technology industry, 20+ years relationship, services include content development and studio services. Contact: Michael Buxton, 11311 W Chinden Blvd, Boise, ID 83714, email: michael.buxton@hp.com, phone: 208-396-5632.
+[5]
+Notes
+Some requested details, such as sales volumes, training specifics, and forums, are not available in the retrieved data. Further clarification may be required.

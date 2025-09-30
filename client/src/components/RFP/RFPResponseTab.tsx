@@ -378,8 +378,8 @@ export function RFPResponseTab() {
                                     const processedChildren = Array.isArray(children) 
                                       ? children.map((child, index) => {
                                           if (typeof child === 'string') {
-                                            // Replace ^[n] with superscript
-                                            const parts = child.split(/\^\[(\d+)\]/g);
+                                            // Replace [^n] (markdown footnote format) with superscript
+                                            const parts = child.split(/\[\^(\d+)\]/g);
                                             return parts.map((part, i) => {
                                               if (i % 2 === 1) {
                                                 // This is a citation number
@@ -401,7 +401,8 @@ export function RFPResponseTab() {
                                     const processedChildren = Array.isArray(children) 
                                       ? children.map((child, index) => {
                                           if (typeof child === 'string') {
-                                            const parts = child.split(/\^\[(\d+)\]/g);
+                                            // Replace [^n] (markdown footnote format) with superscript
+                                            const parts = child.split(/\[\^(\d+)\]/g);
                                             return parts.map((part, i) => {
                                               if (i % 2 === 1) {
                                                 return <sup key={`sup-li-${index}-${i}`} className="text-blue-600 font-semibold">[{part}]</sup>;

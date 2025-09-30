@@ -1,0 +1,153 @@
+Extracted Questions & Responses
+16 Questions
+Q1
+What are the corporate address, mailing address and telephone number of your company’s main offices?
+
+Response:
+
+** Aquent’s headquarters is located at 501 Boylston St., Third Floor, Boston, MA 02116[^1]. A key contact telephone number is (415) 609-7900[^2].
+
+**
+
+Q2
+Who in your sales organization will be our primary contact during the package evaluation process?
+
+Response:
+
+** Corey O'Brien, Vice President, is a key point of contact for RFP submissions[^2]. Sarah-Tyler Moore, Industry Director - Technology, is also listed as a primary contact for RFQ submissions[^3].
+
+**
+
+Q3
+Who in your organization can negotiate a contract with us?
+
+Response:
+
+** The provided documents do not specify which individuals are authorized to negotiate contracts.
+
+**
+
+Q4
+Who else can the evaluation team contact within your organization?
+
+Response:
+
+** Other contacts within our organization include:
+
+Jeff Garner, SVP, Global Service & Delivery[^4]
+Stephanie Greco, Director of Account Management[^2]
+Sarah Fisher, Account Director[^2]
+Tasha DePauw, Client Partner[^4]
+Steve Kreshover, Managing Director[^5]
+**
+
+Q5
+Is your company publicly traded?
+
+Response:
+
+** No, Aquent is a privately held Limited Liability Corporation (LLC)[^1][^5][^6].
+
+**
+
+Q6
+If so, since when?
+
+Response:
+
+** This is not applicable, as Aquent is a privately held company[^1][^6].
+
+**
+
+Q7
+At which stock exchange?
+
+Response:
+
+** This is not applicable[^1].
+
+**
+
+Q8
+How many years have you been in business?
+
+Response:
+
+** Aquent was founded in 1986[^5] and has been in business for over 30 years[^1][^6]. Some documents note our existence for 34 years[^2][^7].
+
+**
+
+Q9
+How many people does your company employ in the area requested?
+
+Response:
+
+** The total number of employees is cited as 2,827[^2] and 819[^7] in different documents. In the U.S., Aquent issued over 9,000 W-2s last year[^1][^6]. Employee counts for specific geographic areas are not detailed in the provided information.
+
+**
+
+Q10
+How long has your company been offering the product/solution requested?
+
+Response:
+
+** While the specific solution was not defined in the request, Aquent has decades of experience in our core service areas:
+
+Recruiting & Staffing Services: 34 years[^1]
+Aquent Studios (Digital Agency Services): 22 years[^1]
+**
+
+Q11
+Have some of the components offered as part of this solution been developed by other bidders?
+
+Response:
+
+** No. Aquent does not intend to leverage third-party partners for this scope of work[^5].
+
+**
+
+Q12
+Does your solution include components developed by companies which you acquired in the last two years?
+
+Response:
+
+** The provided documents do not contain information regarding components from companies acquired in the last two years.
+
+**
+
+Q13
+What forums do you have in place for discussing your product uses and directions among the user community?
+
+Response:
+
+** The provided documents do not mention user community forums for discussing product uses and directions.
+
+**
+
+Q14
+Do you have a formal training program?
+
+Response:
+
+** Yes, Aquent offers a formal training program called Aquent Gymnasium[^5]. It is a Massive Open Online Course (MOOC) platform launched in 2013 that helps creative and marketing professionals advance their digital skills through courses taught by industry experts[^5].
+
+**
+
+Q15
+If so, how many days of training would be involved?
+
+Response:
+
+** Aquent Gymnasium offers dozens of online courses on a variety of topics[^5]. As such, the training duration is not fixed and depends on the courses a user chooses to take[^5].
+
+**
+
+Q16
+Can you provide the training at the client site?
+
+Response:
+
+** Training is delivered through the Aquent Gymnasium online platform[^5]. The provided documents do not specify if training can be provided at a client site.
+
+Sources
+[^1]: MSSG Project RFI_Aquent Studios.docx [^2]: RESPONSE_FORM_Clarisonic_DMI_RFP_Aquent_Studios.xlsx.md [^3]: 2.19.25_-RFQ_Pricing_Document_P_D_2025-_FINAL_SUBMISSION.xlsx.md [^4]: Google _ Geo UX Research Program Pilot RFP Submission 4.18.25.docx [^5]: Copy_of_FINAL_Merck_RFP_Creative_and_DET_Support_Questions_Model_06120202.xlsx.md [^6]: Whirlpool RFI - Project X - AQUENT response 9-4-20.pdf [^7]: RESPONSE_FORM_Clarisonic_DMI_RFP_Aquent_Studios_backup.xlsx.md
