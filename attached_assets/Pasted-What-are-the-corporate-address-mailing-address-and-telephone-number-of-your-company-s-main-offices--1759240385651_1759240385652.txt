@@ -1,0 +1,150 @@
+What are the corporate address, mailing address and telephone number of your company’s main offices?
+
+Response:
+
+** Aquent is headquartered in Boston, MA[^1][^2][^3]. The corporate address is 501 Boylston St., Third Floor, Boston, MA 02116[^1]. A key contact telephone number is (206) 548-2255[^1].
+
+**
+
+Q2
+Who in your sales organization will be our primary contact during the package evaluation process?
+
+Response:
+
+** Your primary contact during the evaluation process will be Corey O’Brien, Vice President of Solution Sales[^1][^2]. He can be reached at (415) 609-7900 or coreyobrien@aquent.com[^1][^2].
+
+**
+
+Q3
+Who in your organization can negotiate a contract with us?
+
+Response:
+
+** While the provided documents do not specify an individual for contract negotiation, key contacts include Corey O’Brien, VP of Solution Sales[^1][^2], and our Controller, Binh Quan, who is available to discuss financial matters[^1][^4].
+
+**
+
+Q4
+Who else can the evaluation team contact within your organization?
+
+Response:
+
+** Other contacts within our organization include:
+
+Jeff Garner, VP, Service & Delivery[^2]
+Stephanie Greco, Director of Account Management[^2]
+Sarah Fisher, Account Director[^2]
+Binh Quan, Controller[^1][^4]
+Brian Shellhorn[^5]
+ST Moore[^5]
+Tasha DePauw[^5]
+**
+
+Q5
+Is your company publicly traded?
+
+Response:
+
+** No, Aquent is a privately held company[^1][^4].
+
+**
+
+Q6
+If so, since when?
+
+Response:
+
+** This is not applicable, as Aquent is a privately held company[^1][^4].
+
+**
+
+Q7
+At which stock exchange?
+
+Response:
+
+** This is not applicable, as Aquent is a privately held company[^1][^4].
+
+**
+
+Q8
+How many years have you been in business?
+
+Response:
+
+** Aquent was founded in 1985[^2][^3] and incorporated in Massachusetts on May 22, 1986[^1]. We have been in business for over 30 years[^1][^4].
+
+**
+
+Q9
+How many people does your company employ in the area requested?
+
+Response:
+
+** Aquent issued over 9,000 W-2s in the U.S. last year[^1][^4]. The number of employees for a specific geographic area is not detailed in the provided documents.
+
+**
+
+Q10
+How long has your company been offering the product/solution requested?
+
+Response:
+
+** Aquent has been providing the types of services requested for over 20 years through our Aquent Studios agency division[^1][^2].
+
+**
+
+Q11
+Have some of the components offered as part of this solution been developed by other bidders?
+
+Response:
+
+** The provided documentation does not contain this information.
+
+**
+
+Q12
+Does your solution include components developed by companies which you acquired in the last two years?
+
+Response:
+
+** The provided documentation does not contain this information.
+
+**
+
+Q13
+What forums do you have in place for discussing your product uses and directions among the user community?
+
+Response:
+
+** The provided documentation does not contain this information.
+
+**
+
+Q14
+Do you have a formal training program?
+
+Response:
+
+** The provided documentation does not contain this information.
+
+**
+
+Q15
+If so, how many days of training would be involved?
+
+Response:
+
+** The provided documentation does not contain this information.
+
+**
+
+Q16
+Can you provide the training at the client site?
+
+Response:
+
+** The provided documentation does not contain this information.
+
+Sources
+[^1]: MSSG Project RFI_Aquent Studios.docx [^2]: RESPONSE_FORM_Clarisonic_DMI_RFP_Aquent_Studios.xlsx.md [^3]: Aquent Studios Proposal and Project Plan - Northwestern University Medill Website Refresh and Development.pdf [^4]: Whirlpool RFI - Project X - AQUENT response 9-4-20.pdf [^5]: 2.19.25_-_Aquent_x_Google_P_D_RFQ_Deck.pdf.md
