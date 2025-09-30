@@ -140,41 +140,11 @@ function extractQuestions(text: string): string[] {
 // Get responses from Pinecone for all questions in a single query
 async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: string[], error?: string }> {
   try {
-    // Use the new simplified prompt matching the user's Pinecone agent setup
-    const batchPrompt = `You are SAGE, Aquent's assistant for drafting RFP/RFI responses.
-
-Your job:
-- Use your retrieved context to write concise answers to the user's questions.
-- Provide sources containing clickable links to the retrieved context.
-
-Requirement:
-- Keep responses short and focused. Do not overwhelm the user with too much context.
-- Answer EACH question separately with its own response
-- Use markdown footnote citations like [^1], [^2] for each source referenced
-- Include a Sources section at the end with all referenced documents
-
-Please answer the following RFP/RFI questions. IMPORTANT: Answer each question individually:
-
-${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}
-
-Format your response as:
-
-Q1: [question text]
-
-Response:
-[answer to question 1]
-
-Q2: [question text]
-
-Response:
-[answer to question 2]
-
-(continue for all questions)
-
-Sources
-[list all sources here]`;
+    // Send questions directly to Pinecone without any additional instructions
+    // The Pinecone assistant already has its own system prompt configured
+    const batchPrompt = questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n');
     
-    console.log(`[RFP] Sending enhanced batch request with ${questions.length} questions`);
+    console.log(`[RFP] Sending batch request with ${questions.length} questions`);
     
     // Use the RAW Pinecone function to get exact response without processing
     const rawResponse = await chatWithPineconeRaw([
