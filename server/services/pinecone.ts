@@ -29,27 +29,20 @@ export interface PineconeResponse {
 export async function initializePinecone(): Promise<boolean> {
   try {
     const apiKey = process.env.PINECONE_API_KEY;
-    const host = process.env.PINECONE_HOST;
     
     if (!apiKey) {
       console.error('[Pinecone] No API key found in environment variables');
       return false;
     }
 
-    // Initialize Pinecone client with API key and host
-    const config: any = {
+    // Initialize Pinecone client with API key
+    // Note: We don't set controllerHostUrl as the assistant is registered in the default control plane
+    // The control plane will properly route to the data plane host for assistant operations
+    pinecone = new Pinecone({
       apiKey: apiKey
-    };
+    });
     
-    // Add host if provided - this connects to the knowledge-backed assistant
-    if (host) {
-      config.controllerHostUrl = host;
-      console.log('[Pinecone] Using custom host:', host);
-    } else {
-      console.warn('[Pinecone] No host URL provided - using default endpoint');
-    }
-    
-    pinecone = new Pinecone(config);
+    console.log('[Pinecone] Initializing assistant:', ASSISTANT_NAME);
     
     // Get the assistant instance
     try {
