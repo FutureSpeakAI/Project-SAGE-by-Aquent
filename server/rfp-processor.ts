@@ -140,9 +140,23 @@ function extractQuestions(text: string): string[] {
 // Get responses from Pinecone for all questions in a single query
 async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: string[], error?: string }> {
   try {
-    // Send questions directly to Pinecone without any additional instructions
-    // The Pinecone assistant already has its own system prompt configured
-    const batchPrompt = questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n');
+    // Send questions with minimal formatting to help with parsing
+    // No persona instructions - let Pinecone use its own configured prompt
+    const batchPrompt = `Please answer each question individually in this format:
+
+Q1: [question]
+
+Response:
+[your answer]
+
+Q2: [question]
+
+Response:
+[your answer]
+
+Here are the questions:
+
+${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}`;
     
     console.log(`[RFP] Sending batch request with ${questions.length} questions`);
     
