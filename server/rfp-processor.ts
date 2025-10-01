@@ -215,52 +215,57 @@ async function extractQuestionsWithAI(text: string): Promise<string[]> {
     console.log('[RFP] Using AI to extract questions from document');
     
     // Create a comprehensive prompt for Gemini to extract all questions and requirements
-    const extractionPrompt = `You are an expert RFP analyst. Analyze the following RFP document and extract ALL questions, requirements, and vendor action items that require a response or compliance confirmation.
+    const extractionPrompt = `You are an expert RFP analyst. Analyze the following RFP document and extract ONLY the questions, requirements, and vendor action items that require a SPECIFIC VENDOR RESPONSE about their capabilities, services, or commitments.
 
-Your task - Extract ALL of the following:
+Your task - Extract ONLY items that ask for VENDOR-SPECIFIC INFORMATION:
 
-1. DIRECT QUESTIONS (ending with "?")
-   - Any sentence ending with a question mark
-   - Embedded questions within paragraphs
+1. DIRECT QUESTIONS (ending with "?") that ask about:
+   - Vendor capabilities, experience, or qualifications
+   - Specific solutions, approaches, or methodologies
+   - Pricing, timelines, or deliverables
+   - NOT procedural questions about the RFP process itself
 
-2. IMPERATIVE STATEMENTS requiring vendor action:
-   - "Describe your..." / "Explain how..." / "Provide details..."
-   - "List your..." / "Detail your..." / "Outline your..."
-   - "Demonstrate..." / "Show how..." / "Illustrate..."
-   - "Please provide..." / "Please describe..." / "Please explain..."
-   - "Submit..." / "Include..." / "Attach..."
-   - "Specify..." / "Identify..." / "Define..."
+2. IMPERATIVE STATEMENTS requiring vendor to describe their specific:
+   - "Describe your approach to..." / "Explain how you would..."
+   - "Provide details about your experience with..."
+   - "List your qualifications for..." / "Detail your methodology..."
+   - "Demonstrate your ability to..." / "Show examples of..."
+   - NOT general instructions about RFP submission format
 
-3. VENDOR REQUIREMENTS AND EXPECTATIONS:
-   - "The vendor must..." / "The vendor shall..." / "Vendor should..."
-   - "The contractor must..." / "The supplier will..."
-   - "You must..." / "You should..." / "You will need to..."
-   - "It is required that..." / "Requirements include..."
-   - "Must demonstrate..." / "Must have..." / "Must provide..."
+3. VENDOR CAPABILITY REQUIREMENTS (things vendor must prove they can do):
+   - "The vendor must be able to..." / "Vendor shall demonstrate..."
+   - "Must have experience in..." / "Must provide evidence of..."
+   - "Required capabilities include..." / "Must show ability to..."
+   - NOT rules about participating in the RFP process
 
-4. COMPLIANCE AND CERTIFICATION REQUIREMENTS:
-   - "Confirm that..." / "Verify that..." / "Certify that..."
-   - "Provide evidence of..." / "Provide proof of..."
-   - "Must be compliant with..." / "Must meet..."
-   - "Required certifications..." / "Required qualifications..."
+4. COMPLIANCE AND CERTIFICATION REQUIREMENTS about vendor's business:
+   - "Confirm that your company..." / "Verify your compliance with..."
+   - "Provide evidence of your certifications in..."
+   - "Must be ISO/SOC certified..." / "Must meet industry standards..."
+   - NOT confirmations about accepting RFP terms
 
-5. TABLE AND FORM COMPLETION REQUESTS:
-   - "Complete the table..." / "Fill in the pricing..."
-   - "Provide the following information in table format..."
-   - References to appendices or attachments requiring completion
+5. DELIVERABLES AND PRICING REQUESTS:
+   - "Complete the pricing table..." / "Provide your rates for..."
+   - "Detail your proposed deliverables..." / "Outline your project plan..."
+   - "Specify your timeline for..." / "Include your staffing plan..."
 
-6. EVALUATION CRITERIA that require vendor input:
-   - Technical capability requirements
-   - Experience requirements
-   - Staffing and resource requirements
-   - Methodology and approach requirements
+6. EVALUATION CRITERIA requiring vendor to prove qualifications:
+   - Past performance and references
+   - Technical expertise and capabilities
+   - Team qualifications and experience
+   - Proposed solution and methodology
 
-ONLY EXCLUDE:
-- Pure RFP submission logistics (address, email, deadline ONLY if not asking for vendor info)
-- Page numbers, headers, footers
-- Table of contents entries
-- Contact information that's purely informational
-- Copyright notices and legal disclaimers about the RFP itself
+EXCLUDE ALL OF THE FOLLOWING (these are NOT vendor questions):
+- RFP process rules: "Agency must adhere to...", "All communication must be directed to..."
+- RFP submission instructions: "Submit by...", "Response must include...", "Must be submitted electronically..."
+- RFP terms and conditions: "By participating...", "Agency agrees that...", "If agency does not agree..."
+- Confidentiality statements about the RFP itself
+- Instructions about how to format or structure the RFP response
+- Statements about what happens during the RFP evaluation process
+- General legal terms about participating in the RFP
+- Contact information for RFP administration
+- Deadlines and timelines for RFP submission
+- Page limits or formatting requirements for the response
 
 IMPORTANT RULES:
 - Include EVERYTHING that requires vendor response or acknowledgment
@@ -365,12 +370,13 @@ function extractQuestionsWithRegex(text: string): string[] {
     });
   });
   
-  // Pattern 3: Vendor/contractor requirements
+  // Pattern 3: Vendor/contractor requirements (filter out RFP process rules)
   const vendorPatterns = [
-    /\b(The\s+)?(?:vendor|contractor|supplier|bidder|respondent|applicant|company|organization|firm)\s+(?:must|shall|should|will|needs?\s+to|is\s+(?:required|expected)\s+to)[^.!?]+[.!?]/gi,
-    /\b(?:You|Your\s+(?:company|organization|firm))\s+(?:must|shall|should|will|need\s+to|are\s+(?:required|expected)\s+to)[^.!?]+[.!?]/gi,
-    /\b(?:It\s+is\s+(?:required|mandatory|necessary|essential)\s+(?:that|to))[^.!?]+[.!?]/gi,
-    /\b(?:Must|Shall|Should)\s+(?:have|possess|demonstrate|provide|include|submit)[^.!?]+[.!?]/gi
+    // Match vendor requirements but exclude RFP process statements
+    /\b(The\s+)?(?:vendor|contractor|supplier|bidder|respondent)\s+(?:must|shall|should|will)\s+(?:be\s+able\s+to|have|possess|demonstrate|provide\s+evidence|show)[^.!?]+[.!?]/gi,
+    /\b(?:Your\s+(?:company|organization|firm))\s+(?:must|shall|should|will)\s+(?:be\s+able\s+to|have|possess|demonstrate|provide)[^.!?]+[.!?]/gi,
+    /\b(?:Required\s+(?:capabilities|qualifications|experience|certifications))[^.!?]+[.!?]/gi,
+    /\b(?:Must\s+have\s+(?:experience|expertise|knowledge|certification))[^.!?]+[.!?]/gi
   ];
   
   vendorPatterns.forEach(pattern => {
@@ -736,7 +742,7 @@ function categorizeQuestion(question: string): keyof ExtractionMetadata['categor
   return 'imperatives'; // Default category
 }
 
-// Validate question quality
+// Validate question quality and filter out RFP process statements
 function validateQuestionQuality(question: string): boolean {
   // Minimum length requirement
   if (question.length < 15) return false;
@@ -748,7 +754,7 @@ function validateQuestionQuality(question: string): boolean {
   const wordCount = question.split(/\s+/).length;
   if (wordCount < 3) return false;
   
-  // Filter out common non-questions
+  // Filter out common non-questions and RFP process statements
   const nonQuestionPatterns = [
     /^page\s+\d+/i,
     /^table\s+of\s+contents/i,
@@ -758,12 +764,42 @@ function validateQuestionQuality(question: string): boolean {
     /^\d+\s*$/,
     /^[a-z]\.\s*$/i,
     /^section\s+\d+/i,
-    /^appendix\s+[a-z]/i
+    /^appendix\s+[a-z]/i,
+    // New patterns to filter out RFP process rules
+    /\b(?:agency|participant|participating\s+(?:agency|vendor))\s+(?:must|shall|agrees?\s+to?)\s+(?:adhere|comply|follow|delete|dispose)/i,
+    /\ball\s+(?:communication|questions|responses|correspondence)\s+must\s+be\s+(?:directed|submitted|sent)\s+to/i,
+    /\b(?:if|when)\s+(?:the\s+)?(?:agency|participant|vendor)\s+does\s+not\s+agree/i,
+    /\bby\s+participating\s+in\s+(?:this\s+)?(?:the\s+)?RFP/i,
+    /\bRFP\s+(?:response|submission)\s+must\s+(?:be\s+submitted|include)/i,
+    /\b(?:candidates?|agencies?|vendors?)\s+must\s+(?:submit|be\s+ready)\s+(?:to|the)/i,
+    /\binformation\s+must\s+be\s+submitted\s+(?:directly\s+)?to/i,
+    /\beach\s+description\s+must\s+contain/i,
+    /\bdocumentation\s+(?:including|must\s+be\s+returned)/i,
+    /\ball\s+necessary\s+documentation/i
   ];
   
+  const questionLower = question.toLowerCase();
   for (const pattern of nonQuestionPatterns) {
-    if (pattern.test(question)) return false;
+    if (pattern.test(questionLower)) return false;
   }
+  
+  // Additional check: if it's about RFP logistics but doesn't ask for vendor info, filter it out
+  const rfpLogisticWords = ['submit', 'deadline', 'due date', 'format', 'electronic', 'email', 'directed to', 'point of contact'];
+  const vendorInfoWords = ['your', 'describe', 'explain', 'provide', 'experience', 'capability', 'approach', 'solution'];
+  
+  let hasLogisticWord = false;
+  let hasVendorInfoWord = false;
+  
+  for (const word of rfpLogisticWords) {
+    if (questionLower.includes(word)) hasLogisticWord = true;
+  }
+  
+  for (const word of vendorInfoWords) {
+    if (questionLower.includes(word)) hasVendorInfoWord = true;
+  }
+  
+  // If it has logistic words but no vendor info words, it's probably a process rule
+  if (hasLogisticWord && !hasVendorInfoWord) return false;
   
   return true;
 }
