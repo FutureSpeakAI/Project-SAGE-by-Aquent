@@ -1,0 +1,69 @@
+Agent 3 Task: AI-Powered Document Extraction for RFP System
+Objective: Replace the current regex-based question extraction in the RFP processor with an AI-powered approach using Gemini to handle complex document structures automatically, including Excel support.
+
+Current System Analysis:
+
+RFP processor is located in server/rfp-processor.ts
+Current extractQuestions() function uses regex patterns to find questions
+System already has AI text cleanup via cleanMalformedText() function
+Gemini integration is available and working via server/gemini.ts
+Text extraction is handled in server/brief-processing.ts via extractTextFromFile()
+Implementation Requirements:
+
+1. Excel Support Addition
+File: server/brief-processing.ts
+Install xlsx package for Excel parsing
+Add .xlsx and .xls support to extractTextFromFile() function
+Extract text content from Excel files (let AI handle structure interpretation)
+2. File Type Validation Updates
+File: server/rfp-processor.ts
+Update fileFilter in multer configuration to include Excel files (.xlsx, .xls)
+Modify allowedTypes array to include Excel extensions
+3. AI-Powered Question Extraction
+File: server/rfp-processor.ts
+Replace the extractQuestions() function with an AI-powered version that:
+Sends the full extracted text to Gemini via generateContent()
+Uses a smart prompt to identify all questions, requirements, and RFP sections needing responses
+Returns a clean array of questions without manual parsing
+Handles any document format or structure automatically
+4. Enhanced Error Handling
+Include fallback mechanisms if AI question extraction fails
+Gracefully handle cases where Gemini returns unexpected formats
+Provide fallback to original regex-based extraction if AI is unavailable
+Handle edge cases like documents with no clear questions
+5. Prompt Engineering for Question Extraction
+Design AI prompt to return consistent structured format (JSON array or numbered list)
+Ensure prompt handles various question formats:
+Numbered lists (1., 2., etc.)
+Bullet points (•, -, *)
+Paragraph questions
+Requirements statements
+RFP sections needing responses
+Include instructions for deduplication and quality filtering
+Key Design Principles:
+
+Simplicity over complexity: One AI call instead of complex parsing logic
+Leverage existing pipeline: 90% of the system is already perfect
+AI-first approach: Let Gemini handle document structure instead of building parsers
+Maintain reliability: Include fallback to original text if AI fails
+Preserve existing functionality: Don't modify Pinecone response processing or export capabilities
+Files to Modify:
+
+server/brief-processing.ts - Add Excel support to extractTextFromFile()
+server/rfp-processor.ts - Replace extractQuestions() with AI version and update file validation
+package.json - Add xlsx dependency (via package install proposal)
+Testing Requirements:
+
+Test with various Excel formats (.xlsx, .xls)
+Test with complex document structures (mixed content, tables, forms)
+Validate AI question extraction accuracy across different RFP styles
+Ensure system degrades gracefully on AI failures
+Verify all existing functionality (batch processing, DOCX/PDF export, source linking) remains intact
+Success Criteria:
+
+RFP system handles any document format/structure automatically
+Processing time remains under 2 minutes for typical RFPs
+No manual question editing needed
+Maintains all current export and source linking functionality
+System works reliably even when AI services are temporarily unavailable
+This approach transforms the most complex part of RFP processing (question extraction) into a simple, robust AI operation while preserving all the proven components of the existing system.
