@@ -907,76 +907,94 @@ export async function processRFPDocument(req: Request, res: Response) {
         const fullContent = pineconeResult.content;
         const allSources = pineconeResult.sources;
         
-        // Split the response by question headers - looking for Q1:, Q2:, etc.
-        // Using lazy match (?) to capture content until the next question or end
-        // Important: [\s\S]*? matches any character including newlines
-        const questionPattern = /Q(\d+):\s*([^\n]+)\n\nResponse:\n([\s\S]*?)(?=\nQ\d+:|$)/gi;
-        const matches = Array.from(fullContent.matchAll(questionPattern));
+        // Debug: Log the first 500 chars to see the format
+        console.log(`[RFP] Response format preview (first 500 chars): ${fullContent.substring(0, 500)}`);
+        
+        // Try multiple parsing patterns to handle different response formats
+        let parsedSuccessfully = false;
+        
+        // Pattern 1: Look for Q1:, Q2:, etc. with Response: labels
+        const pattern1 = /Q(\d+):\s*([^\n]*)\n+Response:\s*([\s\S]*?)(?=\nQ\d+:|$)/gi;
+        let matches = Array.from(fullContent.matchAll(pattern1));
+        
+        if (matches.length === 0) {
+          // Pattern 2: Look for Q1 (without colon), then question, then Response:
+          const pattern2 = /Q(\d+)\n([^\n]+)\n+Response:\s*([\s\S]*?)(?=\nQ\d+\n|$)/gi;
+          matches = Array.from(fullContent.matchAll(pattern2));
+        }
+        
+        if (matches.length === 0) {
+          // Pattern 3: More flexible - just Q followed by number
+          const pattern3 = /Q(\d+)[:\s]*([^\n]*?)\n+(?:Response:)?\s*([\s\S]*?)(?=\n?Q\d+[:\s]|$)/gi;
+          matches = Array.from(fullContent.matchAll(pattern3));
+        }
         
         if (matches.length > 0) {
           // We found structured answers
           console.log(`[RFP] Found ${matches.length} structured answers in response`);
+          
+          // Build a map of question numbers to responses
+          const responseMap = new Map();
+          for (const match of matches) {
+            const qNum = parseInt(match[1]);
+            // Clean up the response - remove any embedded Q2:, Q3: references that leaked in
+            let answer = match[3].trim();
+            
+            // Remove any subsequent questions that may have leaked into this answer
+            // Look for patterns like "Q2:" or "Q2\n" that indicate the start of another question
+            const nextQPattern = /\n?Q\d+[:\s]/;
+            const nextQIndex = answer.search(nextQPattern);
+            if (nextQIndex > 0) {
+              answer = answer.substring(0, nextQIndex).trim();
+            }
+            
+            responseMap.set(qNum, answer);
+          }
+          
+          // Now build responses array in order
           for (let i = 0; i < questions.length; i++) {
-            const match = matches.find(m => parseInt(m[1]) === i + 1);
-            if (match) {
+            const qNum = i + 1;
+            if (responseMap.has(qNum)) {
               responses.push({
                 question: questions[i],
                 pineconeSources: allSources,
-                generatedAnswer: match[3].trim()
+                generatedAnswer: responseMap.get(qNum)
               });
+              parsedSuccessfully = true;
             } else {
-              // No match found for this question number - might be in combined format
-              // Try to extract from the first answer if it contains all responses
-              if (i === 0 && matches.length === 1) {
-                responses.push({
-                  question: questions[i],
-                  pineconeSources: allSources,
-                  generatedAnswer: matches[0][3].trim()
-                });
-              } else {
-                responses.push({
-                  question: questions[i],
-                  pineconeSources: allSources,
-                  generatedAnswer: `See response to Question 1 for combined answer`
-                });
-              }
+              // This question wasn't found in the response
+              responses.push({
+                question: questions[i],
+                pineconeSources: allSources,
+                generatedAnswer: 'No response provided for this question'
+              });
             }
           }
-        } else {
-          // Fallback: If Pinecone didn't structure the response as expected,
-          // Try alternative parsing or use full content
-          console.log('[RFP] Trying alternative parsing for unstructured response');
+        }
+        
+        if (!parsedSuccessfully) {
+          // Final fallback: Try to split by "Response:" occurrences
+          console.log('[RFP] Trying to split by Response: occurrences');
+          const responsePattern = /Response:\s*([\s\S]*?)(?=\n(?:Q\d+|Response:|Sources|$))/gi;
+          const responseMatches = Array.from(fullContent.matchAll(responsePattern));
           
-          // Check if all answers are in the first response
-          if (fullContent.includes('Q1:') && fullContent.includes('Q2:')) {
-            // Response has question markers but different format
+          if (responseMatches.length >= questions.length) {
+            // We found enough response blocks
             for (let i = 0; i < questions.length; i++) {
-              const qNum = i + 1;
-              const qPattern = new RegExp(`Q${qNum}:[^\\n]*\\n+(?:Response:\\n)?([\\s\\S]*?)(?=\\nQ\\d+:|Sources|$)`, 'i');
-              const match = fullContent.match(qPattern);
-              
-              if (match) {
-                responses.push({
-                  question: questions[i],
-                  pineconeSources: allSources,
-                  generatedAnswer: match[1].trim()
-                });
-              } else {
-                responses.push({
-                  question: questions[i],
-                  pineconeSources: allSources,
-                  generatedAnswer: i === 0 ? fullContent : 'See response to Question 1 for combined answer'
-                });
-              }
+              responses.push({
+                question: questions[i],
+                pineconeSources: allSources,
+                generatedAnswer: responseMatches[i] ? responseMatches[i][1].trim() : 'No response found'
+              });
             }
           } else {
             // Complete fallback: return full content for first question
-            console.log('[RFP] Using fallback - returning full content');
+            console.log('[RFP] Using complete fallback - couldn\'t parse structured responses');
             for (let i = 0; i < questions.length; i++) {
               responses.push({
                 question: questions[i],
                 pineconeSources: allSources,
-                generatedAnswer: i === 0 ? fullContent : 'See response to Question 1 for combined answer'
+                generatedAnswer: i === 0 ? fullContent : 'Unable to parse individual response - see Question 1'
               });
             }
           }
