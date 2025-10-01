@@ -1,0 +1,70 @@
+I need you to analyze and improve our RFP question extraction system in server/rfp-processor.ts. The current system uses AI-powered extraction with regex fallback, but we're experiencing issues where some relevant questions and requirements may be missed during extraction.
+
+Current System Overview:
+- Uses Gemini AI for primary question extraction with specific exclusion criteria
+- Falls back to regex-based extraction if AI fails
+- Limits extraction to 50 questions max via AI, 20 via regex
+- Processes text through cleanMalformedText() for PDF spacing issues
+- Sends all questions to Pinecone in batch for responses
+
+Problems to Address:
+
+1. **Over-Restrictive AI Exclusions**: The current AI prompt excludes categories that might contain important vendor requirements:
+   - "Administrative instructions" and "procedural directives" 
+   - "Evaluation criteria descriptions"
+   - "General statements that don't request information"
+   - These exclusions may be too aggressive and miss valid requirements
+
+2. **Limited Regex Fallback**: The regex patterns only catch:
+   - Direct questions ending with "?"
+   - Numbered items with specific keywords
+   - Bullet points with capability-related terms
+   - Missing: imperative statements, "Please provide...", table references, compliance requirements
+
+3. **Question vs Requirement Detection**: System focuses on questions but RFPs often contain:
+   - Imperative statements ("Describe your approach to...")
+   - Compliance requirements ("Vendor must demonstrate...")
+   - Table completion requests ("Complete the pricing table below...")
+
+Your Tasks:
+
+1. **Analyze the current extractQuestionsWithAI() function** and identify specific improvements to make the AI extraction more comprehensive while maintaining quality
+
+2. **Enhance the regex fallback patterns** in extractQuestionsWithRegex() to catch more requirement types:
+   - Imperative statements starting with action verbs
+   - "Please provide/describe/explain/list..." statements
+   - Table and form completion requests
+   - Compliance and certification requirements
+
+3. **Add a multi-pass extraction approach**:
+   - Pass 1: Direct questions (current approach)
+   - Pass 2: Imperative statements and requirements
+   - Pass 3: Table/form references and compliance items
+   - Deduplicate and merge results
+
+4. **Improve text preprocessing** to handle additional PDF extraction artifacts:
+   - Headers/footers that break question flow
+   - Page numbers embedded in text
+   - Table formatting issues
+   - Bullet point markers that interfere with parsing
+
+5. **Add extraction quality validation**:
+   - Minimum question length requirements
+   - Duplicate detection and removal
+   - Question completeness validation (no cut-off sentences)
+   - Category distribution analysis (ensure we're not missing entire sections)
+
+6. **Implement extraction debugging and logging**:
+   - Log which extraction method found each question
+   - Track extraction statistics (AI vs regex success rates)
+   - Provide extraction quality metrics
+   - Add verbose mode for troubleshooting
+
+Requirements:
+- Maintain current Pinecone batch processing approach (don't change that part)
+- Keep the 50-question overall limit but distribute intelligently across categories
+- Preserve existing cleanMalformedText() functionality
+- Ensure backward compatibility with current RFP processing flow
+- Add comprehensive error handling and fallbacks
+
+Focus on making the extraction more inclusive and comprehensive while maintaining the existing architecture and performance characteristics. The goal is to ensure no important vendor requirements are missed during the extraction phase.

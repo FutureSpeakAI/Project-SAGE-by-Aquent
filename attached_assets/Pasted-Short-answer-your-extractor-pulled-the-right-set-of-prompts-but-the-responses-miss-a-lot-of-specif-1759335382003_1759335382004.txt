@@ -1,0 +1,161 @@
+Short answer: your extractor pulled the right set of prompts, but the responses miss a lot of specifics—and a few answers contradict the RFP. Here’s the tight audit.
+
+What’s missing or incorrect
+
+Q1 — “All questions… submitted to the L’Oréal Point of Contact by the due date…”
+Your answer says the due date and POC aren’t provided. They are—names, emails, and the full schedule are in the RFP (incl. Questions due 12/26/2019 and RFP due 1/9/2020 3:00 PM ET)
+
+Clarisonic DMI Agency 2020 RFP
+
+. So this response is incorrect
+
+RFP_Response_1759332724491
+
+.
+
+Q2 — “RFP response must be submitted electronically… by the due date and time…”
+You say “submit electronically” (fine), but you don’t restate the exact deadline and recipients. The RFP gives both and expects precision; include the timestamp and the listed Points of Contact
+
+Clarisonic DMI Agency 2020 RFP
+
+. As-is, this is too vague
+
+RFP_Response_1759332724491
+
+.
+
+Q3 / Q20 — Required documents
+Q3 lists the Excel response form, Ethical Commitment Letter, etc.; Q20 explicitly adds ASGS and the 3rd-Party Security & Data Assessment Form with electronic submission before the deadline. Your Q3 mentions ASGS but doesn’t bring in the security assessment; Q20 does. Net: covered but fragmented. I’d consolidate so the first “docs” answer is exhaustive
+
+RFP_Response_1759332724491
+
+Clarisonic DMI Agency 2020 RFP
+
+.
+
+Q4 — “Be ready to present in person at Hudson Yards (NYC) or as specified”
+Your answer says there’s no info about an in-person presentation. The RFP explicitly requires it (and notes details shared by Dec 30)
+
+Clarisonic DMI Agency 2020 RFP
+
+. Incorrect
+
+RFP_Response_1759332724491
+
+.
+
+Q5 — “Be ready to receive Clarisonic for a site visit”
+Your answer says there’s no such requirement; the RFP says there is
+
+Clarisonic DMI Agency 2020 RFP
+
+. Incorrect
+
+RFP_Response_1759332724491
+
+.
+
+Q6–Q8, Q10–Q19 — The substantive proposal content
+These are the meat: company philosophy, experience (with client references), solution plan, techniques/process, transition timeline, comms/reporting model, staffing plan + org chart, sample profiles, invoicing approach (incl. frequency and itemized lines), company info for the in-person deck, proposed fee (FTE tables + cost breakdown), and references.
+Your doc mostly replies with “not in the provided context” or “See response to Q1.” That’s a placeholder, not an answer. These sections require your actual content (Aquent’s story, approach, org chart, rate model, deliverable pricing tables, etc.). As-is, they are not answered
+
+RFP_Response_1759332724491
+
+.
+Specific call-outs:
+
+Q15 invoicing: you cite L’Oréal’s generic AP rules, but the RFP asks for your invoicing plan (frequency of cost breakdowns + itemization). Provide cadence (e.g., monthly), example invoice structure, and how you map line-items to deliverables/SOW milestones
+
+Clarisonic DMI Agency 2020 RFP
+
+RFP_Response_1759332724491
+
+.
+
+Q18 fee model: you include neither the FTE resource table nor the “Breakdown of Costs by Category/Deliverable”—both are explicitly requested
+
+Clarisonic DMI Agency 2020 RFP
+
+RFP_Response_1759332724491
+
+.
+
+Not extracted as a question, but important to address in your proposal text
+The RFP’s evaluation criteria include SBWA & Solidarity Sourcing and Economic Dependence (<30% of your total revenue). Even if not a numbered prompt, it’s wise to include a short statement and examples to score those criteria
+
+Clarisonic DMI Agency 2020 RFP
+
+.
+
+Coverage map (RFP → your Q/A status)
+
+Admin/Instructions (questions due, response due, POCs, electronic submission): Extracted but several answers are wrong or vague; add exact dates/times and the named contacts
+
+Clarisonic DMI Agency 2020 RFP
+
+RFP_Response_1759332724491
+
+.
+
+Readiness items (in-person presentation, site visit): Extracted but answers deny requirements that the RFP clearly states
+
+Clarisonic DMI Agency 2020 RFP
+
+RFP_Response_1759332724491
+
+.
+
+Proposal & Presentation content (company overview, experience, solution, methods, transition, comms/reporting, staffing plan + org chart, sample profiles, invoicing, fee tables + cost breakdown, references, deck content): All extracted, but not answered (placeholders or deflections)
+
+RFP_Response_1759332724491
+
+.
+
+Documentation pack (forms, ASGS, security assessment): Covered across Q3 and Q20; consider consolidating into one canonical checklist with filenames and signatories
+
+RFP_Response_1759332724491
+
+Clarisonic DMI Agency 2020 RFP
+
+.
+
+What to fix (in order of pain relief)
+
+Replace the incorrect administrative answers with specifics from the RFP.
+Include the schedule dates and the Points of Contact exactly as listed; name the submission emails and the Jan 9, 2020 3:00 PM ET deadline in the body of your response
+
+Clarisonic DMI Agency 2020 RFP
+
+. This immediately resolves Q1–Q5 issues
+
+RFP_Response_1759332724491
+
+.
+
+Write the substantive sections (Q6–Q14, Q16–Q19).
+Don’t say “not in context.” These are prompts for your content. Add:
+
+Aquent’s philosophy, values, and creative ops approach.
+
+3–5 relevant case briefs with client contacts (per RFP).
+
+Your Clarisonic-specific plan: asset workflows, review rounds, model rights handling, file-naming & server upload process, and how you’ll integrate with DMI timelines.
+
+Transition plan and timeline (what happens weeks 0–12); roles + org chart; on-/off-site mix; named sample profiles.
+
+Comms/reporting model: cadences, tooling, who attends, what artifacts (status, RAID log, dashboards).
+
+Invoicing plan: frequency (e.g., monthly, net terms noted), itemization schema (by deliverable, phase, and OOP like proofs/retouching).
+
+Fee model: FTE tables by role + rate and breakdown by category/deliverable that maps to the 2020 calendar in the scope
+
+Clarisonic DMI Agency 2020 RFP
+
+.
+
+Add the evaluation niceties.
+Short paragraphs on SBWA/Solidarity Sourcing initiatives and a one-liner confirming L’Oréal’s <30% revenue dependency threshold help downstream scoring
+
+Clarisonic DMI Agency 2020 RFP
+
+.
