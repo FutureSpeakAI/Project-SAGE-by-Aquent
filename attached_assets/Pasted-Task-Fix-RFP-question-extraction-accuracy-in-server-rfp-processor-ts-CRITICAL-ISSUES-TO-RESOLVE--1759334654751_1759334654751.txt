@@ -1,0 +1,36 @@
+Task: Fix RFP question extraction accuracy in server/rfp-processor.ts
+CRITICAL ISSUES TO RESOLVE:
+1. extractQuestionsWithAI() is extracting imperative instructions as questions
+2. Table data (contacts, schedules, deadlines) is being lost during DOCX parsing
+3. System may be influenced by response document formatting instead of pure RFP content
+FILES TO MODIFY:
+1. server/rfp-processor.ts - extractQuestionsWithAI() function:
+   - Update Gemini prompt to explicitly exclude imperative instructions ("Submit by...", "Provide documentation...")
+   - Add instruction to preserve table data as structured text
+   - Filter out Q&A scaffolding patterns (Q1:, Q2:, etc.)
+   - Focus only on actual questions requiring vendor responses
+2. server/brief-processing.ts - extractTextFromFile() function:
+   - Enhance DOCX table parsing to preserve structure
+   - Mark table boundaries and column headers
+   - Maintain contact information and schedule formatting
+3. Create test-rfp-extraction-accuracy.js:
+   - Test with attached_assets/Clarisonic DMI Agency 2020 RFP_1759334466109.docx
+   - Verify no fabricated Q&A patterns
+   - Confirm table data preservation
+   - Ensure imperatives aren't treated as questions
+KEY REQUIREMENTS:
+- Extract ONLY genuine vendor questions from the RFP document
+- Preserve contact tables, schedules, and deadline information
+- Exclude submission instructions and administrative directives
+- Maintain original question formatting and context
+VALIDATION: Test extraction should find actual RFP questions while preserving all structured data (contacts, deadlines, evaluation criteria tables).
+Test Plan
+File: test-rfp-extraction-accuracy.js
+
+Assertions:
+
+No fabricated Q&A: Extracted questions must not contain "Q1:", "Q2:" patterns from response scaffolding
+Imperative exclusion: Instructions like "Submit documentation by..." should not appear in extracted questions
+Table preservation: Contact information, deadlines, and structured data must be retained in extracted text
+Question authenticity: All extracted items must be genuine questions requiring vendor responses, not administrative instructions
+Test data: Use attached_assets/Clarisonic DMI Agency 2020 RFP_1759334466109.docx as source truth, ignore the response PDF completely.

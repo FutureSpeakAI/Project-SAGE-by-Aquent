@@ -282,9 +282,46 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
         pdfParser.parseBuffer(fileBuffer);
       });
     } else if (fileExt === '.docx') {
-      // Extract text from DOCX using mammoth
-      const result = await mammoth.extractRawText({ buffer: fileBuffer });
-      return result.value;
+      // Extract text from DOCX using mammoth with table preservation
+      const result = await mammoth.convertToHtml({ 
+        buffer: fileBuffer
+      });
+      
+      // Parse HTML to extract text while preserving table structure
+      let text = result.value;
+      
+      // Replace table structures with formatted text
+      // Convert table rows to clearly separated lines
+      text = text.replace(/<tr>/g, '\n');
+      text = text.replace(/<\/tr>/g, '');
+      
+      // Convert table cells to tab-separated values
+      text = text.replace(/<td>/g, '\t');
+      text = text.replace(/<\/td>/g, '');
+      text = text.replace(/<th>/g, '\t');
+      text = text.replace(/<\/th>/g, '');
+      
+      // Mark table boundaries
+      text = text.replace(/<table>/g, '\n[TABLE START]\n');
+      text = text.replace(/<\/table>/g, '\n[TABLE END]\n');
+      
+      // Remove remaining HTML tags
+      text = text.replace(/<[^>]*>/g, '');
+      
+      // Decode HTML entities
+      text = text.replace(/&amp;/g, '&');
+      text = text.replace(/&lt;/g, '<');
+      text = text.replace(/&gt;/g, '>');
+      text = text.replace(/&quot;/g, '"');
+      text = text.replace(/&#39;/g, "'");
+      text = text.replace(/&nbsp;/g, ' ');
+      
+      // Clean up excessive whitespace while preserving table formatting
+      text = text.replace(/\t+/g, '\t');          // Collapse multiple tabs
+      text = text.replace(/[ ]{2,}/g, ' ');       // Collapse multiple spaces
+      text = text.replace(/\n{3,}/g, '\n\n');     // Limit consecutive newlines
+      
+      return text.trim();
     } else {
       throw new Error(`Unsupported file extension: ${fileExt}`);
     }

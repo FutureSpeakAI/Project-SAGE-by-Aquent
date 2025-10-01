@@ -87,34 +87,41 @@ async function extractQuestionsWithAI(text: string): Promise<string[]> {
     console.log('[RFP] Using AI to extract questions from document');
     
     // Create a comprehensive prompt for Gemini to extract all questions and requirements
-    const extractionPrompt = `You are an expert RFP analyst. Analyze the following document and extract ALL questions, requirements, and items that need responses.
+    const extractionPrompt = `You are an expert RFP analyst. Analyze the following RFP document and extract ONLY the genuine questions and requirements that need vendor responses.
 
 Your task:
-1. Identify ALL direct questions (ending with ?)
-2. Find ALL numbered requirements (1., 2., etc.)
-3. Extract ALL bullet point requirements (•, -, *)
-4. Identify ALL sections asking for information (even if not phrased as questions)
-5. Include ALL items that request:
-   - Descriptions, explanations, or details
-   - Company information or history
-   - Capabilities, experience, or qualifications
-   - Methodologies, approaches, or solutions
-   - Pricing, timelines, or deliverables
-   - References, case studies, or examples
-   - Compliance or certification information
-   - Any other information requests
+1. Extract ALL direct questions (sentences ending with ?)
+2. Extract requirements that ask for specific information, such as:
+   - "Describe your..." 
+   - "Explain how..."
+   - "Provide details about..."
+   - "List your..."
+   - "What is your..."
+   - "How do you..."
+
+EXCLUDE these types of content:
+- Administrative instructions ("Submit by...", "Documents must be...", "Responses should be...")
+- Procedural directives ("Contact us at...", "Email to...", "Send to...")
+- RFP process information (deadlines, submission methods, formatting requirements)
+- Section headers or table of contents
+- Contact information listings
+- Any Q&A pattern like "Q1:", "Q2:" that appears to be response scaffolding
+- Evaluation criteria descriptions (unless they ask for specific vendor information)
+- General statements that don't request information
+
+PRESERVE:
+- Complete question text without modification
+- Table data references (e.g., "Fill in the pricing table below")
+- Context needed to understand the question
 
 Return ONLY a JSON array of strings, where each string is a complete question or requirement.
 Format: ["question 1", "question 2", "question 3", ...]
 
 IMPORTANT:
-- Include the COMPLETE text of each question/requirement
-- Do NOT summarize or shorten questions
-- Do NOT add your own interpretations
-- Do NOT include section headers unless they contain requirements
-- Remove duplicate questions
-- Ensure proper formatting and readability
-- Maximum 50 questions (prioritize the most important if more exist)
+- Each item must be something the vendor needs to respond to
+- Do NOT include imperatives that are just instructions about the RFP process
+- Do NOT fabricate Q&A patterns or add numbering
+- Maximum 50 questions (prioritize the most substantial if more exist)
 
 Document to analyze:
 ${text}`;
