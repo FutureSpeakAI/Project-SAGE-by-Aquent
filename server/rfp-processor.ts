@@ -215,68 +215,59 @@ async function extractQuestionsWithAI(text: string): Promise<string[]> {
     console.log('[RFP] Using AI to extract questions from document');
     
     // Create a comprehensive prompt for Gemini to extract all questions and requirements
-    const extractionPrompt = `You are an expert RFP analyst. Analyze the following RFP document and extract ONLY the questions, requirements, and vendor action items that require a SPECIFIC VENDOR RESPONSE about their capabilities, services, or commitments.
+    const extractionPrompt = `You are an expert RFP analyst. Your job is to identify ONLY the items in this RFP that require vendors to provide information about their company, capabilities, or proposed solution.
 
-Your task - Extract ONLY items that ask for VENDOR-SPECIFIC INFORMATION:
+CRITICAL DISTINCTION:
+✓ INCLUDE: Questions that ask vendors to describe THEMSELVES, their experience, their approach, their pricing, their team, etc.
+✗ EXCLUDE: Instructions about the RFP process, submission rules, formatting requirements, or procedural statements
 
-1. DIRECT QUESTIONS (ending with "?") that ask about:
-   - Vendor capabilities, experience, or qualifications
-   - Specific solutions, approaches, or methodologies
-   - Pricing, timelines, or deliverables
-   - NOT procedural questions about the RFP process itself
+EXTRACT THESE TYPES OF VENDOR QUESTIONS:
 
-2. IMPERATIVE STATEMENTS requiring vendor to describe their specific:
-   - "Describe your approach to..." / "Explain how you would..."
-   - "Provide details about your experience with..."
-   - "List your qualifications for..." / "Detail your methodology..."
-   - "Demonstrate your ability to..." / "Show examples of..."
-   - NOT general instructions about RFP submission format
+1. CAPABILITY QUESTIONS:
+   - "What is your experience with..."
+   - "How would you approach..."
+   - "Describe your methodology for..."
+   - "Provide examples of similar projects..."
 
-3. VENDOR CAPABILITY REQUIREMENTS (things vendor must prove they can do):
-   - "The vendor must be able to..." / "Vendor shall demonstrate..."
-   - "Must have experience in..." / "Must provide evidence of..."
-   - "Required capabilities include..." / "Must show ability to..."
-   - NOT rules about participating in the RFP process
+2. QUALIFICATION REQUIREMENTS:
+   - "Must have 5 years experience in..."
+   - "Required certifications include..."
+   - "Team must include certified professionals..."
+   - "Demonstrate expertise in..."
 
-4. COMPLIANCE AND CERTIFICATION REQUIREMENTS about vendor's business:
-   - "Confirm that your company..." / "Verify your compliance with..."
-   - "Provide evidence of your certifications in..."
-   - "Must be ISO/SOC certified..." / "Must meet industry standards..."
-   - NOT confirmations about accepting RFP terms
+3. PRICING AND DELIVERABLES:
+   - "Provide hourly rates for..."
+   - "Complete the pricing matrix..."
+   - "Outline your proposed timeline..."
+   - "List all deliverables..."
 
-5. DELIVERABLES AND PRICING REQUESTS:
-   - "Complete the pricing table..." / "Provide your rates for..."
-   - "Detail your proposed deliverables..." / "Outline your project plan..."
-   - "Specify your timeline for..." / "Include your staffing plan..."
+4. COMPANY INFORMATION:
+   - "Provide company overview..."
+   - "List your key personnel..."
+   - "Describe your quality assurance process..."
+   - "Submit references from similar engagements..."
 
-6. EVALUATION CRITERIA requiring vendor to prove qualifications:
-   - Past performance and references
-   - Technical expertise and capabilities
-   - Team qualifications and experience
-   - Proposed solution and methodology
+DO NOT EXTRACT THESE (RFP PROCESS RULES):
+- "Agency must adhere to the conditions below" ← This is about RFP rules, not vendor info
+- "All communication must be directed to..." ← This is a submission instruction
+- "RFP response must be submitted by..." ← This is a deadline, not a question
+- "If agency does not agree, must delete materials" ← This is a legal term
+- "Each description must contain client name..." ← This is formatting instruction
+- "Candidates must submit electronically" ← This is a submission method
 
-EXCLUDE ALL OF THE FOLLOWING (these are NOT vendor questions):
-- RFP process rules: "Agency must adhere to...", "All communication must be directed to..."
-- RFP submission instructions: "Submit by...", "Response must include...", "Must be submitted electronically..."
-- RFP terms and conditions: "By participating...", "Agency agrees that...", "If agency does not agree..."
-- Confidentiality statements about the RFP itself
-- Instructions about how to format or structure the RFP response
-- Statements about what happens during the RFP evaluation process
-- General legal terms about participating in the RFP
-- Contact information for RFP administration
-- Deadlines and timelines for RFP submission
-- Page limits or formatting requirements for the response
+TEST YOURSELF: Ask "Does this require the vendor to provide information about their company or solution?" 
+- If YES → Include it
+- If NO (it's about RFP logistics) → Exclude it
 
-IMPORTANT RULES:
-- Include EVERYTHING that requires vendor response or acknowledgment
-- Preserve complete context (don't truncate questions)
-- Include requirements even if phrased as statements
-- Include both mandatory (must/shall) and recommended (should/may) requirements
-- Each extracted item should be self-contained and understandable
-- Maximum 50 items (prioritize most substantial if more exist)
+IMPORTANT: Be very strict. When in doubt, exclude it. It's better to miss a borderline question than to include RFP process rules.
 
-Return ONLY a JSON array of strings, where each string is a complete question or requirement.
+Return a JSON array of strings containing ONLY the vendor questions/requirements you found.
+Each item should be the complete, original text from the document.
+Maximum 50 items (prioritize the most substantial vendor requirements if more exist).
+
 Format: ["question 1", "requirement 2", "question 3", ...]
+
+REMEMBER: Only include items that ask for vendor information. Exclude all RFP process rules.
 
 Document to analyze:
 ${text}`;
@@ -317,25 +308,20 @@ ${text}`;
       
       console.log(`[RFP] AI extracted ${questions.length} questions successfully`);
       
-      // If AI extraction succeeded and found questions, return them
-      if (questions.length > 0) {
-        return questions;
-      }
+      // Return whatever AI found (even if empty)
+      return questions;
       
     } catch (parseError) {
       console.error('[RFP] Failed to parse AI response as JSON:', parseError);
       console.log('[RFP] AI Response (first 500 chars):', aiResponse.substring(0, 500));
+      // Return empty array on parse error - no fallback to regex
+      return [];
     }
-    
-    // If parsing failed or no questions found, fall back to regex
-    console.log('[RFP] AI extraction failed or returned no questions, falling back to regex extraction');
-    return extractQuestionsWithRegex(text);
     
   } catch (error) {
     console.error('[RFP] AI question extraction failed:', error);
-    // Fallback to regex-based extraction
-    console.log('[RFP] Falling back to regex-based extraction due to AI error');
-    return extractQuestionsWithRegex(text);
+    // Return empty array on AI error - no fallback to regex
+    return [];
   }
 }
 
@@ -586,11 +572,10 @@ function formatPineconeResponse(content: string, sources: string[]): string {
   return content;
 }
 
-// Multi-pass extraction with deduplication
+// AI-only extraction - let Gemini determine what are actual questions
 async function extractQuestionsMultiPass(text: string): Promise<{ questions: string[], metadata: ExtractionMetadata }> {
-  console.log('[RFP] Starting multi-pass extraction process');
+  console.log('[RFP] Starting AI-only extraction process');
   
-  const allQuestions = new Map<string, ExtractionSource>(); // Use Map to track source of each question
   const metadata: ExtractionMetadata = {
     totalExtracted: 0,
     aiExtracted: 0,
@@ -604,104 +589,32 @@ async function extractQuestionsMultiPass(text: string): Promise<{ questions: str
       tables: 0
     },
     extractionTime: Date.now(),
-    extractionMethod: 'multi-pass'
+    extractionMethod: 'ai-only'
   };
 
   try {
-    // Pass 1: AI Extraction (primary method)
-    console.log('[RFP] Pass 1: AI-powered extraction');
+    // Use ONLY AI extraction - no regex fallback
+    console.log('[RFP] Using AI-powered extraction exclusively');
     const startTime = Date.now();
     const aiQuestions = await extractQuestionsWithAI(text);
     metadata.aiExtracted = aiQuestions.length;
     console.log(`[RFP] AI extraction completed in ${Date.now() - startTime}ms, found ${aiQuestions.length} items`);
     
-    // Add AI questions to the map
-    aiQuestions.forEach(q => {
-      const normalized = normalizeQuestion(q);
-      if (!allQuestions.has(normalized)) {
-        allQuestions.set(normalized, { 
-          original: q, 
-          source: 'AI',
-          category: categorizeQuestion(q)
-        });
-      }
-    });
-
-    // Pass 2: Enhanced Regex Extraction (fallback and supplement)
-    console.log('[RFP] Pass 2: Enhanced regex extraction for supplemental capture');
-    const regexQuestions = extractQuestionsWithRegex(text);
-    
-    // Add regex questions that weren't found by AI
-    let regexUnique = 0;
-    regexQuestions.forEach(q => {
-      const normalized = normalizeQuestion(q);
-      if (!allQuestions.has(normalized)) {
-        allQuestions.set(normalized, {
-          original: q,
-          source: 'Regex',
-          category: categorizeQuestion(q)
-        });
-        regexUnique++;
-      } else {
-        metadata.duplicatesRemoved++;
-      }
-    });
-    metadata.regexExtracted = regexUnique;
-    console.log(`[RFP] Regex extraction added ${regexUnique} unique items (${metadata.duplicatesRemoved} duplicates removed)`);
-
-    // Pass 3: Targeted extraction for commonly missed patterns
-    if (allQuestions.size < 30) { // Only run if we haven't found many questions
-      console.log('[RFP] Pass 3: Targeted extraction for potentially missed patterns');
-      const targetedQuestions = extractTargetedPatterns(text);
-      
-      targetedQuestions.forEach(q => {
-        const normalized = normalizeQuestion(q);
-        if (!allQuestions.has(normalized)) {
-          allQuestions.set(normalized, {
-            original: q,
-            source: 'Targeted',
-            category: categorizeQuestion(q)
-          });
-        } else {
-          metadata.duplicatesRemoved++;
-        }
-      });
-    }
-
-    // Convert Map to array and apply quality filters
-    const finalQuestions = Array.from(allQuestions.values())
-      .filter(item => validateQuestionQuality(item.original))
-      .sort((a, b) => {
-        // Prioritize by source (AI > Targeted > Regex) and category importance
-        const sourcePriority = { 'AI': 0, 'Targeted': 1, 'Regex': 2 };
-        const categoryPriority = { 
-          'directQuestions': 0, 
-          'requirements': 1, 
-          'imperatives': 2, 
-          'compliance': 3, 
-          'tables': 4 
-        };
-        
-        const sourceCompare = sourcePriority[a.source] - sourcePriority[b.source];
-        if (sourceCompare !== 0) return sourceCompare;
-        
-        return categoryPriority[a.category] - categoryPriority[b.category];
-      })
+    // Simply use AI results without any regex or pattern filtering
+    const finalQuestions = aiQuestions
+      .filter(q => q && q.trim().length > 10) // Basic sanity check only
       .slice(0, 50) // Limit to 50 questions
-      .map(item => {
-        // Update category counts
-        metadata.categoryCounts[item.category]++;
-        return item.original;
+      .map(q => {
+        metadata.categoryCounts[categorizeQuestion(q)]++;
+        return q.trim();
       });
 
     metadata.totalExtracted = finalQuestions.length;
     metadata.extractionTime = Date.now() - metadata.extractionTime;
 
     // Log extraction statistics
-    console.log('[RFP] Extraction complete:', {
+    console.log('[RFP] AI extraction complete:', {
       total: metadata.totalExtracted,
-      bySource: { ai: metadata.aiExtracted, regex: metadata.regexExtracted },
-      duplicatesRemoved: metadata.duplicatesRemoved,
       categories: metadata.categoryCounts,
       timeMs: metadata.extractionTime
     });
@@ -709,13 +622,11 @@ async function extractQuestionsMultiPass(text: string): Promise<{ questions: str
     return { questions: finalQuestions, metadata };
     
   } catch (error) {
-    console.error('[RFP] Multi-pass extraction failed, using fallback:', error);
-    // Fallback to simple regex extraction if multi-pass fails
-    const fallbackQuestions = extractQuestionsWithRegex(text).slice(0, 50);
-    metadata.totalExtracted = fallbackQuestions.length;
-    metadata.regexExtracted = fallbackQuestions.length;
-    metadata.extractionMethod = 'fallback-regex';
-    return { questions: fallbackQuestions, metadata };
+    console.error('[RFP] AI extraction failed:', error);
+    // No fallback to regex - return empty if AI fails
+    metadata.totalExtracted = 0;
+    metadata.extractionMethod = 'failed';
+    return { questions: [], metadata };
   }
 }
 
