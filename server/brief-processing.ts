@@ -43,13 +43,13 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     // Accept only specific file types
-    const allowedTypes = ['.txt', '.pdf', '.docx'];
+    const allowedTypes = ['.txt', '.pdf', '.docx', '.xlsx', '.xls'];
     const ext = path.extname(file.originalname).toLowerCase();
     
     if (allowedTypes.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only .txt, .pdf, and .docx files are allowed.') as any);
+      cb(new Error('Invalid file type. Only .txt, .pdf, .docx, .xlsx, and .xls files are allowed.') as any);
     }
   }
 }).single('file');
@@ -118,6 +118,82 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
         .trim();
       
       return text;
+    } else if (fileExt === '.xlsx' || fileExt === '.xls') {
+      // Extract text from Excel files using xlsx package
+      const xlsx = require('xlsx');
+      
+      try {
+        // Read the workbook from buffer
+        const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+        
+        let extractedText = '';
+        
+        // Process all sheets
+        workbook.SheetNames.forEach((sheetName: string, sheetIndex: number) => {
+          const worksheet = workbook.Sheets[sheetName];
+          
+          // Add sheet name as a header
+          if (workbook.SheetNames.length > 1) {
+            extractedText += `\n=== Sheet: ${sheetName} ===\n\n`;
+          }
+          
+          // Convert sheet to CSV format for text extraction
+          // This preserves the structure while making it readable as text
+          const csvContent = xlsx.utils.sheet_to_csv(worksheet, {
+            blankrows: false, // Skip blank rows
+            skipHidden: true, // Skip hidden rows/columns
+            strip: true,      // Strip whitespace
+            FS: '\t'         // Use tab as field separator for better readability
+          });
+          
+          // Also try to extract as formatted text for better structure
+          const jsonData = xlsx.utils.sheet_to_json(worksheet, {
+            header: 1,        // Use array format
+            raw: false,       // Get formatted strings
+            defval: '',       // Default value for empty cells
+            blankrows: false  // Skip blank rows
+          });
+          
+          // Build text representation from JSON data
+          if (Array.isArray(jsonData) && jsonData.length > 0) {
+            jsonData.forEach((row: any, rowIndex: number) => {
+              if (Array.isArray(row) && row.some((cell: any) => cell !== '')) {
+                // Join cells with proper spacing
+                const rowText = row
+                  .filter((cell: any) => cell !== '')
+                  .join(' | ')
+                  .trim();
+                
+                if (rowText) {
+                  extractedText += rowText + '\n';
+                }
+              }
+            });
+          } else {
+            // Fallback to CSV content if JSON conversion fails
+            extractedText += csvContent;
+          }
+        });
+        
+        // Clean up the extracted text
+        extractedText = extractedText
+          .replace(/\t+/g, ' ')         // Replace tabs with spaces
+          .replace(/(\s)\s+/g, '$1')    // Collapse multiple spaces
+          .replace(/\n\s+/g, '\n')       // Remove leading spaces after newlines
+          .replace(/\s+\n/g, '\n')       // Remove trailing spaces before newlines
+          .replace(/\n{3,}/g, '\n\n')    // Multiple newlines to double newline
+          .trim();
+        
+        if (!extractedText || extractedText.length === 0) {
+          throw new Error('No text content found in Excel file');
+        }
+        
+        return extractedText;
+        
+      } catch (excelError: any) {
+        console.error('Error parsing Excel file:', excelError);
+        throw new Error(`Failed to parse Excel file: ${excelError.message}`);
+      }
     } else if (fileExt === '.pdf') {
       // Extract text from PDF using pdf2json
       const PDFParser = require('pdf2json');
