@@ -37,48 +37,176 @@ export interface RFPResponse {
     generatedAnswer: string;
   }[];
   generatedAt: Date;
+  extractionMetadata?: ExtractionMetadata; // Optional metadata for debugging
 }
 
-// Clean malformed text using AI (for PDF extraction issues)
+// Enhanced text preprocessing for PDF extraction issues
 async function cleanMalformedText(text: string): Promise<string> {
   try {
-    // Check if text has spacing issues
+    console.log('[RFP] Starting text preprocessing...');
+    
+    // Step 1: Remove common PDF artifacts
+    let processedText = removePDFArtifacts(text);
+    
+    // Step 2: Fix table formatting issues
+    processedText = fixTableFormatting(processedText);
+    
+    // Step 3: Check if text has spacing issues
     const hasSpacingIssues = 
       // Character-level spacing: "W h o   i n   y o u r"
-      /[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]/.test(text.substring(0, 500)) ||
+      /[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]/.test(processedText.substring(0, 500)) ||
       // Words joined together: "Whatarethecorporate"
-      /[a-z]{20,}/.test(text.substring(0, 500));
+      /[a-z]{20,}/.test(processedText.substring(0, 500));
     
     if (!hasSpacingIssues) {
-      console.log('[RFP] Text appears correctly formatted, skipping AI cleanup');
-      return text;
+      console.log('[RFP] Text preprocessing complete (no AI cleanup needed)');
+      return processedText;
     }
     
     console.log('[RFP] Detected malformed text, using AI to clean up spacing issues');
     
-    // Use Gemini to fix the text
-    const cleanupPrompt = `Fix the spacing in the following text. The text has been extracted from a PDF and has incorrect spacing between letters and words. 
+    // Use Gemini to fix spacing issues
+    const cleanupPrompt = `Fix the spacing and formatting issues in the following text extracted from a PDF document.
     
-Please return ONLY the corrected text with proper spacing, without any explanation or additional commentary. Fix issues like:
-- Letters separated by spaces: "W h o   i n   y o u r" should become "Who in your"  
-- Words joined together: "Whatarethecorporate" should become "What are the corporate"
+Your task:
+1. Fix letters separated by spaces: "W h o   i n   y o u r" → "Who in your"
+2. Fix words joined together: "Whatarethecorporate" → "What are the corporate"
+3. Fix broken hyphenation: "require- ment" → "requirement"
+4. Fix broken sentences across lines (preserve paragraph breaks)
+5. Clean up extra whitespace while preserving intentional formatting
+
+IMPORTANT: Return ONLY the corrected text without any explanation or commentary.
 
 Text to fix:
-${text}`;
+${processedText}`;
 
     const cleanedText = await generateContent({
       model: 'gemini-2.0-flash',
       prompt: cleanupPrompt,
-      systemPrompt: 'You are a text correction assistant. Fix spacing issues in text and return only the corrected text.'
+      systemPrompt: 'You are a text correction assistant. Fix spacing and formatting issues in PDF-extracted text. Return only the corrected text.'
     });
     
     console.log('[RFP] AI cleanup completed successfully');
     return cleanedText;
     
   } catch (error) {
-    console.error('[RFP] Failed to clean text with AI, using original:', error);
-    return text; // Fallback to original text if AI fails
+    console.error('[RFP] Failed to clean text with AI, using preprocessed text:', error);
+    return removePDFArtifacts(text); // At least return text with artifacts removed
   }
+}
+
+// Remove common PDF artifacts
+function removePDFArtifacts(text: string): string {
+  console.log('[RFP] Removing PDF artifacts...');
+  
+  // Remove page headers/footers (common patterns)
+  let cleaned = text
+    // Remove page numbers at the beginning or end of lines
+    .replace(/^Page\s+\d+\s*(?:of\s+\d+)?$/gim, '')
+    .replace(/^\d+\s*(?:of\s+\d+)?$/gm, '')
+    .replace(/^-\s*\d+\s*-$/gm, '')
+    
+    // Remove common header/footer patterns
+    .replace(/^(?:CONFIDENTIAL|PROPRIETARY|DRAFT|INTERNAL USE ONLY).*$/gim, '')
+    .replace(/^©.*\d{4}.*$/gm, '') // Copyright lines
+    .replace(/^All rights reserved.*$/gim, '')
+    
+    // Remove date stamps that appear as headers/footers
+    .replace(/^(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}$/gim, '')
+    .replace(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/gm, '')
+    
+    // Remove document reference numbers that appear repeatedly
+    .replace(/^RFP[-#]\d+.*$/gm, '')
+    .replace(/^Document\s+(?:ID|Number|#)[:]\s*[\w-]+$/gim, '')
+    
+    // Remove empty lines and excessive whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+/g, ' ')
+    
+    // Fix broken words at line ends (hyphenation)
+    .replace(/(\w+)-\s*\n\s*(\w+)/g, '$1$2')
+    
+    // Fix sentences broken across lines (but preserve paragraph breaks)
+    .replace(/([a-z,])\s*\n\s*([a-z])/g, '$1 $2')
+    
+    // Remove watermark-style text
+    .replace(/\[DRAFT\]/gi, '')
+    .replace(/\[SAMPLE\]/gi, '')
+    .replace(/\[TEMPLATE\]/gi, '');
+  
+  // Remove lines that are just section dividers
+  cleaned = cleaned
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      // Remove lines that are just dashes, equals, underscores, etc.
+      return !(
+        /^[-=_*]{3,}$/.test(trimmed) ||
+        /^[•·▪▫◦‣⁃]{1,3}$/.test(trimmed) ||
+        trimmed === ''
+      );
+    })
+    .join('\n');
+  
+  return cleaned;
+}
+
+// Fix table formatting issues
+function fixTableFormatting(text: string): string {
+  console.log('[RFP] Fixing table formatting...');
+  
+  // Detect and reformat table-like content
+  const lines = text.split('\n');
+  const processedLines: string[] = [];
+  let inTable = false;
+  let tableBuffer: string[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Detect table boundaries (lines with multiple | or tab separators)
+    const hasTableDelimiters = (line.match(/\|/g) || []).length >= 2 || 
+                               (line.match(/\t/g) || []).length >= 2;
+    
+    // Check if line looks like table content
+    const looksLikeTableContent = hasTableDelimiters || 
+      /^\s*\d+\.\d+\s+/.test(line) || // Numbered sections like "1.1 "
+      /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s*[:]\s*\S/.test(trimmed); // Headers with colons
+    
+    if (looksLikeTableContent && !inTable) {
+      inTable = true;
+      tableBuffer = [line];
+    } else if (inTable && looksLikeTableContent) {
+      tableBuffer.push(line);
+    } else if (inTable && !looksLikeTableContent) {
+      // End of table, process the buffer
+      processedLines.push(...processTableBuffer(tableBuffer));
+      processedLines.push(line);
+      inTable = false;
+      tableBuffer = [];
+    } else {
+      processedLines.push(line);
+    }
+  }
+  
+  // Process any remaining table content
+  if (tableBuffer.length > 0) {
+    processedLines.push(...processTableBuffer(tableBuffer));
+  }
+  
+  return processedLines.join('\n');
+}
+
+// Process table buffer to clean up table formatting
+function processTableBuffer(buffer: string[]): string[] {
+  if (buffer.length === 0) return [];
+  
+  // For simple tables, just clean up spacing
+  return buffer.map(line => {
+    // Replace multiple spaces/tabs with single space for readability
+    return line.replace(/\s{2,}/g, ' ').replace(/\t+/g, ' ');
+  });
 }
 
 // AI-powered question extraction using Gemini
@@ -87,41 +215,63 @@ async function extractQuestionsWithAI(text: string): Promise<string[]> {
     console.log('[RFP] Using AI to extract questions from document');
     
     // Create a comprehensive prompt for Gemini to extract all questions and requirements
-    const extractionPrompt = `You are an expert RFP analyst. Analyze the following RFP document and extract ONLY the genuine questions and requirements that need vendor responses.
+    const extractionPrompt = `You are an expert RFP analyst. Analyze the following RFP document and extract ALL questions, requirements, and vendor action items that require a response or compliance confirmation.
 
-Your task:
-1. Extract ALL direct questions (sentences ending with ?)
-2. Extract requirements that ask for specific information, such as:
-   - "Describe your..." 
-   - "Explain how..."
-   - "Provide details about..."
-   - "List your..."
-   - "What is your..."
-   - "How do you..."
+Your task - Extract ALL of the following:
 
-EXCLUDE these types of content:
-- Administrative instructions ("Submit by...", "Documents must be...", "Responses should be...")
-- Procedural directives ("Contact us at...", "Email to...", "Send to...")
-- RFP process information (deadlines, submission methods, formatting requirements)
-- Section headers or table of contents
-- Contact information listings
-- Any Q&A pattern like "Q1:", "Q2:" that appears to be response scaffolding
-- Evaluation criteria descriptions (unless they ask for specific vendor information)
-- General statements that don't request information
+1. DIRECT QUESTIONS (ending with "?")
+   - Any sentence ending with a question mark
+   - Embedded questions within paragraphs
 
-PRESERVE:
-- Complete question text without modification
-- Table data references (e.g., "Fill in the pricing table below")
-- Context needed to understand the question
+2. IMPERATIVE STATEMENTS requiring vendor action:
+   - "Describe your..." / "Explain how..." / "Provide details..."
+   - "List your..." / "Detail your..." / "Outline your..."
+   - "Demonstrate..." / "Show how..." / "Illustrate..."
+   - "Please provide..." / "Please describe..." / "Please explain..."
+   - "Submit..." / "Include..." / "Attach..."
+   - "Specify..." / "Identify..." / "Define..."
+
+3. VENDOR REQUIREMENTS AND EXPECTATIONS:
+   - "The vendor must..." / "The vendor shall..." / "Vendor should..."
+   - "The contractor must..." / "The supplier will..."
+   - "You must..." / "You should..." / "You will need to..."
+   - "It is required that..." / "Requirements include..."
+   - "Must demonstrate..." / "Must have..." / "Must provide..."
+
+4. COMPLIANCE AND CERTIFICATION REQUIREMENTS:
+   - "Confirm that..." / "Verify that..." / "Certify that..."
+   - "Provide evidence of..." / "Provide proof of..."
+   - "Must be compliant with..." / "Must meet..."
+   - "Required certifications..." / "Required qualifications..."
+
+5. TABLE AND FORM COMPLETION REQUESTS:
+   - "Complete the table..." / "Fill in the pricing..."
+   - "Provide the following information in table format..."
+   - References to appendices or attachments requiring completion
+
+6. EVALUATION CRITERIA that require vendor input:
+   - Technical capability requirements
+   - Experience requirements
+   - Staffing and resource requirements
+   - Methodology and approach requirements
+
+ONLY EXCLUDE:
+- Pure RFP submission logistics (address, email, deadline ONLY if not asking for vendor info)
+- Page numbers, headers, footers
+- Table of contents entries
+- Contact information that's purely informational
+- Copyright notices and legal disclaimers about the RFP itself
+
+IMPORTANT RULES:
+- Include EVERYTHING that requires vendor response or acknowledgment
+- Preserve complete context (don't truncate questions)
+- Include requirements even if phrased as statements
+- Include both mandatory (must/shall) and recommended (should/may) requirements
+- Each extracted item should be self-contained and understandable
+- Maximum 50 items (prioritize most substantial if more exist)
 
 Return ONLY a JSON array of strings, where each string is a complete question or requirement.
-Format: ["question 1", "question 2", "question 3", ...]
-
-IMPORTANT:
-- Each item must be something the vendor needs to respond to
-- Do NOT include imperatives that are just instructions about the RFP process
-- Do NOT fabricate Q&A patterns or add numbering
-- Maximum 50 questions (prioritize the most substantial if more exist)
+Format: ["question 1", "requirement 2", "question 3", ...]
 
 Document to analyze:
 ${text}`;
@@ -184,60 +334,153 @@ ${text}`;
   }
 }
 
-// Original regex-based extraction as fallback
+// Enhanced regex-based extraction as fallback
 function extractQuestionsWithRegex(text: string): string[] {
-  console.log('[RFP] Using regex-based question extraction (fallback)');
+  console.log('[RFP] Using enhanced regex-based question extraction (fallback)');
   const questions: string[] = [];
+  const extractedSet = new Set<string>(); // Use Set to avoid duplicates from the start
   
   // Pattern 1: Direct questions (ending with ?)
   const directQuestions = text.match(/[^.!?]*\?/g) || [];
-  questions.push(...directQuestions.map(q => q.trim()));
+  directQuestions.forEach(q => {
+    const cleaned = q.trim();
+    if (cleaned.length > 15) {
+      extractedSet.add(cleaned);
+    }
+  });
   
-  // Pattern 2: Numbered items that look like requirements
-  const numberedPattern = /^\s*\d+[\.)]\s*(.+)$/gm;
+  // Pattern 2: Imperative statements starting with action verbs
+  const imperativePatterns = [
+    /\b(Describe|Explain|Provide|List|Detail|Outline|Demonstrate|Show|Illustrate|Specify|Identify|Define|Present|Document|Submit|Include|Attach|Confirm|Verify|Certify|State|Indicate|Clarify)\s+[^.!?]+[.!]/gi,
+    /\b(Please\s+(?:provide|describe|explain|list|detail|submit|include|confirm|specify|indicate|clarify))\s+[^.!?]+[.!]/gi
+  ];
+  
+  imperativePatterns.forEach(pattern => {
+    const matches = text.match(pattern) || [];
+    matches.forEach(match => {
+      const cleaned = match.trim();
+      if (cleaned.length > 20) {
+        extractedSet.add(cleaned);
+      }
+    });
+  });
+  
+  // Pattern 3: Vendor/contractor requirements
+  const vendorPatterns = [
+    /\b(The\s+)?(?:vendor|contractor|supplier|bidder|respondent|applicant|company|organization|firm)\s+(?:must|shall|should|will|needs?\s+to|is\s+(?:required|expected)\s+to)[^.!?]+[.!?]/gi,
+    /\b(?:You|Your\s+(?:company|organization|firm))\s+(?:must|shall|should|will|need\s+to|are\s+(?:required|expected)\s+to)[^.!?]+[.!?]/gi,
+    /\b(?:It\s+is\s+(?:required|mandatory|necessary|essential)\s+(?:that|to))[^.!?]+[.!?]/gi,
+    /\b(?:Must|Shall|Should)\s+(?:have|possess|demonstrate|provide|include|submit)[^.!?]+[.!?]/gi
+  ];
+  
+  vendorPatterns.forEach(pattern => {
+    const matches = text.match(pattern) || [];
+    matches.forEach(match => {
+      const cleaned = match.trim();
+      if (cleaned.length > 20) {
+        extractedSet.add(cleaned);
+      }
+    });
+  });
+  
+  // Pattern 4: Table and form completion requests
+  const tablePatterns = [
+    /\b(?:Complete|Fill\s+(?:in|out)|Provide\s+(?:the\s+)?following\s+information\s+in)\s+(?:the\s+)?(?:table|form|template|matrix|schedule|appendix|attachment|exhibit)[^.!?]*[.!?]/gi,
+    /\b(?:Pricing|Cost|Rate|Fee)\s+(?:table|schedule|sheet|form)[^.!?]*(?:must|should|needs?\s+to)\s+be\s+(?:completed|filled|provided)[^.!?]*[.!?]/gi,
+    /\bRefer\s+to\s+(?:Appendix|Attachment|Exhibit|Schedule|Table|Form)\s+[A-Z0-9]+[^.!?]*[.!?]/gi
+  ];
+  
+  tablePatterns.forEach(pattern => {
+    const matches = text.match(pattern) || [];
+    matches.forEach(match => {
+      const cleaned = match.trim();
+      if (cleaned.length > 20) {
+        extractedSet.add(cleaned);
+      }
+    });
+  });
+  
+  // Pattern 5: Compliance and certification requirements
+  const compliancePatterns = [
+    /\b(?:Provide\s+)?(?:evidence|proof|documentation|certification|confirmation)\s+(?:of|that|regarding)[^.!?]+[.!?]/gi,
+    /\b(?:Must|Should|Shall)\s+(?:be\s+)?(?:compliant|certified|qualified|licensed|accredited)[^.!?]+[.!?]/gi,
+    /\b(?:Required|Mandatory|Necessary)\s+(?:certifications?|qualifications?|licenses?|credentials?|requirements?)[^.!?]+[.!?]/gi,
+    /\b(?:Compliance|Conformance|Adherence)\s+(?:with|to)\s+[^.!?]+\s+(?:is\s+)?(?:required|mandatory|necessary)[^.!?]*[.!?]/gi
+  ];
+  
+  compliancePatterns.forEach(pattern => {
+    const matches = text.match(pattern) || [];
+    matches.forEach(match => {
+      const cleaned = match.trim();
+      if (cleaned.length > 20) {
+        extractedSet.add(cleaned);
+      }
+    });
+  });
+  
+  // Pattern 6: Numbered items that look like requirements (enhanced)
+  const numberedPattern = /^\s*(?:\d+[\.)]\s*|[a-zA-Z][\.)]\s*)(.+)$/gm;
   let match;
   while ((match = numberedPattern.exec(text)) !== null) {
     const item = match[1].trim();
-    // Check if it looks like a requirement or question
+    // Enhanced keyword list
     if (item.length > 20 && (
-      item.toLowerCase().includes('describe') ||
-      item.toLowerCase().includes('provide') ||
-      item.toLowerCase().includes('explain') ||
-      item.toLowerCase().includes('detail') ||
-      item.toLowerCase().includes('what') ||
-      item.toLowerCase().includes('how') ||
-      item.toLowerCase().includes('why') ||
-      item.toLowerCase().includes('when') ||
-      item.toLowerCase().includes('please') ||
-      item.toLowerCase().includes('submit') ||
-      item.toLowerCase().includes('include')
+      /\b(describe|explain|provide|list|detail|outline|what|how|why|when|where|who|please|submit|include|must|shall|should|vendor|contractor|demonstrate|specify|identify|confirm|verify|certify|evidence|proof|complete|fill|table|form|compliance|required|mandatory)\b/i.test(item)
     )) {
-      questions.push(item);
+      extractedSet.add(item);
     }
   }
   
-  // Pattern 3: Bullet points with requirement keywords
-  const bulletPattern = /^\s*[•·\-\*]\s*(.+)$/gm;
+  // Pattern 7: Bullet points with requirement keywords (enhanced)
+  const bulletPattern = /^\s*[•·\-\*▪▫◦‣⁃]\s*(.+)$/gm;
   while ((match = bulletPattern.exec(text)) !== null) {
     const item = match[1].trim();
     if (item.length > 20 && (
-      item.toLowerCase().includes('experience') ||
-      item.toLowerCase().includes('capability') ||
-      item.toLowerCase().includes('approach') ||
-      item.toLowerCase().includes('methodology') ||
-      item.toLowerCase().includes('solution') ||
-      item.toLowerCase().includes('demonstrate')
+      /\b(experience|capability|approach|methodology|solution|demonstrate|provide|describe|explain|must|shall|should|vendor|contractor|required|qualification|certification|compliance|evidence|proof)\b/i.test(item)
     )) {
-      questions.push(item);
+      extractedSet.add(item);
     }
   }
   
-  // Deduplicate and clean
-  const uniqueQuestions = Array.from(new Set(questions))
-    .filter(q => q.length > 10) // Filter out very short items
-    .slice(0, 20); // Limit to 20 questions max for performance
+  // Pattern 8: Requirements in specific sections (looking for section headers followed by content)
+  const sectionPatterns = [
+    /(?:Requirements|Qualifications|Capabilities|Specifications|Criteria|Scope\s+of\s+Work|Statement\s+of\s+Work|Deliverables)[:]\s*\n+([^]+?)(?=\n{2,}|\n(?:Requirements|Qualifications|Capabilities|Specifications|Criteria|Scope|Statement|Deliverables)|$)/gi
+  ];
   
-  console.log(`[RFP] Regex extraction found ${uniqueQuestions.length} questions`);
+  sectionPatterns.forEach(pattern => {
+    const matches = text.match(pattern) || [];
+    matches.forEach(match => {
+      // Extract individual lines from the section that look like requirements
+      const lines = match.split('\n');
+      lines.forEach(line => {
+        const cleaned = line.trim();
+        if (cleaned.length > 20 && !cleaned.match(/^(Requirements|Qualifications|Capabilities|Specifications|Criteria|Scope|Statement|Deliverables):/i)) {
+          extractedSet.add(cleaned);
+        }
+      });
+    });
+  });
+  
+  // Convert Set to Array and apply final filtering
+  const uniqueQuestions = Array.from(extractedSet)
+    .filter(q => {
+      // Filter out very short items
+      if (q.length < 15) return false;
+      
+      // Filter out items that are just headers or labels
+      if (/^(Section|Chapter|Part|Article|Appendix|Attachment|Exhibit|Table|Figure|Schedule)\s+[A-Z0-9]+[:.]?\s*$/i.test(q)) return false;
+      
+      // Filter out page numbers and similar artifacts
+      if (/^Page\s+\d+\s*(?:of\s+\d+)?$/i.test(q)) return false;
+      
+      // Ensure the item has actual content (not just numbers or special characters)
+      if (!/[a-zA-Z]{5,}/.test(q)) return false;
+      
+      return true;
+    })
+    .slice(0, 50); // Increased limit to 50 to match AI extraction
+  
+  console.log(`[RFP] Enhanced regex extraction found ${uniqueQuestions.length} questions/requirements`);
   return uniqueQuestions;
 }
 
@@ -337,6 +580,244 @@ function formatPineconeResponse(content: string, sources: string[]): string {
   return content;
 }
 
+// Multi-pass extraction with deduplication
+async function extractQuestionsMultiPass(text: string): Promise<{ questions: string[], metadata: ExtractionMetadata }> {
+  console.log('[RFP] Starting multi-pass extraction process');
+  
+  const allQuestions = new Map<string, ExtractionSource>(); // Use Map to track source of each question
+  const metadata: ExtractionMetadata = {
+    totalExtracted: 0,
+    aiExtracted: 0,
+    regexExtracted: 0,
+    duplicatesRemoved: 0,
+    categoryCounts: {
+      directQuestions: 0,
+      imperatives: 0,
+      requirements: 0,
+      compliance: 0,
+      tables: 0
+    },
+    extractionTime: Date.now(),
+    extractionMethod: 'multi-pass'
+  };
+
+  try {
+    // Pass 1: AI Extraction (primary method)
+    console.log('[RFP] Pass 1: AI-powered extraction');
+    const startTime = Date.now();
+    const aiQuestions = await extractQuestionsWithAI(text);
+    metadata.aiExtracted = aiQuestions.length;
+    console.log(`[RFP] AI extraction completed in ${Date.now() - startTime}ms, found ${aiQuestions.length} items`);
+    
+    // Add AI questions to the map
+    aiQuestions.forEach(q => {
+      const normalized = normalizeQuestion(q);
+      if (!allQuestions.has(normalized)) {
+        allQuestions.set(normalized, { 
+          original: q, 
+          source: 'AI',
+          category: categorizeQuestion(q)
+        });
+      }
+    });
+
+    // Pass 2: Enhanced Regex Extraction (fallback and supplement)
+    console.log('[RFP] Pass 2: Enhanced regex extraction for supplemental capture');
+    const regexQuestions = extractQuestionsWithRegex(text);
+    
+    // Add regex questions that weren't found by AI
+    let regexUnique = 0;
+    regexQuestions.forEach(q => {
+      const normalized = normalizeQuestion(q);
+      if (!allQuestions.has(normalized)) {
+        allQuestions.set(normalized, {
+          original: q,
+          source: 'Regex',
+          category: categorizeQuestion(q)
+        });
+        regexUnique++;
+      } else {
+        metadata.duplicatesRemoved++;
+      }
+    });
+    metadata.regexExtracted = regexUnique;
+    console.log(`[RFP] Regex extraction added ${regexUnique} unique items (${metadata.duplicatesRemoved} duplicates removed)`);
+
+    // Pass 3: Targeted extraction for commonly missed patterns
+    if (allQuestions.size < 30) { // Only run if we haven't found many questions
+      console.log('[RFP] Pass 3: Targeted extraction for potentially missed patterns');
+      const targetedQuestions = extractTargetedPatterns(text);
+      
+      targetedQuestions.forEach(q => {
+        const normalized = normalizeQuestion(q);
+        if (!allQuestions.has(normalized)) {
+          allQuestions.set(normalized, {
+            original: q,
+            source: 'Targeted',
+            category: categorizeQuestion(q)
+          });
+        } else {
+          metadata.duplicatesRemoved++;
+        }
+      });
+    }
+
+    // Convert Map to array and apply quality filters
+    const finalQuestions = Array.from(allQuestions.values())
+      .filter(item => validateQuestionQuality(item.original))
+      .sort((a, b) => {
+        // Prioritize by source (AI > Targeted > Regex) and category importance
+        const sourcePriority = { 'AI': 0, 'Targeted': 1, 'Regex': 2 };
+        const categoryPriority = { 
+          'directQuestions': 0, 
+          'requirements': 1, 
+          'imperatives': 2, 
+          'compliance': 3, 
+          'tables': 4 
+        };
+        
+        const sourceCompare = sourcePriority[a.source] - sourcePriority[b.source];
+        if (sourceCompare !== 0) return sourceCompare;
+        
+        return categoryPriority[a.category] - categoryPriority[b.category];
+      })
+      .slice(0, 50) // Limit to 50 questions
+      .map(item => {
+        // Update category counts
+        metadata.categoryCounts[item.category]++;
+        return item.original;
+      });
+
+    metadata.totalExtracted = finalQuestions.length;
+    metadata.extractionTime = Date.now() - metadata.extractionTime;
+
+    // Log extraction statistics
+    console.log('[RFP] Extraction complete:', {
+      total: metadata.totalExtracted,
+      bySource: { ai: metadata.aiExtracted, regex: metadata.regexExtracted },
+      duplicatesRemoved: metadata.duplicatesRemoved,
+      categories: metadata.categoryCounts,
+      timeMs: metadata.extractionTime
+    });
+
+    return { questions: finalQuestions, metadata };
+    
+  } catch (error) {
+    console.error('[RFP] Multi-pass extraction failed, using fallback:', error);
+    // Fallback to simple regex extraction if multi-pass fails
+    const fallbackQuestions = extractQuestionsWithRegex(text).slice(0, 50);
+    metadata.totalExtracted = fallbackQuestions.length;
+    metadata.regexExtracted = fallbackQuestions.length;
+    metadata.extractionMethod = 'fallback-regex';
+    return { questions: fallbackQuestions, metadata };
+  }
+}
+
+// Normalize question for deduplication
+function normalizeQuestion(question: string): string {
+  return question
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '') // Remove punctuation
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim()
+    .substring(0, 100); // Use first 100 chars for comparison
+}
+
+// Categorize question for prioritization
+function categorizeQuestion(question: string): keyof ExtractionMetadata['categoryCounts'] {
+  const q = question.toLowerCase();
+  
+  if (q.includes('?')) return 'directQuestions';
+  if (/\b(must|shall|vendor|contractor|supplier)\b/.test(q)) return 'requirements';
+  if (/\b(describe|explain|provide|list|detail|demonstrate)\b/.test(q)) return 'imperatives';
+  if (/\b(compliance|certification|evidence|proof|qualified|accredited)\b/.test(q)) return 'compliance';
+  if (/\b(table|form|template|appendix|attachment|pricing|schedule)\b/.test(q)) return 'tables';
+  
+  return 'imperatives'; // Default category
+}
+
+// Validate question quality
+function validateQuestionQuality(question: string): boolean {
+  // Minimum length requirement
+  if (question.length < 15) return false;
+  
+  // Check for incomplete sentences (cut-off)
+  if (question.endsWith('...') || question.endsWith('etc') || question.endsWith(',')) return false;
+  
+  // Ensure it has substantial content (at least 3 words)
+  const wordCount = question.split(/\s+/).length;
+  if (wordCount < 3) return false;
+  
+  // Filter out common non-questions
+  const nonQuestionPatterns = [
+    /^page\s+\d+/i,
+    /^table\s+of\s+contents/i,
+    /^copyright/i,
+    /^confidential/i,
+    /^proprietary/i,
+    /^\d+\s*$/,
+    /^[a-z]\.\s*$/i,
+    /^section\s+\d+/i,
+    /^appendix\s+[a-z]/i
+  ];
+  
+  for (const pattern of nonQuestionPatterns) {
+    if (pattern.test(question)) return false;
+  }
+  
+  return true;
+}
+
+// Extract targeted patterns that might be missed
+function extractTargetedPatterns(text: string): string[] {
+  const targetedQuestions: string[] = [];
+  
+  // Look for specific evaluation criteria sections
+  const evaluationPattern = /(?:evaluation\s+criteria|scoring|assessment|selection\s+criteria)[:\s]*\n+([^]+?)(?=\n{2,}|$)/gi;
+  let match;
+  while ((match = evaluationPattern.exec(text)) !== null) {
+    const section = match[1];
+    const lines = section.split('\n').filter(line => line.trim().length > 20);
+    targetedQuestions.push(...lines.slice(0, 5)); // Take first 5 lines from evaluation sections
+  }
+  
+  // Look for "ability to" or "capability to" statements
+  const abilityPattern = /\b(?:ability|capability|capacity)\s+to\s+[^.!?]+[.!?]/gi;
+  const abilityMatches = text.match(abilityPattern) || [];
+  targetedQuestions.push(...abilityMatches.map(m => m.trim()));
+  
+  // Look for "responsible for" statements
+  const responsibilityPattern = /\b(?:responsible\s+for|accountable\s+for|tasked\s+with)\s+[^.!?]+[.!?]/gi;
+  const responsibilityMatches = text.match(responsibilityPattern) || [];
+  targetedQuestions.push(...responsibilityMatches.map(m => m.trim()));
+  
+  return targetedQuestions.filter(q => q.length > 15);
+}
+
+// Interface for extraction metadata
+interface ExtractionMetadata {
+  totalExtracted: number;
+  aiExtracted: number;
+  regexExtracted: number;
+  duplicatesRemoved: number;
+  categoryCounts: {
+    directQuestions: number;
+    imperatives: number;
+    requirements: number;
+    compliance: number;
+    tables: number;
+  };
+  extractionTime: number;
+  extractionMethod: string;
+}
+
+// Interface for tracking extraction source
+interface ExtractionSource {
+  original: string;
+  source: 'AI' | 'Regex' | 'Targeted';
+  category: keyof ExtractionMetadata['categoryCounts'];
+}
+
 // Process uploaded RFP document
 export async function processRFPDocument(req: Request, res: Response) {
   try {
@@ -356,14 +837,21 @@ export async function processRFPDocument(req: Request, res: Response) {
       // Clean up malformed text if needed (for PDF extraction issues)
       extractedText = await cleanMalformedText(extractedText);
 
-      // Extract questions/requirements using AI-powered extraction
-      const questions = await extractQuestionsWithAI(extractedText);
+      // Extract questions/requirements using multi-pass extraction
+      const { questions, metadata } = await extractQuestionsMultiPass(extractedText);
       
       if (questions.length === 0) {
         return res.status(400).json({ 
           error: 'No questions or requirements found in the document',
-          suggestion: 'Please ensure the document contains numbered items, bullet points, or questions.'
+          suggestion: 'Please ensure the document contains numbered items, bullet points, or questions.',
+          extractionMetadata: metadata // Include metadata for debugging
         });
+      }
+
+      // Log extraction metadata if verbose mode is enabled
+      const verboseMode = req.query.verbose === 'true' || req.body?.verbose === true;
+      if (verboseMode) {
+        console.log('[RFP] Verbose mode - Extraction metadata:', JSON.stringify(metadata, null, 2));
       }
 
       // Process all questions in a single batch
@@ -491,7 +979,8 @@ export async function processRFPDocument(req: Request, res: Response) {
         uploadedFile: req.file.originalname,
         extractedQuestions: questions,
         responses,
-        generatedAt: new Date()
+        generatedAt: new Date(),
+        ...(verboseMode ? { extractionMetadata: metadata } : {}) // Include metadata in verbose mode
       };
 
       res.json(rfpResponse);
