@@ -81,10 +81,106 @@ ${text}`;
   }
 }
 
-// Extract questions from text
-function extractQuestions(text: string): string[] {
+// AI-powered question extraction using Gemini
+async function extractQuestionsWithAI(text: string): Promise<string[]> {
+  try {
+    console.log('[RFP] Using AI to extract questions from document');
+    
+    // Create a comprehensive prompt for Gemini to extract all questions and requirements
+    const extractionPrompt = `You are an expert RFP analyst. Analyze the following document and extract ALL questions, requirements, and items that need responses.
+
+Your task:
+1. Identify ALL direct questions (ending with ?)
+2. Find ALL numbered requirements (1., 2., etc.)
+3. Extract ALL bullet point requirements (•, -, *)
+4. Identify ALL sections asking for information (even if not phrased as questions)
+5. Include ALL items that request:
+   - Descriptions, explanations, or details
+   - Company information or history
+   - Capabilities, experience, or qualifications
+   - Methodologies, approaches, or solutions
+   - Pricing, timelines, or deliverables
+   - References, case studies, or examples
+   - Compliance or certification information
+   - Any other information requests
+
+Return ONLY a JSON array of strings, where each string is a complete question or requirement.
+Format: ["question 1", "question 2", "question 3", ...]
+
+IMPORTANT:
+- Include the COMPLETE text of each question/requirement
+- Do NOT summarize or shorten questions
+- Do NOT add your own interpretations
+- Do NOT include section headers unless they contain requirements
+- Remove duplicate questions
+- Ensure proper formatting and readability
+- Maximum 50 questions (prioritize the most important if more exist)
+
+Document to analyze:
+${text}`;
+
+    // Call Gemini to extract questions
+    const aiResponse = await generateContent({
+      model: 'gemini-2.0-flash',
+      prompt: extractionPrompt,
+      systemPrompt: 'You are an RFP analysis expert. Extract questions and requirements from documents accurately and completely. Return only valid JSON arrays.',
+      temperature: 0.2 // Lower temperature for more consistent extraction
+    });
+    
+    console.log('[RFP] AI extraction completed, parsing response');
+    
+    // Parse the AI response
+    let questions: string[] = [];
+    
+    try {
+      // Try to find and parse JSON array in the response
+      const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        questions = JSON.parse(jsonMatch[0]);
+        
+        // Validate that we got an array of strings
+        if (!Array.isArray(questions) || !questions.every(q => typeof q === 'string')) {
+          throw new Error('Invalid response format from AI');
+        }
+      } else {
+        // Fallback: Try parsing the entire response as JSON
+        questions = JSON.parse(aiResponse);
+      }
+      
+      // Clean and validate questions
+      questions = questions
+        .filter(q => typeof q === 'string' && q.trim().length > 10)
+        .map(q => q.trim())
+        .slice(0, 50); // Limit to 50 questions max
+      
+      console.log(`[RFP] AI extracted ${questions.length} questions successfully`);
+      
+      // If AI extraction succeeded and found questions, return them
+      if (questions.length > 0) {
+        return questions;
+      }
+      
+    } catch (parseError) {
+      console.error('[RFP] Failed to parse AI response as JSON:', parseError);
+      console.log('[RFP] AI Response (first 500 chars):', aiResponse.substring(0, 500));
+    }
+    
+    // If parsing failed or no questions found, fall back to regex
+    console.log('[RFP] AI extraction failed or returned no questions, falling back to regex extraction');
+    return extractQuestionsWithRegex(text);
+    
+  } catch (error) {
+    console.error('[RFP] AI question extraction failed:', error);
+    // Fallback to regex-based extraction
+    console.log('[RFP] Falling back to regex-based extraction due to AI error');
+    return extractQuestionsWithRegex(text);
+  }
+}
+
+// Original regex-based extraction as fallback
+function extractQuestionsWithRegex(text: string): string[] {
+  console.log('[RFP] Using regex-based question extraction (fallback)');
   const questions: string[] = [];
-  const lines = text.split('\n');
   
   // Pattern 1: Direct questions (ending with ?)
   const directQuestions = text.match(/[^.!?]*\?/g) || [];
@@ -134,6 +230,7 @@ function extractQuestions(text: string): string[] {
     .filter(q => q.length > 10) // Filter out very short items
     .slice(0, 20); // Limit to 20 questions max for performance
   
+  console.log(`[RFP] Regex extraction found ${uniqueQuestions.length} questions`);
   return uniqueQuestions;
 }
 
@@ -252,8 +349,8 @@ export async function processRFPDocument(req: Request, res: Response) {
       // Clean up malformed text if needed (for PDF extraction issues)
       extractedText = await cleanMalformedText(extractedText);
 
-      // Extract questions/requirements
-      const questions = extractQuestions(extractedText);
+      // Extract questions/requirements using AI-powered extraction
+      const questions = await extractQuestionsWithAI(extractedText);
       
       if (questions.length === 0) {
         return res.status(400).json({ 
