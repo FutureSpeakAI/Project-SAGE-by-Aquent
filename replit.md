@@ -7,7 +7,7 @@ SAGE (Strategic AI Generation Engine) is a comprehensive marketing content creat
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 1, 2025)
-- **RFP Question Extraction Accuracy** (October 1): Fixed issue where RFP processor was extracting procedural RFP rules as questions. The AI prompt now specifically focuses on vendor capability questions while excluding RFP submission logistics. Updated regex patterns to avoid capturing process statements. Added post-extraction validation to filter out non-questions like "Agency must adhere to..." and "All communication must be directed to...". System now correctly identifies actual vendor requirements needing responses.
+- **AI-Only RFP Question Extraction** (October 1): Simplified RFP question extraction to rely exclusively on Gemini AI, removing all regex-based fallback methods. Enhanced the AI prompt with clearer distinction between vendor capability questions and RFP procedural rules. System now uses a simple test: "Does this require the vendor to provide information about their company or solution?" The AI-only approach ensures more accurate extraction of actual vendor requirements while filtering out submission instructions and process rules.
 - **RFP Response Parsing Fix** (October 1): Fixed critical issue where individual question responses were bleeding together in the output. Enhanced the batch response parser with multiple pattern matching strategies to correctly separate Q1, Q2, etc. responses. Added cleanup logic to remove embedded question references that leaked into answers. Implemented robust fallback mechanisms for various response formats from Pinecone.
 
 ## Recent Changes (September 30, 2025)
