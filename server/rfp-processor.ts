@@ -510,6 +510,45 @@ function extractQuestionsWithRegex(text: string): string[] {
   return uniqueQuestions;
 }
 
+// Get sources for a single question
+async function getPineconeSourcesForQuestion(question: string): Promise<Array<{ name: string; url?: string }>> {
+  try {
+    // Send single question to get accurate sources
+    const rawResponse = await chatWithPineconeRaw([
+      { role: 'user', content: question }
+    ]);
+    
+    // Process citations to extract sources
+    const sources: Array<{ name: string; url?: string }> = [];
+    const sourceUrls = new Map<string, string>();
+    
+    if (rawResponse.citations && rawResponse.citations.length > 0) {
+      rawResponse.citations.forEach((citation: any) => {
+        if (citation.references) {
+          citation.references.forEach((ref: any) => {
+            if (ref.file) {
+              const fileName = ref.file.name || 'Unknown';
+              const signedUrl = ref.file.signedUrl;
+              
+              if (signedUrl && !sourceUrls.has(fileName)) {
+                sourceUrls.set(fileName, signedUrl);
+                sources.push({ name: fileName, url: signedUrl });
+              } else if (!sourceUrls.has(fileName)) {
+                sources.push({ name: fileName });
+              }
+            }
+          });
+        }
+      });
+    }
+    
+    return sources;
+  } catch (error) {
+    console.error('[RFP] Error getting sources for individual question:', error);
+    return [];
+  }
+}
+
 // Get responses from Pinecone for all questions in a single query
 async function getPineconeBatchResponse(questions: string[]): Promise<{ content: string, sources: Array<{ name: string; url?: string }>, error?: string }> {
   try {
@@ -540,53 +579,17 @@ ${questions.map((q, i) => `Q${i + 1}: ${q}`).join('\n\n')}`;
     
     console.log(`[RFP] Received raw Pinecone response`);
     
-    // Log the structure to understand what Pinecone is returning
-    console.log('[RFP] Raw response structure:', {
-      hasMessage: !!rawResponse.message,
-      hasCitations: !!rawResponse.citations,
-      citationsCount: rawResponse.citations?.length || 0,
-      messageKeys: rawResponse.message ? Object.keys(rawResponse.message) : [],
-      firstCitation: rawResponse.citations?.[0] ? JSON.stringify(rawResponse.citations[0], null, 2) : 'none'
-    });
-    
     // Extract the raw content directly from Pinecone's response
     let content = rawResponse.message?.content || 'No response from Pinecone';
     
     // Debug: Log full response length
     console.log(`[RFP] Full Pinecone response length: ${content.length} chars`);
     
-    // Process citations to preserve both file names and URLs
-    const sources: Array<{ name: string; url?: string }> = [];
-    const sourceUrls = new Map<string, string>(); // Map file names to URLs
-    
-    if (rawResponse.citations && rawResponse.citations.length > 0) {
-      console.log(`[RFP] Processing ${rawResponse.citations.length} citations`);
-      
-      // Extract all unique sources with their URLs
-      rawResponse.citations.forEach((citation: any) => {
-        if (citation.references) {
-          citation.references.forEach((ref: any) => {
-            if (ref.file) {
-              const fileName = ref.file.name || 'Unknown';
-              const signedUrl = ref.file.signedUrl;
-              
-              // Store URL for this file name
-              if (signedUrl && !sourceUrls.has(fileName)) {
-                sourceUrls.set(fileName, signedUrl);
-                sources.push({ name: fileName, url: signedUrl });
-              } else if (!sourceUrls.has(fileName)) {
-                sources.push({ name: fileName });
-              }
-            }
-          });
-        }
-      });
-    }
-    
-    // Return the content with preserved source URLs
+    // For batch responses, we don't extract sources here
+    // Sources will be fetched individually for each question for accuracy
     return { 
       content,
-      sources 
+      sources: [] // Empty - will be populated per question
     };
   } catch (error) {
     console.error('Pinecone batch error:', error);
@@ -896,13 +899,21 @@ export async function processRFPDocument(req: Request, res: Response) {
             responseMap.set(qNum, answer);
           }
           
-          // Now build responses array in order
+          // Now build responses array in order - HYBRID APPROACH
+          console.log(`[RFP] Fetching individual sources for ${questions.length} questions...`);
+          
+          // Fetch sources for all questions in parallel for efficiency
+          const sourcePromises = questions.map(q => getPineconeSourcesForQuestion(q));
+          const allQuestionSources = await Promise.all(sourcePromises);
+          
           for (let i = 0; i < questions.length; i++) {
             const qNum = i + 1;
+            const individualSources = allQuestionSources[i] || [];
+            
             if (responseMap.has(qNum)) {
               responses.push({
                 question: questions[i],
-                pineconeSources: allSources,
+                pineconeSources: individualSources, // Use individual sources
                 generatedAnswer: responseMap.get(qNum)
               });
               parsedSuccessfully = true;
@@ -910,11 +921,13 @@ export async function processRFPDocument(req: Request, res: Response) {
               // This question wasn't found in the response
               responses.push({
                 question: questions[i],
-                pineconeSources: allSources,
+                pineconeSources: individualSources, // Use individual sources
                 generatedAnswer: 'No response provided for this question'
               });
             }
           }
+          
+          console.log(`[RFP] Individual source fetching completed`);
         }
         
         if (!parsedSuccessfully) {
@@ -923,12 +936,18 @@ export async function processRFPDocument(req: Request, res: Response) {
           const responsePattern = /Response:\s*([\s\S]*?)(?=\n(?:Q\d+|Response:|Sources|$))/gi;
           const responseMatches = Array.from(fullContent.matchAll(responsePattern));
           
+          // Fetch individual sources even for fallback cases
+          console.log(`[RFP] Fallback: Fetching individual sources for ${questions.length} questions...`);
+          const sourcePromises = questions.map(q => getPineconeSourcesForQuestion(q));
+          const allQuestionSources = await Promise.all(sourcePromises);
+          
           if (responseMatches.length >= questions.length) {
             // We found enough response blocks
             for (let i = 0; i < questions.length; i++) {
+              const individualSources = allQuestionSources[i] || [];
               responses.push({
                 question: questions[i],
-                pineconeSources: allSources,
+                pineconeSources: individualSources, // Use individual sources
                 generatedAnswer: responseMatches[i] ? responseMatches[i][1].trim() : 'No response found'
               });
             }
@@ -936,13 +955,16 @@ export async function processRFPDocument(req: Request, res: Response) {
             // Complete fallback: return full content for first question
             console.log('[RFP] Using complete fallback - couldn\'t parse structured responses');
             for (let i = 0; i < questions.length; i++) {
+              const individualSources = allQuestionSources[i] || [];
               responses.push({
                 question: questions[i],
-                pineconeSources: allSources,
+                pineconeSources: individualSources, // Use individual sources
                 generatedAnswer: i === 0 ? fullContent : 'Unable to parse individual response - see Question 1'
               });
             }
           }
+          
+          console.log(`[RFP] Fallback: Individual source fetching completed`);
         }
         
         console.log(`[RFP] Successfully processed batch response with ${responses.length} answers`);
