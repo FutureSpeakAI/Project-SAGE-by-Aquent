@@ -223,57 +223,46 @@ async function extractQuestionsWithAI(text: string): Promise<string[]> {
     // Create a comprehensive prompt for Gemini to extract all questions and requirements
     const extractionPrompt = `You are an expert RFP analyst. Your job is to identify ONLY the items in this RFP that require vendors to provide information about their company, capabilities, or proposed solution.
 
-CRITICAL DISTINCTION:
-✓ INCLUDE: Questions that ask vendors to describe THEMSELVES, their experience, their approach, their pricing, their team, etc.
-✗ EXCLUDE: Instructions about the RFP process, submission rules, formatting requirements, or procedural statements
+CRITICAL RULES FOR EXCLUSION:
+✗ NEVER include section headers like "Provide responses to the following questions..."
+✗ NEVER include standalone field labels like "Total Number of Employees:" without context
+✗ NEVER include partial table cells like "Competitor # 1: Estimated Market Share (%)"
+✗ NEVER include instructions or navigation text
+✗ NEVER include formatting directions
 
-EXTRACT THESE TYPES OF VENDOR QUESTIONS:
+WHAT TO INCLUDE - COMPLETE QUESTIONS ONLY:
+✓ Full questions that request specific vendor information
+✓ Complete requirements with clear context
+✓ Questions that combine field labels with their context (e.g., "What is your company's total number of employees?")
+✓ Requirements that specify what the vendor must demonstrate
 
-1. CAPABILITY QUESTIONS:
-   - "What is your experience with..."
-   - "How would you approach..."
-   - "Describe your methodology for..."
-   - "Provide examples of similar projects..."
+EXAMPLES OF WHAT TO EXCLUDE:
+❌ "Provide responses to the following questions that address your company's operations" → Section header
+❌ "Total Number of Employees:" → Incomplete field label
+❌ "2020 Annual Gross Sales:" → Standalone data field
+❌ "Competitor # 1: Competitor Name" → Partial table cell
+❌ "Reference # 1: Company Name" → Table field without context
+❌ "Cash (Cash & Equivalents)" → Financial line item
 
-2. QUALIFICATION REQUIREMENTS:
-   - "Must have 5 years experience in..."
-   - "Required certifications include..."
-   - "Team must include certified professionals..."
-   - "Demonstrate expertise in..."
+EXAMPLES OF WHAT TO INCLUDE:
+✅ "Is your company a certified diverse supplier (MBE, WBE, VBE, etc.)?"
+✅ "How many active, W-2 employees do you currently have in your workforce?"
+✅ "Who are your top three competitors? Also, describe your competitive market share relative to these competitors."
+✅ "Indicate whether your company would enter into any conflicts of interest by conducting business with CVS Health."
+✅ "Describe your company's experience implementing similar solutions in the retail sector."
 
-3. PRICING AND DELIVERABLES:
-   - "Provide hourly rates for..."
-   - "Complete the pricing matrix..."
-   - "Outline your proposed timeline..."
-   - "List all deliverables..."
+QUALITY CHECK:
+Before including any item, ask yourself:
+1. Is this a complete, standalone question that makes sense without additional context?
+2. Does it clearly ask for specific information from the vendor?
+3. Could a vendor reasonably provide a meaningful response to this item alone?
 
-4. COMPANY INFORMATION:
-   - "Provide company overview..."
-   - "List your key personnel..."
-   - "Describe your quality assurance process..."
-   - "Submit references from similar engagements..."
+If the answer to ANY of these is NO, exclude it.
 
-DO NOT EXTRACT THESE (RFP PROCESS RULES):
-- "Agency must adhere to the conditions below" ← This is about RFP rules, not vendor info
-- "All communication must be directed to..." ← This is a submission instruction
-- "RFP response must be submitted by..." ← This is a deadline, not a question
-- "If agency does not agree, must delete materials" ← This is a legal term
-- "Each description must contain client name..." ← This is formatting instruction
-- "Candidates must submit electronically" ← This is a submission method
+Return a JSON array of strings containing ONLY the complete vendor questions/requirements you found.
+Maximum 50 items (prioritize the most substantial and complete questions).
 
-TEST YOURSELF: Ask "Does this require the vendor to provide information about their company or solution?" 
-- If YES → Include it
-- If NO (it's about RFP logistics) → Exclude it
-
-IMPORTANT: Be very strict. When in doubt, exclude it. It's better to miss a borderline question than to include RFP process rules.
-
-Return a JSON array of strings containing ONLY the vendor questions/requirements you found.
-Each item should be the complete, original text from the document.
-Maximum 50 items (prioritize the most substantial vendor requirements if more exist).
-
-Format: ["question 1", "requirement 2", "question 3", ...]
-
-REMEMBER: Only include items that ask for vendor information. Exclude all RFP process rules.
+Format: ["question 1", "question 2", "question 3", ...]
 
 Document to analyze:
 ${text}`;
@@ -306,13 +295,52 @@ ${text}`;
         questions = JSON.parse(aiResponse);
       }
       
-      // Clean and validate questions
+      // Clean and validate questions with additional filtering
       questions = questions
         .filter(q => typeof q === 'string' && q.trim().length > 10)
         .map(q => q.trim())
+        .filter(q => {
+          // Additional filter to remove obvious non-questions
+          const lower = q.toLowerCase();
+          
+          // Exclude section headers
+          if (lower.includes('provide responses to') || 
+              lower.includes('answer the following') ||
+              lower.includes('complete the following') ||
+              lower.includes('fill out the') ||
+              lower.startsWith('section ')) {
+            return false;
+          }
+          
+          // Exclude standalone field labels (ends with colon, no question mark, very short)
+          if (q.endsWith(':') && !q.includes('?') && q.length < 50) {
+            return false;
+          }
+          
+          // Exclude partial table cells with specific patterns
+          if (/^(competitor|reference|year|quarter)\s*#?\s*\d+\s*:/i.test(q)) {
+            return false;
+          }
+          
+          // Exclude financial line items
+          if (/^(cash|assets|liabilities|revenue|equity|sales)(\s+\([^)]+\))?:?\s*$/i.test(q)) {
+            return false;
+          }
+          
+          // Exclude date/year fields
+          if (/^\d{4}\s+(annual|quarterly|monthly)?\s*(gross|net)?\s*(sales|revenue|income):?\s*$/i.test(q)) {
+            return false;
+          }
+          
+          // Must have substantive content - either a question mark or be a clear requirement/instruction
+          const hasQuestionMark = q.includes('?');
+          const isRequirement = /\b(provide|describe|explain|list|submit|indicate|demonstrate|outline|specify|detail|include)\b/i.test(q);
+          
+          return hasQuestionMark || isRequirement;
+        })
         .slice(0, 50); // Limit to 50 questions max
       
-      console.log(`[RFP] AI extracted ${questions.length} questions successfully`);
+      console.log(`[RFP] After filtering: ${questions.length} valid questions`);
       
       // Return whatever AI found (even if empty)
       return questions;
