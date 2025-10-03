@@ -93,6 +93,7 @@
     "pinecone-client": "^2.0.0",
     "pizzip": "^3.2.0",
     "potrace": "^2.1.8",
+    "pptx-parser": "^1.1.7-beta.9",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
