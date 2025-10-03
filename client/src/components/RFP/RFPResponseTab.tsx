@@ -48,11 +48,11 @@ export function RFPResponseTab() {
     const file = e.target.files?.[0];
     if (file) {
       const fileExt = file.name.split('.').pop()?.toLowerCase();
-      if (['pdf', 'docx', 'txt'].includes(fileExt || '')) {
+      if (['pdf', 'docx', 'txt', 'xlsx', 'xls', 'pptx'].includes(fileExt || '')) {
         setSelectedFile(file);
         setError(null);
       } else {
-        setError("Please upload a PDF, DOCX, or TXT file");
+        setError("Please upload a PDF, DOCX, TXT, XLSX, XLS, or PPTX file");
       }
     }
   };
@@ -74,11 +74,11 @@ export function RFPResponseTab() {
     const file = e.dataTransfer.files?.[0];
     if (file) {
       const fileExt = file.name.split('.').pop()?.toLowerCase();
-      if (['pdf', 'docx', 'txt'].includes(fileExt || '')) {
+      if (['pdf', 'docx', 'txt', 'xlsx', 'xls', 'pptx'].includes(fileExt || '')) {
         setSelectedFile(file);
         setError(null);
       } else {
-        setError("Please upload a PDF, DOCX, or TXT file");
+        setError("Please upload a PDF, DOCX, TXT, XLSX, XLS, or PPTX file");
       }
     }
   };
@@ -253,7 +253,7 @@ export function RFPResponseTab() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.docx,.txt"
+              accept=".pdf,.docx,.txt,.xlsx,.xls,.pptx"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -289,7 +289,7 @@ export function RFPResponseTab() {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Supports PDF, DOCX, and TXT files up to 20MB
+                  Supports PDF, DOCX, TXT, XLSX, XLS, and PPTX files up to 20MB
                 </p>
               </div>
             )}

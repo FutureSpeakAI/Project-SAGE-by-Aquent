@@ -195,91 +195,130 @@ export async function extractTextFromFile(fileBuffer: Buffer, fileExt: string): 
         throw new Error(`Failed to parse Excel file: ${excelError.message}`);
       }
     } else if (fileExt === '.pptx') {
-      // Extract text from PowerPoint files using pptx-parser
-      const PPTXParser = require('pptx-parser');
+      // Extract text from PowerPoint files by parsing XML
+      const PizZip = require('pizzip');
       
-      return new Promise((resolve, reject) => {
-        const pptxParser = new PPTXParser();
+      try {
+        // Validate that the buffer has content
+        if (!fileBuffer || fileBuffer.length === 0) {
+          throw new Error('PowerPoint file is empty');
+        }
         
-        pptxParser.parse(fileBuffer, (err: any, data: any) => {
-          if (err) {
-            console.error('Error parsing PowerPoint file:', err);
-            reject(new Error(`Failed to parse PowerPoint file: ${err.message}`));
-            return;
+        // Load the .pptx file as a ZIP archive
+        let zip;
+        try {
+          zip = new PizZip(fileBuffer);
+        } catch (zipError: any) {
+          console.error('Invalid PowerPoint file structure:', zipError);
+          throw new Error('Invalid PowerPoint file. Please ensure the file is not corrupted and is a valid .pptx file.');
+        }
+        
+        let extractedText = '';
+        let slideCount = 0;
+        
+        // Get all slide files from the ppt/slides directory
+        const slideFiles: string[] = [];
+        for (const filename in zip.files) {
+          if (filename.startsWith('ppt/slides/slide') && filename.endsWith('.xml')) {
+            slideFiles.push(filename);
           }
-          
-          try {
-            let extractedText = '';
+        }
+        
+        // Sort slide files by number
+        slideFiles.sort((a, b) => {
+          const numA = parseInt(a.match(/slide(\d+)\.xml/)?.[1] || '0');
+          const numB = parseInt(b.match(/slide(\d+)\.xml/)?.[1] || '0');
+          return numA - numB;
+        });
+        
+        // Check if we found any slides
+        if (slideFiles.length === 0) {
+          throw new Error('No slides found in PowerPoint file. The file may be empty or corrupted.');
+        }
+        
+        // Extract text from each slide
+        slideFiles.forEach((filename, index) => {
+          const slideXml = zip.files[filename]?.asText();
+          if (slideXml) {
+            slideCount++;
+            extractedText += `\n=== Slide ${index + 1} ===\n\n`;
             
-            // Add document title if available
-            if (data.title) {
-              extractedText += `Title: ${data.title}\n\n`;
-            }
-            
-            // Process all slides in order
-            if (data.slides && Array.isArray(data.slides)) {
-              data.slides.forEach((slide: any, slideIndex: number) => {
-                // Add slide separator
-                extractedText += `\n=== Slide ${slideIndex + 1} ===\n\n`;
-                
-                // Extract slide title
-                if (slide.title) {
-                  extractedText += `${slide.title}\n\n`;
+            // Extract all text content from the slide XML
+            // Match text within <a:t> tags (PowerPoint text elements)
+            const textMatches = slideXml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g);
+            if (textMatches) {
+              const slideTexts: string[] = [];
+              textMatches.forEach((match: string) => {
+                const textContent = match.replace(/<[^>]*>/g, '');
+                if (textContent.trim()) {
+                  slideTexts.push(textContent.trim());
                 }
-                
-                // Extract content from text elements
-                if (slide.content && Array.isArray(slide.content)) {
-                  slide.content.forEach((content: any) => {
-                    if (content.text) {
-                      // Handle bullet points
-                      if (content.type === 'bullet' || content.type === 'list') {
-                        extractedText += `• ${content.text}\n`;
-                      } else {
-                        extractedText += `${content.text}\n`;
-                      }
-                    }
-                  });
-                }
-                
-                // Extract text from shapes and text boxes
-                if (slide.shapes && Array.isArray(slide.shapes)) {
-                  slide.shapes.forEach((shape: any) => {
-                    if (shape.text) {
-                      extractedText += `${shape.text}\n`;
-                    }
-                  });
-                }
-                
-                // Extract notes if available
-                if (slide.notes) {
-                  extractedText += `\n[Speaker Notes: ${slide.notes}]\n`;
-                }
-                
-                extractedText += '\n';
               });
+              
+              // Join the text elements with appropriate spacing
+              if (slideTexts.length > 0) {
+                extractedText += slideTexts.join('\n') + '\n';
+              }
             }
-            
-            // Clean up the extracted text
-            extractedText = extractedText
-              .replace(/\t+/g, ' ')           // Replace tabs with spaces
-              .replace(/(\s)\s+/g, '$1')      // Collapse multiple spaces
-              .replace(/\n\s+/g, '\n')        // Remove leading spaces after newlines
-              .replace(/\s+\n/g, '\n')        // Remove trailing spaces before newlines
-              .replace(/\n{4,}/g, '\n\n\n')   // Limit consecutive newlines
-              .trim();
-            
-            if (!extractedText || extractedText.length === 0) {
-              throw new Error('No text content found in PowerPoint file');
-            }
-            
-            resolve(extractedText);
-            
-          } catch (parseError: any) {
-            console.error('Error processing PowerPoint content:', parseError);
-            reject(new Error(`Failed to extract text from PowerPoint: ${parseError.message}`));
           }
         });
-      });
+        
+        // Also try to extract notes from slides
+        const notesFiles: string[] = [];
+        for (const filename in zip.files) {
+          if (filename.startsWith('ppt/notesSlides/notesSlide') && filename.endsWith('.xml')) {
+            notesFiles.push(filename);
+          }
+        }
+        
+        // Sort notes files by number
+        notesFiles.sort((a, b) => {
+          const numA = parseInt(a.match(/notesSlide(\d+)\.xml/)?.[1] || '0');
+          const numB = parseInt(b.match(/notesSlide(\d+)\.xml/)?.[1] || '0');
+          return numA - numB;
+        });
+        
+        // Extract speaker notes if available
+        notesFiles.forEach((filename, index) => {
+          const notesXml = zip.files[filename]?.asText();
+          if (notesXml) {
+            const notesMatches = notesXml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g);
+            if (notesMatches) {
+              const notesTexts: string[] = [];
+              notesMatches.forEach((match: string) => {
+                const textContent = match.replace(/<[^>]*>/g, '');
+                if (textContent.trim() && !textContent.match(/^\d+$/)) { // Exclude page numbers
+                  notesTexts.push(textContent.trim());
+                }
+              });
+              
+              if (notesTexts.length > 0) {
+                extractedText += `\n[Speaker Notes for Slide ${index + 1}: ${notesTexts.join(' ')}]\n`;
+              }
+            }
+          }
+        });
+        
+        // Clean up the extracted text
+        extractedText = extractedText
+          .replace(/\t+/g, ' ')           // Replace tabs with spaces
+          .replace(/(\s)\s+/g, '$1')      // Collapse multiple spaces
+          .replace(/\n\s+/g, '\n')        // Remove leading spaces after newlines
+          .replace(/\s+\n/g, '\n')        // Remove trailing spaces before newlines
+          .replace(/\n{4,}/g, '\n\n\n')   // Limit consecutive newlines
+          .trim();
+        
+        if (!extractedText || extractedText.length === 0) {
+          throw new Error('No text content found in PowerPoint file');
+        }
+        
+        console.log(`Successfully extracted text from PowerPoint: ${slideCount} slides processed`);
+        return extractedText;
+        
+      } catch (pptxError: any) {
+        console.error('Error parsing PowerPoint file:', pptxError);
+        throw new Error(`Failed to parse PowerPoint file: ${pptxError.message}`);
+      }
     } else if (fileExt === '.pdf') {
       // Extract text from PDF using pdf2json
       const PDFParser = require('pdf2json');
