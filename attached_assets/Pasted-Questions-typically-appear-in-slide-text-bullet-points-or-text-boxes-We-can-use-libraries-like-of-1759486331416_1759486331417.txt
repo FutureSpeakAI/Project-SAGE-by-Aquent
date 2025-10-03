@@ -1,0 +1,82 @@
+Questions typically appear in slide text, bullet points, or text boxes
+We can use libraries like officegen or parse the XML structure directly
+Strategy: Extract all text from slides in order
+Agent 3 Prompt
+Here's a comprehensive prompt for Agent 3:
+
+Agent 3 - Task: Add Excel & PowerPoint Support to RFP Processor
+
+Objective: Extend the RFP document processing system to extract text from Excel spreadsheets (.xlsx, .xls) and PowerPoint presentations (.pptx) in addition to the currently supported PDF, DOCX, and TXT formats.
+
+Current State:
+
+File: server/rfp-processor.ts handles RFP uploads and uses extractTextFromFile from server/brief-processing.ts
+Supported formats: .pdf, .docx, .txt
+File size limit: 20MB
+Text extraction calls AI-powered question extraction via Gemini
+Required Changes:
+
+Install Dependencies:
+
+npm install xlsx officegen-pptx
+Update server/brief-processing.ts:
+
+Add extraction logic for Excel files using the xlsx library
+Add extraction logic for PowerPoint files
+For Excel: Read all sheets, extract cell values row-by-row, preserve structure with newlines
+For PowerPoint: Extract text from all slides in sequence, including titles and content
+Ensure extracted text maintains readability (add spacing, preserve bullet points where possible)
+Update server/rfp-processor.ts:
+
+Modify the fileFilter in the multer configuration to accept .xlsx, .xls, and .pptx extensions
+Update the allowedTypes array to include these new formats
+Update any user-facing error messages to reflect the expanded format support
+Implementation Details:
+
+Excel Extraction:
+
+// For .xlsx and .xls files
+import * as XLSX from 'xlsx';
+function extractFromExcel(buffer: Buffer): string {
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+  let fullText = '';
+  
+  workbook.SheetNames.forEach(sheetName => {
+    const sheet = workbook.Sheets[sheetName];
+    // Convert to CSV-like format to preserve structure
+    const sheetData = XLSX.utils.sheet_to_csv(sheet);
+    fullText += `\n\n=== Sheet: ${sheetName} ===\n\n${sheetData}`;
+  });
+  
+  return fullText;
+}
+PowerPoint Extraction:
+
+// For .pptx files - use a suitable library or XML parsing
+// Extract text from each slide's shapes and text boxes
+// Preserve slide order and structure
+Quality Requirements:
+
+Maintain existing functionality for PDF, DOCX, and TXT
+Preserve text structure and formatting where possible (headings, bullets, tables)
+Handle edge cases: empty sheets/slides, images without text, merged cells
+Add appropriate error handling for corrupted or password-protected files
+Update console logging to indicate which format is being processed
+Testing Considerations:
+
+Test with sample RFP files in Excel and PowerPoint formats
+Verify the AI question extraction works correctly with the new text output
+Ensure file size limits still apply
+Confirm error messages are clear and helpful
+Success Criteria:
+
+Users can upload .xlsx, .xls, and .pptx RFP documents
+Questions are successfully extracted from spreadsheets and slide decks
+The existing DOCX/PDF generation for responses still works correctly
+No breaking changes to existing functionality
+Additional Notes:
+
+Excel files may have multiple sheets - extract from all of them
+PowerPoint slides should be processed in order
+Some RFPs use tables in Excel extensively - preserve table structure where possible
+Consider that Excel might have formulas - extract the calculated values, not the formulas
