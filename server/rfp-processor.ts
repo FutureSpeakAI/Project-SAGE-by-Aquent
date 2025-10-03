@@ -40,10 +40,10 @@ export interface RFPResponse {
   extractionMetadata?: ExtractionMetadata; // Optional metadata for debugging
 }
 
-// Enhanced text preprocessing for PDF extraction issues
+// Enhanced text preprocessing and reconstruction for all document types
 async function cleanMalformedText(text: string): Promise<string> {
   try {
-    console.log('[RFP] Starting text preprocessing...');
+    console.log('[RFP] Starting text preprocessing and reconstruction...');
     
     // Step 1: Remove common PDF artifacts
     let processedText = removePDFArtifacts(text);
@@ -51,46 +51,52 @@ async function cleanMalformedText(text: string): Promise<string> {
     // Step 2: Fix table formatting issues
     processedText = fixTableFormatting(processedText);
     
-    // Step 3: Check if text has spacing issues
-    const hasSpacingIssues = 
-      // Character-level spacing: "W h o   i n   y o u r"
-      /[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]/.test(processedText.substring(0, 500)) ||
-      // Words joined together: "Whatarethecorporate"
-      /[a-z]{20,}/.test(processedText.substring(0, 500));
+    // Step 3: Always use AI to reconstruct questions from potentially fragmented text
+    // This is especially important for Excel files where questions might span multiple cells
+    console.log('[RFP] Using AI to reconstruct complete questions from potentially fragmented text');
     
-    if (!hasSpacingIssues) {
-      console.log('[RFP] Text preprocessing complete (no AI cleanup needed)');
-      return processedText;
-    }
-    
-    console.log('[RFP] Detected malformed text, using AI to clean up spacing issues');
-    
-    // Use Gemini to fix spacing issues
-    const cleanupPrompt = `Fix the spacing and formatting issues in the following text extracted from a PDF document.
-    
+    // Use Gemini to reconstruct the document with complete questions
+    const reconstructionPrompt = `You are processing an RFP document that may have questions fragmented across cells, rows, or sections. Your task is to reconstruct complete, coherent questions from this potentially fragmented text.
+
+Common patterns you'll see:
+1. Questions split across Excel cells: "What is your experience with" | "implementing creative solutions"
+2. Questions with parts in different rows or columns
+3. Questions where the main question is in one place and sub-parts are elsewhere
+4. Tables where column headers + row headers form the complete question
+5. Numbered sections where the number is separate from the question text
+6. Character-level spacing issues: "W h o   i n   y o u r" (fix to "Who in your")
+7. Words joined together: "Whatarethecorporate" (fix to "What are the corporate")
+
 Your task:
-1. Fix letters separated by spaces: "W h o   i n   y o u r" → "Who in your"
-2. Fix words joined together: "Whatarethecorporate" → "What are the corporate"
-3. Fix broken hyphenation: "require- ment" → "requirement"
-4. Fix broken sentences across lines (preserve paragraph breaks)
-5. Clean up extra whitespace while preserving intentional formatting
+1. Identify all question fragments and reconstruct them into complete questions
+2. Preserve the meaning and intent of each question
+3. Keep questions in their original order
+4. Fix any spacing or formatting issues
+5. If you see partial questions like "What is your experience with..." look for the continuation nearby
+6. For tables, combine headers and cells to form complete questions when appropriate
+7. Maintain section headers and question numbers if present
 
-IMPORTANT: Return ONLY the corrected text without any explanation or commentary.
+IMPORTANT: 
+- Return the reconstructed document with complete questions
+- Preserve non-question content (instructions, context, etc.)
+- Do not add any commentary or explanations
+- Focus on making questions complete and readable
 
-Text to fix:
+Document to reconstruct:
 ${processedText}`;
 
     const cleanedText = await generateContent({
       model: 'gemini-2.0-flash',
-      prompt: cleanupPrompt,
-      systemPrompt: 'You are a text correction assistant. Fix spacing and formatting issues in PDF-extracted text. Return only the corrected text.'
+      prompt: reconstructionPrompt,
+      systemPrompt: 'You are an RFP document reconstruction expert. Your job is to take fragmented text (especially from Excel files) and reconstruct it into a clean document with complete questions. Return only the reconstructed text without any commentary.',
+      temperature: 0.3 // Slightly higher than extraction to allow for reconstruction creativity
     });
     
-    console.log('[RFP] AI cleanup completed successfully');
+    console.log('[RFP] AI reconstruction completed successfully');
     return cleanedText;
     
   } catch (error) {
-    console.error('[RFP] Failed to clean text with AI, using preprocessed text:', error);
+    console.error('[RFP] Failed to reconstruct text with AI, using preprocessed text:', error);
     return removePDFArtifacts(text); // At least return text with artifacts removed
   }
 }
